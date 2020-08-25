@@ -1,0 +1,8 @@
+numpy
+hbayesdm==1.0.1
+nibabel==3.1.1
+bids
+fmriprep==20.1.1
+pybids==0.10.2
+templateflow==0.6.2
+sentry_sdk
