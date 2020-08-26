@@ -130,3 +130,7 @@ dmypy.json
 
 examples/data
 *.pkl
+examples/output
+examples/*toml
+examples/fmriprep_wf/
+examples/license.txt
