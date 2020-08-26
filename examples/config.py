@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
 
-DATA_DIR = Path('output/ds000005')
+RAW_DATA_DIR = Path('data/tom_2007/ds000005')
+PREP_DIR = Path('output/fmriprep')
 RESPONSE_TR = 0.01
+FMRI_TR = 2
