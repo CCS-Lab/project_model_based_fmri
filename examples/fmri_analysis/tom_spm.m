@@ -4,6 +4,10 @@
 % download and add "tsvread.m" from https://kr.mathworks.com/matlabcentral/fileexchange/32782-tsvread-importing-tab-separated-data?focused=a53e9d7b-eac4-4992-21fa-d380115d33e5&tab=function
 % run this code under each subject's parent folders
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% general specification
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 clear all  % clear workspace
 
 addpath('/usr/local/matlab_toolbox/spm12')
@@ -26,6 +30,9 @@ fmri_path = '/home/cheoljun/project_model_based_fmri/examples/output/fmriprep';
 behav_root = '/home/cheoljun/project_model_based_fmri/examples/data/tom_2007/ds000005/';
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% spm specification
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 spm('defaults', 'FMRI');
 spm_jobman('initcfg'); % SPM12
@@ -128,6 +135,11 @@ end
 spm_jobman('run', matlabbatch) 
 disp('parametric model is specified for all subjects')
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% spm estimation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 matlabbatch = [];
 
 disp('start model estimation')
@@ -143,6 +155,11 @@ end
 
 spm_jobman('run', matlabbatch) 
 disp('parametric model is estimated')
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% spm contrast
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 matlabbatch = [];
 
