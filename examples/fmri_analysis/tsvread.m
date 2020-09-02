@@ -1,4 +1,5 @@
 function varargout = tsvread( varargin )
+
 %[data, header, raw] = tsvread( file ) reads in text file with tab-seperated variables. default value for data is nan.
 %alternative input/output option is suppluying header strings
 %[col1, col2, col3, ..., header, raw] = tsvread( file, header1, header2, header3, ... )

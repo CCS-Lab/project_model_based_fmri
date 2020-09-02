@@ -1,6 +1,5 @@
 % Smoothing of preprocessed Tom 2007 data
 
-
 %2020.09.01 Cheol Jun Cho
 
 addpath('/usr/local/matlab_toolbox/spm12')

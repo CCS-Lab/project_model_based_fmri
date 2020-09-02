@@ -135,3 +135,5 @@ examples/*toml
 examples/fmriprep_wf/
 examples/license.txt
 *Copy*
+
+*/fmri_analysis/results

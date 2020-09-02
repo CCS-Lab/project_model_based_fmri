@@ -1,4 +1,3 @@
-% function [] = tom_spm(subj_n)
 % First-level analysis of Mixed-gamble task from Tom 2007
 % Modified by Cheol Jun Cho based on cluster_fnirs_PRL_1st_hy_v5.m by Hoyoung Doh
 %
@@ -22,8 +21,7 @@ motionregName = 'movement_regressors_tom';
 
 
 % output_path - where to save output
-output_path = '/home/cheoljun/project_model_based_fmri/examples/fmri_analysis/files';
-
+output_path = '/home/cheoljun/project_model_based_fmri/examples/fmri_analysis/results';
 fmri_path = '/home/cheoljun/project_model_based_fmri/examples/output/fmriprep';
 behav_root = '/home/cheoljun/project_model_based_fmri/examples/data/tom_2007/ds000005/';
 
@@ -33,17 +31,26 @@ spm('defaults', 'FMRI');
 spm_jobman('initcfg'); % SPM12
 
 for subj_n = 1:subjNum
-
+    subj_id =  sprintf('sub-%02d',subj_n);
+    indiv_result_path = fullfile(output_path,subj_id)
+    
+    if isfolder(indiv_result_path)
+        delete([indiv_result_path '/*'])
+        rmdir(indiv_result_path)
+    end
+    
+    mkdir(indiv_result_path)
     matlabbatch = [];
     
-    %% for both run 1 and run 2
-    matlabbatch{1}.spm.stats.fmri_spec.dir = { output_path };
+    disp('start setting up')
+    
+    matlabbatch{1}.spm.stats.fmri_spec.dir = {indiv_result_path };
     matlabbatch{1}.spm.stats.fmri_spec.timing.units = 'secs';
     matlabbatch{1}.spm.stats.fmri_spec.timing.RT = TR;
     matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t = 16;
     matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
-
-    subj_id =  sprintf('sub-%02d',subj_n);
+    
+    
     for run_n = 1:runNum
         
         move_path_origin = fullfile(fmri_path, subj_id, 'func', [subj_id '_' taskName '_' sprintf('run-%d',run_n) '_' 'desc-confounds_regressors.tsv']);
@@ -60,54 +67,52 @@ for subj_n = 1:subjNum
         outliers = startsWith(header,'motion_outlier');
         R_outlier = data(2:end, [outliers]);
         R = horzcat(R_mov, R_outlier);
-        motionreg_save_path = fullfile(output_path, [subj_id '_' motionregName '_' sprintf('run-%02d',run_n) '.mat']);
-        save motionreg_save_path R;
+        motionreg_save_path = [output_path '/' subj_id '/' motionregName '_' sprintf('run-%02d',run_n) '.mat'];
+        save (motionreg_save_path, 'R');
     
         
         behav_path = fullfile(behav_root, subj_id, 'func', [subj_id '_' taskName '_' sprintf('run-%02d',run_n) '_' 'events.tsv']);
         
-        [data, header, ] = tsvread(behav_path);
-        onset = strmatch('onset', header, 'exact');
-        duration = strmatch('duration', header, 'exact');
-        respnum = strmatch('respnum', header, 'exact');
-        gamble = (respnum <= 2);
-        safe = (respnum > 2);
+        behav_data = tdfread(behav_path,'\t')
+        onset = behav_data.onset;
+        duration = behav_data.duration;
+        respnum = behav_data.respnum;
 
 
         % rescan files
-        tmpFiles = fullfile(fmri_path, subj_id, 'func', ['smoothed_' subj_id '_' taskName '_' sprintf('run-%d',run_n) '_' 'space-MNI152NLin2009cAsym_desc-preproc_bold.nii']);  
+        tmpFile = fullfile(fmri_path, subj_id, 'func', ['smoothed_' subj_id '_' taskName '_' sprintf('run-%d',run_n) '_' 'space-MNI152NLin2009cAsym_desc-preproc_bold.nii']);  
         
         % get header information to read a 4D file
-        tmpHdr = spm_vol(tmpFiles);
+        tmpHdr = spm_vol(tmpFile);
         f_list_length = size(tmpHdr, 1);  % number of 3d volumes
         for jx = 1:f_list_length
-            scanFiles{jx,1} = [tmpFiles ',' num2str(jx) ]; % add numbers in the end
+            scanFiles{jx,1} = [tmpFile ',' num2str(jx) ]; % add numbers in the end
             % End of difference for 3D vs. 4D %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
 
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).scans = scanFiles;
 
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).name = 'gamble';
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).onset = onset; 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).duration = duration;
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).tmod = 0; % ?
+        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).onset = onset(respnum <= 2);
+        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).duration = duration(respnum <= 2);
+        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).tmod = 0; 
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).orth = 0;
 
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).name = 'safe';
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).onset = onset; 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).duration = duration;
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).tmod = 0; % ?
+        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).onset = onset(respnum > 2);
+        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).duration = duration(respnum > 2);
+        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).tmod = 0; 
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).orth = 0;
 
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).multi = {''};
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).regress = struct('name', {}, 'val', {});
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).multi_reg = {motionreg_save_path};
+        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).multi_reg = {fullfile(motionreg_save_path)};
         matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).hpf = 128;
 
     end
-
+    disp('set up done')
 
     %% These are for all 2 runs
 
@@ -118,18 +123,41 @@ for subj_n = 1:subjNum
     matlabbatch{1}.spm.stats.fmri_spec.mthresh = defThres;   % threshold
     matlabbatch{1}.spm.stats.fmri_spec.mask = {''};
     matlabbatch{1}.spm.stats.fmri_spec.cvi = 'AR(1)';
+    
+    disp('specifying...')
 
     %% run parametric model specification
     spm_jobman('run', matlabbatch) 
     disp('parametric model is specified')
+    
 
-
+    
     %% parameteric model estimation
     matlabbatch = [];
-    matlabbatch{1}.spm.stats.fmri_est.spmmat = { fullfile( output_path, 'SPM.mat') };
+    matlabbatch{1}.spm.stats.fmri_est.spmmat = { fullfile( indiv_result_path, 'SPM.mat' ) };
     matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
-    disp([ID ' Estimation started']);
+    disp(' Estimation started');
     spm_jobman('run', matlabbatch) 
     disp('parametric model is estimated')
+    
+    matlabbatch = [];
+    matlabbatch{1}.spm.stats.con.spmmat = { fullfile( indiv_result_path, 'SPM.mat'  )  };
+
+    matlabbatch{1}.spm.stats.con.consess{1}.tcon.name = 'gamble';
+    matlabbatch{1}.spm.stats.con.consess{1}.tcon.convec = [1/2];
+    matlabbatch{1}.spm.stats.con.consess{1}.tcon.sessrep = 'repl'; 
+
+    matlabbatch{1}.spm.stats.con.consess{2}.tcon.name = 'safe';
+    matlabbatch{1}.spm.stats.con.consess{2}.tcon.convec = [0 1/2];
+    matlabbatch{1}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
+    
+    matlabbatch{1}.spm.stats.con.consess{2}.tcon.name = 'gamble_vs_safe';
+    matlabbatch{1}.spm.stats.con.consess{2}.tcon.convec = [1/2 -1/2];
+    matlabbatch{1}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
+
+    matlabbatch{1}.spm.stats.con.delete = 0; % after creating all contrasts
+
+    spm_jobman('run', matlabbatch) 
+    disp([currApproach ' model: contrasts are generated'])
 
 end
