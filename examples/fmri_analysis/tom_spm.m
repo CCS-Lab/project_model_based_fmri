@@ -179,9 +179,9 @@ for subj_n = 1:subjNum
     matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.convec = [0 1/2];
     matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
     
-    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.name = 'gamble_vs_safe';
-    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.convec = [1/2 -1/2];
-    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
+    matlabbatch{subj_n}.spm.stats.con.consess{3}.tcon.name = 'gamble_vs_safe';
+    matlabbatch{subj_n}.spm.stats.con.consess{3}.tcon.convec = [1/2 -1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{3}.tcon.sessrep = 'repl'; 
 
     matlabbatch{subj_n}.spm.stats.con.delete = 0; % after creating all contrasts
 
