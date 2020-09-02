@@ -12,11 +12,13 @@ runNum = 3;
 
 spm('defaults', 'FMRI');
 spm_jobman('initcfg'); % SPM12
-    
+matlabbatch = [];
+
+disp('start smoothing')
+
 for subj_n = 1:subjNum
     
     for run_n = 1:runNum
-        matlabbatch = [];
         subj_id =  sprintf('sub-%02d',subj_n);
         tmpFile = fullfile(fmri_path, subj_id, 'func', [subj_id '_' taskName '_' sprintf('run-%d',run_n) '_' 'space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz']);
         gunzip(tmpFile);
@@ -30,11 +32,14 @@ for subj_n = 1:subjNum
             % End of difference for 3D vs. 4D %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
-        matlabbatch{1}.spm.spatial.smooth.data = scanFiles;
-        matlabbatch{1}.spm.spatial.smooth.fwhm = smoothing;
-        matlabbatch{1}.spm.spatial.smooth.dtype = 0;
-        matlabbatch{1}.spm.spatial.smooth.im = 0;
-        matlabbatch{1}.spm.spatial.smooth.prefix = 'smoothed_';
-        spm_jobman('run', matlabbatch) 
+        batch_i = (subj_n-1)*runNum + run_n
+        matlabbatch{batch_i}.spm.spatial.smooth.data = scanFiles;
+        matlabbatch{batch_i}.spm.spatial.smooth.fwhm = smoothing;
+        matlabbatch{batch_i}.spm.spatial.smooth.dtype = 0;
+        matlabbatch{batch_i}.spm.spatial.smooth.im = 0;
+        matlabbatch{batch_i}.spm.spatial.smooth.prefix = 'smoothed_';
     end
 end
+
+spm_jobman('run', matlabbatch) 
+disp('smoothing done!')

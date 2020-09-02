@@ -30,6 +30,10 @@ behav_root = '/home/cheoljun/project_model_based_fmri/examples/data/tom_2007/ds0
 spm('defaults', 'FMRI');
 spm_jobman('initcfg'); % SPM12
 
+matlabbatch = [];
+
+disp('start spm specification')
+
 for subj_n = 1:subjNum
     subj_id =  sprintf('sub-%02d',subj_n);
     indiv_result_path = fullfile(output_path,subj_id)
@@ -40,15 +44,13 @@ for subj_n = 1:subjNum
     end
     
     mkdir(indiv_result_path)
-    matlabbatch = [];
     
-    disp('start setting up')
     
-    matlabbatch{1}.spm.stats.fmri_spec.dir = {indiv_result_path };
-    matlabbatch{1}.spm.stats.fmri_spec.timing.units = 'secs';
-    matlabbatch{1}.spm.stats.fmri_spec.timing.RT = TR;
-    matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t = 16;
-    matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
+    matlabbatch{subj_n}.spm.stats.fmri_spec.dir = {indiv_result_path };
+    matlabbatch{subj_n}.spm.stats.fmri_spec.timing.units = 'secs';
+    matlabbatch{subj_n}.spm.stats.fmri_spec.timing.RT = TR;
+    matlabbatch{subj_n}.spm.stats.fmri_spec.timing.fmri_t = 16;
+    matlabbatch{subj_n}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
     
     
     for run_n = 1:runNum
@@ -90,74 +92,83 @@ for subj_n = 1:subjNum
             % End of difference for 3D vs. 4D %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).scans = scanFiles;
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).scans = scanFiles;
 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).name = 'gamble';
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).onset = onset(respnum <= 2);
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).duration = duration(respnum <= 2);
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).tmod = 0; 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(1).orth = 0;
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).name = 'gamble';
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).onset = onset(respnum <= 2);
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).duration = duration(respnum <= 2);
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).tmod = 0; 
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).orth = 0;
 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).name = 'safe';
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).onset = onset(respnum > 2);
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).duration = duration(respnum > 2);
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).tmod = 0; 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).cond(2).orth = 0;
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).name = 'safe';
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).onset = onset(respnum > 2);
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).duration = duration(respnum > 2);
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).tmod = 0; 
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).orth = 0;
 
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).multi = {''};
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).regress = struct('name', {}, 'val', {});
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).multi_reg = {fullfile(motionreg_save_path)};
-        matlabbatch{1}.spm.stats.fmri_spec.sess(run_n).hpf = 128;
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).multi = {''};
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).regress = struct('name', {}, 'val', {});
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).multi_reg = {fullfile(motionreg_save_path)};
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).hpf = 128;
 
     end
-    disp('set up done')
-
-    %% These are for all 2 runs
-
-    matlabbatch{1}.spm.stats.fmri_spec.fact = struct('name', {}, 'levels', {});
-    matlabbatch{1}.spm.stats.fmri_spec.bases.hrf.derivs = [0 0];
-    matlabbatch{1}.spm.stats.fmri_spec.volt = 1;
-    matlabbatch{1}.spm.stats.fmri_spec.global = 'None';
-    matlabbatch{1}.spm.stats.fmri_spec.mthresh = defThres;   % threshold
-    matlabbatch{1}.spm.stats.fmri_spec.mask = {''};
-    matlabbatch{1}.spm.stats.fmri_spec.cvi = 'AR(1)';
     
-    disp('specifying...')
-
-    %% run parametric model specification
-    spm_jobman('run', matlabbatch) 
-    disp('parametric model is specified')
+    matlabbatch{subj_n}.spm.stats.fmri_spec.fact = struct('name', {}, 'levels', {});
+    matlabbatch{subj_n}.spm.stats.fmri_spec.bases.hrf.derivs = [0 0];
+    matlabbatch{subj_n}.spm.stats.fmri_spec.volt = 1;
+    matlabbatch{subj_n}.spm.stats.fmri_spec.global = 'None';
+    matlabbatch{subj_n}.spm.stats.fmri_spec.mthresh = defThres;   % threshold
+    matlabbatch{subj_n}.spm.stats.fmri_spec.mask = {''};
+    matlabbatch{subj_n}.spm.stats.fmri_spec.cvi = 'AR(1)';
     
+end
 
+spm_jobman('run', matlabbatch) 
+disp('parametric model is specified for all subjects')
+
+matlabbatch = [];
+
+disp('start model estimation')
+
+for subj_n = 1:subjNum
+    subj_id =  sprintf('sub-%02d',subj_n);
+    indiv_result_path = fullfile(output_path,subj_id)
+       
+    matlabbatch{subj_n}.spm.stats.fmri_est.spmmat = { fullfile( indiv_result_path, 'SPM.mat' ) };
+    matlabbatch{subj_n}.spm.stats.fmri_est.method.Classical = 1;
     
-    %% parameteric model estimation
-    matlabbatch = [];
-    matlabbatch{1}.spm.stats.fmri_est.spmmat = { fullfile( indiv_result_path, 'SPM.mat' ) };
-    matlabbatch{1}.spm.stats.fmri_est.method.Classical = 1;
-    disp(' Estimation started');
-    spm_jobman('run', matlabbatch) 
-    disp('parametric model is estimated')
+end
+
+spm_jobman('run', matlabbatch) 
+disp('parametric model is estimated')
+
+matlabbatch = [];
+
+disp('start contrast generation')
+
+for subj_n = 1:subjNum
+    subj_id =  sprintf('sub-%02d',subj_n);
+    indiv_result_path = fullfile(output_path,subj_id)
     
-    matlabbatch = [];
-    matlabbatch{1}.spm.stats.con.spmmat = { fullfile( indiv_result_path, 'SPM.mat'  )  };
+    matlabbatch{subj_n}.spm.stats.con.spmmat = { fullfile( indiv_result_path, 'SPM.mat'  )  };
 
-    matlabbatch{1}.spm.stats.con.consess{1}.tcon.name = 'gamble';
-    matlabbatch{1}.spm.stats.con.consess{1}.tcon.convec = [1/2];
-    matlabbatch{1}.spm.stats.con.consess{1}.tcon.sessrep = 'repl'; 
+    matlabbatch{subj_n}.spm.stats.con.consess{1}.tcon.name = 'gamble';
+    matlabbatch{subj_n}.spm.stats.con.consess{1}.tcon.convec = [1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{1}.tcon.sessrep = 'repl'; 
 
-    matlabbatch{1}.spm.stats.con.consess{2}.tcon.name = 'safe';
-    matlabbatch{1}.spm.stats.con.consess{2}.tcon.convec = [0 1/2];
-    matlabbatch{1}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
+    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.name = 'safe';
+    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.convec = [0 1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
     
-    matlabbatch{1}.spm.stats.con.consess{2}.tcon.name = 'gamble_vs_safe';
-    matlabbatch{1}.spm.stats.con.consess{2}.tcon.convec = [1/2 -1/2];
-    matlabbatch{1}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
+    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.name = 'gamble_vs_safe';
+    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.convec = [1/2 -1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
 
-    matlabbatch{1}.spm.stats.con.delete = 0; % after creating all contrasts
-
-    spm_jobman('run', matlabbatch) 
-    disp([currApproach ' model: contrasts are generated'])
+    matlabbatch{subj_n}.spm.stats.con.delete = 0; % after creating all contrasts
 
 end
+
+spm_jobman('run', matlabbatch) 
+disp('contrasts are generated')
