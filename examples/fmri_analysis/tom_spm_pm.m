@@ -106,7 +106,10 @@ for subj_n = 1:subjNum
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).onset = onset((respnum <= 2) & (respnum>0));
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).duration = duration((respnum <= 2) & (respnum>0));
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).tmod = 0; 
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod = struct('name', {}, 'param', {}, 'poly', {});
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod(1).name = 'utility';
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod(1).param = utility((respnum <= 2) & (respnum>0)) ;
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).pmod(1).poly = 1;
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(1).orth = 0;
 
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).name = 'safe';
@@ -114,28 +117,10 @@ for subj_n = 1:subjNum
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).duration = duration(respnum > 2);
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).tmod = 0;
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).pmod(1).name = 'utility';
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).pmod(1).param = utility(respnum > 2) ;
+        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).pmod(1).poly = 1;                 
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(2).orth = 0;
-        
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).name = 'utility_gamble';
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).onset =  onset((respnum <= 2) & (respnum>0));
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).duration = duration((respnum <= 2) & (respnum>0));
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).tmod = 0;
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).pmod(1).name = 'utility';
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).pmod(1).param =utility((respnum <= 2) & (respnum>0)) ;
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).pmod(1).poly = 1;                 
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(3).orth = 0;
-        
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).name = 'utility_safe';
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).onset =  onset(respnum > 2);
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).duration = duration(respnum > 2);
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).tmod = 0;
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).pmod = struct('name', {}, 'param', {}, 'poly', {}); % ?
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).pmod(1).name = 'utility';
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).pmod(1).param =utility(respnum > 2) ;
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).pmod(1).poly = 1;                 
-        matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).cond(4).orth = 0;
-        
         
 
         matlabbatch{subj_n}.spm.stats.fmri_spec.sess(run_n).multi = {''};
@@ -199,15 +184,15 @@ for subj_n = 1:subjNum
     matlabbatch{subj_n}.spm.stats.con.consess{1}.tcon.sessrep = 'repl'; 
 
     matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.name = 'safe';
-    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.convec = [0 1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.convec = [0 0 1/2];
     matlabbatch{subj_n}.spm.stats.con.consess{2}.tcon.sessrep = 'repl'; 
     
     matlabbatch{subj_n}.spm.stats.con.consess{3}.tcon.name = 'gamble_vs_safe';
-    matlabbatch{subj_n}.spm.stats.con.consess{3}.tcon.convec = [1/2 -1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{3}.tcon.convec = [1/2 0 -1/2];
     matlabbatch{subj_n}.spm.stats.con.consess{3}.tcon.sessrep = 'repl'; 
     
     matlabbatch{subj_n}.spm.stats.con.consess{4}.tcon.name = 'utility_gamble';
-    matlabbatch{subj_n}.spm.stats.con.consess{4}.tcon.convec = [0 0 1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{4}.tcon.convec = [0 1/2];
     matlabbatch{subj_n}.spm.stats.con.consess{4}.tcon.sessrep = 'repl'; 
 
     matlabbatch{subj_n}.spm.stats.con.consess{5}.tcon.name = 'utility_safe';
@@ -215,7 +200,7 @@ for subj_n = 1:subjNum
     matlabbatch{subj_n}.spm.stats.con.consess{5}.tcon.sessrep = 'repl'; 
     
     matlabbatch{subj_n}.spm.stats.con.consess{6}.tcon.name = 'utility_gamble_vs_safe';
-    matlabbatch{subj_n}.spm.stats.con.consess{6}.tcon.convec = [0 0 0 1/2 -1/2];
+    matlabbatch{subj_n}.spm.stats.con.consess{6}.tcon.convec = [0 1/2 0 -1/2];
     matlabbatch{subj_n}.spm.stats.con.consess{6}.tcon.sessrep = 'repl'
 
     matlabbatch{subj_n}.spm.stats.con.delete = 0; % after creating all contrasts
