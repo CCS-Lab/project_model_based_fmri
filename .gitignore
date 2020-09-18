@@ -137,3 +137,9 @@ examples/license.txt
 *Copy*
 
 */fmri_analysis/results
+*.nii*
+*.dat*
+examples2/piva_dd
+examples2/output
+examples2/fmriprep_wf
+examples2/*toml

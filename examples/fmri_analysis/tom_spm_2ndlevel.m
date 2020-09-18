@@ -11,9 +11,9 @@ spm_jobman('initcfg'); % SPM12
 %%
 
 subjNum = 16;
-condNum = 6;
+condNum = 7;
 
-allConds = {'gamble','safe','gamble_vs_safe','utility_gamble','utility_safe','utility_gamble_vs_safe'}
+allConds = {'gamble','safe','gamble_vs_safe','utility_gamble','utility_safe','utility_gamble_vs_safe','utility_total'}
 
 for cond_i = 1:condNum
     
@@ -37,6 +37,9 @@ for cond_i = 1:condNum
             dir_name = cond;
         case 'utility_gamble_vs_safe'
             contrast_num = '0006';
+            dir_name = cond;
+        case 'utility_total'
+            contrast_num = '0007';
             dir_name = cond;
     end
     result_path = fullfile(output_path, cond);
