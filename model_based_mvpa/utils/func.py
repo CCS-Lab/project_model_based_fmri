@@ -30,13 +30,19 @@ def get_flatten_shape(array):
     return reduce(lambda x, y: x * y, array)
 
 
-def prepare_data(X, y):
-    if type(X) == str:
+def prepare_data(X, y, n=None):
+    if type(X) is str:
         X = np.load(X)
-    if type(y) == str:
+    if type(y) is str:
         y = np.load(y)
     
-    X_reshaped = X.reshape(get_flatten_shape(X), -1)
-    y_reshaped = y.reshape(get_flatten_shape(y), -1)
+    if n is None or n == 0:
+        X_reshaped = X.reshape(get_flatten_shape(X), -1)
+        y_reshaped = y.reshape(get_flatten_shape(y), -1)
+    else:
+        X_reshaped = X.reshape(n, -1)
+        y_reshaped = y.reshape(n, -1)
+
+    assert (X_reshaped.shape != y_reshaped.shape)
 
     return X_reshaped, y_reshaped
