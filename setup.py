@@ -68,7 +68,6 @@ setup(
         'pystan',
         'hbayesdm',
         'matplotlib',
-        'tensorflow'
     ],
     zip_safe=False,
     include_package_data=True,
