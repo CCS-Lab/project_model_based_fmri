@@ -1,28 +1,28 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+@author: Yedarm Seong
+@contact: mybirth0407@gmail.com
+@last modification: 2020.11.02
+"""
+
 import numpy as np
 import pandas as pd
 from pathlib import Path
 
 from skimage.measure import block_reduce
-from scipy import stats
+
+from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
+
+import nibabel as nib
+from ..utils import func
+
 import logging
 
 
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
-
-
-def array2pindex(array, p_value=0.05, flatten=False):
-    confidence = 1 - p_value
-    flattened_array = array.flatten()
-    
-    n = len(flattened_array)
-    m = np.mean(flattened_array)
-    std_err = stats.sem(flattened_array)
-    h = std_err * stats.t.ppf((1 + confidence) / 2, n - 1)
-    end = m + h
-    
-    ret = (flattened_array >= end) if flatten is True else (array >= end)
-    return ret
 
 
 def custom_masking(mask_path, p_value, zoom,
@@ -39,10 +39,10 @@ def custom_masking(mask_path, p_value, zoom,
         mask_files = [file for file in mask_path.glob('*.nii.gz')]
 
     image_sample = nib.load(mask_files[0])
-    m = array2pindex(image_sample.get_fdata(), p_value, flatten)
+    m = func.array2pindex(image_sample.get_fdata(), p_value, flatten)
 
     for i in range(1, len(mask_files)):
-        m |= array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
+        m |= func.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
     
     if zoom != (1, 1, 1):
         m = block_reduce(m, zoom, interpolation_func)

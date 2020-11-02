@@ -22,9 +22,9 @@ VERSION += '' if ISRELEASED else '.9000'
 
 
 DESC = 'Python library for fMRI multivoxel pattern analysis'
-with open('README.rst', 'r', encoding='utf-8') as f:
-    LONG_DESC = f.read()
-LONG_DESC_TYPE = 'text/x-rst'
+# with open('README.rst', 'r', encoding='utf-8') as f:
+#     LONG_DESC = f.read()
+# LONG_DESC_TYPE = 'text/x-rst'
 AUTHOR = 'CCSLab'
 AUTHOR_EMAIL = 'ccslab.snu@gmail.com'
 URL = 'https://github.com/CCS-Lab/project_model_based_fmri '
@@ -63,12 +63,12 @@ setup(
         'numpy',
         'scipy',
         'sklearn',
-        'skimage',
+        'scikit-image',
         'pandas',
         'pystan',
         'hbayesdm',
         'matplotlib',
-        'arviz',
+        'tensorflow'
     ],
     zip_safe=False,
     include_package_data=True,

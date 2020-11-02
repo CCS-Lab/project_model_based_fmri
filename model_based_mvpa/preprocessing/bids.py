@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+@author: Yedarm Seong
+@contact: mybirth0407@gmail.com
+@last modification: 2020.11.02
+"""
+
 import os
 import numpy as np
 from pathlib import Path
@@ -6,7 +15,10 @@ import bids
 from bids import BIDSLayout, BIDSValidator
 
 from concurrent.futures import ProcessPoolExecutor
-import fMRI
+import time
+from tqdm import tqdm
+from .fMRI import *
+
 import logging
 
 
@@ -25,9 +37,13 @@ def bids_preprocess(root,
                     p_value=0.05,
                     task_name='task-zero',
                     standardize=True,
-                    ncore=os.cpu_count()):
+                    ncore=os.cpu_count(),
+                    time_check=True):
 
-    logging.info('loading bids dataset.. 0/4')
+    pbar = tqdm(total=4)
+    s = time.time()
+
+    pbar.set_description('loading bids dataset..'.center(40))
     layout = BIDSLayout(root, derivatives=True)
     nii_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='bold', extension='nii.gz')
     reg_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='regressors', extension='tsv')
@@ -35,9 +51,9 @@ def bids_preprocess(root,
     n_subject = len(layout.get_subjects())
     n_session = len(layout.get_session())
     n_run = len(layout.get_run())
-    logging.info('done 1/4..')
+    pbar.update(1)
     
-    logging.info('make custom masking.. 1/4')
+    pbar.set_description('make custom masking..'.center(40))
     root = Path(root)
     mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
 
@@ -45,11 +61,9 @@ def bids_preprocess(root,
         mask_path, p_value, zoom,
         smoothing_fwhm, interpolation_func, standardize
     )
-    print(masked_data.shape)
-    print(m_true.shape)
-    logging.info('done..! 2/4')
-    
-    logging.info('image preprocessing using %d cores.. 2/4' % ncore)
+    pbar.update(1)
+
+    pbar.set_description('image preprocessing using %d cores..'.center(40) % ncore)
     params = [[z[0], z[1], motion_confounds, masker, masked_data, i]
             for i, z in enumerate(zip(nii_layout, reg_layout))]
 
@@ -60,9 +74,9 @@ def bids_preprocess(root,
             X = X.reshape(n_subject, n_session, n_run, -1, m_true.shape[0])
         else:
             X = X.reshape(n_subject, n_run, -1, m_true.shape[0])
-    logging.info('done..! 3/4')
+    pbar.update(1)
 
-    logging.info('file saving..! 3/4')
+    pbar.set_description('file saving..'.center(40))
     if save:
         if save_path is None:
             sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
@@ -78,6 +92,13 @@ def bids_preprocess(root,
             for i in range(X.shape[0]):
                 np.save(sp / f'X_{i+1}.npy', X[i])
         nib.save(masked_data, sp / 'masked_data.nii.gz')
-    logging.info('done..! 4/4')
-    
+    pbar.update(1)
+    pbar.set_description('bids preprocessing done!'.center(40))
+
+    logging.info(f'result\nmasking data shape: {maksed_data.shape}\nnumber of voxels: {m_true.shape}')
+
+    if time_check:
+        e = time.time()
+        logging.info(f'time elapsed: {e-s} seconds')
+        
     return X, masked_data
