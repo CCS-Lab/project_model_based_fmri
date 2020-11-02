@@ -46,8 +46,8 @@ class DataGenerator(Sequence):
     def __getitem__(self, index):  # index : batch no.
         # Generate indexes of the batch
         indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
-        niis = [X[i] for i  in indexes]
-        targets = [y[i] for i in indexes]
+        niis = [self.X[i] for i  in indexes]
+        targets = [self.y[i] for i in indexes]
         niis = np.array(niis)
         targets = np.array(targets)
 
@@ -90,8 +90,8 @@ def mvpa_regression_MLP(
 
         train_generator = DataGenerator(X_train, y_train, batch_size, shuffle=True)
         valid_generator = DataGenerator(X_test, y_test, batch_size, shuffle=False)
-
-        bst_model_path = f'temp/{repeat_i}_best_mlp.h5'
+        
+        bst_model_path = f'temp_{repeat_i}_best_mlp.h5'
         model_checkpoint = ModelCheckpoint(bst_model_path, save_best_only=True, save_weights_only=True,monitor='val_loss',mode='min',)
 
         #adam= optimizers.Adam(lr=0.0005, decay=0)
@@ -173,7 +173,7 @@ def mvpa_regression_penalized_linear(
         train_generator = DataGenerator(X_train, y_train, batch_size, shuffle=True)
         valid_generator = DataGenerator(X_test, y_test, batch_size, shuffle=False)
 
-        bst_model_path = f'temp/{repeat_i}_best_mlp.h5'
+        bst_model_path = f'temp_{repeat_i}_best_mlp.h5'
         model_checkpoint = ModelCheckpoint(bst_model_path, save_best_only=True, save_weights_only=True,monitor='val_loss',mode='min',)
 
         #adam= optimizers.Adam(lr=0.0005, decay=0)
