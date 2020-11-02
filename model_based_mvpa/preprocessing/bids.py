@@ -23,7 +23,7 @@ import logging
 
 
 bids.config.set_option('extension_initial_dot', True)
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 
 def bids_preprocess(root,

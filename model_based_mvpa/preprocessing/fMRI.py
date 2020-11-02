@@ -22,7 +22,7 @@ from ..utils import func
 import logging
 
 
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 
 def custom_masking(mask_path, p_value, zoom,
