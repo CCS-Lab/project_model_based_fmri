@@ -36,6 +36,7 @@ def coeff_to_zmap(coeffs, masked_data, smoothing_sigma=1, save_file_name=None):
         nii_i.to_filename(save_file_name+'_zmap.nii')
         
     return nii_i
+    
 
 def coeff_to_tmap(coeffs, masked_data, smoothing_sigma=1):
     
