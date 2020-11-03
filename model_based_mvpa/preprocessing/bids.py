@@ -95,6 +95,7 @@ def bids_preprocess(root,
     pbar.update(1)
     pbar.set_description('bids preprocessing done!'.center(40))
 
+    time.sleep(1)
     logging.info(f'result\nmasking data shape: {masked_data.shape}\nnumber of voxels: {m_true.shape}')
 
     if time_check:

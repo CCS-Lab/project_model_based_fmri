@@ -20,7 +20,7 @@ from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras.callbacks import  ModelCheckpoint,EarlyStopping
 from sklearn.model_selection import train_test_split
 from scipy.stats import ttest_1samp
-from ..data import DataGenerator
+from ..data import *
 
 from sklearn.metrics import mean_squared_error
 
@@ -49,7 +49,7 @@ def mlp_regression(X, y,
     for i in range(N):
         ids = np.arange(X.shape[0])
         train_ids, test_ids = train_test_split(
-            ids, test_size=0.2, random_state=np.random.randint(i)
+            ids, test_size=0.2, random_state=42 + (i * i)
         )
         train_steps = len(train_ids) // batch_size
         val_steps = len(test_ids) // batch_size
@@ -132,7 +132,8 @@ def penalized_regression(X, y,
 
     for i in range(N):
         ids = np.arange(X.shape[0])
-        train_ids, test_ids = train_test_split(ids, test_size=0.2, random_state=i)
+        train_ids, test_ids = train_test_split(
+            ids, test_size=0.2, random_state=42 + (i * i))
         train_steps = len(train_ids) // batch_size
         val_steps = len(test_ids) // batch_size
 
