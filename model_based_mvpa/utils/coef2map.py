@@ -12,16 +12,18 @@ import numpy as np
 from scipy.stats import ttest_1samp, zscore
 from scipy.ndimage import gaussian_filter
 
+from pathlib import Path
 
-def get_map(coeffs, masked_data, layout,
+
+def get_map(coefs, masked_data, layout,
             map_type='t', save_path=None, smoothing_sigma=1):
 
     activation_maps = []
     mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0] 
 
-    for coeff in coeffs:
+    for coef in coefs:
         activation_map = np.zeros(masked_data.get_fdata().flatten().shape[0])
-        for i, v in zip(mapping_id, coeff):
+        for i, v in zip(mapping_id, coef):
             activation_map[i] = v
 
         activation_map = activation_map.reshape(masked_data.shape)
@@ -52,13 +54,13 @@ def get_map(coeffs, masked_data, layout,
     return result
 
 
-def get_zmap(coeffs, masked_data, layout, save_path=None, smoothing_sigma=1):
+def get_zmap(coefs, masked_data, layout, save_path=None, smoothing_sigma=1):
     activation_maps = []
     mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0] 
 
-    for coeff in coeffs:
+    for coef in coefs:
         activation_map = np.zeros(masked_data.get_fdata().flatten().shape[0])
-        for i, v in zip(mapping_id, coeff):
+        for i, v in zip(mapping_id, coef):
             activation_map[i] = v
             
         activation_map = activation_map.reshape(masked_data.shape)
@@ -85,13 +87,13 @@ def get_zmap(coeffs, masked_data, layout, save_path=None, smoothing_sigma=1):
     return result
 
 
-def get_tmap(coeffs, masked_data, layout, save_path=None, smoothing_sigma=1):
+def get_tmap(coefs, masked_data, layout, save_path=None, smoothing_sigma=1):
     activation_maps = []
     mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0] 
 
-    for coeff in coeffs:
+    for coef in coefs:
         activation_map = np.zeros(masked_data.get_fdata().flatten().shape[0])
-        for i, v in zip(mapping_id, coeff):
+        for i, v in zip(mapping_id, coef):
             activation_map[i] = v
 
         activation_map = activation_map.reshape(masked_data.shape)

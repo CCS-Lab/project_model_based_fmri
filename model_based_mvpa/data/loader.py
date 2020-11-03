@@ -30,9 +30,10 @@ class DataGenerator(Sequence):
     def __len__(self):
         "Denotes the number of batches per epoch"
         
-        return len(self.indexes) // self.batch_size
+        return int(np.floor(len(self.indexes) / self.batch_size))
 
-    def __getitem__(self, index):  # index : batch no.
+    def __getitem__(self, index):
+        # index : batch no.
         # Generate indexes of the batch
         indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
         images = [self.X[i] for i  in indexes]
