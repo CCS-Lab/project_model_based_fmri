@@ -18,15 +18,13 @@ from tensorflow.keras import Sequential, layers, losses, optimizers, datasets
 from tensorflow.keras.layers import Dense, BatchNormalization, ReLU, Dropout
 from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras.callbacks import  ModelCheckpoint,EarlyStopping
-from sklearn.model_selection import train_test_split
-from scipy.stats import ttest_1samp
-<<<<<<< HEAD
-from ..data import loader
-=======
-from ..data import *
->>>>>>> 6b5d58b5cd072250870f9627249b258919cb82dc
 
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
+
+from scipy.stats import ttest_1samp
+from ..data import loader
+
 
 import logging
 
@@ -48,7 +46,7 @@ def mlp_regression(X, y,
     if verbose > 0:
         logging.info('start running')
         
-    coeffs = []
+    coefs = []
 
     for i in range(N):
         ids = np.arange(X.shape[0])
@@ -99,10 +97,12 @@ def mlp_regression(X, y,
 
         model.load_weights(bst_model_path)
 
-        results = model.evaluate(X_test, y_test)
+        # results = model.evaluate(X_test, y_test)
+        y_pred = model.prediction(X_test)
+        error = mean_squared_error(y_pred, y_test)
 
         if verbose > 0:
-            logging.info(f'[{i+1}/{N}] - mse: {results:.04f}')
+            logging.info(f'[{i+1}/{N}] - mse: {error:.04f}')
             
         weights = []
         for layer in model.layers:
@@ -110,15 +110,16 @@ def mlp_regression(X, y,
                 continue
             weights.append(layer.get_weights()[0])
 
-        coeff = weights[0]
+        coef = weights[0]
         for weight in weights[1:]:
-            coeff = np.matmul(coeff,weight)
-        coeffs.append(coeff.ravel())
+            coef = np.matmul(coef,weight)
+        coefs.append(coef.ravel())
 
-    coeffs = np.array(coeffs)
+    coefs = np.array(coefs)
     
-    # coeffs : N x voxel #
-    return coeffs
+    # coefs : N x voxel #
+    return coefs
+    
 
 def penalized_regression(X, y,
                          alpha=0.001, # mixing parameter
@@ -132,7 +133,7 @@ def penalized_regression(X, y,
     if verbose > 0:
         logging.info('start running')
         
-    coeffs = []
+    coefs = []
 
     for i in range(N):
         ids = np.arange(X.shape[0])
@@ -175,16 +176,17 @@ def penalized_regression(X, y,
 
         model.load_weights(bst_model_path)
 
-        results = model.evaluate(X_test, y_test)
+        y_pred = model.prediction(X_test)
+        error = mean_squared_error(y_pred, y_test)
 
         if verbose > 0:
-            logging.info(f'[{i+1}/{N}] - mse: {results:.04f}')
+            logging.info(f'[{i+1}/{N}] - mse: {error:.04f}')
 
-        coeff = model.layers[0].get_weights()[0] 
-        coeffs.append(coeff)
+        coef = model.layers[0].get_weights()[0] 
+        coefs.append(coef)
 
-    coeffs = np.array(coeffs)
+    coefs = np.array(coefs)
     
-    # coeffs : N x voxel #
-    return coeffs
+    # coefs : N x voxel #
+    return coefs
 
