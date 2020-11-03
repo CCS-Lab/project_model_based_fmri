@@ -20,7 +20,11 @@ from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras.callbacks import  ModelCheckpoint,EarlyStopping
 from sklearn.model_selection import train_test_split
 from scipy.stats import ttest_1samp
+<<<<<<< HEAD
 from ..data import loader
+=======
+from ..data import *
+>>>>>>> 6b5d58b5cd072250870f9627249b258919cb82dc
 
 from sklearn.metrics import mean_squared_error
 
