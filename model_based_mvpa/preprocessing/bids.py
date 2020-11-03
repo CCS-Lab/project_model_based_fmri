@@ -95,10 +95,10 @@ def bids_preprocess(root,
     pbar.update(1)
     pbar.set_description('bids preprocessing done!'.center(40))
 
-    logging.info(f'result\nmasking data shape: {maksed_data.shape}\nnumber of voxels: {m_true.shape}')
+    logging.info(f'result\nmasking data shape: {masked_data.shape}\nnumber of voxels: {m_true.shape}')
 
     if time_check:
         e = time.time()
         logging.info(f'time elapsed: {e-s} seconds')
         
-    return X, masked_data
+    return X, masked_data, layout
