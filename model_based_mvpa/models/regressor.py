@@ -98,7 +98,7 @@ def mlp_regression(X, y,
         model.load_weights(bst_model_path)
 
         # results = model.evaluate(X_test, y_test)
-        y_pred = model.prediction(X_test)
+        y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
 
         if verbose > 0:
@@ -176,7 +176,7 @@ def penalized_regression(X, y,
 
         model.load_weights(bst_model_path)
 
-        y_pred = model.prediction(X_test)
+        y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
 
         if verbose > 0:
