@@ -204,13 +204,13 @@ def elasticnet(X, y,
     for i in range(N):
         model = ElasticNet(alpha = alpha, n_jobs =n_jobs)
         model = model.fit(X,y)
-        coefs.append(model.coef_)
+        coefs.append(model.coef_.ravel())
         
         if verbose > 0:
             logging.info(f'[{i+1}/{N}] - tuned_lambda: {model.lambda_max_:.03f}')
 
 
-    coefs = np.array(coefs.ravel())
+    coefs = np.array(coefs
     
     # coefs : N x voxel #
     return coefs
