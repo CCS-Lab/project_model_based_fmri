@@ -51,7 +51,7 @@ def calculate_modulation(df_events_list, latent_params):
             - (new_df_list[i]['lambda'] * (new_df_list[i]['loss'] ** new_df_list[i]['rho']))
         
     return new_df_list
-    
+
 
 def preprocess_events(root, dm_model, funcs,
                       hrf_model='glover',

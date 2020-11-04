@@ -26,19 +26,15 @@ def array2pindex(array, p_value=0.05, flatten=False):
     return ret
 
 
-def get_flatten_shape(array):
-    return reduce(lambda x, y: x * y, array)
-
-
 def prepare_data(X, y, n=None):
     if type(X) is str:
         X = np.load(X)
     if type(y) is str:
         y = np.load(y)
-    
+
     if n is None or n == 0:
-        X_reshaped = X.reshape(get_flatten_shape(X), -1)
-        y_reshaped = y.reshape(get_flatten_shape(y), -1)
+        X_reshaped = X.reshape(-1, X.shape[-1])
+        y_reshaped = y.reshape(-1, y.shape[-1])
     else:
         X_reshaped = X.reshape(n, -1)
         y_reshaped = y.reshape(n, -1)
