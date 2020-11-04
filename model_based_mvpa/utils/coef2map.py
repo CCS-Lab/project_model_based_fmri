@@ -15,19 +15,20 @@ from scipy.ndimage import gaussian_filter
 from pathlib import Path
 
 
-def get_map(coefs, masked_data, layout,
+def get_map(coefs, masked_data, task_name,
             map_type='t', save_path=None, smoothing_sigma=1):
 
     activation_maps = []
-    mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0] 
-
+    mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0]
+    
     for coef in coefs:
         activation_map = np.zeros(masked_data.get_fdata().flatten().shape[0])
         for i, v in zip(mapping_id, coef):
             activation_map[i] = v
 
         activation_map = activation_map.reshape(masked_data.shape)
-        activation_map = gaussian_filter(activation_map,smoothing_sigma)
+        if smoothing_sigma > 0:
+            activation_map = gaussian_filter(activation_map,smoothing_sigma)
         activation_maps.append(activation_map)
 
     activation_maps = np.array(activation_maps)
@@ -36,8 +37,11 @@ def get_map(coefs, masked_data, layout,
     if map_type == 't':
         m = ttest_1samp(activation_maps, 0).statistic
     else:
-        m = zscore(activation_maps)
-
+        mean = activation_maps.mean()
+        std = activation_maps.std()
+        m = ((activation_maps-mean)/std).mean(0)
+        
+    m[np.isnan(m)] = 0
     m *= masked_data.get_fdata()
     result = nib.Nifti1Image(m, affine=masked_data.affine)
     
@@ -48,7 +52,6 @@ def get_map(coefs, masked_data, layout,
 
     if not sp.exists():
         sp.mkdir()
-        
-    result.to_filename(sp / f'{layout.get_task()[0]}_{map_type}_map.nii')
+    result.to_filename(sp / f'{task_name}_{map_type}_map.nii')
 
     return result

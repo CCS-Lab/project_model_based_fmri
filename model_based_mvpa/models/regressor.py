@@ -24,7 +24,7 @@ from sklearn.metrics import mean_squared_error
 
 from scipy.stats import ttest_1samp
 from ..data import loader
-
+from glmnet import ElasticNet
 
 import logging
 
@@ -121,7 +121,7 @@ def mlp_regression(X, y,
     return coefs
     
 
-def penalized_regression(X, y,
+def penalized_linear_regression(X, y,
                          alpha=0.001, # mixing parameter
                          lambda_par=0.8, # shrinkage parameter
                          epochs=100,
@@ -147,8 +147,8 @@ def penalized_regression(X, y,
         y_train = y[train_ids]
         y_test = y[test_ids]
 
-        train_generator = DataGenerator(X_train, y_train, batch_size, shuffle=True)
-        val_generator = DataGenerator(X_test, y_test, batch_size, shuffle=False)
+        train_generator = loader.DataGenerator(X_train, y_train, batch_size, shuffle=True)
+        val_generator = loader.DataGenerator(X_test, y_test, batch_size, shuffle=False)
 
         bst_model_path = f'temp_{i}_best_mlp.h5'
         es = EarlyStopping(monitor='val_loss', patience=patience)
@@ -183,9 +183,34 @@ def penalized_regression(X, y,
             logging.info(f'[{i+1}/{N}] - mse: {error:.04f}')
 
         coef = model.layers[0].get_weights()[0] 
-        coefs.append(coef)
+        coefs.append(coef.ravel())
 
     coefs = np.array(coefs)
+    
+    # coefs : N x voxel #
+    return coefs
+
+def elasticnet(X, y,
+             alpha=0.001,
+             n_jobs=16,
+             N=3,
+             verbose=0):
+    
+    if verbose > 0:
+        logging.info('start running')
+        
+    coefs = []
+
+    for i in range(N):
+        model = ElasticNet(alpha = alpha, n_jobs =n_jobs)
+        model = model.fit(X,y)
+        coefs.append(model.coef_)
+        
+        if verbose > 0:
+            logging.info(f'[{i+1}/{N}] - tuned_lambda: {model.lambda_max_:.03f}')
+
+
+    coefs = np.array(coefs.ravel())
     
     # coefs : N x voxel #
     return coefs
