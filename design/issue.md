@@ -53,6 +53,6 @@ as the repeat number is limited, calculating survival rate of each coefficient i
 1) z map : calculate z-score using all values in converted MNI152 space coefficients, and average scores along the axis of repeatition. 
 2) t map : calculate voxel wise one sample t-score of converted MNI152 space coefficients along the axis of repeatition.
 
-## Other
+## Other suggestion
 
-CJC ) suggests to use 8x8x8 mean pooled data if ROI masking info is not given.
+CJC ) use 8x8x8 mean pooled data if ROI masking info is not given.
