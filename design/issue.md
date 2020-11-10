@@ -43,7 +43,7 @@ model-based MVPA is too long. we need a concise and intuitive name.
 
 ## 4. Drawing activation map
 
-we get repeat N x coefficient from model fitting. coefficient can be readily converted to MNI152 space using ROI masking info. 
+we get (repeat N x coefficient) from model fitting. coefficient can be readily converted to MNI152 space using ROI masking info. 
 
 as the number of repetition is limited, calculating survival rate of each coefficient is not plausible. therefore, here, we are tentatively using **z map** and **t map**.
 
