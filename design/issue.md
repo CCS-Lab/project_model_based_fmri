@@ -39,6 +39,20 @@ the optimal level of abstraction for user to use the package e.g. use the tool w
 
 ## 3. Package name
 
+model-based MVPA is too long. we need concise and intuitive alias 
+
+## 4. Drawing activation map
+
+we get repeat N x coefficient from model fitting. coefficient can be readily converted to MNI152 space using ROI masking info. 
+
+as the repeat number is limited, calculating survival rate of each coefficient is not plausible. therefore, here, we are tentatively using **z map** and **t map**.
+
+**current approach** 
+
+
+1) z map : calculate z-score using all values in converted MNI152 space coefficients, and average scores along the axis of repeatition. 
+2) t map : calculate voxel wise one sample t-score of converted MNI152 space coefficients along the axis of repeatition.
+
 ## Other
 
 CJC ) suggests to use 8x8x8 mean pooled data if ROI masking info is not given.
