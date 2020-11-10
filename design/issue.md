@@ -35,23 +35,23 @@ Then, following should also be considered.
 
 ## 2. Usability
 
-the optimal level of abstraction for user to use the package e.g. use the tool with a single line command by specifying BIDS root, ROI masking, target latent process.
+the optimal level of abstraction for user to use the package e.g. user can use this tool with a single line command by specifying BIDS root, ROI masking, target latent process.
 
 ## 3. Package name
 
-model-based MVPA is too long. we need concise and intuitive alias 
+model-based MVPA is too long. we need a concise and intuitive name. 
 
 ## 4. Drawing activation map
 
 we get repeat N x coefficient from model fitting. coefficient can be readily converted to MNI152 space using ROI masking info. 
 
-as the repeat number is limited, calculating survival rate of each coefficient is not plausible. therefore, here, we are tentatively using **z map** and **t map**.
+as the number of repetition is limited, calculating survival rate of each coefficient is not plausible. therefore, here, we are tentatively using **z map** and **t map**.
 
 **current approach** 
 
 
-1) z map : calculate z-score using all values in converted MNI152 space coefficients, and average scores along the axis of repeatition. 
-2) t map : calculate voxel wise one sample t-score of converted MNI152 space coefficients along the axis of repeatition.
+1) z map : calculate z-score using all values in converted MNI152 space coefficients, and average scores along the axis of repetition. 
+2) t map : calculate voxel wise one sample t-score of converted MNI152 space coefficients along the axis of repetition.
 
 ## Other suggestion
 
