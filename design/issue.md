@@ -33,9 +33,11 @@ Then, following should also be considered.
 
 
 
-## 2. 
+## 2. Usability
 
-## 3. 
+the optimal level of abstraction for user to use the package e.g. use the tool with a single line command by specifying BIDS root, ROI masking, target latent process.
+
+## 3. Package name
 
 ## Other
 
