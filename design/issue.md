@@ -26,7 +26,9 @@ BIDS root -- derivatives -- fmriprep
 Then, following should also be considered. 
 
 **Dataloading for model fitting**
+
 **Cross validation : subject level vs agnostic ratio**
+
 **Constrain on max number of data for model fitting**
 
 
