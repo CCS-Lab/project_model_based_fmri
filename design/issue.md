@@ -23,4 +23,18 @@ BIDS root -- derivatives -- fmriprep
 
 ```
 
+Then, following should also be considered. 
 
+**Dataloading for model fitting**
+**Cross validation : subject level vs agnostic ratio**
+**Constrain on max number of data for model fitting**
+
+
+
+## 2. 
+
+## 3. 
+
+## Other
+
+CJC ) suggests to use 8x8x8 mean pooled data if ROI masking info is not given.
