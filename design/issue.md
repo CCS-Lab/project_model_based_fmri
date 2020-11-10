@@ -11,14 +11,16 @@ resulting directory might looks like
 
 ```
 BIDS root -- derivatives -- fmriprep
-                        |-- prepprep -- subj01.npy
+                        |-- prepprep -- subj01.npy          # preprocessed data per subject. data shape : (ses # x run # x time #) x masked voxels #
                                     |-- subj02.npy
                                            .
                                            .
-                                           .
+                                           
                                     |-- medta_data.json     # meta info e.g. number of subjects, data shape
                                     |-- mask.npy            # ROIs mask
                                            
                           
 
 ```
+
+
