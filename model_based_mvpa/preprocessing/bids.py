@@ -10,6 +10,7 @@
 import os
 import numpy as np
 from pathlib import Path
+import json
 
 import bids
 from bids import BIDSLayout, BIDSValidator
@@ -28,8 +29,7 @@ logging.basicConfig(level=logging.INFO)
 
 def bids_preprocess(root,
                     save_path=None,
-                    save=True,
-                    single_file=False,
+                    mask_path=None,
                     zoom=(1, 1, 1),
                     smoothing_fwhm=6,
                     interpolation_func=np.mean,
@@ -45,8 +45,6 @@ def bids_preprocess(root,
 
     pbar.set_description('loading bids dataset..'.center(40))
     layout = BIDSLayout(root, derivatives=True)
-    nii_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='bold', extension='nii.gz')
-    reg_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='regressors', extension='tsv')
     
     n_subject = len(layout.get_subjects())
     n_session = len(layout.get_session())
@@ -55,8 +53,12 @@ def bids_preprocess(root,
     
     pbar.set_description('make custom masking..'.center(40))
     root = Path(root)
-    mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
-
+    
+    if mask_path is None:
+        mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
+    else:
+        mask_path = Path(mask_path)
+        
     masked_data, masker, m_true = custom_masking(
         mask_path, p_value, zoom,
         smoothing_fwhm, interpolation_func, standardize
@@ -64,34 +66,55 @@ def bids_preprocess(root,
     pbar.update(1)
 
     pbar.set_description('image preprocessing using %d cores..'.center(40) % ncore)
-    params = [[z[0], z[1], motion_confounds, masker, masked_data, i]
-            for i, z in enumerate(zip(nii_layout, reg_layout))]
-
-    with ProcessPoolExecutor() as executor:
-        X = np.array(list(executor.map(image_preprocess, params)))
-        
-        if n_session != 0:
-            X = X.reshape(n_subject, n_session, n_run, -1, m_true.shape[0])
-        else:
-            X = X.reshape(n_subject, n_run, -1, m_true.shape[0])
-    pbar.update(1)
-
-    pbar.set_description('file saving..'.center(40))
-    if save:
-        if save_path is None:
-            sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-        else:
-            sp = Path(save_path)
+    
+    
+    nii_layout = {subject_id:layout.derivatives['fMRIPrep'].get(subject=subject_id, 
+                                                                 return_type='file', 
+                                                                 suffix='bold', 
+                                                                 extension='nii.gz') for subject_id in layout.get_subjects()}
+    
+    reg_layout = {subject_id:layout.derivatives['fMRIPrep'].get(subject=subject_id, 
+                                                                return_type='file', 
+                                                                suffix='regressors', 
+                                                                extension='tsv') for subject_id in layout.get_subjects()}
+    
+    params = {subject_id:[[z[0], z[1], motion_confounds, masker, masked_data, i] 
+                          for i, z in enumerate(zip(nii_layout[subject_id], reg_layout[subject_id]))] 
+                          for subject_id in layout.get_subjects()}
+    
+    if save_path is None:
+        sp = root / 'derivatives'/ 'data'
+    else:
+        sp = Path(save_path)
             
-        if not sp.exists():
-            sp.mkdir()
-        
-        if single_file:
-            np.save(sp / 'X.npy', X)
-        else:
-            for i in range(X.shape[0]):
-                np.save(sp / f'X_{i+1}.npy', X[i])
-        nib.save(masked_data, sp / 'masked_data.nii.gz')
+    if not sp.exists():
+        sp.mkdir()
+            
+            
+    nib.save(masked_data, sp / 'masked_data.nii.gz')        
+    meta_info ={}
+    
+    for subject_id in layout.get_subjects():
+        with ProcessPoolExecutor() as executor:
+            X = np.array(list(executor.map(image_preprocess, params[subject_id])))
+            
+            # run number can be different among subjects. 
+            
+            '''
+            if n_session != 0:
+                X = X.reshape(n_session, n_run, -1, m_true.shape[0])
+            else:
+                X = X.reshape(n_run, -1, m_true.shape[0])
+            '''
+        meta_info[f'sub_{subject_id}'] = 
+        pbar.set_description('file saving..'.center(40))
+        np.save(sp / f'X_{subject_id}.npy', X)
+    
+    
+    
+    with open(sp /'meta_info.json','w') as f:
+        json.dump(meta_info,f)
+            
     pbar.update(1)
     pbar.set_description('bids preprocessing done!'.center(40))
 
