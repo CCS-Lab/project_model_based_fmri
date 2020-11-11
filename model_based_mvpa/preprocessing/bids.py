@@ -55,7 +55,8 @@ def bids_preprocess(root,
     root = Path(root)
     
     if mask_path is None:
-        mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
+        #mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
+        mask_path = None
     else:
         mask_path = Path(mask_path)
         
@@ -63,10 +64,11 @@ def bids_preprocess(root,
         mask_path, p_value, zoom,
         smoothing_fwhm, interpolation_func, standardize
     )
+        
     pbar.update(1)
 
     pbar.set_description('image preprocessing using %d cores..'.center(40) % ncore)
-    
+        
     
     nii_layout = {subject_id:layout.derivatives['fMRIPrep'].get(subject=subject_id, 
                                                                  return_type='file', 
@@ -106,7 +108,7 @@ def bids_preprocess(root,
             else:
                 X = X.reshape(n_run, -1, m_true.shape[0])
             '''
-        meta_info[f'sub_{subject_id}'] = 
+        
         pbar.set_description('file saving..'.center(40))
         np.save(sp / f'X_{subject_id}.npy', X)
     
