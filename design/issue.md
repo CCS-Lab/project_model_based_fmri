@@ -56,3 +56,7 @@ as the number of repetition is limited, calculating survival rate of each coeffi
 ## Other suggestion
 
 CJC ) use 8x8x8 mean pooled data if ROI masking info is not given.
+
+##  Example data
+
+Delayed discount task by Piva et al. 2019 retrieved from https://doi.org/10.18112/openneuro.ds001882.v1.0.5
