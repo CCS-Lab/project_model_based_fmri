@@ -47,6 +47,10 @@ we get repeat N x coefficients from model fitting. coefficients can be readily c
 
 as the number of repetition is limited, calculating survival rate of each coefficient is not plausible. therefore, here, we are tentatively using **z map** and **t map**.
 
+## 5. Masking onset
+
+If part of onsets are not involved in y ( masked out ), should corresponding Nii image (X) also be masked out? In what criteria should we cut off the BOLDified data?
+
 **current approach** 
 
 
