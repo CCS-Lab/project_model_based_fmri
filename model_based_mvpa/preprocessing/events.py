@@ -51,6 +51,10 @@ def example_calculate_modulation(df_events_list, latent_params):
         
     return new_df_list
 
+def get_indiv_par(subjId, all_ind_pars, parameter_names):
+    ind_pars = all_ind_pars.loc[int(subjId)]
+    return [ind_pars[name] for name in paramter_names]
+
 def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
     
     df_events = df_events.sort_values(by='onset')
@@ -69,19 +73,20 @@ def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
         
     return time_mask
 
-def preprocess_event(prep_func, cond_func, df_events):
+def preprocess_event(prep_func, cond_func, df_events, **kargs):
     
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
     for _, row in df_events.iterrows():
         if cond_func is not None and cond_func(row):
-            new_datarows.append(prep_func(row))
+            new_datarows.append(prep_func(row,**kargs))
         
     return pd.concat(new_datarows)
 
 def preprocess_events(root, dm_model, 
-                      prep_func, cond_func,
+                      prep_func, cond_func, 
+                      latent_func,par_names
                       layout=None,
                       hrf_model='glover',
                       save_path=None,
@@ -111,7 +116,7 @@ def preprocess_events(root, dm_model,
     n_scans = image_sample.shape[-1]
     
     pbar.set_description('adjusting event file columns..'.center(40))
-    df_events_list = [preprocess_event(prep_func, cond_func, event.get_df() ) for event in events]
+    df_events_list = [preprocess_event(prep_func, cond_func, event.get_df()) for event in events]
     pbar.update(1)
 
     pbar.set_description('hbayesdm doing (model: %s)..'.center(40) % dm_model)
@@ -120,7 +125,9 @@ def preprocess_events(root, dm_model,
     pbar.update(1)
 
     pbar.set_description('calculating modulation..'.center(40))
-    df_events_list = funcs[1](df_events_list, dm_model.all_ind_pars)
+    
+    df_events_list =[preprocess_event(prep_func, cond_func, event.get_df(),
+                                      get_indiv_par(event.get_entities()['subject'], dm_model.all_ind_pars,par_names)) for event in events]
     pbar.update(1)
     
     pbar.set_description('modulation signal making..'.center(40))
