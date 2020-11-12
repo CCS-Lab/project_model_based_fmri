@@ -52,8 +52,8 @@ def example_calculate_modulation(df_events_list, latent_params):
     return new_df_list
 
 def get_indiv_par(subjId, all_ind_pars, parameter_names):
-    ind_pars = all_ind_pars.loc[int(subjId)]
-    return [ind_pars[name] for name in paramter_names]
+    ind_pars = all_ind_pars.loc[subjId]
+    return [ind_pars[name] for name in parameter_names]
 
 def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
     
@@ -73,20 +73,22 @@ def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
         
     return time_mask
 
-def preprocess_event(prep_func, cond_func, df_events, **kargs):
+def preprocess_event(prep_func, cond_func, df_events, event_infos, *args):
     
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
     for _, row in df_events.iterrows():
         if cond_func is not None and cond_func(row):
-            new_datarows.append(prep_func(row,**kargs))
-        
-    return pd.concat(new_datarows)
+            new_datarows.append(prep_func(row,event_infos,*args))
+    
+    new_datarows = pd.concat(new_datarows, axis=1, keys=[s.name for s in new_datarows]).transpose()
+    
+    return new_datarows
 
 def preprocess_events(root, dm_model, 
                       prep_func, cond_func, 
-                      latent_func,par_names
+                      latent_func,par_names,
                       layout=None,
                       hrf_model='glover',
                       save_path=None,
@@ -116,7 +118,7 @@ def preprocess_events(root, dm_model,
     n_scans = image_sample.shape[-1]
     
     pbar.set_description('adjusting event file columns..'.center(40))
-    df_events_list = [preprocess_event(prep_func, cond_func, event.get_df()) for event in events]
+    df_events_list = [preprocess_event(prep_func, cond_func, event.get_df(),event.get_entities()) for event in events]
     pbar.update(1)
 
     pbar.set_description('hbayesdm doing (model: %s)..'.center(40) % dm_model)
@@ -126,8 +128,8 @@ def preprocess_events(root, dm_model,
 
     pbar.set_description('calculating modulation..'.center(40))
     
-    df_events_list =[preprocess_event(prep_func, cond_func, event.get_df(),
-                                      get_indiv_par(event.get_entities()['subject'], dm_model.all_ind_pars,par_names)) for event in events]
+    df_events_list =[preprocess_event(latent_func, cond_func, event.get_df(), event.get_entities(),
+                                      *get_indiv_par(event.get_entities()['subject'], dm_model.all_ind_pars,par_names)) for event in events]
     pbar.update(1)
     
     pbar.set_description('modulation signal making..'.center(40))
@@ -139,7 +141,7 @@ def preprocess_events(root, dm_model,
         signal_subject = []
         for name1, group1 in group0.groupby(['run']):
             exp_condition = group1[['onset', 'duration', 'modulation']].to_numpy().T
-
+            exp_condition = exp_condition.astype(float)
             signal, name = compute_regressor(
                 exp_condition=exp_condition,
                 hrf_model=hrf_model,
