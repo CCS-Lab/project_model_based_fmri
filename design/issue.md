@@ -51,6 +51,8 @@ as the number of repetition is limited, calculating survival rate of each coeffi
 
 If part of onsets are not involved in y ( masked out ), should corresponding Nii image (X) also be masked out? In what criteria should we cut off the BOLDified data?
 
+>> adapting onset & duration
+
 **current approach** 
 
 
