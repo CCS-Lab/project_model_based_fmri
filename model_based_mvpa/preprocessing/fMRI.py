@@ -13,6 +13,8 @@ from pathlib import Path
 
 from skimage.measure import block_reduce
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
 
@@ -58,14 +60,49 @@ def custom_masking(mask_path, p_value, zoom,
 
 
 def image_preprocess(params):
-    image_filepath, confounds, motion_confounds, masker, masked_data, num = params
-    
-    if confounds is not None:
-        confounds = pd.read_table(confounds, sep='\t')
+    image_path, confounds_path,\
+    motion_confounds, masker,\
+    masked_data, subject = params
+
+    preprocessed_images = []
+    if confounds_path is not None:
+        confounds = pd.read_table(confounds_path, sep='\t')
         confounds = confounds[motion_confounds]
         confounds = confounds.to_numpy()
+    else:
+        confounds = None
 
-    fmri_masked = resample_to_img(image_filepath, masked_data)
+    fmri_masked = resample_to_img(image_path, masked_data)
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
+
+    return fmri_masked, subject
+
+def image_preprocess_mt(params, n_thread):
+    image_paths, confounds_paths,\
+    motion_confounds, masker,\
+    masked_data, subject = params
+    # print(image_paths, confounds_paths, motion_confounds,
+    #       masker, masked_data, subject)
+
+    image_params = []
+    for i in range(len(params[0])):
+        image_params.append(
+            [image_paths[i], confounds_paths[i], motion_confounds,
+             masker, masked_data, subject])
+
+    preprocessed_images = []
+    n_worker = n_thread if n_thread < 5 else n_thread // 2
+    n_worker += 1
     
-    return fmri_masked
+    with ThreadPoolExecutor(max_workers=n_worker) as executor:
+        future_result = {
+            executor.submit(image_preprocess, image_param): image_param for image_param in image_params
+        }
+
+        for future in as_completed(future_result):
+            data, subject = future.result()
+            preprocessed_images.append(data)
+
+    preprocessed_images = np.array(preprocessed_images)
+
+    return preprocessed_images, subject

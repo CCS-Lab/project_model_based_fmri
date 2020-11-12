@@ -4,7 +4,7 @@
 """
 @author: Yedarm Seong
 @contact: mybirth0407@gmail.com
-@last modification: 2020.11.02
+@last modification: 2020.11.12
 """
 
 import os
@@ -14,7 +14,7 @@ from pathlib import Path
 import bids
 from bids import BIDSLayout, BIDSValidator
 
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import time
 from tqdm import tqdm
 from .fMRI import *
@@ -29,31 +29,33 @@ logging.basicConfig(level=logging.INFO)
 def bids_preprocess(root,
                     save_path=None,
                     save=True,
-                    single_file=False,
                     zoom=(1, 1, 1),
                     smoothing_fwhm=6,
                     interpolation_func=np.mean,
                     motion_confounds=['trans_x', 'trans_y', 'trans_z', 'rot_x', 'rot_y', 'rot_z'],
                     p_value=0.05,
                     task_name='task-zero',
-                    standardize=True,
-                    ncore=os.cpu_count(),
-                    time_check=True):
+                    standardize=True):
 
-    pbar = tqdm(total=4)
+    pbar = tqdm(total=6)
     s = time.time()
+################################################################################
+# load bids layout
 
-    pbar.set_description('loading bids dataset..'.center(40))
+    pbar.set_description('loading bids dataset..'.ljust(50))
     layout = BIDSLayout(root, derivatives=True)
-    nii_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='bold', extension='nii.gz')
-    reg_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='regressors', extension='tsv')
+    # nii_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='bold', extension='nii.gz')
+    # reg_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='regressors', extension='tsv')
     
-    n_subject = len(layout.get_subjects())
+    subjects = layout.get_subjects()
+    n_subject = len(subjects)
     n_session = len(layout.get_session())
     n_run = len(layout.get_run())
     pbar.update(1)
-    
-    pbar.set_description('make custom masking..'.center(40))
+################################################################################
+# make masked data
+
+    pbar.set_description('making custom masked data..'.ljust(50))
     root = Path(root)
     mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
 
@@ -62,44 +64,79 @@ def bids_preprocess(root,
         smoothing_fwhm, interpolation_func, standardize
     )
     pbar.update(1)
+################################################################################
+# setting parameter
 
-    pbar.set_description('image preprocessing using %d cores..'.center(40) % ncore)
-    params = [[z[0], z[1], motion_confounds, masker, masked_data, i]
-            for i, z in enumerate(zip(nii_layout, reg_layout))]
+    pbar.set_description('image preprocessing - parameter setting..'.ljust(50))
 
-    with ProcessPoolExecutor() as executor:
-        X = np.array(list(executor.map(image_preprocess, params)))
+    params = []
+    for subject in subjects:
+        nii_layout = layout.derivatives['fMRIPrep'].get(
+            subject=subject, return_type='file', suffix='bold',
+            extension='nii.gz'
+        )
+        reg_layout = layout.derivatives['fMRIPrep'].get(
+            subject=subject, return_type='file', suffix='regressors',
+            extension='tsv'
+        )
+
+        param = [nii_layout, reg_layout, motion_confounds,
+                 masker, masked_data, subject]
+        params.append(param)
+
+    assert len(params) == n_subject, 'length of params list and the number of subjects are not validate'
+    pbar.update(1)
+################################################################################
+# create path for data
+
+    pbar.set_description('image preprocessing - making path..'.ljust(50))
+    if save_path is None:
+        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+    else:
+        sp = Path(save_path)
         
-        if n_session != 0:
-            X = X.reshape(n_subject, n_session, n_run, -1, m_true.shape[0])
-        else:
-            X = X.reshape(n_subject, n_run, -1, m_true.shape[0])
+    if not sp.exists():
+        sp.mkdir()
+
+    nib.save(masked_data, sp / 'masked_data.nii.gz')
+    pbar.update(1)
+################################################################################
+# image preprocessing using mutli process and thread
+
+    pbar.set_description('image preprocessing - fMRI data..'.ljust(50))
+    X = []
+
+    # todo: 
+    chunk_size = int(np.log10(n_subject * n_run)) if n_session == 0 \
+                    else int(np.log10(n_subject * n_session * n_run))
+    chunk_size += 1
+
+    params_chunks = [params[i:i + chunk_size] for i in range(0, len(params), chunk_size)]
+
+    for i, params_chunk in enumerate(params_chunks):
+        with ProcessPoolExecutor(max_workers=chunk_size) as executor:
+            future_result = {
+                executor.submit(
+                    image_preprocess_mt, param, n_run): param for param in params_chunk
+            }
+
+            for future in as_completed(future_result):
+                data, subject = future.result()
+                np.save(sp / f'X_{subject}.npy', data)
+                X.append(data)
+            pbar.set_description(
+                f'image preprocessing - fMRI data {i+1} / {len(params_chunks)}..'.ljust(50))
+
+    X = np.array(X)
+    pbar.update(1)
+################################################################################
+# elapsed time check
+    pbar.set_description('bids preprocessing done!'.ljust(50))
     pbar.update(1)
 
-    pbar.set_description('file saving..'.center(40))
-    if save:
-        if save_path is None:
-            sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-        else:
-            sp = Path(save_path)
-            
-        if not sp.exists():
-            sp.mkdir()
-        
-        if single_file:
-            np.save(sp / 'X.npy', X)
-        else:
-            for i in range(X.shape[0]):
-                np.save(sp / f'X_{i+1}.npy', X[i])
-        nib.save(masked_data, sp / 'masked_data.nii.gz')
-    pbar.update(1)
-    pbar.set_description('bids preprocessing done!'.center(40))
+    e = time.time()
+    logging.info(f'time elapsed: {(e-s) / 60:.2f} minutes')
+    logging.info(f'result\nmasking data shape: {masked_data.shape}\n'
+               + f'number of voxels: {m_true.shape}')
 
-    time.sleep(1)
-    logging.info(f'result\nmasking data shape: {masked_data.shape}\nnumber of voxels: {m_true.shape}')
-
-    if time_check:
-        e = time.time()
-        logging.info(f'time elapsed: {e-s} seconds')
-        
     return X, masked_data, layout

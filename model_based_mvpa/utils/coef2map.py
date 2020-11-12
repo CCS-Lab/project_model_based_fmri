@@ -15,9 +15,11 @@ from scipy.ndimage import gaussian_filter
 from pathlib import Path
 
 
-def get_map(coefs, masked_data, task_name,
+def get_map(coefs, masked_data, layout=None, task_name=None,
             map_type='t', save_path=None, smoothing_sigma=1):
 
+    assert (layout is None and task_name is None)
+    
     activation_maps = []
     mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0]
     
@@ -39,7 +41,8 @@ def get_map(coefs, masked_data, task_name,
     else:
         mean = activation_maps.mean()
         std = activation_maps.std()
-        m = ((activation_maps-mean)/std).mean(0)
+        m = ((activation_maps - mean) / std).mean(0)
+        m = zscore(activation_maps, axis=None)
         
     m[np.isnan(m)] = 0
     m *= masked_data.get_fdata()
@@ -52,6 +55,10 @@ def get_map(coefs, masked_data, task_name,
 
     if not sp.exists():
         sp.mkdir()
+
+    if task_name is None:
+        task_name = layout.get_task()[0]
+
     result.to_filename(sp / f'{task_name}_{map_type}_map.nii')
 
     return result

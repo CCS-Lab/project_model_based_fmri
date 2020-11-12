@@ -29,18 +29,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-def adjust_event_columns(df_events_list, df_events_info):
+def example_adjust_event_columns(df_events_list, df_events_info):
     new_df_list = df_events_list.copy()
     for i in range(len(new_df_list)):
         new_df_list[i]['run'] = df_events_info[i]['run']
         new_df_list[i]['subjID'] = df_events_info[i]['subject']
         new_df_list[i]['gamble'] = new_df_list[i]['respcat'].apply(lambda x: 1 if x == 1 else 0)
         new_df_list[i]['cert'] = 0 # certain..?
-        
     return new_df_list
 
 
-def calculate_modulation(df_events_list, latent_params):
+def example_calculate_modulation(df_events_list, latent_params):
     new_df_list = df_events_list.copy()
     for i in range(len(new_df_list)):
         idx = new_df_list[i].iloc[0]['subjID']
@@ -54,6 +53,7 @@ def calculate_modulation(df_events_list, latent_params):
 
 
 def preprocess_events(root, dm_model, funcs,
+                      layout=None,
                       hrf_model='glover',
                       save_path=None,
                       save=True,
@@ -63,9 +63,14 @@ def preprocess_events(root, dm_model, funcs,
     
     pbar = tqdm(total=6)
     s = time.time()
+################################################################################
+# load bids layout
 
     pbar.set_description('loading bids dataset..'.center(40))
-    layout = BIDSLayout(root, derivatives=True)
+
+    if layout is None:
+        layout = BIDSLayout(root, derivatives=True)
+
     t_r = layout.get_tr()
     events = layout.get(suffix='events', extension='tsv')
     image_sample = nib.load(
@@ -79,9 +84,10 @@ def preprocess_events(root, dm_model, funcs,
     df_events_list = [event.get_df() for event in events]
     df_events_info = [event.get_entities() for event in events]
 
-    if len(df_events_list) != len(df_events_info):
-        assert()
+    assert(len(df_events_list) != len(df_events_info))
     pbar.update(1)
+################################################################################
+# make masked data
 
     pbar.set_description('adjusting event file columns..'.center(40))
     df_events_list = funcs[0](df_events_list, df_events_info)
@@ -139,8 +145,7 @@ def preprocess_events(root, dm_model, funcs,
     pbar.update(1)
     pbar.set_description('events preproecssing done!'.center(40))
     
-    if time_check:
-        e = time.time()
-        logging.info(f'time elapsed: {e-s} seconds')
+    e = time.time()
+    logging.info(f'time elapsed: {(e-s) / 60:.2f} minutes')
         
     return dm_model, df_events, signals

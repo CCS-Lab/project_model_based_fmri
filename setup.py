@@ -6,8 +6,8 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 
-if sys.version_info[:2] < (3, 5):
-    raise RuntimeError("Python version >= 3.5 required.")
+if sys.version_info[:2] < (3, 6):
+    raise RuntimeError("Python version >= 3.6 required.")
 
 
 PATH_ROOT = Path(__file__).absolute().parent
@@ -37,21 +37,22 @@ CLASSIFIERS = [
     'Operating System :: OS Independent',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
     'Topic :: Scientific/Engineering',
 ]
 
 setup(
-    name='model_based_mvpa',
+    name='model based mvpa',
     version=VERSION,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     description=DESC,
     # long_description=LONG_DESC,
     # long_description_content_type=LONG_DESC_TYPE,
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     url=URL,
     license=LICENSE,
     classifiers=CLASSIFIERS,
@@ -61,7 +62,6 @@ setup(
         'nilearn',
         'nibabel',
         'numpy',
-        #'scipy',
         'sklearn',
         'scikit-image',
         'pandas',
