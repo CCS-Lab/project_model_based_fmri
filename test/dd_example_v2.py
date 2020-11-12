@@ -36,7 +36,7 @@ coefs = elasticnet(X, y,
              alpha=0.001,
              n_jobs=16,
              N=1,
-             verbose=1)
+             verbose=0)
 
 task_name = 'piva2019_elasticnet_v2'
 result = get_map(coefs, masked_data, task_name, map_type='z', save_path='.', smoothing_sigma=1)

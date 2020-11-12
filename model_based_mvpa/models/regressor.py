@@ -366,7 +366,7 @@ def elasticnet(X, y,
         coefs.append(model.coef_.ravel())
         
         if verbose > 0:
-            logging.info(f'[{i+1}/{N}] - lambda_best: {model.lambda_best_:.03f}/ mse: {error:.04f}')
+            logging.info(f'[{i+1}/{N}] - lambda_best: {float(model.lambda_best_):.03f}/ mse: {float(error):.04f}')
 
 
     coefs = np.array(coefs)

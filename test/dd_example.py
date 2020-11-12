@@ -17,7 +17,7 @@ y = y.flatten()
 masked_data = nib.load(prep_path / 'masked_data.nii.gz')
 
 print(time.strftime('%c', time.localtime(time.time())))
-
+'''
 coefs = mlp_regression(X, y,
                        layer_dims=[1024, 1024],
                        activation_func='linear',
@@ -30,14 +30,15 @@ coefs = mlp_regression(X, y,
 
 task_name = 'piva2019_mlp_10'
 result = get_map(coefs, masked_data, task_name, map_type='z', save_path='.', smoothing_sigma=1)
+'''
 print(time.strftime('%c', time.localtime(time.time())))
 
 coefs = elasticnet(X, y, 
              alpha=0.001,
-             n_jobs=16,
+             n_jobs=25,
              N=1,
-             verbose=1)
+             verbose=0)
 
-task_name = 'piva2019_elasticnet_10'
+task_name = 'piva2019_elasticnet'
 result = get_map(coefs, masked_data, task_name, map_type='z', save_path='.', smoothing_sigma=1)
 print(time.strftime('%c', time.localtime(time.time())))
