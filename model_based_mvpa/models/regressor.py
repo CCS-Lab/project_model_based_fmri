@@ -184,7 +184,8 @@ def mlp_regression(X, y,
                    patience=10,
                    batch_size=64,
                    N=15,
-                   verbose=0):
+                   verbose=0,
+                   n_jobs=0):
     
     if verbose > 0:
         logging.info('start running')
@@ -230,7 +231,7 @@ def mlp_regression(X, y,
             model.add(Dense(dim, activation=activation_func, use_bias=False))
             model.add(Dropout(dropout_rate))
 
-        model.add(Dense(1, activation='linear',use_bias=True))
+        model.add(Dense(1, activation='linear', use_bias=True))
         model.compile(loss='mse', optimizer='adam')
 
         model.fit(train_generator, batch_size=batch_size,
@@ -267,14 +268,14 @@ def mlp_regression(X, y,
     return coefs
     
 
-def penalized_linear_regression(X, y, 
-                         alpha=0.001, # mixing parameter
-                         lambda_par=0.8, # shrinkage parameter
-                         epochs=100,
-                         patience=30,
-                         batch_size=256,
-                         N=15,
-                         verbose=0):
+def penalized_linear_regression(X, y,
+                                alpha=0.001, # mixing parameter
+                                lambda_par=0.8, # shrinkage parameter
+                                epochs=100,
+                                patience=30,
+                                batch_size=256,
+                                N=15,
+                                verbose=0):
     
     if verbose > 0:
         logging.info('start running')
@@ -309,9 +310,9 @@ def penalized_linear_regression(X, y,
                              mode='min')
 
         kernel_regularizer = l1_l2(lambda_par * alpha, lambda_par * (1 - alpha) / 2)
-        #adam= optimizers.Adam(lr=0.0005, decay=0)
+        #adam= optimizers.Adam(lr=0.0005, decay= 0)
         model = Sequential()
-        model.add(Dense(1, activation='linear', input_shape=(X.shape[-1],),
+        model.add(Dense(1, activation='linear', input_shape=(X.shape[-1]),
                         use_bias=True, kernel_regularizer=kernel_regularizer))
         model.compile(loss='mse', optimizer='adam')
 
@@ -340,11 +341,12 @@ def penalized_linear_regression(X, y,
     # coefs : N x voxel #
     return coefs
 
-def elasticnet(X, y, 
-             alpha=0.001,
-             n_jobs=16,
-             N=3,
-             verbose=0):
+
+def elasticnet(X, y,
+               alpha=0.001,
+               n_jobs=16,
+               N=3,
+               verbose=0):
     
     if verbose > 0:
         logging.info('start running')
@@ -366,9 +368,8 @@ def elasticnet(X, y,
         coefs.append(model.coef_.ravel())
         
         if verbose > 0:
-            logging.info(f'[{i+1}/{N}] - lambda_best: {float(model.lambda_best_):.03f}/ mse: {float(error):.04f}')
-
-
+            logging.info(f'[{i+1}/{N}] - lambda_best: {model.lambda_best_:.03f}/ mse: {error:.04f}')
+    
     coefs = np.array(coefs)
     
     # coefs : N x voxel #

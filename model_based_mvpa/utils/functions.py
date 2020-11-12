@@ -8,6 +8,7 @@
 """
 
 import numpy as np
+from pathlib import Path
 from scipy import stats
 from functools import reduce
 
@@ -26,9 +27,9 @@ def array2pindex(array, p_value=0.05, flatten=False):
     return ret
 
 
-def prepare_data(X, y, n=None):
-    if type(X) is str:
-        X = np.load(X)
+def prepare_data(root, n=None):
+    if type(root) is str:
+        X_path = root
     if type(y) is str:
         y = np.load(y)
 
