@@ -29,7 +29,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-def example_adjust_event_columns(df_events_list, df_events_info):
+################################################################################
+def example_tom_adjust_events_columns(df_events_list, df_events_info):
     new_df_list = df_events_list.copy()
     for i in range(len(new_df_list)):
         new_df_list[i]['run'] = df_events_info[i]['run']
@@ -39,7 +40,7 @@ def example_adjust_event_columns(df_events_list, df_events_info):
     return new_df_list
 
 
-def example_calculate_modulation(df_events_list, latent_params):
+def example_tom_calculate_modulation(df_events_list, latent_params):
     new_df_list = df_events_list.copy()
     for i in range(len(new_df_list)):
         idx = new_df_list[i].iloc[0]['subjID']
@@ -50,76 +51,73 @@ def example_calculate_modulation(df_events_list, latent_params):
             - (new_df_list[i]['lambda'] * (new_df_list[i]['loss'] ** new_df_list[i]['rho']))
         
     return new_df_list
+################################################################################
 
-def get_indiv_par(subjId, all_ind_pars, parameter_names):
+def _get_individual_params(subject_id, all_individual_params, param_names):
     try:
-        ind_pars = all_ind_pars.loc[subjId]
+        ind_pars = all_individual_params.loc[subject_id]
     except:
-        ind_pars = all_ind_pars.loc[int(subjId)]
+        ind_pars = all_individual_params.loc[int(subject_id)]
         
-    return [ind_pars[name] for name in parameter_names]
+    return {name : ind_pars[name] for name in param_names}
 
-def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
-    
+
+def _get_time_mask(cond_func, df_events, time_length, t_r, use_duration=False):
     df_events = df_events.sort_values(by='onset')
-    onsets = np.array(df_events['onset'])
+    onsets = df_events['onset'].to_numpy()
     if use_duration:
-        durations = np.array(df['duration'])
+        durations = df['duration'].to_numpy()
     else:
-        durations = np.array(list(df_events['onset'][1:])+[time_len*TR]) - onsets
+        durations = np.array(list(df_events['onset'][1:])+[time_length*t_r]) - onsets
     
-    mask = [cond_func(row) for _, row in df_events.iterrows()]
-    time_mask = np.zeros(time_len)
+    mask = [cond_func(row) for row in df_events.rows()]
+    time_mask = np.zeros(time_length)
     
-    for flag,onset,duration in zip(mask,onsets,durations):
-            if flag:
-                time_mask[int(onset/TR):int(onset/TR)+int(duration/TR)] = 1
+    for mask, onset, duration in zip(masks, onsets, durations):
+        if mask:
+            time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
         
     return time_mask
 
-def preprocess_event(prep_func, cond_func, df_events, event_infos, *args):
-    
+
+def _preprocess_event(prep_func, cond_func, df_events, event_infos, **kwargs):
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
     for _, row in df_events.iterrows():
         if cond_func is not None and cond_func(row):
-            new_datarows.append(prep_func(row,event_infos,*args))
+            new_datarows.append(prep_func(row,event_infos, **kwargs))
     
-    new_datarows = pd.concat(new_datarows, axis=1, keys=[s.name for s in new_datarows]).transpose()
+    new_datarows = pd.concat(
+        new_datarows, axis=1,
+        keys=[s.name for s in new_datarows]
+    ).transpose()
     
     return new_datarows
+################################################################################
 
-def preprocess_events(root, dm_model,   
-                      latent_func,par_names,
-                      prep_func=lambda x : x,
-                      cond_func=lambda _ : True,
-                      df_events=None,
-                      all_ind_pars=None,
-                      use_duration=False,
+def preprocess_events(root, dm_model,
+                      latent_func, params_name,
                       layout=None,
+                      prep_func=lambda x: x,
+                      cond_func=lambda _: True,
+                      df_events=None,
+                      all_individual_params=None,
+                      use_duration=False,
                       hrf_model='glover',
-                      save_path=None,
-                      save=True,
-                      ncore=4,
-                      time_check=True):
-    
+                      save_path=None
+                      ):
+
     pbar = tqdm(total=6)
     s = time.time()
 ################################################################################
 # load bids layout
-    if save_path is None:
-        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-    else:
-        sp = Path(save_path)
-    
-    if not sp.exists():
-            sp.mkdir()
-            
-    pbar.set_description('loading bids dataset..'.center(40))
 
     if layout is None:
+        pbar.set_description('loading bids dataset..'.ljust(50))
         layout = BIDSLayout(root, derivatives=True)
+    else:
+        pbar.set_description('loading layout..'.ljust(50))
 
     t_r = layout.get_tr()
     events = layout.get(suffix='events', extension='tsv')
@@ -133,52 +131,67 @@ def preprocess_events(root, dm_model,
     df_events_list = [event.get_df() for event in events]
     event_infos_list = [event.get_entities() for event in events]
     pbar.update(1)
+################################################################################
     
-    pbar.set_description('adjusting event file columns..'.center(40))
-    
-    df_events_list = [preprocess_event(prep_func, cond_func, df_events, event_infos) for df_events, event_infos in zip(df_events_list, event_infos_list)]
-    pbar.update(1)
 
-    pbar.set_description('calculating time mask..'.center(40))
-    time_masks = [get_time_mask(cond_func,  df_events, n_scans, t_r, use_duration=False) for  df_events in df_events_list]
+    pbar.set_description('adjusting event file columns..'.ljust(50))
+    
+    df_events_list = [
+        preprocess_event(
+            prep_func, cond_func, df_events, event_infos
+        ) for df_events, event_infos in zip(df_events_list, event_infos_list)
+    ]
+    pbar.update(1)
+################################################################################
+
+    pbar.set_description('calculating time mask..'.ljust(50))
+    
+    time_masks = []
+    for name0, group0 in pd.concat(df_events_list).groupby(['subjID']):
+        time_mask_subject = []
+        for name1, group1 in group0.groupby(['run']):
+            time_mask_subject.append(_get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
+
+        time_mask_subject = np.array(time_mask_subject)
+        time_masks.append(time_mask_subject)
+   
     time_masks = np.array(time_masks)
 
-    if save:
-        np.save(sp / 'y_mask.npy',time_masks)
-        
     pbar.update(1)
-    pbar.set_description('time mask preproecssing done!'.center(40))
+    pbar.set_description('time mask preproecssing done!'.ljust(50))
+################################################################################
     
     if df_events is None:
-        
-        if all_ind_pars is None:
-            pbar.set_description('hbayesdm doing (model: %s)..'.center(40) % dm_model)
+        if all_individual_params is None:
+            pbar.set_description('hbayesdm doing (model: %s)..'.ljust(50) % dm_model)
             dm_model = getattr(hbayesdm.models, dm_model)(
                 data=pd.concat(df_events_list), ncore=ncore)
             pbar.update(1)
-            all_ind_pars = dm_model.all_ind_pars
+            all_individual_params = dm_model.all_individual_params
+
             if save:
-                all_ind_pars.to_csv(sp / 'all_ind_pars.tsv', sep="\t")
+                all_individual_params.to_csv(sp / 'all_individual_params.tsv', sep="\t")
                 
-            # all_ind_pars = pd.read_csv(sp / 'all_ind_pars.tsv',sep = '\t',index_col='Unnamed: 0')
+            # all_individual_params = pd.read_csv(sp / 'all_individual_params.tsv',sep = '\t',index_col='Unnamed: 0')
         else:
             pbar.update(1)
-            
-        pbar.set_description('calculating modulation..'.center(40))
+        pbar.set_description('calculating modulation..'.ljust(50))
 
-
-        df_events_list =[preprocess_event(latent_func, cond_func, df_events, event_infos,
-                                          *get_indiv_par(event_infos['subject'], all_ind_pars,par_names))for df_events, event_infos in zip(df_events_list, event_infos_list)]
+        df_events_list =[
+            prep_rocess_event(
+                latent_func, cond_func, df_events, event_infos,
+                    **get_individual_params(
+                        event_infos['subject'], all_individual_params,params_name)
+                    ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
         df_events = pd.concat(df_events_list)
         pbar.update(1)
     else:
         pbar.update(2)
-    
-    pbar.set_description('modulation signal making..'.center(40))
+################################################################################
+
+    pbar.set_description('modulation signal making..'.ljust(50))
     frame_times = t_r * (np.arange(n_scans) + t_r/2)
-    
-    
-    
+
     signals = []
     for name0, group0 in df_events.groupby(['subjID']):
         signal_subject = []
@@ -198,12 +211,24 @@ def preprocess_events(root, dm_model,
         normalized_signal = normalized_signal.reshape(-1, n_scans, 1)
         signals.append(normalized_signal)
     signals = np.array(signals)
-    
-    if save:
-        np.save(sp / 'y.npy', signals)
-        
     pbar.update(1)
-    pbar.set_description('events preproecssing done!'.center(40))
+################################################################################
+
+    if save_path is None:
+        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+    else:
+        sp = Path(save_path)
+    
+    if not sp.exists():
+        sp.mkdir()
+
+    np.save(sp / 'time_mask.npy', time_masks)
+    np.save(sp / 'y.npy', signals)
+    pbar.update(1)
+
+################################################################################
+# elapsed time check
+    pbar.set_description('events preproecssing done!'.ljust(50))
     
     e = time.time()
     logging.info(f'time elapsed: {(e-s) / 60:.2f} minutes')

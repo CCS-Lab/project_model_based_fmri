@@ -32,7 +32,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-def _get_map(train_generator,
+def get_map(train_generator,
             val_generator,
             model,
             model2actmap_fun,
