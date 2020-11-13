@@ -165,6 +165,7 @@ def preprocess_events(root, dm_model,
 
         df_events_list =[preprocess_event(latent_func, cond_func, df_events, event_infos,
                                           *get_indiv_par(event_infos['subject'], all_ind_pars,par_names))for df_events, event_infos in zip(df_events_list, event_infos_list)]
+        df_events = pd.concat(df_events_list)
         pbar.update(1)
     else:
         pbar.update(2)
@@ -173,7 +174,7 @@ def preprocess_events(root, dm_model,
     frame_times = t_r * (np.arange(n_scans) + t_r/2)
     
     
-    df_events = pd.concat(df_events_list)
+    
     signals = []
     for name0, group0 in df_events.groupby(['subjID']):
         signal_subject = []
