@@ -103,7 +103,7 @@ def preprocess_events(root, dm_model,
                       save=True,
                       ncore=4,
                       time_check=True,
-                      **kwargs # hBayesDM fitting argument 
+                      **kwargs # hBayesDM fitting 
                       ):
     
     pbar = tqdm(total=6)

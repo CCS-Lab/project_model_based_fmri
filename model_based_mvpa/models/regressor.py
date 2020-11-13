@@ -11,6 +11,7 @@
 
 import numpy as np
 from tqdm import tqdm
+import os
 
 import tensorflow as tf
 from tensorflow import keras as K
@@ -261,6 +262,7 @@ def mlp_regression(X, y,
         for weight in weights[1:]:
             coef = np.matmul(coef,weight)
         coefs.append(coef.ravel())
+        os.remove(bst_model_path)
 
     coefs = np.array(coefs)
     
@@ -335,7 +337,8 @@ def penalized_linear_regression(X, y,
 
         coef = model.layers[0].get_weights()[0] 
         coefs.append(coef.ravel())
-
+        os.remove(bst_model_path)
+        
     coefs = np.array(coefs)
     
     # coefs : N x voxel #
