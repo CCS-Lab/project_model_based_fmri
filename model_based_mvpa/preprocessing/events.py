@@ -122,6 +122,8 @@ def preprocess_events(root, dm_model,
     n_scans = image_sample.shape[-1]
     df_events_list = [event.get_df() for event in events]
     event_infos_list = [event.get_entities() for event in events]
+    pbar.update(1)
+    
     pbar.set_description('adjusting event file columns..'.center(40))
     
     df_events_list = [preprocess_event(prep_func, cond_func, df_events, event_infos) for df_events, event_infos in zip(df_events_list, event_infos_list)]
@@ -130,7 +132,6 @@ def preprocess_events(root, dm_model,
     pbar.set_description('calculating time mask..'.center(40))
     time_masks = [get_time_mask(cond_func,  df_events, n_scans, t_r, use_duration=False) for  df_events in df_events_list]
     time_masks = np.array(time_masks)
-    pbar.update(1)
 
     if save:
         if save_path is None:
@@ -157,14 +158,16 @@ def preprocess_events(root, dm_model,
                 data=pd.concat(df_events_list), ncore=ncore)
             pbar.update(1)
             all_ind_pars = dm_model.all_ind_pars
-            
+        else:
+            pbar.update(1)
         pbar.set_description('calculating modulation..'.center(40))
 
 
         df_events_list =[preprocess_event(latent_func, cond_func, df_events, event_infos,
                                           *get_indiv_par(event_infos['subject'], all_ind_pars,par_names))for df_events, event_infos in zip(df_events_list, event_infos_list)]
         pbar.update(1)
-    
+    else:
+        pbar.update(2)
     
     pbar.set_description('modulation signal making..'.center(40))
     frame_times = t_r * (np.arange(n_scans) + t_r/2)
@@ -190,9 +193,7 @@ def preprocess_events(root, dm_model,
         normalized_signal = normalized_signal.reshape(-1, n_scans, 1)
         signals.append(normalized_signal)
     signals = np.array(signals)
-    pbar.update(1)
     
-    pbar.set_description('modulation signal making..'.center(40))
     if save:
         if save_path is None:
             sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
@@ -215,60 +216,3 @@ def preprocess_events(root, dm_model,
     
     
     return dm_model, df_events, signals, time_masks
-
-def preprocess_time_masks(root, 
-                      cond_func=lambda x: x,
-                      use_duration=False,
-                      layout=None,
-                      save_path=None,
-                      save=True,
-                      single_file=True,
-                      ncore=os.cpu_count(),
-                      time_check=True):
-    
-    pbar = tqdm(total=6)
-    s = time.time()
-################################################################################
-# load bids layout
-
-    pbar.set_description('loading bids dataset..'.center(40))
-
-    if layout is None:
-        layout = BIDSLayout(root, derivatives=True)
-
-    t_r = layout.get_tr()
-    events = layout.get(suffix='events', extension='tsv')
-    image_sample = nib.load(
-        layout.derivatives['fMRIPrep'].get(
-            return_type='file',
-            suffix='bold',
-            extension='nii.gz')[0]
-    )
-    n_scans = image_sample.shape[-1]
-    
-    pbar.set_description('adjusting event file columns..'.center(40))
-    time_masks = [get_time_mask(cond_func, event.get_df(), n_scans, t_r, use_duration=False) for event in events]
-    time_masks = np.array(time_masks)
-    pbar.update(1)
-
-    if save:
-        if save_path is None:
-            sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-        else:
-            sp = Path(save_path)
-            
-        if not sp.exists():
-            sp.mkdir()
-        
-        if single_file:
-            np.save(sp / 'y_mask.npy',time_masks)
-        else:
-            for i in range(signals.shape[0]):
-                np.save(sp / f'y_mask_{i+1}.npy', signals[i])
-    pbar.update(1)
-    pbar.set_description('time mask preproecssing done!'.center(40))
-    
-    e = time.time()
-    logging.info(f'time elapsed: {(e-s) / 60:.2f} minutes')
-        
-    return time_masks
