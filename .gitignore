@@ -139,3 +139,4 @@ examples/*/*.npy
 examples/*/*.nii*
 examples/*/*.tsv
 examples/*/*.pkl
+examples/*/*scratch*
