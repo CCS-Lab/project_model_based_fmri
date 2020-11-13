@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-@author: Yedarm Seong
+@author: Yedarm Seong, Cheoljun cho
 @contact: mybirth0407@gmail.com
-@last modification: 2020.11.02
+          cjfwndnsl@gmail.com
+@last modification: 2020.11.13
 """
 
 import os

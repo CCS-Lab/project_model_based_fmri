@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-@main author: Cheol Jun Cho
-@code optimization: Yedarm Seong
+@author: Cheol Jun Cho, Yedarm Seong
 @contact: cjfwndnsl@gmail.com
           mybirth0407@gmail.com
 @last modification: 2020.11.03
