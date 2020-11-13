@@ -133,3 +133,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Example data
+examples/*/*.npy
+examples/*/*.nii*
+examples/*/*.tsv
+examples/*/*.pkl

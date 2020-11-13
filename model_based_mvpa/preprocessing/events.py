@@ -52,7 +52,11 @@ def example_calculate_modulation(df_events_list, latent_params):
     return new_df_list
 
 def get_indiv_par(subjId, all_ind_pars, parameter_names):
-    ind_pars = all_ind_pars.loc[subjId]
+    try:
+        ind_pars = all_ind_pars.loc[subjId]
+    except:
+        ind_pars = all_ind_pars.loc[int(subjId)]
+        
     return [ind_pars[name] for name in parameter_names]
 
 def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
