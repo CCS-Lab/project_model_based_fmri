@@ -61,7 +61,7 @@ def _get_individual_params(subject_id, all_individual_params, param_names):
         
     return {name : ind_pars[name] for name in param_names}
 
-
+    
 def _get_time_mask(cond_func, df_events, time_length, t_r, use_duration=False):
     df_events = df_events.sort_values(by='onset')
     onsets = df_events['onset'].to_numpy()
@@ -106,6 +106,7 @@ def preprocess_events(root, dm_model,
                       use_duration=False,
                       hrf_model='glover',
                       save_path=None
+                      **kwargs # hBayesDM fitting 
                       ):
 
     pbar = tqdm(total=6)
@@ -152,6 +153,14 @@ def preprocess_events(root, dm_model,
         for name1, group1 in group0.groupby(['run']):
             time_mask_subject.append(_get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
 
+    pbar.set_description('calculating time mask..'.center(40))
+    
+    time_masks = []
+    for name0, group0 in pd.concat(df_events_list).groupby(['subjID']):
+        time_mask_subject = []
+        for name1, group1 in group0.groupby(['run']):
+            time_mask_subject.append(get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
+            
         time_mask_subject = np.array(time_mask_subject)
         time_masks.append(time_mask_subject)
    
@@ -165,7 +174,7 @@ def preprocess_events(root, dm_model,
         if all_individual_params is None:
             pbar.set_description('hbayesdm doing (model: %s)..'.ljust(50) % dm_model)
             dm_model = getattr(hbayesdm.models, dm_model)(
-                data=pd.concat(df_events_list), ncore=ncore)
+                data=pd.concat(df_events_list), ncore=ncore, **kwargs)
             pbar.update(1)
             all_individual_params = dm_model.all_individual_params
 
@@ -175,7 +184,8 @@ def preprocess_events(root, dm_model,
             # all_individual_params = pd.read_csv(sp / 'all_individual_params.tsv',sep = '\t',index_col='Unnamed: 0')
         else:
             pbar.update(1)
-        pbar.set_description('calculating modulation..'.ljust(50))
+        
+     pbar.set_description('calculating modulation..'.ljust(50))
 
         df_events_list =[
             prep_rocess_event(
@@ -183,6 +193,7 @@ def preprocess_events(root, dm_model,
                     **get_individual_params(
                         event_infos['subject'], all_individual_params,params_name)
                     ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
+        
         df_events = pd.concat(df_events_list)
         pbar.update(1)
     else:
