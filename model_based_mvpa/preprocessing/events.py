@@ -57,7 +57,7 @@ def get_indiv_par(subjId, all_ind_pars, parameter_names):
     except:
         ind_pars = all_ind_pars.loc[int(subjId)]
         
-    return [ind_pars[name] for name in parameter_names]
+    return {name : ind_pars[name] for name in parameter_names}
 
 def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
     
@@ -77,14 +77,14 @@ def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
         
     return time_mask
 
-def preprocess_event(prep_func, cond_func, df_events, event_infos, *args):
+def preprocess_event(prep_func, cond_func, df_events, event_infos, **kwargs):
     
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
     for _, row in df_events.iterrows():
         if cond_func is not None and cond_func(row):
-            new_datarows.append(prep_func(row,event_infos,*args))
+            new_datarows.append(prep_func(row,event_infos,**kwargs))
     
     new_datarows = pd.concat(new_datarows, axis=1, keys=[s.name for s in new_datarows]).transpose()
     
@@ -168,7 +168,7 @@ def preprocess_events(root, dm_model,
 
 
         df_events_list =[preprocess_event(latent_func, cond_func, df_events, event_infos,
-                                          *get_indiv_par(event_infos['subject'], all_ind_pars,par_names))for df_events, event_infos in zip(df_events_list, event_infos_list)]
+                                          **get_indiv_par(event_infos['subject'], all_ind_pars,par_names))for df_events, event_infos in zip(df_events_list, event_infos_list)]
         df_events = pd.concat(df_events_list)
         pbar.update(1)
     else:
