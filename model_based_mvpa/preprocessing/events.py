@@ -102,7 +102,8 @@ def preprocess_events(root, dm_model,
                       save_path=None,
                       save=True,
                       ncore=4,
-                      time_check=True):
+                      time_check=True,
+                      **kwargs # hBayesDM fitting argument):
     
     pbar = tqdm(total=6)
     s = time.time()
@@ -164,7 +165,7 @@ def preprocess_events(root, dm_model,
         if all_ind_pars is None:
             pbar.set_description('hbayesdm doing (model: %s)..'.center(40) % dm_model)
             dm_model = getattr(hbayesdm.models, dm_model)(
-                data=pd.concat(df_events_list), ncore=ncore)
+                data=pd.concat(df_events_list), ncore=ncore, **kwargs)
             pbar.update(1)
             all_ind_pars = dm_model.all_ind_pars
             if save:
