@@ -1,3 +1,7 @@
+test/
+dev/
+*.npy
+*.h5
 results/
 
 # data and model binary files

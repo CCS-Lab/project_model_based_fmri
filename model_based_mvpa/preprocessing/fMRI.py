@@ -78,6 +78,7 @@ def image_preprocess(params):
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
 
     return fmri_masked, subject
+    
 
 def image_preprocess_mt(params, n_thread):
     image_paths, confounds_paths,\

@@ -10,7 +10,6 @@
 import os
 import numpy as np
 from pathlib import Path
-import json
 
 import bids
 from bids import BIDSLayout, BIDSValidator
@@ -58,13 +57,8 @@ def bids_preprocess(root,
 
     pbar.set_description('making custom masked data..'.ljust(50))
     root = Path(root)
+    mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
     
-    if mask_path is None:
-        #mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
-        mask_path = None
-    else:
-        mask_path = Path(mask_path)
-        
     masked_data, masker, m_true = custom_masking(
         mask_path, p_value, zoom,
         smoothing_fwhm, interpolation_func, standardize
