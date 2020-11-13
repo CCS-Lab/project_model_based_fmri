@@ -73,7 +73,7 @@ def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
     
     for flag,onset,duration in zip(mask,onsets,durations):
             if flag:
-                time_mask[int(onset/TR):int(onset/TR)+int(duration/TR)] = 1
+                time_mask[int(onset/TR):int((onset+duration)/TR)] = 1
         
     return time_mask
 
@@ -140,7 +140,17 @@ def preprocess_events(root, dm_model,
     pbar.update(1)
 
     pbar.set_description('calculating time mask..'.center(40))
-    time_masks = [get_time_mask(cond_func,  df_events, n_scans, t_r, use_duration=False) for  df_events in df_events_list]
+    
+    time_masks = []
+    for name0, group0 in pd.concat(df_events_list).groupby(['subjID']):
+        time_mask_subject = []
+        for name1, group1 in group0.groupby(['run']):
+            time_mask_subject.append(get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
+            
+        
+        time_mask_subject = np.array(time_mask_subject)
+        time_masks.append(time_mask_subject)
+   
     time_masks = np.array(time_masks)
 
     if save:
