@@ -10,13 +10,13 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-
 from skimage.measure import block_reduce
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
+from nilearn.datasets import load_mni152_brain_mask
 
 import nibabel as nib
 from ..utils import func
@@ -32,7 +32,8 @@ def custom_masking(mask_path, p_value, zoom,
                    flatten=False):
 
     if mask_path is None:
-        assert (mask_path is None)
+        #assert (mask_path is None)
+        mask_files = []
     elif type(mask_path) is str:
         mask_files = [mask_path]
     else:
@@ -40,10 +41,11 @@ def custom_masking(mask_path, p_value, zoom,
             mask_path = Path(mask_path)
         mask_files = [file for file in mask_path.glob('*.nii.gz')]
 
-    image_sample = nib.load(mask_files[0])
+    #image_sample = nib.load(mask_files[0])
+    image_sample = load_mni152_brain_mask()
     m = func.array2pindex(image_sample.get_fdata(), p_value, flatten)
 
-    for i in range(1, len(mask_files)):
+    for i in range(len(mask_files)):
         m |= func.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
     
     if zoom != (1, 1, 1):

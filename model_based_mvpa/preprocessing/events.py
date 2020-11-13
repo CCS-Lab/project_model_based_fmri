@@ -51,21 +51,71 @@ def example_calculate_modulation(df_events_list, latent_params):
         
     return new_df_list
 
+def get_indiv_par(subjId, all_ind_pars, parameter_names):
+    try:
+        ind_pars = all_ind_pars.loc[subjId]
+    except:
+        ind_pars = all_ind_pars.loc[int(subjId)]
+        
+    return [ind_pars[name] for name in parameter_names]
 
-def preprocess_events(root, dm_model, funcs,
+def get_time_mask(cond_func, df_events, time_len, TR, use_duration=False):
+    
+    df_events = df_events.sort_values(by='onset')
+    onsets = np.array(df_events['onset'])
+    if use_duration:
+        durations = np.array(df['duration'])
+    else:
+        durations = np.array(list(df_events['onset'][1:])+[time_len*TR]) - onsets
+    
+    mask = [cond_func(row) for _, row in df_events.iterrows()]
+    time_mask = np.zeros(time_len)
+    
+    for flag,onset,duration in zip(mask,onsets,durations):
+            if flag:
+                time_mask[int(onset/TR):int(onset/TR)+int(duration/TR)] = 1
+        
+    return time_mask
+
+def preprocess_event(prep_func, cond_func, df_events, event_infos, *args):
+    
+    new_datarows = []
+    df_events = df_events.sort_values(by='onset')
+    
+    for _, row in df_events.iterrows():
+        if cond_func is not None and cond_func(row):
+            new_datarows.append(prep_func(row,event_infos,*args))
+    
+    new_datarows = pd.concat(new_datarows, axis=1, keys=[s.name for s in new_datarows]).transpose()
+    
+    return new_datarows
+
+def preprocess_events(root, dm_model,   
+                      latent_func,par_names,
+                      prep_func=lambda x : x,
+                      cond_func=lambda _ : True,
+                      df_events=None,
+                      all_ind_pars=None,
+                      use_duration=False,
                       layout=None,
                       hrf_model='glover',
                       save_path=None,
                       save=True,
-                      single_file=True,
-                      ncore=os.cpu_count(),
+                      ncore=4,
                       time_check=True):
     
     pbar = tqdm(total=6)
     s = time.time()
 ################################################################################
 # load bids layout
-
+    if save_path is None:
+        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+    else:
+        sp = Path(save_path)
+    
+    if not sp.exists():
+            sp.mkdir()
+            
     pbar.set_description('loading bids dataset..'.center(40))
 
     if layout is None:
@@ -80,38 +130,61 @@ def preprocess_events(root, dm_model, funcs,
             extension='nii.gz')[0]
     )
     n_scans = image_sample.shape[-1]
-    
     df_events_list = [event.get_df() for event in events]
-    df_events_info = [event.get_entities() for event in events]
-
-    assert(len(df_events_list) != len(df_events_info))
-    pbar.update(1)
-################################################################################
-# make masked data
-
-    pbar.set_description('adjusting event file columns..'.center(40))
-    df_events_list = funcs[0](df_events_list, df_events_info)
+    event_infos_list = [event.get_entities() for event in events]
     pbar.update(1)
     
-    pbar.set_description('hbayesdm doing (model: %s)..'.center(40) % dm_model)
-    dm_model = getattr(hbayesdm.models, dm_model)(
-        data=pd.concat(df_events_list), ncore=ncore)
+    pbar.set_description('adjusting event file columns..'.center(40))
+    
+    df_events_list = [preprocess_event(prep_func, cond_func, df_events, event_infos) for df_events, event_infos in zip(df_events_list, event_infos_list)]
     pbar.update(1)
 
-    pbar.set_description('calculating modulation..'.center(40))
-    df_events_list = funcs[1](df_events_list, dm_model.all_ind_pars)
+    pbar.set_description('calculating time mask..'.center(40))
+    time_masks = [get_time_mask(cond_func,  df_events, n_scans, t_r, use_duration=False) for  df_events in df_events_list]
+    time_masks = np.array(time_masks)
+
+    if save:
+        np.save(sp / 'y_mask.npy',time_masks)
+        
     pbar.update(1)
+    pbar.set_description('time mask preproecssing done!'.center(40))
+    
+    if df_events is None:
+        
+        if all_ind_pars is None:
+            pbar.set_description('hbayesdm doing (model: %s)..'.center(40) % dm_model)
+            dm_model = getattr(hbayesdm.models, dm_model)(
+                data=pd.concat(df_events_list), ncore=ncore)
+            pbar.update(1)
+            all_ind_pars = dm_model.all_ind_pars
+            if save:
+                all_ind_pars.to_csv(sp / 'all_ind_pars.tsv', sep="\t")
+                
+            # all_ind_pars = pd.read_csv(sp / 'all_ind_pars.tsv',sep = '\t',index_col='Unnamed: 0')
+        else:
+            pbar.update(1)
+            
+        pbar.set_description('calculating modulation..'.center(40))
+
+
+        df_events_list =[preprocess_event(latent_func, cond_func, df_events, event_infos,
+                                          *get_indiv_par(event_infos['subject'], all_ind_pars,par_names))for df_events, event_infos in zip(df_events_list, event_infos_list)]
+        df_events = pd.concat(df_events_list)
+        pbar.update(1)
+    else:
+        pbar.update(2)
     
     pbar.set_description('modulation signal making..'.center(40))
     frame_times = t_r * (np.arange(n_scans) + t_r/2)
     
-    df_events = pd.concat(df_events_list)
+    
+    
     signals = []
     for name0, group0 in df_events.groupby(['subjID']):
         signal_subject = []
         for name1, group1 in group0.groupby(['run']):
             exp_condition = group1[['onset', 'duration', 'modulation']].to_numpy().T
-
+            exp_condition = exp_condition.astype(float)
             signal, name = compute_regressor(
                 exp_condition=exp_condition,
                 hrf_model=hrf_model,
@@ -125,27 +198,15 @@ def preprocess_events(root, dm_model, funcs,
         normalized_signal = normalized_signal.reshape(-1, n_scans, 1)
         signals.append(normalized_signal)
     signals = np.array(signals)
-    pbar.update(1)
     
-    pbar.set_description('modulation signal making..'.center(40))
     if save:
-        if save_path is None:
-            sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-        else:
-            sp = Path(save_path)
-            
-        if not sp.exists():
-            sp.mkdir()
+        np.save(sp / 'y.npy', signals)
         
-        if single_file:
-            np.save(sp / 'y.npy', signals)
-        else:
-            for i in range(signals.shape[0]):
-                np.save(sp / f'y_{i+1}.npy', signals[i])
     pbar.update(1)
     pbar.set_description('events preproecssing done!'.center(40))
     
     e = time.time()
     logging.info(f'time elapsed: {(e-s) / 60:.2f} minutes')
-        
-    return dm_model, df_events, signals
+    
+    
+    return dm_model, df_events, signals, time_masks

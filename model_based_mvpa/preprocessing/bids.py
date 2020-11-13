@@ -58,11 +58,12 @@ def bids_preprocess(root,
     pbar.set_description('making custom masked data..'.ljust(50))
     root = Path(root)
     mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
-
+    
     masked_data, masker, m_true = custom_masking(
         mask_path, p_value, zoom,
         smoothing_fwhm, interpolation_func, standardize
     )
+        
     pbar.update(1)
 ################################################################################
 # setting parameter

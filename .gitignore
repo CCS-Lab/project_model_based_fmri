@@ -1,3 +1,6 @@
+dev/
+*.npy
+*.h5
 results/
 
 # data and model binary files
@@ -32,7 +35,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 examples/Scratch/*
-
+*.nii*
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -133,3 +136,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Example data
+examples/*/*.npy
+examples/*/*.nii*
+examples/*/*.tsv
+examples/*/*.pkl
+examples/*/*scratch*
