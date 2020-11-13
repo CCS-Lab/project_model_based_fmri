@@ -101,7 +101,7 @@ def preprocess_events(root, dm_model,
                       hrf_model='glover',
                       save_path=None,
                       save=True,
-                      ncore=os.cpu_count(),
+                      ncore=4,
                       time_check=True):
     
     pbar = tqdm(total=6)
