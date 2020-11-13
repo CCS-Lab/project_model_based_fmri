@@ -97,7 +97,6 @@ def preprocess_events(root, dm_model,
                       hrf_model='glover',
                       save_path=None,
                       save=True,
-                      single_file=True,
                       ncore=os.cpu_count(),
                       time_check=True):
     
@@ -105,7 +104,14 @@ def preprocess_events(root, dm_model,
     s = time.time()
 ################################################################################
 # load bids layout
-
+    if save_path is None:
+        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+    else:
+        sp = Path(save_path)
+    
+    if not sp.exists():
+            sp.mkdir()
+            
     pbar.set_description('loading bids dataset..'.center(40))
 
     if layout is None:
@@ -134,19 +140,8 @@ def preprocess_events(root, dm_model,
     time_masks = np.array(time_masks)
 
     if save:
-        if save_path is None:
-            sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-        else:
-            sp = Path(save_path)
-            
-        if not sp.exists():
-            sp.mkdir()
+        np.save(sp / 'y_mask.npy',time_masks)
         
-        if single_file:
-            np.save(sp / 'y_mask.npy',time_masks)
-        else:
-            for i in range(signals.shape[0]):
-                np.save(sp / f'y_mask_{i+1}.npy', signals[i])
     pbar.update(1)
     pbar.set_description('time mask preproecssing done!'.center(40))
     
@@ -158,8 +153,13 @@ def preprocess_events(root, dm_model,
                 data=pd.concat(df_events_list), ncore=ncore)
             pbar.update(1)
             all_ind_pars = dm_model.all_ind_pars
+            if save:
+                all_ind_pars.to_csv(sp / 'all_ind_pars.tsv', sep="\t")
+                
+            # all_ind_pars = pd.read_csv(sp / 'all_ind_pars.tsv',sep = '\t',index_col='Unnamed: 0')
         else:
             pbar.update(1)
+            
         pbar.set_description('calculating modulation..'.center(40))
 
 
@@ -195,19 +195,8 @@ def preprocess_events(root, dm_model,
     signals = np.array(signals)
     
     if save:
-        if save_path is None:
-            sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-        else:
-            sp = Path(save_path)
-            
-        if not sp.exists():
-            sp.mkdir()
+        np.save(sp / 'y.npy', signals)
         
-        if single_file:
-            np.save(sp / 'y.npy', signals)
-        else:
-            for i in range(signals.shape[0]):
-                np.save(sp / f'y_{i+1}.npy', signals[i])
     pbar.update(1)
     pbar.set_description('events preproecssing done!'.center(40))
     
