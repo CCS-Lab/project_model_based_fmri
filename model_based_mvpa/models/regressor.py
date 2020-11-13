@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-@main author: Cheol Jun Cho
-@code optimization: Yedarm Seong
+@author: Cheol Jun Cho, Yedarm Seong
 @contact: cjfwndnsl@gmail.com
           mybirth0407@gmail.com
 @last modification: 2020.11.03
@@ -11,6 +10,7 @@
 
 import numpy as np
 from tqdm import tqdm
+import os
 
 import tensorflow as tf
 from tensorflow import keras as K
@@ -261,6 +261,7 @@ def mlp_regression(X, y,
         for weight in weights[1:]:
             coef = np.matmul(coef,weight)
         coefs.append(coef.ravel())
+        os.remove(bst_model_path)
 
     coefs = np.array(coefs)
     
@@ -335,7 +336,8 @@ def penalized_linear_regression(X, y,
 
         coef = model.layers[0].get_weights()[0] 
         coefs.append(coef.ravel())
-
+        os.remove(bst_model_path)
+        
     coefs = np.array(coefs)
     
     # coefs : N x voxel #

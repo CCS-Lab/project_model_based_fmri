@@ -16,9 +16,9 @@ from pathlib import Path
 
 
 def get_map(coefs, masked_data, layout=None, task_name=None,
-            map_type='t', save_path=None, smoothing_sigma=1):
+            map_type='z', save_path=None, smoothing_sigma=1):
 
-    assert (layout is None and task_name is None)
+    assert (not(layout is None and task_name is None))
     
     activation_maps = []
     mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0]
@@ -39,10 +39,7 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
     if map_type == 't':
         m = ttest_1samp(activation_maps, 0).statistic
     else:
-        mean = activation_maps.mean()
-        std = activation_maps.std()
-        m = ((activation_maps - mean) / std).mean(0)
-        m = zscore(activation_maps, axis=None)
+        m = zscore(activation_maps, axis=None).mean(0)
         
     m[np.isnan(m)] = 0
     m *= masked_data.get_fdata()
