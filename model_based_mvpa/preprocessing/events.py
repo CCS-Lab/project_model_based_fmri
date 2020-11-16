@@ -97,8 +97,10 @@ def _preprocess_event(prep_func, cond_func, df_events, event_infos, **kwargs):
     return new_datarows
 ################################################################################
 
-def preprocess_events(root, dm_model,
-                      latent_func, params_name,
+def preprocess_events(root, 
+                      dm_model=None,
+                      latent_func=None, 
+                      params_name=None,
                       layout=None,
                       prep_func=lambda x: x,
                       cond_func=lambda _: True,
@@ -172,7 +174,14 @@ def preprocess_events(root, dm_model,
 ################################################################################
     
     if df_events is None:
+        
+        assert(latent_func is not None)
+        assert(params_name is not None)
+        
         if all_individual_params is None:
+            
+            assert(dm_model is not None)
+            
             pbar.set_description('hbayesdm doing (model: %s)..'.ljust(50) % dm_model)
             dm_model = getattr(hbayesdm.models, dm_model)(
                 data=pd.concat(df_events_list), ncore=ncore, **kwargs)
@@ -186,7 +195,7 @@ def preprocess_events(root, dm_model,
         else:
             pbar.update(1)
         
-     pbar.set_description('calculating modulation..'.ljust(50))
+        pbar.set_description('calculating modulation..'.ljust(50))
 
         df_events_list =[
             prep_rocess_event(
