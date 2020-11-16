@@ -71,11 +71,11 @@ def _get_time_mask(cond_func, df_events, time_length, t_r, use_duration=False):
     else:
         durations = np.array(list(df_events['onset'][1:])+[time_length*t_r]) - onsets
     
-    mask = [cond_func(row) for row in df_events.rows()]
+    mask = [cond_func(row) for _,row in df_events.iterrows()]
     time_mask = np.zeros(time_length)
     
-    for mask, onset, duration in zip(masks, onsets, durations):
-        if mask:
+    for do_use, onset, duration in zip(mask, onsets, durations):
+        if do_use:
             time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
         
     return time_mask
@@ -85,7 +85,7 @@ def _preprocess_event(prep_func, cond_func, df_events, event_infos, **kwargs):
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
-    for _, row in df_events.iterrows():
+    for _,row in df_events.iterrows():
         if cond_func is not None and cond_func(row):
             new_datarows.append(prep_func(row,event_infos, **kwargs))
     
@@ -108,7 +108,8 @@ def preprocess_events(root,
                       all_individual_params=None,
                       use_duration=False,
                       hrf_model='glover',
-                      save_path=None
+                      save=True,
+                      save_path=None,
                       **kwargs # hBayesDM fitting 
                       ):
     
@@ -129,6 +130,7 @@ def preprocess_events(root,
     # all_individual_params : pd.DataFrame with params_name columns and corresponding values for each subject if not provided, it will be obtained by fitting hBayesDM model
     # use_duration : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
     # hrf_model : specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
+    # save : boolean indicating whether save result
     # save_path : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
     
     ## Output ##
@@ -139,6 +141,15 @@ def preprocess_events(root,
     
     pbar = tqdm(total=6)
     s = time.time()
+    
+    if save_path is None:
+        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+    else:
+        sp = Path(save_path)
+    
+    if save and not sp.exists():
+        sp.mkdir()
+        
 ################################################################################
 # load bids layout
 
@@ -166,7 +177,7 @@ def preprocess_events(root,
     pbar.set_description('adjusting event file columns..'.ljust(50))
     
     df_events_list = [
-        preprocess_event(
+        _preprocess_event(
             prep_func, cond_func, df_events, event_infos
         ) for df_events, event_infos in zip(df_events_list, event_infos_list)
     ]
@@ -180,17 +191,6 @@ def preprocess_events(root,
         time_mask_subject = []
         for name1, group1 in group0.groupby(['run']):
             time_mask_subject.append(_get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
-
-    pbar.set_description('calculating time mask..'.center(40))
-    
-    time_masks = []
-    for name0, group0 in pd.concat(df_events_list).groupby(['subjID']):
-        time_mask_subject = []
-        for name1, group1 in group0.groupby(['run']):
-            time_mask_subject.append(get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
-            
-        time_mask_subject = np.array(time_mask_subject)
-        time_masks.append(time_mask_subject)
    
     time_masks = np.array(time_masks)
 
@@ -209,9 +209,9 @@ def preprocess_events(root,
             
             pbar.set_description('hbayesdm doing (model: %s)..'.ljust(50) % dm_model)
             dm_model = getattr(hbayesdm.models, dm_model)(
-                data=pd.concat(df_events_list), ncore=ncore, **kwargs)
+                data=pd.concat(df_events_list), **kwargs)
             pbar.update(1)
-            all_individual_params = dm_model.all_individual_params
+            all_individual_params = dm_model.all_ind_pars
 
             if save:
                 all_individual_params.to_csv(sp / 'all_individual_params.tsv', sep="\t")
@@ -223,9 +223,9 @@ def preprocess_events(root,
         pbar.set_description('calculating modulation..'.ljust(50))
 
         df_events_list =[
-            prep_rocess_event(
+            _preprocess_event(
                 latent_func, cond_func, df_events, event_infos,
-                    **get_individual_params(
+                    **_get_individual_params(
                         event_infos['subject'], all_individual_params,params_name)
                     ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
         
@@ -259,14 +259,6 @@ def preprocess_events(root,
     signals = np.array(signals)
     pbar.update(1)
 ################################################################################
-
-    if save_path is None:
-        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-    else:
-        sp = Path(save_path)
-    
-    if not sp.exists():
-        sp.mkdir()
 
     np.save(sp / 'time_mask.npy', time_masks)
     np.save(sp / 'y.npy', signals)

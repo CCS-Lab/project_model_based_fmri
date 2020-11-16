@@ -43,10 +43,13 @@ def custom_masking(mask_path, p_value, zoom,
 
     #image_sample = nib.load(mask_files[0])
     image_sample = load_mni152_brain_mask()
-    m = func.array2pindex(image_sample.get_fdata(), p_value, flatten)
-
-    for i in range(len(mask_files)):
-        m |= func.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
+    
+    if len(mask_files) > 0 :
+        m = func.array2pindex(nib.load(mask_files[0]).get_fdata(), p_value, flatten)
+        for i in range(len(mask_files)-1):
+            m |= func.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
+    else:
+        m = func.array2pindex(image_sample.get_fdata(), p_value, flatten)
     
     if zoom != (1, 1, 1):
         m = block_reduce(m, zoom, interpolation_func)
