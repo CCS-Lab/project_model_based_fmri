@@ -200,7 +200,7 @@ def preprocess_events(root,
             dm_model = getattr(hbayesdm.models, dm_model)(
                 data=pd.concat(df_events_list), **kwargs)
             pbar.update(1)
-            all_individual_params = dm_model.all_individual_params
+            all_individual_params = dm_model.all_ind_pars
 
             if save:
                 all_individual_params.to_csv(sp / 'all_individual_params.tsv', sep="\t")
