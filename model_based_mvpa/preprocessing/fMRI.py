@@ -4,7 +4,7 @@
 """
 @author: Yedarm Seong
 @contact: mybirth0407@gmail.com
-@last modification: 2020.11.02
+@last modification: 2020.11.13
 """
 
 import numpy as np
@@ -64,7 +64,7 @@ def custom_masking(mask_path, p_value, zoom,
 def image_preprocess(params):
     image_path, confounds_path,\
     motion_confounds, masker,\
-    masked_data, subject = params
+    masked_data, subject_id = params
 
     preprocessed_images = []
     if confounds_path is not None:
@@ -77,21 +77,19 @@ def image_preprocess(params):
     fmri_masked = resample_to_img(image_path, masked_data)
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
 
-    return fmri_masked, subject
-    
+    return fmri_masked, subject_id
+
 
 def image_preprocess_mt(params, n_thread):
     image_paths, confounds_paths,\
     motion_confounds, masker,\
-    masked_data, subject = params
-    # print(image_paths, confounds_paths, motion_confounds,
-    #       masker, masked_data, subject)
+    masked_data, subject_id = params
 
     image_params = []
     for i in range(len(params[0])):
         image_params.append(
             [image_paths[i], confounds_paths[i], motion_confounds,
-             masker, masked_data, subject])
+             masker, masked_data, subject_id])
 
     preprocessed_images = []
     n_worker = n_thread if n_thread < 5 else n_thread // 2
@@ -103,9 +101,9 @@ def image_preprocess_mt(params, n_thread):
         }
 
         for future in as_completed(future_result):
-            data, subject = future.result()
+            data, subject_id = future.result()
             preprocessed_images.append(data)
 
     preprocessed_images = np.array(preprocessed_images)
 
-    return preprocessed_images, subject
+    return preprocessed_images, subject_id
