@@ -28,9 +28,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 def bids_preprocess(root,
+                    mask_path=None,
                     save_path=None,
                     save=True,
-                    zoom=(1, 1, 1),
+                    zoom=(2, 2, 2),
                     smoothing_fwhm=6,
                     interpolation_func=np.mean,
                     motion_confounds=['trans_x', 'trans_y', 'trans_z', 'rot_x', 'rot_y', 'rot_z'],
@@ -58,7 +59,9 @@ def bids_preprocess(root,
 
     pbar.set_description('making custom masked data..'.ljust(50))
     root = Path(root)
-    mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
+    
+    if mask_path is None:
+        mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
     
     masked_data, masker, m_true = custom_masking(
         mask_path, p_value, zoom,
