@@ -111,7 +111,32 @@ def preprocess_events(root,
                       save_path=None
                       **kwargs # hBayesDM fitting 
                       ):
+    
+    ##################################################################################
+    
+    # preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data
+    
+    ## Input ##
 
+    # root : root directory of BIDS layout
+    # dm_model : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
+    # latent_func : user defined function for calculating latent process. f(single_row_data_frame, model_parameter) -> single_row_data_frame_with_latent_state
+    # params_name : model parameter name specification. should be same as parameter in model, and latent_func arguments
+    # layout : BIDSLayout by bids package. if not provided, it will be obtained using root info.
+    # prep_func : user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
+    # cond_func : user defined function for filtering behavioral data. f(single_row_data_frame) -> boolean
+    # df_events : pd.DataFrame with 'onset', 'duration', 'modulation'. if not provided, it will be obtained by applyng hBayesDM modeling and user defined functions.
+    # all_individual_params : pd.DataFrame with params_name columns and corresponding values for each subject if not provided, it will be obtained by fitting hBayesDM model
+    # use_duration : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
+    # hrf_model : specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
+    # save_path : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
+    
+    ## Output ##
+    
+    # dm_model : hBayesDM model.
+    # df_events : integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
+    # signals : BOLD-like signal. shape : subject # x (session # x run #) x time length of scan x voxel #
+    
     pbar = tqdm(total=6)
     s = time.time()
 ################################################################################
