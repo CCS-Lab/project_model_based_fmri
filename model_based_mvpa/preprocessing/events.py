@@ -108,6 +108,7 @@ def preprocess_events(root,
                       all_individual_params=None,
                       use_duration=False,
                       hrf_model='glover',
+                      save=True,
                       save_path=None,
                       **kwargs # hBayesDM fitting 
                       ):
@@ -129,6 +130,7 @@ def preprocess_events(root,
     # all_individual_params : pd.DataFrame with params_name columns and corresponding values for each subject if not provided, it will be obtained by fitting hBayesDM model
     # use_duration : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
     # hrf_model : specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
+    # save : boolean indicating whether save result
     # save_path : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
     
     ## Output ##
@@ -139,6 +141,15 @@ def preprocess_events(root,
     
     pbar = tqdm(total=6)
     s = time.time()
+    
+    if save_path is None:
+        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+    else:
+        sp = Path(save_path)
+    
+    if save and not sp.exists():
+        sp.mkdir()
+        
 ################################################################################
 # load bids layout
 
@@ -212,9 +223,9 @@ def preprocess_events(root,
         pbar.set_description('calculating modulation..'.ljust(50))
 
         df_events_list =[
-            prep_rocess_event(
+            _preprocess_event(
                 latent_func, cond_func, df_events, event_infos,
-                    **get_individual_params(
+                    **_get_individual_params(
                         event_infos['subject'], all_individual_params,params_name)
                     ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
         
@@ -248,14 +259,6 @@ def preprocess_events(root,
     signals = np.array(signals)
     pbar.update(1)
 ################################################################################
-
-    if save_path is None:
-        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
-    else:
-        sp = Path(save_path)
-    
-    if not sp.exists():
-        sp.mkdir()
 
     np.save(sp / 'time_mask.npy', time_masks)
     np.save(sp / 'y.npy', signals)
