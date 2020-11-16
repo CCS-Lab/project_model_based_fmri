@@ -5,7 +5,7 @@
 @author: Cheol Jun Cho, Yedarm Seong
 @contact: cjfwndnsl@gmail.com
           mybirth0407@gmail.com
-@last modification: 2020.11.03
+@last modification: 2020.11.16
 """
 
 import numpy as np
