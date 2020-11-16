@@ -10,6 +10,7 @@
 
 import numpy as np
 from tqdm import tqdm
+import random
 import os
 
 import tensorflow as tf

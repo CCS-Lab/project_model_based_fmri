@@ -108,7 +108,7 @@ def preprocess_events(root,
                       all_individual_params=None,
                       use_duration=False,
                       hrf_model='glover',
-                      save_path=None
+                      save_path=None,
                       **kwargs # hBayesDM fitting 
                       ):
     
