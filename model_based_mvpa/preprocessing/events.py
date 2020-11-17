@@ -16,6 +16,7 @@ from bids import BIDSLayout, BIDSValidator
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import minmax_scale
+from scipy.stats import zscore
 
 from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 import nibabel as nib
@@ -123,6 +124,7 @@ def preprocess_events(root,
                       all_individual_params=None,
                       use_duration=False,
                       hrf_model='glover',
+                      normalizer='minmax',
                       save=True,
                       save_path=None,
                       **kwargs # hBayesDM fitting 
@@ -204,9 +206,13 @@ def preprocess_events(root,
         time_mask_subject = []
         for name1, group1 in group0.groupby(['run']):
             time_mask_subject.append(_get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
-   
+        time_masks.append(time_mask_subject)
+        
     time_masks = np.array(time_masks)
-
+    
+    if save:
+        np.save(sp / 'time_mask.npy', time_masks)
+        
     pbar.update(1)
     pbar.set_description('time mask preproecssing done!'.ljust(50))
 ################################################################################
@@ -266,15 +272,22 @@ def preprocess_events(root,
         signal_subject = np.array(signal_subject)
         reshape_target = signal_subject.shape
         
-        normalized_signal = minmax_scale(signal_subject.flatten(), axis=0, copy=True)
+        if normalizer == 'minmax':
+            normalized_signal = minmax_scale(signal_subject.flatten(), feature_range=(-1,1), axis=0, copy=True)
+        if normalizer == 'standard':
+            normalized_signal = zscore(signal_subject.flatten(),axis=None)
+        else:
+            normalized_signal = zscore(signal_subject.flatten(),axis=None)
+            
         normalized_signal = normalized_signal.reshape(-1, n_scans, 1)
         signals.append(normalized_signal)
     signals = np.array(signals)
     pbar.update(1)
 ################################################################################
 
-    np.save(sp / 'time_mask.npy', time_masks)
-    np.save(sp / 'y.npy', signals)
+    if save:
+        np.save(sp / 'y.npy', signals)
+        
     pbar.update(1)
 
 ################################################################################
