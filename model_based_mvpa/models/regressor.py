@@ -26,6 +26,7 @@ from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_1samp
 from ..data import loader
 from glmnet import ElasticNet
+import matplotlib.pyplot as plt
 
 import logging
 
@@ -216,7 +217,9 @@ def penalized_linear_regression(X, y,
 def elasticnet(X, y,
                alpha=0.001,
                n_jobs=16,
-               N=3,
+               max_lambda = 2,
+               min_lambda_ratio = 1e-4,
+               N=1,
                verbose=0,
                max_use_sample_N=30000):
     
@@ -224,15 +227,17 @@ def elasticnet(X, y,
         logging.info('start running')
         
     coefs = []
+    
+    lambda_path = np.exp(np.linspace(np.log(max_lambda),np.log(max_lambda*min_lambda_ratio),100))
 
     for i in range(N):
         ids = np.arange(X.shape[0])
         if X.shape[0] > max_use_sample_N:
             np.random.shuffle(ids)
             ids = ids[:max_use_sample_N]
-        X_data = X #[ids]
-        y_data  = y #[ids]
-        model = ElasticNet(alpha = alpha, n_jobs =n_jobs)
+        X_data = X[ids]
+        y_data  = y[ids]
+        model = ElasticNet(alpha = alpha, n_jobs =n_jobs,scoring='mean_squared_error',lambda_path=lambda_path)
         model = model.fit(X_data,y_data)
         y_pred = model.predict(X_data).flatten()
         error = mean_squared_error(y_pred, y_data)
@@ -240,7 +245,11 @@ def elasticnet(X, y,
         coefs.append(model.coef_.ravel())
         
         if verbose > 0:
-            logging.info(f'[{i+1}/{N}] - lambda_best: {model.lambda_best_:.03f}/ mse: {error:.04f}')
+            logging.info(f'[{i+1}/{N}] - lambda_best: {model.lambda_best_[0]:.03f}/ mse: {error:.04f}')
+            plt.plot(lambda_path,model.cv_mean_score_)
+            plt.xlabel('lambda')
+            plt.ylabel('cv_mean_score')
+            plt.show()
     
     coefs = np.array(coefs)
     
