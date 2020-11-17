@@ -29,7 +29,7 @@ from glmnet import ElasticNet
 import matplotlib.pyplot as plt
 
 import logging
-
+from scipy.stats import cauchy
 
 logging.basicConfig(level=logging.INFO)
 
@@ -221,7 +221,8 @@ def elasticnet(X, y,
                min_lambda_ratio = 1e-4,
                N=1,
                verbose=0,
-               max_use_sample_N=30000):
+               max_use_sample_N=30000,
+              coef_mean_threshold=1e-4):
     
     if verbose > 0:
         logging.info('start running')
@@ -242,7 +243,27 @@ def elasticnet(X, y,
         y_pred = model.predict(X_data).flatten()
         error = mean_squared_error(y_pred, y_data)
         
-        coefs.append(model.coef_.ravel())
+         
+        coef = model.coef_.ravel()
+        lambda_vals= np.log(np.array([model.lambda_best_[0]]))
+        if abs(coef).mean() < coef_mean_threshold:
+
+            def get_valid_idxs(array, valid_range,n):
+                return np.nonzero((array >= valid_range[0]) & (array < valid_range[1]))[0][:n]
+
+            cauchy_lambdas  = []
+            for i in range(100):
+                cfs = model.coef_path_[:,i]
+
+                cauchy_lambdas.append(cauchy.fit(cfs)[1])
+            cauchy_lambdas = np.array(cauchy_lambdas)
+
+            alt_list = get_valid_idxs(cauchy_lambdas, (1e-2,0.1),5)
+            coef = model.coef_path_[:,alt_list].mean(-1)
+            lambda_vals= np.log(np.array([model.lambda_path_[alt_list]]))
+
+            
+        coefs.append(coef)
         
         if verbose > 0:
             
@@ -251,13 +272,21 @@ def elasticnet(X, y,
             plt.errorbar(np.log(lambda_path),-model.cv_mean_score_,yerr=model.cv_standard_error_*2.576,color='k',alpha=.5,elinewidth=1,capsize=2)
             # plot 99 % confidence interval
             plt.plot(np.log(lambda_path),-model.cv_mean_score_, color='k', alpha = 0.9)
+            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=0.2, lw=1)
             plt.xlabel('log(lambda)',fontsize=20)
             plt.ylabel('cv average MSE',fontsize=20)
             plt.show()
             plt.figure(figsize=(10,8))
             plt.plot(np.log(lambda_path),model.coef_path_[np.random.choice(np.arange(model.coef_path_.shape[0]),150),:].T)
+            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=.2, lw=1)
             plt.xlabel('log(lambda)',fontsize=20)
             plt.ylabel('coefficients',fontsize=20)
+            plt.show()
+            plt.figure(figsize=(10,8))
+            plt.plot(np.log(lambda_path),cauchy_lambdas,color='k')
+            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=0.2, lw=1)
+            plt.xlabel('log(lambda)',fontsize=20)
+            plt.ylabel('cauchy lambda',fontsize=20)
             plt.show()
     
     

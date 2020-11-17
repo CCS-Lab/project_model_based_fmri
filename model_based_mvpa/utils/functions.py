@@ -29,7 +29,7 @@ def array2pindex(array, p_value=0.05, flatten=False):
 
 def prepare_data(root=None, X=None, y=None):
     # input is root
-    if root is Not None:
+    if root is not None:
         _root = Path(root) / 'derivatives/fmriprep/data/'
         X_list = sorted(list(_root.glob('X*.pkl')))
         y_list = sorted(list(_root.glob('y*.pkl')))
