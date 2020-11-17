@@ -4,7 +4,7 @@
 """
 @author: Yedarm Seong
 @contact: mybirth0407@gmail.com
-@last modification: 2020.11.02
+@last modification: 2020.11.16
 """
 
 import numpy as np
@@ -27,19 +27,31 @@ def array2pindex(array, p_value=0.05, flatten=False):
     return ret
 
 
-def prepare_data(root, n=None):
-    if type(root) is str:
-        X_path = root
-    if type(y) is str:
-        y = np.load(y)
+def prepare_data(root=None, X=None, y=None):
+    # input is root
+    if root is Not None:
+        _root = Path(root) / 'derivatives/fmriprep/data/'
+        X_list = sorted(list(_root.glob('X*.pkl')))
+        y_list = sorted(list(_root.glob('y*.pkl')))
 
-    if n is None or n == 0:
-        X_reshaped = X.reshape(-1, X.shape[-1])
-        y_reshaped = y.reshape(-1, y.shape[-1])
+        X = []
+        for partfile in X_list:
+            X.append(np.load(partfile))
+        X = np.concatenate(X)
+
+        y = []
+        for partfile in y_list:
+            y.append(np.load(partfile))
+        y = np.concatenate(y)
+
     else:
-        X_reshaped = X.reshape(n, -1)
-        y_reshaped = y.reshape(n, -1)
+        # input is X, y
+        if type(y) is list:
+            y = np.array(y)
 
-    assert (X_reshaped.shape != y_reshaped.shape)
+    X_reshaped = X.reshape(-1, X.shape[-1])
+    y_reshaped = y.reshape(-1, y.shape[-1])
+
+    assert (X_reshaped.shape != y_reshaped.shape, "X, y data shapes are difficult..")
 
     return X_reshaped, y_reshaped
