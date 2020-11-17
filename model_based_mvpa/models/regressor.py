@@ -246,10 +246,13 @@ def elasticnet(X, y,
          
         coef = model.coef_.ravel()
         lambda_vals= np.log(np.array([model.lambda_best_[0]]))
+        use_cauchy_dist_fitting = False
         if abs(coef).mean() < coef_mean_threshold:
 
             def get_valid_idxs(array, valid_range,n):
-                return np.nonzero((array >= valid_range[0]) & (array < valid_range[1]))[0][:n]
+                idxs = list(np.nonzero((array >= valid_range[0]) & (array < valid_range[1]))[0])
+                idxs.sort()
+                return idxs[:n]
 
             cauchy_lambdas  = []
             for i in range(100):
@@ -258,10 +261,14 @@ def elasticnet(X, y,
                 cauchy_lambdas.append(cauchy.fit(cfs)[1])
             cauchy_lambdas = np.array(cauchy_lambdas)
 
-            alt_list = get_valid_idxs(cauchy_lambdas, (1e-2,0.1),5)
-            coef = model.coef_path_[:,alt_list].mean(-1)
-            lambda_vals= np.log(np.array([model.lambda_path_[alt_list]]))
-
+            alt_list = get_valid_idxs(cauchy_lambdas, (1e-5,0.1),5)
+            
+            if len(alt_list) == 0:
+                use_cauchy_dist_fitting = False
+            else:
+                coef = model.coef_path_[:,alt_list].mean(-1)
+                lambda_vals= np.log(np.array([model.lambda_path_[alt_list]]))
+                use_cauchy_dist_fitting = True
             
         coefs.append(coef)
         
@@ -282,12 +289,13 @@ def elasticnet(X, y,
             plt.xlabel('log(lambda)',fontsize=20)
             plt.ylabel('coefficients',fontsize=20)
             plt.show()
-            plt.figure(figsize=(10,8))
-            plt.plot(np.log(lambda_path),cauchy_lambdas,color='k')
-            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=0.2, lw=1)
-            plt.xlabel('log(lambda)',fontsize=20)
-            plt.ylabel('cauchy lambda',fontsize=20)
-            plt.show()
+            if use_cauchy_dist_fitting and len(alt_list) != 0:
+                plt.figure(figsize=(10,8))
+                plt.plot(np.log(lambda_path),cauchy_lambdas,color='k')
+                plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=0.2, lw=1)
+                plt.xlabel('log(lambda)',fontsize=20)
+                plt.ylabel('cauchy lambda',fontsize=20)
+                plt.show()
     
     
     coefs = np.array(coefs)
