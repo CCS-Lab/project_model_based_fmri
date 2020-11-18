@@ -251,7 +251,7 @@ def elasticnet(X, y,
         
         if verbose > 0:
             
-            logging.info(f'[{i+1}/{N}] - lambda_best: {model.lambda_best_[0]:.03f}/ mse: {error:.04f}')
+            logging.info(f'[{i+1}/{N}] - lambda_best: {lambda_best:.03f}/ mse: {error:.04f}')
             plt.figure(figsize=(10,8))
             plt.errorbar(np.log(lambda_path),-model.cv_mean_score_,yerr=model.cv_standard_error_*2.576,color='k',alpha=.5,elinewidth=1,capsize=2)
             # plot 99 % confidence interval
@@ -262,7 +262,7 @@ def elasticnet(X, y,
             plt.show()
             plt.figure(figsize=(10,8))
             plt.plot(np.log(lambda_path),model.coef_path_[np.random.choice(np.arange(model.coef_path_.shape[0]),150),:].T)
-            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=.5, lw=1)
+            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=.75, lw=1)
             plt.xlabel('log(lambda)',fontsize=20)
             plt.ylabel('coefficients',fontsize=20)
             plt.show()
