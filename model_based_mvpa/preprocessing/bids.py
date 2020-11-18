@@ -37,6 +37,8 @@ def bids_preprocess(root,
                     motion_confounds=['trans_x', 'trans_y', 'trans_z', 'rot_x', 'rot_y', 'rot_z'],
                     p_value=0.05,
                     task_name='task-zero',
+                    ncore=0,
+                    nthread=0,
                     standardize=True):
 
     pbar = tqdm(total=6)
@@ -46,8 +48,6 @@ def bids_preprocess(root,
 
     pbar.set_description('loading bids dataset..'.ljust(50))
     layout = BIDSLayout(root, derivatives=True)
-    # nii_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='bold', extension='nii.gz')
-    # reg_layout = layout.derivatives['fMRIPrep'].get(return_type='file', suffix='regressors', extension='tsv')
     
     subjects = layout.get_subjects()
     n_subject = len(subjects)

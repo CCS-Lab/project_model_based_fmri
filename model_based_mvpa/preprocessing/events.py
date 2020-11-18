@@ -60,7 +60,7 @@ def example_tom_modulation(df_events_list, latent_params):
 
 ################################################################################
 """
-example functions for tom 2007 (ds000005)
+example functions for piva 2019 (ds001882)
 """
 def example_piva_adjust(df_events_list, df_events_info):
     pass
@@ -153,7 +153,7 @@ def preprocess_events(root,
     @signals : BOLD-like signal. shape : subject # x (session # x run #) x time length of scan x voxel #
 """
 
-    ##################################################################################
+################################################################################
     pbar = tqdm(total=6)
     s = time.time()
     
