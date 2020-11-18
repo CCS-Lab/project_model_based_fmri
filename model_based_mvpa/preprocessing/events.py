@@ -129,7 +129,7 @@ def preprocess_events(root,
                       save_path=None,
                       **kwargs # hBayesDM fitting 
                       ):
-"""
+    """
     preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data
     
     ## parameter ##
@@ -151,7 +151,7 @@ def preprocess_events(root,
     @dm_model : hBayesDM model.
     @df_events : integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
     @signals : BOLD-like signal. shape : subject # x (session # x run #) x time length of scan x voxel #
-"""
+    """
 
 ################################################################################
     pbar = tqdm(total=6)

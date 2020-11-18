@@ -30,7 +30,6 @@ import matplotlib.pyplot as plt
 
 import logging
 
-
 logging.basicConfig(level=logging.INFO)
 
 
@@ -216,9 +215,11 @@ def penalized_linear_regression(X, y,
 
 def elasticnet(X, y,
                alpha=0.001,
+               n_splits=5,
                n_jobs=16,
-               max_lambda = 2,
+               max_lambda = 10,
                min_lambda_ratio = 1e-4,
+               lambda_search_num = 100,
                N=1,
                verbose=0,
                max_use_sample_N=30000):
@@ -228,7 +229,7 @@ def elasticnet(X, y,
         
     coefs = []
     
-    lambda_path = np.exp(np.linspace(np.log(max_lambda),np.log(max_lambda*min_lambda_ratio),100))
+    lambda_path = np.exp(np.linspace(np.log(max_lambda),np.log(max_lambda*min_lambda_ratio),lambda_search_num))
 
     for i in range(N):
         ids = np.arange(X.shape[0])
@@ -237,19 +238,35 @@ def elasticnet(X, y,
             ids = ids[:max_use_sample_N]
         X_data = X[ids]
         y_data  = y[ids]
-        model = ElasticNet(alpha = alpha, n_jobs =n_jobs,scoring='mean_squared_error',lambda_path=lambda_path)
+        model = ElasticNet(alpha = alpha, n_jobs =n_jobs,scoring='mean_squared_error',lambda_path=lambda_path,n_splits=n_splits)
         model = model.fit(X_data,y_data)
         y_pred = model.predict(X_data).flatten()
         error = mean_squared_error(y_pred, y_data)
         
-        coefs.append(model.coef_.ravel())
+        lambda_best_idx = model.cv_mean_score_.argmax()
+        lambda_best = lambda_path[lambda_best_idx]
+        coef = model.coef_path_[:,lambda_best_idx]
+        lambda_vals= np.log(np.array([lambda_best]))
+        coefs.append(coef)
         
         if verbose > 0:
-            logging.info(f'[{i+1}/{N}] - lambda_best: {model.lambda_best_[0]:.03f}/ mse: {error:.04f}')
-            plt.plot(lambda_path,model.cv_mean_score_)
-            plt.xlabel('lambda')
-            plt.ylabel('cv_mean_score')
+            
+            logging.info(f'[{i+1}/{N}] - lambda_best: {lambda_best:.03f}/ mse: {error:.04f}')
+            plt.figure(figsize=(10,8))
+            plt.errorbar(np.log(lambda_path),-model.cv_mean_score_,yerr=model.cv_standard_error_*2.576,color='k',alpha=.5,elinewidth=1,capsize=2)
+            # plot 99 % confidence interval
+            plt.plot(np.log(lambda_path),-model.cv_mean_score_, color='k', alpha = 0.9)
+            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=0.2, lw=1)
+            plt.xlabel('log(lambda)',fontsize=20)
+            plt.ylabel('cv average MSE',fontsize=20)
             plt.show()
+            plt.figure(figsize=(10,8))
+            plt.plot(np.log(lambda_path),model.coef_path_[np.random.choice(np.arange(model.coef_path_.shape[0]),150),:].T)
+            plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=.75, lw=1)
+            plt.xlabel('log(lambda)',fontsize=20)
+            plt.ylabel('coefficients',fontsize=20)
+            plt.show()
+            
     
     coefs = np.array(coefs)
     
