@@ -23,7 +23,7 @@ from .fMRI import *
 import logging
 
 
-bids.config.set_option('extension_initial_dot', True)
+bids.config.set_option("extension_initial_dot", True)
 logging.basicConfig(level=logging.INFO)
 
 
@@ -34,9 +34,9 @@ def bids_preprocess(root,
                     zoom=(2, 2, 2),
                     smoothing_fwhm=6,
                     interpolation_func=np.mean,
-                    motion_confounds=['trans_x', 'trans_y', 'trans_z', 'rot_x', 'rot_y', 'rot_z'],
+                    motion_confounds=["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"],
                     p_value=0.05,
-                    task_name='task-zero',
+                    task_name="task-zero",
                     ncore=0,
                     nthread=0,
                     standardize=True):
@@ -46,7 +46,7 @@ def bids_preprocess(root,
 ################################################################################
 # load bids layout
 
-    pbar.set_description('loading bids dataset..'.ljust(50))
+    pbar.set_description("loading bids dataset..".ljust(50))
     layout = BIDSLayout(root, derivatives=True)
     
     subjects = layout.get_subjects()
@@ -57,11 +57,11 @@ def bids_preprocess(root,
 ################################################################################
 # make masked data
 
-    pbar.set_description('making custom masked data..'.ljust(50))
+    pbar.set_description("making custom masked data..".ljust(50))
     root = Path(root)
     
     if mask_path is None:
-        mask_path = Path(layout.derivatives['fMRIPrep'].root) / 'mask'
+        mask_path = Path(layout.derivatives["fMRIPrep"].root) / "mask"
     
     masked_data, masker, m_true = custom_masking(
         mask_path, p_value, zoom,
@@ -72,43 +72,40 @@ def bids_preprocess(root,
 ################################################################################
 # setting parameter
 
-    pbar.set_description('image preprocessing - parameter setting..'.ljust(50))
+    pbar.set_description("image preprocessing - parameter setting..".ljust(50))
 
     params = []
     for subject in subjects:
-        nii_layout = layout.derivatives['fMRIPrep'].get(
-            subject=subject, return_type='file', suffix='bold',
-            extension='nii.gz'
+        nii_layout = layout.derivatives["fMRIPrep"].get(
+            subject=subject, return_type="file", suffix="bold",
+            extension="nii.gz"
         )
-        reg_layout = layout.derivatives['fMRIPrep'].get(
-            subject=subject, return_type='file', suffix='regressors',
-            extension='tsv'
+        reg_layout = layout.derivatives["fMRIPrep"].get(
+            subject=subject, return_type="file", suffix="regressors",
+            extension="tsv"
         )
 
         param = [nii_layout, reg_layout, motion_confounds,
                  masker, masked_data, subject]
         params.append(param)
 
-    assert len(params) == n_subject, 'length of params list and the number of subjects are not validate'
+    assert len(params) == n_subject, "length of params list and the number of subjects are not validate"
     pbar.update(1)
 ################################################################################
 # create path for data
 
-    pbar.set_description('image preprocessing - making path..'.ljust(50))
+    pbar.set_description("image preprocessing - making path..".ljust(50))
     if save_path is None:
-        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+        sp = Path(layout.derivatives["fMRIPrep"].root) / "mvpa"
     else:
         sp = Path(save_path)
         
-    if not sp.exists():
-        sp.mkdir()
-
-    nib.save(masked_data, sp / 'masked_data.nii.gz')
+    nib.save(masked_data, sp / "masked_data.nii.gz")
     pbar.update(1)
 ################################################################################
 # image preprocessing using mutli process and thread
 
-    pbar.set_description('image preprocessing - fMRI data..'.ljust(50))
+    pbar.set_description("image preprocessing - fMRI data..".ljust(50))
     X = []
 
     # todo: 
@@ -127,22 +124,22 @@ def bids_preprocess(root,
 
             for future in as_completed(future_result):
                 data, subject = future.result()
-                np.save(sp / f'X_{subject}.npy', data)
+                np.save(sp / f"X_{subject}.npy", data)
                 X.append(data)
             pbar.set_description(
-                f'image preprocessing - fMRI data {i+1} / {len(params_chunks)}..'.ljust(50))
+                f"image preprocessing - fMRI data {i+1} / {len(params_chunks)}..".ljust(50))
 
     X = np.array(X)
     pbar.update(1)
 ################################################################################
 # elapsed time check
 
-    pbar.set_description('bids preprocessing done!'.ljust(50))
+    pbar.set_description("bids preprocessing done!".ljust(50))
     pbar.update(1)
 
     e = time.time()
-    logging.info(f'time elapsed: {(e-s) / 60:.2f} minutes')
-    logging.info(f'result\nmasking data shape: {masked_data.shape}\n'
-               + f'number of voxels: {m_true.shape}')
+    logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
+    logging.info(f"result\nmasking data shape: {masked_data.shape}\n"
+               + f"number of voxels: {m_true.shape}")
 
     return X, masked_data, layout

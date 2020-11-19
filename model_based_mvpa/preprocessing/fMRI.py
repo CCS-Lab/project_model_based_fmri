@@ -32,14 +32,13 @@ def custom_masking(mask_path, p_value, zoom,
                    flatten=False):
 
     if mask_path is None:
-        #assert (mask_path is None)
         mask_files = []
     elif type(mask_path) is str:
         mask_files = [mask_path]
     else:
         if type(mask_path) is not type(Path()):
             mask_path = Path(mask_path)
-        mask_files = [file for file in mask_path.glob('*.nii.gz')]
+        mask_files = [file for file in mask_path.glob("*.nii.gz")]
 
     #image_sample = nib.load(mask_files[0])
     image_sample = load_mni152_brain_mask()
@@ -71,7 +70,7 @@ def image_preprocess(params):
 
     preprocessed_images = []
     if confounds_path is not None:
-        confounds = pd.read_table(confounds_path, sep='\t')
+        confounds = pd.read_table(confounds_path, sep="\t")
         confounds = confounds[motion_confounds]
         confounds = confounds.to_numpy()
     else:

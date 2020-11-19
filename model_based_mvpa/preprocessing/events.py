@@ -78,8 +78,8 @@ def _get_individual_params(subject_id, all_individual_params, param_names):
         
     return {name : ind_pars[name] for name in param_names}
 
-    
-def _get_time_mask(cond_func, df_events, time_length, t_r, use_duration=False):
+
+def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     df_events = df_events.sort_values(by='onset')
     onsets = df_events['onset'].to_numpy()
     if use_duration:
@@ -87,7 +87,7 @@ def _get_time_mask(cond_func, df_events, time_length, t_r, use_duration=False):
     else:
         durations = np.array(list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
     
-    mask = [cond_func(row) for row in df_events.rows()]
+    mask = [condition(row) for row in df_events.rows()]
     time_mask = np.zeros(time_length)
     
     for do_use, onset, duration in zip(mask, onsets, durations):
@@ -97,13 +97,13 @@ def _get_time_mask(cond_func, df_events, time_length, t_r, use_duration=False):
     return time_mask
 
 
-def _preprocess_event(prep_func, cond_func, df_events, event_infos, **kwargs):
+def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
-    for _,row in df_events.iterrows():
-        if cond_func is not None and cond_func(row):
-            new_datarows.append(prep_func(row,event_infos, **kwargs))
+    for row in df_events.rows():
+        if condition is not None and condition(row):
+            new_datarows.append(preprocess(row,event_infos, **kwargs))
     
     new_datarows = pd.concat(
         new_datarows, axis=1,
@@ -114,17 +114,17 @@ def _preprocess_event(prep_func, cond_func, df_events, event_infos, **kwargs):
 
 
 def preprocess_events(root, 
+                      hrf_model="glover",
+                      normalizer="minmax",
                       dm_model=None,
                       latent_func=None, 
                       params_name=None,
                       layout=None,
-                      prep_func=lambda x: x,
-                      cond_func=lambda _: True,
+                      preprocess=lambda x: x,
+                      condition=lambda _: True,
                       df_events=None,
                       all_individual_params=None,
                       use_duration=False,
-                      hrf_model='glover',
-                      normalizer='minmax',
                       save=True,
                       save_path=None,
                       **kwargs # hBayesDM fitting 
@@ -132,14 +132,14 @@ def preprocess_events(root,
     """
     preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data
     
-    ## parameter ##
+    ## parameters ##
     @root : root directory of BIDS layout
     @dm_model : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
     @latent_func : user defined function for calculating latent process. f(single_row_data_frame, model_parameter) -> single_row_data_frame_with_latent_state
     @params_name : model parameter name specification. should be same as parameter in model, and latent_func arguments
     @layout : BIDSLayout by bids package. if not provided, it will be obtained using root info.
-    @prep_func : user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
-    @cond_func : user defined function for filtering behavioral data. f(single_row_data_frame) -> boolean
+    @preprocess : user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
+    @condition : user defined function for filtering behavioral data. f(single_row_data_frame) -> boolean
     @df_events : pd.DataFrame with 'onset', 'duration', 'modulation'. if not provided, it will be obtained by applyng hBayesDM modeling and user defined functions.
     @all_individual_params : pd.DataFrame with params_name columns and corresponding values for each subject if not provided, it will be obtained by fitting hBayesDM model
     @use_duration : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
@@ -158,7 +158,7 @@ def preprocess_events(root,
     s = time.time()
     
     if save_path is None:
-        sp = Path(layout.derivatives['fMRIPrep'].root) / 'data'
+        sp = Path(layout.derivatives["fMRIPrep"].root) / "data"
     else:
         sp = Path(save_path)
     
@@ -169,54 +169,53 @@ def preprocess_events(root,
 # load bids layout
 
     if layout is None:
-        pbar.set_description('loading bids dataset..'.ljust(50))
+        pbar.set_description("loading bids dataset..".ljust(50))
         layout = BIDSLayout(root, derivatives=True)
     else:
-        pbar.set_description('loading layout..'.ljust(50))
+        pbar.set_description("loading layout..".ljust(50))
 
     t_r = layout.get_tr()
-    events = layout.get(suffix='events', extension='tsv')
+    events = layout.get(suffix="events", extension="tsv")
     image_sample = nib.load(
-        layout.derivatives['fMRIPrep'].get(
-            return_type='file',
-            suffix='bold',
-            extension='nii.gz')[0]
+        layout.derivatives["fMRIPrep"].get(
+            return_type="file",
+            suffix="bold",
+            extension="nii.gz")[0]
     )
     n_scans = image_sample.shape[-1]
     df_events_list = [event.get_df() for event in events]
     event_infos_list = [event.get_entities() for event in events]
     pbar.update(1)
 ################################################################################
-    
 
-    pbar.set_description('adjusting event file columns..'.ljust(50))
-    
+    pbar.set_description("adjusting event file columns..".ljust(50))
+
     df_events_list = [
         _preprocess_event(
-            prep_func, cond_func, df_events, event_infos
+            preprocess, condition, df_events, event_infos
         ) for df_events, event_infos in zip(df_events_list, event_infos_list)
     ]
     pbar.update(1)
 ################################################################################
 
-    pbar.set_description('calculating time mask..'.ljust(50))
+    pbar.set_description("calculating time mask..".ljust(50))
     
     time_masks = []
-    for name0, group0 in pd.concat(df_events_list).groupby(['subjID']):
+    for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
         time_mask_subject = []
-        for name1, group1 in group0.groupby(['run']):
-            time_mask_subject.append(_get_time_mask(cond_func, group1 , n_scans, t_r, use_duration))
+        for name1, group1 in group0.groupby(["run"]):
+            time_mask_subject.append(_get_time_mask(condition, group1 , n_scans, t_r, use_duration))
         time_masks.append(time_mask_subject)
         
     time_masks = np.array(time_masks)
     
     if save:
-        np.save(sp / 'time_mask.npy', time_masks)
+        np.save(sp / "time_mask.npy", time_masks)
         
     pbar.update(1)
-    pbar.set_description('time mask preproecssing done!'.ljust(50))
+    pbar.set_description("time mask preproecssing done!".ljust(50))
 ################################################################################
-    
+
     if df_events is None:
         
         assert(latent_func is not None)
@@ -226,26 +225,25 @@ def preprocess_events(root,
             
             assert(dm_model is not None)
             
-            pbar.set_description('hbayesdm doing (model: %s)..'.ljust(50) % dm_model)
+            pbar.set_description("hbayesdm doing (model: %s)..".ljust(50) % dm_model)
             dm_model = getattr(hbayesdm.models, dm_model)(
                 data=pd.concat(df_events_list), **kwargs)
             pbar.update(1)
             all_individual_params = dm_model.all_ind_pars
 
             if save:
-                all_individual_params.to_csv(sp / 'all_individual_params.tsv', sep="\t")
+                all_individual_params.to_csv(sp / "all_individual_params.tsv", sep="\t")
                 
-            # all_individual_params = pd.read_csv(sp / 'all_individual_params.tsv',sep = '\t',index_col='Unnamed: 0')
         else:
             pbar.update(1)
         
-        pbar.set_description('calculating modulation..'.ljust(50))
+        pbar.set_description("calculating modulation..".ljust(50))
 
         df_events_list =[
             _preprocess_event(
-                latent_func, cond_func, df_events, event_infos,
+                latent_func, condition, df_events, event_infos,
                     **_get_individual_params(
-                        event_infos['subject'], all_individual_params,params_name)
+                        event_infos["subject"], all_individual_params,params_name)
                     ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
         
         df_events = pd.concat(df_events_list)
@@ -254,14 +252,14 @@ def preprocess_events(root,
         pbar.update(2)
 ################################################################################
 
-    pbar.set_description('modulation signal making..'.ljust(50))
+    pbar.set_description("modulation signal making..".ljust(50))
     frame_times = t_r * (np.arange(n_scans) + t_r/2)
 
     signals = []
-    for name0, group0 in df_events.groupby(['subjID']):
+    for name0, group0 in df_events.groupby(["subjID"]):
         signal_subject = []
-        for name1, group1 in group0.groupby(['run']):
-            exp_condition = group1[['onset', 'duration', 'modulation']].to_numpy().T
+        for name1, group1 in group0.groupby(["run"]):
+            exp_condition = group1[["onset", "duration", "modulation"]].to_numpy().T
             exp_condition = exp_condition.astype(float)
             signal, name = compute_regressor(
                 exp_condition=exp_condition,
@@ -272,9 +270,12 @@ def preprocess_events(root,
         signal_subject = np.array(signal_subject)
         reshape_target = signal_subject.shape
         
-        if normalizer == 'minmax':
-            normalized_signal = minmax_scale(signal_subject.flatten(), feature_range=(-1,1), axis=0, copy=True)
-        if normalizer == 'standard':
+        if normalizer == "minmax":
+            normalized_signal = minmax_scale(
+                signal_subject.flatten(), feature_range=(-1, 1), axis=0, copy=True
+            )
+
+        if normalizer == "standard":
             normalized_signal = zscore(signal_subject.flatten(),axis=None)
         else:
             normalized_signal = zscore(signal_subject.flatten(),axis=None)
@@ -286,16 +287,16 @@ def preprocess_events(root,
 ################################################################################
 
     if save:
-        np.save(sp / 'y.npy', signals)
+        np.save(sp / "y.npy", signals)
         
     pbar.update(1)
 
 ################################################################################
 # elapsed time check
-    pbar.set_description('events preproecssing done!'.ljust(50))
+    pbar.set_description("events preproecssing done!".ljust(50))
     
     e = time.time()
-    logging.info(f'time elapsed: {(e-s) / 60:.2f} minutes')
+    logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
     
     
     return dm_model, df_events, signals, time_masks

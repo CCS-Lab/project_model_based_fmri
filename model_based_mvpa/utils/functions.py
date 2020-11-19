@@ -28,8 +28,14 @@ def array2pindex(array, p_value=0.05, flatten=False):
 
 
 def prepare_data(root=None, X=None, y=None):
-    # input is root
-    if root is not None:
+    if root is None:
+        if type(y) is list:
+            y = np.array(y)
+        elif type(y) is np.array:
+            pass
+        else:
+            assert ()
+    else:
         _root = Path(root) / 'derivatives/fmriprep/data/'
         X_list = sorted(list(_root.glob('X*.pkl')))
         y_list = sorted(list(_root.glob('y*.pkl')))
@@ -43,11 +49,6 @@ def prepare_data(root=None, X=None, y=None):
         for partfile in y_list:
             y.append(np.load(partfile))
         y = np.concatenate(y)
-
-    else:
-        # input is X, y
-        if type(y) is list:
-            y = np.array(y)
 
     X_reshaped = X.reshape(-1, X.shape[-1])
     y_reshaped = y.reshape(-1, y.shape[-1])
