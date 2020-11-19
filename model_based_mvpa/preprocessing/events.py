@@ -35,48 +35,86 @@ logging.basicConfig(level=logging.INFO)
 """
 example functions for tom 2007 (ds000005)
 """
-def example_tom_adjust(df_events_list, df_events_info):
-    new_df_list = df_events_list.copy()
-    for i in range(len(new_df_list)):
-        new_df_list[i]['run'] = df_events_info[i]['run']
-        new_df_list[i]['subjID'] = df_events_info[i]['subject']
-        new_df_list[i]['gamble'] = new_df_list[i]['respcat'].apply(lambda x: 1 if x == 1 else 0)
-        new_df_list[i]['cert'] = 0 # certain..?
-    return new_df_list
+
+def example_prep_func_tom_mg(row,info):
+
+    row['subjID'] = info['subject']
+    row['run'] = info['run']
+    
+    row['gamble'] = 1 if row['respcat'] ==1 else 0
+    row['cert'] = 0
+    
+    return row
 
 
-def example_tom_modulation(df_events_list, latent_params):
-    new_df_list = df_events_list.copy()
-    for i in range(len(new_df_list)):
-        idx = new_df_list[i].iloc[0]['subjID']
-        new_df_list[i]['rho'] = latent_params.loc[idx]['rho']
-        new_df_list[i]['lambda'] = latent_params.loc[idx]['lambda']
-        new_df_list[i]['modulation'] = \
-            (new_df_list[i]['gain'] ** new_df_list[i]['rho']) \
-            - (new_df_list[i]['lambda'] * (new_df_list[i]['loss'] ** new_df_list[i]['rho']))
-        
-    return new_df_list
+def example_cond_func_tom_mg(row):
+    return True
+
+
+params_name = ['row','lambda','tau']
+param_rename = {'lambda':'_lambda'}
+dm_model = 'ra_prospect'
+
+def example_latent_func_piva_dd(row,info,rho, _lambda):
+    
+    utility = (row['gain'] ** rho) \
+            - (_lambda * (row['loss'] ** rho))
+    row['modulation'] = utility
+    
+    return row
+
+
 ################################################################################
 
 ################################################################################
 """
 example functions for piva 2019 (ds001882)
 """
-def example_piva_adjust(df_events_list, df_events_info):
-    pass
+def example_prep_func_piva_dd(row,info):
 
-def example_piva_modulation(df_events_list, df_events_info):
-    pass
+    row['subjID'] = info['subject']
+    row['run'] = info['run']
+    
+    if row['delay_left'] >= row['delay_right']:
+        row['delay_later'] = row['delay_left']
+        row['delay_sooner'] = row['delay_right']
+        row['amount_later'] = row['money_left']
+        row['amount_sooner'] = row['money_right']
+        row['choice'] = 1 if row['choice'] == 1 else 0
+    else:
+        row['delay_later'] = row['delay_right']
+        row['delay_sooner'] = row['delay_left']
+        row['amount_later'] = row['money_right']
+        row['amount_sooner'] = row['money_left']
+        row['choice'] = 1 if row['choice'] == 2 else 0
+        
+    return row
+
+
+def example_cond_func_piva_dd(row):
+    return row['agent']==0
+
+params_name = ['k','beta']
+dm_model = 'dd_hyperbolic'
+
+def example_latent_func_piva_dd(row,info,k,beta):
+    
+    ev_later   = row['amount_later'] / (1 + k * row['delay_later'])
+    ev_sooner  = row['amount_sooner'] / (1 + k * row['delay_sooner'])
+    utility = ev_later - ev_sooner
+    row['modulation'] = utility
+    
+    return row
 ################################################################################
 
 
-def _get_individual_params(subject_id, all_individual_params, param_names):
+def _get_individual_params(subject_id, all_individual_params, param_names, param_rename):
     try:
         ind_pars = all_individual_params.loc[subject_id]
     except:
         ind_pars = all_individual_params.loc[int(subject_id)]
         
-    return {name : ind_pars[name] for name in param_names}
+    return {param_rename[name] : ind_pars[name] for name in param_names}
 
 
 def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
@@ -119,6 +157,7 @@ def preprocess_events(root,
                       dm_model=None,
                       latent_func=None, 
                       params_name=None,
+                      param_rename=None,
                       layout=None,
                       preprocess=lambda x: x,
                       condition=lambda _: True,
@@ -239,11 +278,18 @@ def preprocess_events(root,
         
         pbar.set_description("calculating modulation..".ljust(50))
 
+        if param_rename is None:
+            param_rename = {}
+        
+        for name in params_name:
+            if name not in param_rename.key():
+                param_rename[name] = name
+            
         df_events_list =[
             _preprocess_event(
                 latent_func, condition, df_events, event_infos,
                     **_get_individual_params(
-                        event_infos["subject"], all_individual_params,params_name)
+                        event_infos["subject"], all_individual_params,params_name, param_rename)
                     ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
         
         df_events = pd.concat(df_events_list)
