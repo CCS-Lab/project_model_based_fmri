@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 
 import logging
 
+DEFAULT_SAVE_PATH_TEMP = 'temp'
 logging.basicConfig(level=logging.INFO)
 
 
@@ -48,6 +49,7 @@ def mlp_regression(X, y, # input data
                    verbose=0,
                    optimizer="adam",
                    loss="mse",
+                   layout=None,
                    save=False,
                    save_path=None,
                    n_samples=30000):
@@ -151,7 +153,7 @@ def mlp_regression(X, y, # input data
         val_generator = loader.DataGenerator(X_test, y_test, batch_size, shuffle=False)
         
         if save_path is None:
-            sp = Path(os.getcwd())
+            sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_PATH_TEMP
         else:
             sp = Path(save_path)
         
@@ -195,9 +197,9 @@ def mlp_regression(X, y, # input data
         # results = model.evaluate(X_test, y_test)
         y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
-
+        actual_epoch = len(model.history['val_loss'])
         if verbose > 0:
-            logging.info(f"[{i}/{N}] - {loss}: {error:.04f}")
+            logging.info(f"[{i}/{N}] - val_{loss}: {error:.04f}, epoch:{actual_epoch}")
         
         # extracting voxel-wise mapped weight (coefficient) map
         weights = []
@@ -211,8 +213,6 @@ def mlp_regression(X, y, # input data
             coef = np.matmul(coef,weight)
         coefs.append(coef.ravel())
         
-        if not save:
-            os.remove(best_model_filepath)
             
     coefs = np.array(coefs)
     
@@ -231,6 +231,7 @@ def penalized_linear_regression(X, y, # input data
                                 verbose=0,
                                 optimizer="adam",
                                 loss="mse",
+                                layout=None,
                                 save=False,
                                 save_path=None,
                                 n_samples=30000
@@ -327,7 +328,7 @@ def penalized_linear_regression(X, y, # input data
         val_generator = loader.DataGenerator(X_test, y_test, batch_size, shuffle=False)
 
         if save_path is None:
-            sp = Path(os.getcwd())
+            sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_PATH_TEMP
         else:
             sp = Path(save_path)
         
@@ -370,15 +371,14 @@ def penalized_linear_regression(X, y, # input data
         
         y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
-
+        actual_epoch = len(model.history['val_loss'])
+        
         if verbose > 0:
-            logging.info(f'[{i}/{N}] - mse: {error:.04f}')
+            logging.info(f"[{i}/{N}] - val_{loss}: {error:.04f}, epoch:{actual_epoch}")
         
         # extracting coefficients
         coef = model.layers[0].get_weights()[0] 
         coefs.append(coef.ravel())
-        if not save:
-            os.remove(best_model_filepath)
         
     coefs = np.array(coefs)
     

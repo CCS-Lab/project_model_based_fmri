@@ -23,7 +23,7 @@ from ..utils import func
 
 import logging
 
-
+DEFAULT_SAVE_PATH_y = 'mvpa'
 logging.basicConfig(level=logging.INFO)
 
 
