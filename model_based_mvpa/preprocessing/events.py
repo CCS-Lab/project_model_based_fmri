@@ -374,7 +374,7 @@ def preprocess_events(root,
     for name0, group0 in df_events.groupby(["subjID"]):
         signal_subject = []
         
-        if 'session' in df_events.columns and len(df_events['session'].unique()) > 1:
+        if 'session' in group0.columns and len(group0['session'].unique()) > 1:
             # the case with session 
             for _, groupS in group0.groupby(["session"]):
                 for name1, group1 in groupS.groupby(["run"]):
