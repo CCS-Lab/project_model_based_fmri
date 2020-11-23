@@ -38,9 +38,12 @@ example functions for tom 2007 (ds000005)
 
 def example_prep_func_tom_mg(row,info):
 
+    ## mandatory field ##
     row['subjID'] = info['subject']
-    row['run'] = info['run']
+    row['run'] = info['run'] 
+    #row['session'] = info['session'] # if applicable
     
+    ## user defined mapping ##
     row['gamble'] = 1 if row['respcat'] ==1 else 0
     row['cert'] = 0
     
@@ -69,9 +72,12 @@ example functions for piva 2019 (ds001882)
 """
 def example_prep_func_piva_dd(row,info):
 
+    ## mandatory field ##
     row['subjID'] = info['subject']
-    row['run'] = f"{info['session']}_{info['run']}" # please incorporate session info if there is.
+    row['run'] = info['run']
+    row['session'] = info['session'] # if applicable
     
+    ## user defined mapping ##
     if row['delay_left'] >= row['delay_right']:
         row['delay_later'] = row['delay_left']
         row['delay_sooner'] = row['delay_right']
@@ -103,8 +109,18 @@ def example_latent_func_piva_dd(row,param_dict):
     return row
 ################################################################################
 
+def default_prep_func(row,info):
+
+    ## mandatory field ##
+    row['subjID'] = info['subject']
+    row['run'] = info['run']
+    row['session'] = info['session'] # if applicable
+    
+    return row
 
 def _get_individual_params(subject_id, all_individual_params):
+    
+    # get individual parameter dictionary
     try:
         ind_pars = all_individual_params.loc[subject_id]
     except:
@@ -114,6 +130,18 @@ def _get_individual_params(subject_id, all_individual_params):
 
 
 def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
+    
+    # get binary mask indicating time points in use
+    
+    # condition : func : row --> boolean, to indicate if use the row or not 
+    # df_events : dataframe for rows of one 'run' event data
+    # time_length : the length of target BOLD signal 
+    # t_r : time resolution
+    # use_duration : boolean. if True, use 'duration' column for masking, 
+                            # else use the gap between consecutive onsets as duration
+        
+    # return : time_mask : binary array. shape : time_length
+    
     df_events = df_events.sort_values(by='onset')
     onsets = df_events['onset'].to_numpy()
     if use_duration:
@@ -121,7 +149,7 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     else:
         durations = np.array(list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
     
-    mask = [condition(row) for row in df_events.rows()]
+    mask = [condition(row) for _,row in df_events.iterrows()]
     time_mask = np.zeros(time_length)
     
     for do_use, onset, duration in zip(mask, onsets, durations):
@@ -132,10 +160,24 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
 
 
 def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
+    
+    # preprocess dataframe of events of single 'run' 
+    
+    # preprocess : func : row --> row. converting row data to new one to match the name of value with hBayesDM.
+                  # preprocess must include the belows as the original event file would not have subject and run info.
+                            #row['subjID'] = info['subject'] 
+                            #row['run'] = f"{info['session']}_{info['run']}" (or row['run']=info['run'])
+    # condition : func : row --> boolean, to indicate if use the row or not 
+    # event_infos : a dictionary containing  'subject', 'run', (and 'session' if applicable)
+    # df_events : dataframe for rows of one 'run' event data
+    
+    # return : new_datarows, a dataframe with preprocessed rows
+                                        
+    
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
-    for row in df_events.rows():
+    for _,row in df_events.iterrows():
         if condition is not None and condition(row):
             new_datarows.append(preprocess(row,event_infos, **kwargs))
     
@@ -147,10 +189,20 @@ def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
     return new_datarows
 
 def _preprocess_event_latentstate(latent_func, condition, df_events, param_dict):
+    
+    # add latent state value to for each row of dataframe of single 'run'  
+    
+    # latent_func : func : row, param_dict --> row, function for calcualte latent state (or parameteric modulation value) 
+    # condition : func : row --> boolean, to indicate if use the row or not 
+    # df_events : dataframe for rows of one 'run' event data
+    # param_dict : a dictionary containing  model parameter value
+    
+    # return : new_datarows, a dataframe with latent state value
+    
     new_datarows = []
     df_events = df_events.sort_values(by='onset')
     
-    for row in df_events.rows():
+    for _,row in df_events.iterrows():
         if condition is not None and condition(row):
             new_datarows.append(latent_func(row, param_dict))
     
@@ -166,10 +218,8 @@ def preprocess_events(root,
                       normalizer="minmax",
                       dm_model=None,
                       latent_func=None, 
-                      params_name=None,
-                      param_rename=None,
                       layout=None,
-                      preprocess=lambda x: x,
+                      preprocess=default_prep_func,
                       condition=lambda _: True,
                       df_events=None,
                       all_individual_params=None,
@@ -185,8 +235,6 @@ def preprocess_events(root,
     @root : root directory of BIDS layout
     @dm_model : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
     @latent_func : user defined function for calculating latent process. f(single_row_data_frame, model_parameter) -> single_row_data_frame_with_latent_state
-    @params_name : model parameter name specification. should be same as parameter in model, and latent_func arguments
-    @param_rename : parameter re-naming if the pre defined name is incompatible with Python grammar. e.g. lambda is not allowed for argument name in python. 
     @layout : BIDSLayout by bids package. if not provided, it will be obtained using root info.
     @preprocess : user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
     @condition : user defined function for filtering behavioral data. f(single_row_data_frame) -> boolean
@@ -241,7 +289,6 @@ def preprocess_events(root,
     pbar.update(1)
 ################################################################################
     
-    # adjust each row of dataframe to using preprocess
     pbar.set_description("adjusting event file columns..".ljust(50))
 
     df_events_list = [
@@ -251,14 +298,21 @@ def preprocess_events(root,
     ]
     pbar.update(1)
 ################################################################################
-
+    
     pbar.set_description("calculating time mask..".ljust(50))
     
     time_masks = []
     for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
         time_mask_subject = []
-        for name1, group1 in group0.groupby(["run"]):
-            time_mask_subject.append(_get_time_mask(condition, group1 , n_scans, t_r, use_duration))
+        if 'session' in group0.columns and len(group0['session'].unique()) > 1:
+            # the case with session 
+            for _, groupS in group0.groupby(["session"]):
+                for name1, group1 in group0.groupby(["run"]):
+                    time_mask_subject.append(_get_time_mask(condition, group1 , n_scans, t_r, use_duration))
+        else:       
+            for name1, group1 in group0.groupby(["run"]):
+                time_mask_subject.append(_get_time_mask(condition, group1 , n_scans, t_r, use_duration))
+                
         time_masks.append(time_mask_subject)
         
     time_masks = np.array(time_masks)
@@ -273,7 +327,6 @@ def preprocess_events(root,
     if df_events is None:
         
         assert(latent_func is not None)
-        assert(params_name is not None)
         
         if all_individual_params is None:
             
@@ -317,16 +370,30 @@ def preprocess_events(root,
     frame_times = t_r * (np.arange(n_scans) + t_r/2)
 
     signals = []
+    
     for name0, group0 in df_events.groupby(["subjID"]):
         signal_subject = []
-        for name1, group1 in group0.groupby(["run"]):
-            exp_condition = group1[["onset", "duration", "modulation"]].to_numpy().T
-            exp_condition = exp_condition.astype(float)
-            signal, name = compute_regressor(
-                exp_condition=exp_condition,
-                hrf_model=hrf_model,
-                frame_times=frame_times)
-            signal_subject.append(signal)
+        
+        if 'session' in df_events.columns and len(df_events['session'].unique()) > 1:
+            # the case with session 
+            for _, groupS in group0.groupby(["session"]):
+                for name1, group1 in groupS.groupby(["run"]):
+                    exp_condition = group1[["onset", "duration", "modulation"]].to_numpy().T
+                    exp_condition = exp_condition.astype(float)
+                    signal, name = compute_regressor(
+                        exp_condition=exp_condition,
+                        hrf_model=hrf_model,
+                        frame_times=frame_times)
+                    signal_subject.append(signal)
+        else:
+            for name1, group1 in group0.groupby(["run"]):
+                exp_condition = group1[["onset", "duration", "modulation"]].to_numpy().T
+                exp_condition = exp_condition.astype(float)
+                signal, name = compute_regressor(
+                    exp_condition=exp_condition,
+                    hrf_model=hrf_model,
+                    frame_times=frame_times)
+                signal_subject.append(signal)
         
         signal_subject = np.array(signal_subject)
         reshape_target = signal_subject.shape
