@@ -73,7 +73,7 @@ example functions for piva 2019 (ds001882)
 def example_prep_func_piva_dd(row,info):
 
     row['subjID'] = info['subject']
-    row['run'] = info['run']
+    row['run'] = f"{info['session']}_{info['run']}" # please incorporate session info if there is.
     
     if row['delay_left'] >= row['delay_right']:
         row['delay_later'] = row['delay_left']
@@ -223,11 +223,15 @@ def preprocess_events(root,
             extension="nii.gz")[0]
     )
     n_scans = image_sample.shape[-1]
+    
+    # collecting dataframe data from event files in BIDS layout
     df_events_list = [event.get_df() for event in events]
+    # event_info such as id number for subject, session, run 
     event_infos_list = [event.get_entities() for event in events]
     pbar.update(1)
 ################################################################################
-
+    
+    # adjust each row of dataframe to using preprocess
     pbar.set_description("adjusting event file columns..".ljust(50))
 
     df_events_list = [
