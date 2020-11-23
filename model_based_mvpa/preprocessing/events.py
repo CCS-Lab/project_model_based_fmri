@@ -233,6 +233,13 @@ def preprocess_events(root,
     """
     preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data
     
+    user can provide precalculated behaviral data through "df_events" argument, 
+        which is the DataFrame with subjID, run, onset, duration, and modulation. (also session if applicable)
+    
+    if not, it will calculate latent process by using hierarchical Bayesian modeling using "hBayesDM" package. 
+    
+    user also can provide precalculated individual model parameter values, through "all_individual_params" argument. 
+    
     ## parameters ##
     @root : root directory of BIDS layout
     @dm_model : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
@@ -386,6 +393,13 @@ def preprocess_events(root,
     frame_times = t_r * (np.arange(n_scans) + t_r/2)
 
     signals = []
+    
+    # sanity check
+    assert('subjID' in df_events.colums)
+    assert('run' in df_events.colums)
+    assert('onset' in df_events.columns)
+    assert('duration' in df_events.colums)
+    assert('modulation' in df_events.colums)
     
     for name0, group0 in df_events.groupby(["subjID"]):
         signal_subject = []
