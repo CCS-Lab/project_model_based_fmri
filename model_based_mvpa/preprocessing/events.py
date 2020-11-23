@@ -176,6 +176,7 @@ def preprocess_events(root,
     @dm_model : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
     @latent_func : user defined function for calculating latent process. f(single_row_data_frame, model_parameter) -> single_row_data_frame_with_latent_state
     @params_name : model parameter name specification. should be same as parameter in model, and latent_func arguments
+    @param_rename : parameter re-naming if the pre defined name is incompatible with Python grammar. e.g. lambda is not allowed for argument name in python. 
     @layout : BIDSLayout by bids package. if not provided, it will be obtained using root info.
     @preprocess : user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
     @condition : user defined function for filtering behavioral data. f(single_row_data_frame) -> boolean
