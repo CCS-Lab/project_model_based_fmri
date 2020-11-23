@@ -27,6 +27,7 @@ import time
 
 import logging
 
+DEFAULT_SAVE_PATH_y = 'mvpa'
 
 logging.basicConfig(level=logging.INFO)
 
@@ -101,8 +102,8 @@ dm_model = 'dd_hyperbolic'
 
 def example_latent_func_piva_dd(row,param_dict):
     
-    ev_later   = row['amount_later'] / (1 + k * row['delay_later'])
-    ev_sooner  = row['amount_sooner'] / (1 + k * row['delay_sooner'])
+    ev_later   = row['amount_later'] / (1 + param_dict['k'] * row['delay_later'])
+    ev_sooner  = row['amount_sooner'] / (1 + param_dict['k'] * row['delay_sooner'])
     utility = ev_later - ev_sooner
     row['modulation'] = utility
     
@@ -114,7 +115,8 @@ def default_prep_func(row,info):
     ## mandatory field ##
     row['subjID'] = info['subject']
     row['run'] = info['run']
-    row['session'] = info['session'] # if applicable
+    if 'session' in info.keys():
+        row['session'] = info['session'] # if applicable
     
     return row
 
@@ -256,7 +258,7 @@ def preprocess_events(root,
     s = time.time()
     
     if save_path is None:
-        sp = Path(layout.derivatives["fMRIPrep"].root) / "data"
+        sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_PATH_y
     else:
         sp = Path(save_path)
     
@@ -346,13 +348,6 @@ def preprocess_events(root,
         
         pbar.set_description("calculating modulation..".ljust(50))
 
-        if param_rename is None:
-            param_rename = {}
-        
-        for name in params_name:
-            if name not in param_rename.key():
-                param_rename[name] = name
-            
         df_events_list =[
             _preprocess_event_latentstate(
                 latent_func, condition, df_events,

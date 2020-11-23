@@ -12,6 +12,7 @@ import numpy as np
 from tqdm import tqdm
 import random
 import os
+from pathlib import Path
 
 import tensorflow as tf
 from tensorflow import keras as K
@@ -47,7 +48,7 @@ def mlp_regression(X, y, # input data
                    verbose=0,
                    optimizer="adam",
                    loss="mse",
-                   save=True,
+                   save=False,
                    save_path=None,
                    n_samples=30000):
     
@@ -106,7 +107,7 @@ def mlp_regression(X, y, # input data
     
     @verbose : if > 0 then log fitting process and report a validation mse of each repitition.
     
-    @save : if True save the results
+    @save : if True save fitted weigths, else erase them.
     
     @save_path : save temporal model weights file. TODO : replace it with using invisible temp file
     
@@ -150,17 +151,11 @@ def mlp_regression(X, y, # input data
         val_generator = loader.DataGenerator(X_test, y_test, batch_size, shuffle=False)
         
         if save_path is None:
-            sp = Path(layout.derivatives["fMRIPrep"].root) / "data"
+            sp = Path(os.getcwd())
         else:
             sp = Path(save_path)
         
-        if save and not sp.exists():
-            sp.mkdir()
-
-        sp / "model_ckpt".mkdir()
-        
-        # for early stopping
-        best_model_filepath = sp / f"model_ckpt/cp-{i}-{epoch:03d}.ckpt"
+        best_model_filepath = sp / f'temp{int(random.random()*100000)}_best_mlp.h5'
         
         mc = ModelCheckpoint(
             best_model_filepath,
@@ -215,7 +210,10 @@ def mlp_regression(X, y, # input data
         for weight in weights[1:]:
             coef = np.matmul(coef,weight)
         coefs.append(coef.ravel())
-
+        
+        if not save:
+            os.remove(best_model_filepath)
+            
     coefs = np.array(coefs)
     
     # coefs : N x voxel #
@@ -233,7 +231,7 @@ def penalized_linear_regression(X, y, # input data
                                 verbose=0,
                                 optimizer="adam",
                                 loss="mse",
-                                save=True,
+                                save=False,
                                 save_path=None,
                                 n_samples=30000
                                 ):
@@ -329,16 +327,12 @@ def penalized_linear_regression(X, y, # input data
         val_generator = loader.DataGenerator(X_test, y_test, batch_size, shuffle=False)
 
         if save_path is None:
-            sp = Path(layout.derivatives["fMRIPrep"].root) / "data"
+            sp = Path(os.getcwd())
         else:
             sp = Path(save_path)
-
-        if save and not sp.exists():
-            sp.mkdir()
         
-        # for early stopping
-        sp / "model_ckpt".mkdir()
-        best_model_filepath = sp / f"model_ckpt/cp-{i}-{epoch:03d}.ckpt"
+        best_model_filepath = sp / f'temp{int(random.random()*100000)}_best_mlp.h5'
+        
         
         mc = ModelCheckpoint(
             best_model_filepath,
@@ -383,7 +377,8 @@ def penalized_linear_regression(X, y, # input data
         # extracting coefficients
         coef = model.layers[0].get_weights()[0] 
         coefs.append(coef.ravel())
-        os.remove(bst_model_path)
+        if not save:
+            os.remove(best_model_filepath)
         
     coefs = np.array(coefs)
     
@@ -402,7 +397,7 @@ def elasticnet(X, y,
                verbose=0,
                n_samples=30000):
     
-     """
+    """
     this package is wrapping ElasticNet from "glmnet" python package. please refer to https://github.com/civisanalytics/python-glmnet 
     
     fitting ElasticNet as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
