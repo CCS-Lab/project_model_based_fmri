@@ -50,15 +50,12 @@ def example_prep_func_tom_mg(row,info):
 def example_cond_func_tom_mg(row):
     return True
 
-
-params_name = ['row','lambda','tau']
-param_rename = {'lambda':'_lambda'}
 dm_model = 'ra_prospect'
 
-def example_latent_func_piva_dd(row,info,rho, _lambda):
+def example_latent_func_piva_dd(row,info, param_dict):
     
-    utility = (row['gain'] ** rho) \
-            - (_lambda * (row['loss'] ** rho))
+    utility = (row['gain'] ** param_dict['rho']) \
+            - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
     row['modulation'] = utility
     
     return row
@@ -94,10 +91,9 @@ def example_prep_func_piva_dd(row,info):
 def example_cond_func_piva_dd(row):
     return row['agent']==0
 
-params_name = ['k','beta']
 dm_model = 'dd_hyperbolic'
 
-def example_latent_func_piva_dd(row,info,k,beta):
+def example_latent_func_piva_dd(row,param_dict):
     
     ev_later   = row['amount_later'] / (1 + k * row['delay_later'])
     ev_sooner  = row['amount_sooner'] / (1 + k * row['delay_sooner'])
@@ -108,13 +104,13 @@ def example_latent_func_piva_dd(row,info,k,beta):
 ################################################################################
 
 
-def _get_individual_params(subject_id, all_individual_params, param_names, param_rename):
+def _get_individual_params(subject_id, all_individual_params):
     try:
         ind_pars = all_individual_params.loc[subject_id]
     except:
         ind_pars = all_individual_params.loc[int(subject_id)]
         
-    return {param_rename[name] : ind_pars[name] for name in param_names}
+    return dict(ind_pars)
 
 
 def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
@@ -150,6 +146,20 @@ def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
     
     return new_datarows
 
+def _preprocess_event_latentstate(latent_func, condition, df_events, param_dict):
+    new_datarows = []
+    df_events = df_events.sort_values(by='onset')
+    
+    for row in df_events.rows():
+        if condition is not None and condition(row):
+            new_datarows.append(latent_func(row, param_dict))
+    
+    new_datarows = pd.concat(
+        new_datarows, axis=1,
+        keys=[s.name for s in new_datarows]
+    ).transpose()
+    
+    return new_datarows
 
 def preprocess_events(root, 
                       hrf_model="glover",
@@ -291,10 +301,10 @@ def preprocess_events(root,
                 param_rename[name] = name
             
         df_events_list =[
-            _preprocess_event(
-                latent_func, condition, df_events, event_infos,
-                    **_get_individual_params(
-                        event_infos["subject"], all_individual_params,params_name, param_rename)
+            _preprocess_event_latentstate(
+                latent_func, condition, df_events,
+                    _get_individual_params(
+                        event_infos["subject"], all_individual_params)
                     ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
         
         df_events = pd.concat(df_events_list)
