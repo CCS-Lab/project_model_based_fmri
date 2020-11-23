@@ -124,6 +124,8 @@ def mlp_regression(X, y, # input data
     coefs = []
 
     for i in range(1, N + 1):
+        
+        # random sampling "n_samples" if the given number of X,y instances is bigger
         np.random.seed(i * i)
         tf.random.set_seed(i *i)
         ids = np.arange(X.shape[0])
@@ -132,6 +134,7 @@ def mlp_regression(X, y, # input data
             np.random.shuffle(ids)
             ids = ids[:n_samples]
 
+        # general fitting framework using Keras 
         train_ids, test_ids = train_test_split(
             ids, test_size=validation_split, random_state=(i * i)
         )
@@ -155,6 +158,8 @@ def mlp_regression(X, y, # input data
             sp.mkdir()
 
         sp / "model_ckpt".mkdir()
+        
+        # for early stopping
         best_model_filepath = sp / f"model_ckpt/cp-{i}-{epoch:03d}.ckpt"
         
         mc = ModelCheckpoint(
@@ -164,6 +169,7 @@ def mlp_regression(X, y, # input data
         )
         es = EarlyStopping(monitor="val_loss", patience=patience)
         
+        # MLP model building
         model = Sequential()
         model.add(Dense(layer_dims[0],
                         activation=activation,
@@ -178,7 +184,8 @@ def mlp_regression(X, y, # input data
 
         model.add(Dense(1, activation=activation_output, use_bias=True))
         model.compile(loss=loss, optimizer=optimizer)
-
+        
+        # model fitting
         model.fit(train_generator,
             batch_size=batch_size, epochs=epochs,
             verbose=0, callbacks=[mc, es],
@@ -186,7 +193,8 @@ def mlp_regression(X, y, # input data
             steps_per_epoch=train_steps,
             validation_steps=val_steps
         )
-
+        
+        # load best model
         model.load_weights(best_model_filepath)
 
         # results = model.evaluate(X_test, y_test)
@@ -195,7 +203,8 @@ def mlp_regression(X, y, # input data
 
         if verbose > 0:
             logging.info(f"[{i}/{N}] - {loss}: {error:.04f}")
-
+        
+        # extracting voxel-wise mapped weight (coefficient) map
         weights = []
         for layer in model.layers:
             if "dense" not in layer.name:
@@ -295,6 +304,8 @@ def penalized_linear_regression(X, y, # input data
     coefs = []
     
     for i in range(1, N + 1):
+        
+        # random sampling "n_samples" if the given number of X,y instances is bigger
         np.random.seed(i * i)
         tf.random.set_seed(i *i)
 
@@ -303,6 +314,7 @@ def penalized_linear_regression(X, y, # input data
             np.random.shuffle(ids)
             ids = ids[:n_samples]
         
+        # general fitting framework using Keras 
         train_ids, test_ids = train_test_split(
             ids, test_size=validation_split, random_state=42 + (i * i))
         train_steps = len(train_ids) // batch_size
@@ -323,7 +335,8 @@ def penalized_linear_regression(X, y, # input data
 
         if save and not sp.exists():
             sp.mkdir()
-
+        
+        # for early stopping
         sp / "model_ckpt".mkdir()
         best_model_filepath = sp / f"model_ckpt/cp-{i}-{epoch:03d}.ckpt"
         
@@ -339,14 +352,17 @@ def penalized_linear_regression(X, y, # input data
                 save_weights_only=True,
                 mode="min"
             )
-
+        
+        # penalizing
         kernel_regularizer = l1_l2(lambda_par * alpha, lambda_par * (1 - alpha) / 2)
-
+        
+        # model building
         model = Sequential()
         model.add(Dense(1, activation="linear", input_shape=(X.shape[-1]),
                         use_bias=True, kernel_regularizer=kernel_regularizer))
         model.compile(loss=loss, optimizer=optimizer)
-
+        
+        # model fitting
         model.fit(train_generator,
                   batch_size=batch_size,
                   epochs=epochs,
@@ -357,13 +373,14 @@ def penalized_linear_regression(X, y, # input data
                   validation_steps=val_steps)
 
         model.load_weights(bst_model_path)
-
+        
         y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
 
         if verbose > 0:
             logging.info(f'[{i}/{N}] - mse: {error:.04f}')
-
+        
+        # extracting coefficients
         coef = model.layers[0].get_weights()[0] 
         coefs.append(coef.ravel())
         os.remove(bst_model_path)
@@ -455,9 +472,12 @@ def elasticnet(X, y,
                     lambda_search_num
                 )
 
+    # making lambda candidate list for searching best lambda
     lambda_path = np.exp(exponent)
 
     for i in range(1, N + 1):
+        
+        # random sampling "n_samples" if the given number of X,y instances is bigger
         np.random.seed(i * i)
 
         ids = np.arange(X.shape[0])
@@ -467,6 +487,8 @@ def elasticnet(X, y,
 
         X_data = X[ids]
         y_data  = y[ids]
+        
+        # ElasticNet by glmnet package
         model = ElasticNet(alpha=alpha,
                     n_jobs =n_jobs,
                     scoring='mean_squared_error',
@@ -480,11 +502,15 @@ def elasticnet(X, y,
         
         lambda_best_idx = model.cv_mean_score_.argmax()
         lambda_best = lambda_path[lambda_best_idx]
+        
+        # extracting coefficients
         coef = model.coef_path_[:,lambda_best_idx]
         lambda_vals= np.log(np.array([lambda_best]))
         coefs.append(coef)
         
         if verbose > 0:
+            
+            # visualization of ElasticNet procedure
             logging.info(f'[{i}/{N}] - lambda_best: {lambda_best:.03f}/ mse: {error:.04f}')
             plt.figure(figsize=(10,8))
             plt.errorbar(np.log(lambda_path),-model.cv_mean_score_,yerr=model.cv_standard_error_*2.576,color='k',alpha=.5,elinewidth=1,capsize=2)
