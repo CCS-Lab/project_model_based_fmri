@@ -19,36 +19,50 @@ from nilearn.image import resample_to_img
 from nilearn.datasets import load_mni152_brain_mask
 
 import nibabel as nib
-from ..utils import func
+from ..utils import functions as F
 
 import logging
 
-DEFAULT_SAVE_PATH_y = 'mvpa'
 logging.basicConfig(level=logging.INFO)
 
 
 def custom_masking(mask_path, p_value, zoom,
                    smoothing_fwhm, interpolation_func, standardize,
                    flatten=False):
+    """
+    Make custom ROI mask file to reduce the number of features.
+    """
+
+    """
+    Arguments:
+        mask_path: 
+        p_value: 
+        zoom: 
+        smoothing_fwhm: 
+        interpolation_func: 
+        standardize: 
+        flatten: 
+    Return:
+        masked_data: 
+        masker: 
+        m_true
+    """
 
     if mask_path is None:
         mask_files = []
-    elif type(mask_path) is str:
-        mask_files = [mask_path]
     else:
         if type(mask_path) is not type(Path()):
             mask_path = Path(mask_path)
         mask_files = [file for file in mask_path.glob("*.nii.gz")]
 
-    #image_sample = nib.load(mask_files[0])
     image_sample = load_mni152_brain_mask()
     
     if len(mask_files) > 0 :
-        m = func.array2pindex(nib.load(mask_files[0]).get_fdata(), p_value, flatten)
+        m = F.array2pindex(nib.load(mask_files[0]).get_fdata(), p_value, flatten)
         for i in range(len(mask_files)-1):
-            m |= func.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
+            m |= F.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
     else:
-        m = func.array2pindex(image_sample.get_fdata(), p_value, flatten)
+        m = F.array2pindex(image_sample.get_fdata(), p_value, flatten)
     
     if zoom != (1, 1, 1):
         m = block_reduce(m, zoom, interpolation_func)
@@ -64,6 +78,25 @@ def custom_masking(mask_path, p_value, zoom,
 
 
 def image_preprocess(params):
+    """
+    Make image that motion corrected and ROI masked.
+    """
+
+    """
+    Arguments:
+        params: params must have below contents
+            image_path:
+            confounds_path:
+            motion_confounds:
+            masker:
+            masked_data:
+            subject_id:
+
+    Return:
+        fmri_masked:
+        subject_id:
+    """
+
     image_path, confounds_path,\
     motion_confounds, masker,\
     masked_data, subject_id = params
@@ -76,6 +109,11 @@ def image_preprocess(params):
     else:
         confounds = None
 
+    # different from resample_img.
+    # resample_img: need to target affine and shape.
+    # resample_to_img: need to target image including affine.
+    # ref.: https://nilearn.github.io/modules/generated/nilearn.image.resample_img.html
+    #       https://nilearn.github.io/modules/generated/nilearn.image.resample_to_img.html
     fmri_masked = resample_to_img(image_path, masked_data)
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
 
@@ -83,6 +121,24 @@ def image_preprocess(params):
 
 
 def image_preprocess_mt(params, n_thread):
+    """
+    Call image_preprocess function using multithreading.
+    """
+
+    """
+    Arguments:
+        params: params must have below contents.
+            image_path:
+            confounds_path:
+            motion_confounds:
+            masker:
+            masked_data:
+            subject_id:
+
+    Return:
+        preprocessed_images:
+        subject_id:
+    """
     image_paths, confounds_paths,\
     motion_confounds, masker,\
     masked_data, subject_id = params

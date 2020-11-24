@@ -23,8 +23,8 @@ from .fMRI import *
 import logging
 
 
-DEFAULT_SAVE_PATH_X = 'mvpa'
-DEFAULT_SAVE_PATH_MASKED_DATA = DEFAULT_SAVE_PATH_X
+DEFAULT_SAVE_DIR = "mvpa"
+DEFAULT_MASK_DIR = "masks"
 
 bids.config.set_option("extension_initial_dot", True)
 logging.basicConfig(level=logging.INFO)
@@ -64,7 +64,7 @@ def bids_preprocess(root,
     root = Path(root)
     
     if mask_path is None:
-        mask_path = Path(layout.derivatives["fMRIPrep"].root) / "mask"
+        mask_path = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_MASK_DIR
     
     masked_data, masker, m_true = custom_masking(
         mask_path, p_value, zoom,
@@ -99,7 +99,7 @@ def bids_preprocess(root,
 
     pbar.set_description("image preprocessing - making path..".ljust(50))
     if save_path is None:
-        sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_PATH_X
+        sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_DIR
     else:
         sp = Path(save_path)
         
