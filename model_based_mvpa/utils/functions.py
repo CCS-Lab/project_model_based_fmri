@@ -45,6 +45,7 @@ def array2pindex(array, p_value=0.05, flatten=False):
     return ret
 
 
+<<<<<<< HEAD
 def prepare_dataset(root=None, X_path=None, y_path=None, time_masks_path=None):
     """
     Get dataset for fitting model and time-masked brain map.
@@ -63,6 +64,20 @@ def prepare_dataset(root=None, X_path=None, y_path=None, time_masks_path=None):
 
     # if root is given and path for any of X, y is not given, then use default path.
     if root is not None:
+=======
+def prepare_data(root=None,
+                 X_path=None,
+                 y_path=None
+                 ):
+    
+    # get X, y for fitting model and making map
+    
+    
+    # if root is given and path for any of X, y is not given, then use default path.
+    if root is None:
+        assert(X_path is not None) or (y_path is not None)
+    else:
+>>>>>>> b214f634f09f905a1d4d0f4733f234af42c00ca9
         root = Path(root)
         X_path = root / 'mvpa'
     else:
@@ -83,7 +98,7 @@ def prepare_dataset(root=None, X_path=None, y_path=None, time_masks_path=None):
 
     # use data only at timepoints indicated in time_mask file.
     time_mask = np.load(y_path / 'time_masks.npy', allow_pickle=True)
-    time_mask = np.concatenate(time_mask,0)
+    time_mask = np.concatenate(time_mask, 0)
     time_mask = time_mask.flatten()
 
     X = X[time_mask>0]

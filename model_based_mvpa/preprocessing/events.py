@@ -32,11 +32,35 @@ DEFAULT_SAVE_DIR = 'mvpa'
 logging.basicConfig(level=logging.INFO)
 
 
+
+"""
+
+This part is implemented to preprocess "event" files spread out in BIDS layout to make a BOLD like data of latent process.
+
+The latent process means the values of intermediate state defined in computational modeling of behavior. (e.g. subjective utility in prospect theory model)
+
+This calculated latent process will be considered as "paremetric modulation" of GLM analysis. 
+
+So using onset, duration, and modulation value for each trial, the code will output BOLD like array data by convolving hemodynamic function ('glover_hrf' as default). 
+
+The output BOLDified data will serve as target (y) in MVPA.
+
+
+"""
+
+
+
+
 ################################################################################
 """
 example functions for tom 2007 (ds000005)
 """
+<<<<<<< HEAD
 def example_tom_adjust_columns(row, info):
+=======
+
+def example_prep_func_tom_mg(row, info):
+>>>>>>> b214f634f09f905a1d4d0f4733f234af42c00ca9
     ## mandatory field ##
     row['subjID'] = info['subject']
     row['run'] = info['run'] 
@@ -47,11 +71,20 @@ def example_tom_adjust_columns(row, info):
     
     return row
 
+<<<<<<< HEAD
 def example_tom_condition(row):
     return True
 
 def example_tom_modulation(row, info, param_dict):
     modulation = (row['gain'] ** param_dict['rho']) \
+=======
+def example_cond_func_tom_mg(row):
+    return True
+
+def example_latent_func_piva_dd(row, info, param_dict):
+    
+    utility = (row['gain'] ** param_dict['rho']) \
+>>>>>>> b214f634f09f905a1d4d0f4733f234af42c00ca9
             - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
     row['modulation'] = modulation
     
@@ -62,7 +95,12 @@ def example_tom_modulation(row, info, param_dict):
 """
 example functions for piva 2019 (ds001882)
 """
+<<<<<<< HEAD
 def example_piva_adjust_columns(row, info):
+=======
+
+def example_prep_func_piva_dd(row, info):
+>>>>>>> b214f634f09f905a1d4d0f4733f234af42c00ca9
     ## mandatory field ##
     row['subjID'] = info['subject']
     row['run'] = info['run']
@@ -153,7 +191,7 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
         time_mask: binary array.
                    shape: time_length
     """
-    
+
     df_events = df_events.sort_values(by='onset')
     onsets = df_events['onset'].to_numpy()
     if use_duration:
@@ -177,7 +215,8 @@ def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
     # preprocess : func : row --> row. converting row data to new one to match the name of value with hBayesDM.
                   # preprocess must include the belows as the original event file would not have subject and run info.
                             #row['subjID'] = info['subject'] 
-                            #row['run'] = f"{info['session']}_{info['run']}" (or row['run']=info['run'])
+                            #row['run'] = info['run']
+                            #row['session'] = info['session']
     # condition : func : row --> boolean, to indicate if use the row or not 
     # event_infos : a dictionary containing  'subject', 'run', (and 'session' if applicable)
     # df_events : dataframe for rows of one 'run' event data
@@ -310,6 +349,15 @@ def preprocess_events(root,
     )
     n_scans = image_sample.shape[-1]
     
+    session_exist = True
+    if n_session:
+        session_exist = False
+        by = ["subjID", "run"]
+        reshape_target = (n_subject, n_run, n_scans)
+    else:
+        by = ["subjID", "session", "run"]
+        reshape_target = (n_subject, n_session, n_run, n_scans)
+
     # collecting dataframe data from event files in BIDS layout
     df_events_list = [event.get_df() for event in events]
     # event_info such as id number for subject, session, run 
@@ -452,7 +500,7 @@ def preprocess_events(root,
     pbar.update(1)
 ################################################################################
     if save:
-        np.save(sp / "y.npy", signals)
+        np.save(sp / "y.npy", bold_signals)
         
     pbar.update(1)
 
