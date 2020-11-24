@@ -34,6 +34,19 @@ import logging
 DEFAULT_SAVE_PATH_TEMP = 'temp'
 logging.basicConfig(level=logging.INFO)
 
+"""
+
+This part is implemented to fit regression model and extract voxel-wise weights (coefficients). 
+
+Available Model:
+
+    Multi-Layer Perceptron (Keras): stacked perceptron layers intertwinned with "Drop out".
+    Penalized linear regression (Keras): penalizing obejctive function with mixed L1 and L2 norm.
+    ElasticNet (glmnet): penalized linear regression with automatical searching optimal amount of penalizing (shrinkage parameter).
+
+
+"""
+
 
 def mlp_regression(X, y, # input data
                    # specification for model design & training
