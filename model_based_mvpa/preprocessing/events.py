@@ -222,6 +222,13 @@ def preprocess_events(root,
     """
     preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data
     
+    user can provide precalculated behaviral data through "df_events" argument, 
+        which is the DataFrame with subjID, run, onset, duration, and modulation. (also session if applicable)
+    
+    if not, it will calculate latent process by using hierarchical Bayesian modeling using "hBayesDM" package. 
+    
+    user also can provide precalculated individual model parameter values, through "all_individual_params" argument. 
+    
     ## parameters ##
     @root : root directory of BIDS layout
     @dm_model : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
@@ -233,7 +240,8 @@ def preprocess_events(root,
     @all_individual_params : pd.DataFrame with params_name columns and corresponding values for each subject if not provided, it will be obtained by fitting hBayesDM model
     @use_duration : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
     @hrf_model : specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
-    @save : boolean indicating whether save result
+    @normalizer : normalization method to subject-wisely normalize BOLDified signal. "minimax" or "standard" 
+    @save : boolean indicating whether save result if True, you will save y.npy, time_mask.npy and additionaly all_individual_params.tsv.
     @save_path : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
     
     ## return ##
@@ -264,6 +272,7 @@ def preprocess_events(root,
         pbar.set_description("loading layout..".ljust(50))
 
     t_r = layout.get_tr()
+    # this will aggregate all events file path in sorted way.
     events = layout.get(suffix="events", extension="tsv")
 
     subjects = layout.get_subjects()
@@ -320,11 +329,17 @@ def preprocess_events(root,
     pbar.set_description("time mask preproecssing done!".ljust(50))
 ################################################################################
 
-    if df_events is None:
+    if df_events is None: 
+        
+        # the case user does not provide precalculated bahavioral data
+        # calculate latent process using user defined latent function
         
         assert(latent_func is not None)
         
-        if all_individual_params is None:
+        if all_individual_params is None: 
+            
+            # the case user does not provide individual model parameter values
+            # obtain parameter values using hBayesDM package
             
             assert(dm_model is not None)
             
@@ -341,7 +356,8 @@ def preprocess_events(root,
             pbar.update(1)
         
         pbar.set_description("calculating modulation..".ljust(50))
-
+        
+        # calculate latent process using user defined latent function
         df_events_list =[
             _preprocess_event_latent_state(
                 latent_func, condition, df_events,
@@ -355,6 +371,19 @@ def preprocess_events(root,
         pbar.update(2)
 ################################################################################
 
+    # get boldified signal
+    # will be shaped as subject # x run # x n_scan
+    # n_scane means the number of time points in fMRI data
+    # if there is multiple session, still there would be no dimension indicating sessions info, 
+    # but runs will be arranged as grouped by sessions number.
+    # e.g. (subj-01, sess-01, run-01,:)
+    #      (subj-01, sess-01, run-02,:)
+    #                 ...
+    #      (subj-01, sess-02, run-01,:)
+    #      (subj-01, sess-02, run-02,:)
+    #                 ...
+    # this order should match with preprocessed fMRI image data
+    
     pbar.set_description("modulation signal making..".ljust(50))
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
 
@@ -373,6 +402,7 @@ def preprocess_events(root,
 
     for i in range(bold_signals):
         if normalizer == "minmax":
+            # using minimum and maximum values to make the value range in [-1,1]
             normalized_signal = minmax_scale(
                 bold_signals[i], feature_range=(-1, 1), axis=0, copy=True
             )
@@ -382,7 +412,6 @@ def preprocess_events(root,
             normalized_signal = zscore(bold_signals[i], axis=None)
         else:
             normalized_signal = zscore(bold_signals[i], axis=None)
-            
             bold_signals[i] = normalized_signal
 
     bold_signals = bold_signals.reshape(reshape_target)
