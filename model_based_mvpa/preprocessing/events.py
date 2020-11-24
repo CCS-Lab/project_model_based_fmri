@@ -32,6 +32,20 @@ DEFAULT_SAVE_PATH_y = 'mvpa'
 logging.basicConfig(level=logging.INFO)
 
 
+
+"""
+
+This part is implemented to preprocess "event" files spread out in BIDS layout to make a BOLD like data of latent process.
+
+The latent process 
+
+
+
+"""
+
+
+
+
 ################################################################################
 """
 example functions for tom 2007 (ds000005)
@@ -168,7 +182,8 @@ def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
     # preprocess : func : row --> row. converting row data to new one to match the name of value with hBayesDM.
                   # preprocess must include the belows as the original event file would not have subject and run info.
                             #row['subjID'] = info['subject'] 
-                            #row['run'] = f"{info['session']}_{info['run']}" (or row['run']=info['run'])
+                            #row['run'] = info['run']
+                            #row['session'] = info['session']
     # condition : func : row --> boolean, to indicate if use the row or not 
     # event_infos : a dictionary containing  'subject', 'run', (and 'session' if applicable)
     # df_events : dataframe for rows of one 'run' event data
