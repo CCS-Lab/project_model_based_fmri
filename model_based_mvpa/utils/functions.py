@@ -13,13 +13,28 @@ from pathlib import Path
 from scipy import stats
 import nibabel as nib
 from functools import reduce
-from model_based_mvpa.preprocessing.bids import DEFAULT_SAVE_PATH_X, DEFAULT_SAVE_PATH_MASKED_DATA
-from model_based_mvpa.preprocessing.events import DEFAULT_SAVE_PATH_y
+
 
 def array2pindex(array, p_value=0.05, flatten=False):
+    """
+    Alive only index above a given p value
+    """
+
+    """
+    Arguments:
+        array:
+        p_value:
+        flatten:
+
+    Return:
+        ret: binary array preprocessed by p-value.
+    """
+
     confidence = 1 - p_value
     flattened_array = array.flatten()
     
+    # Calculate confidence intervals using p-value.
+    # end is upper parts of the confidence interval.
     n = len(flattened_array)
     m = np.mean(flattened_array)
     std_err = stats.sem(flattened_array)
@@ -30,40 +45,44 @@ def array2pindex(array, p_value=0.05, flatten=False):
     return ret
 
 
-def prepare_data(root=None,
-                 prep_path_X=None, 
-                 prep_path_y=None,
-                 ):
-    
-    # get X, y for fitting model and making map
-    
-    
-    # if root is given and path for any of X, y is not given, then use default path.
-    if root is None:
-        assert(prep_path_X is not None)
-        assert(prep_path_y is not None)
-    else:
-        root = Path(root)
-        
-    if prep_path_X is None:
-        prep_path_X = root / DEFAULT_SAVE_PATH_X
-        
-    if prep_path_y is None:
-        prep_path_y = root / DEFAULT_SAVE_PATH_y
-    
-    # aggregate X fragmented by subject to one matrix
-    data_path_list = list(prep_path_X.glob('X_*.npy'))
-    data_path_list.sort(key=lambda v: int(str(v).split('_')[-1].split('.')[0]))
-    X = np.concatenate([np.load(data_path) for data_path in data_path_list],0)
-    X = X.reshape(-1,X.shape[-1])
+def prepare_dataset(root=None, X_path=None, y_path=None, time_masks_path=None):
+    """
+    Get dataset for fitting model and time-masked brain map.
+    """
 
-    y = np.load(prep_path_y / 'y.npy' , allow_pickle=True)
-    y = np.concatenate(y,0)
-    X = X.reshape(-1,X.shape[-1])
+    """
+    Arguments:
+        root: 
+        X_path: 
+        y_path: 
+
+    Return:
+        X: 
+        y: 
+    """
+
+    # if root is given and path for any of X, y is not given, then use default path.
+    if root is not None:
+        root = Path(root)
+        X_path = root / 'mvpa'
+    else:
+        assert X_path is None, "If root is None, you must be indicate data path (X, Y, time mask)"
+        assert y_path is None, "If root is None, you must be indicate data path (X, Y, time mask)"
+        assert time_masks_path is None, "If root is None, you must be indicate data path (X, Y, time mask)"
+        
+    # aggregate X fragmented by subject to one matrix
+    X_list = list(X_path.glob('X_*.npy'))
+    X_list.sort(key=lambda v: int(str(v).split('_')[-1].split('.')[0]))
+    X = np.concatenate([np.load(data_path) for data_path in X_list],0)
+    X = X.reshape(-1, X.shape[-1])
+
+    y = np.load(y_path / 'y.npy' , allow_pickle=True)
+    y = np.concatenate(y, 0)
+    X = X.reshape(-1, X.shape[-1])
     y = y.flatten()
 
     # use data only at timepoints indicated in time_mask file.
-    time_mask = np.load(prep_path_y / 'time_mask.npy', allow_pickle=True)
+    time_mask = np.load(y_path / 'time_masks.npy', allow_pickle=True)
     time_mask = np.concatenate(time_mask,0)
     time_mask = time_mask.flatten()
 
@@ -73,10 +92,7 @@ def prepare_data(root=None,
     return X, y
 
 
-def get_mask_image(root=None,
-                 masked_data_path=None, 
-                 ):
-    
+def get_mask_image(root=None, masked_data_path=None):
     if masked_data_path is None:
         masked_data_path = root / DEFAULT_SAVE_PATH_MASKED_DATA
 

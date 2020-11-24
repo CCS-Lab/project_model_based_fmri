@@ -22,14 +22,13 @@ class DataGenerator(Sequence):
         
     # for printing the statistics of the function
     def on_epoch_end(self):
-        'Updates indexes after each epoch'
+        "Updates indexes after each epoch"
         
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
     
     def __len__(self):
         "Denotes the number of batches per epoch"
-        
         return len(self.indexes) // self.batch_size
 
     def __getitem__(self, index):

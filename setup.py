@@ -15,13 +15,13 @@ PATH_ROOT = Path(__file__).absolute().parent
 
 MAJOR = 0
 MINOR = 0
-MICRO = 1
+MICRO = 3
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 VERSION += '' if ISRELEASED else '.9000'
 
 
-DESC = 'Python library for fMRI multivoxel pattern analysis'
+DESC = 'Python library for fMRI multi-voxel pattern analysis'
 # with open('README.rst', 'r', encoding='utf-8') as f:
 #     LONG_DESC = f.read()
 # LONG_DESC_TYPE = 'text/x-rst'

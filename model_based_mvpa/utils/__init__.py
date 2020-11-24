@@ -1,1 +1,1 @@
-__all__ = ['functions', 'coef2map']
+__all__ = ["functions", "coef2map"]
