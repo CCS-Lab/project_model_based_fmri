@@ -19,18 +19,16 @@ from nilearn.image import resample_to_img
 from nilearn.datasets import load_mni152_brain_mask
 
 import nibabel as nib
-from ..utils import func
+from ..utils import functions as F
 
 import logging
 
-DEFAULT_SAVE_PATH_y = 'mvpa'
 logging.basicConfig(level=logging.INFO)
 
 
 def custom_masking(mask_path, p_value, zoom,
                    smoothing_fwhm, interpolation_func, standardize,
                    flatten=False):
-
     if mask_path is None:
         mask_files = []
     elif type(mask_path) is str:
@@ -40,15 +38,14 @@ def custom_masking(mask_path, p_value, zoom,
             mask_path = Path(mask_path)
         mask_files = [file for file in mask_path.glob("*.nii.gz")]
 
-    #image_sample = nib.load(mask_files[0])
     image_sample = load_mni152_brain_mask()
     
     if len(mask_files) > 0 :
-        m = func.array2pindex(nib.load(mask_files[0]).get_fdata(), p_value, flatten)
+        m = F.array2pindex(nib.load(mask_files[0]).get_fdata(), p_value, flatten)
         for i in range(len(mask_files)-1):
-            m |= func.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
+            m |= F.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
     else:
-        m = func.array2pindex(image_sample.get_fdata(), p_value, flatten)
+        m = F.array2pindex(image_sample.get_fdata(), p_value, flatten)
     
     if zoom != (1, 1, 1):
         m = block_reduce(m, zoom, interpolation_func)

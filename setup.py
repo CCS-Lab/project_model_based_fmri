@@ -15,7 +15,7 @@ PATH_ROOT = Path(__file__).absolute().parent
 
 MAJOR = 0
 MINOR = 0
-MICRO = 1
+MICRO = 3
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 VERSION += '' if ISRELEASED else '.9000'
