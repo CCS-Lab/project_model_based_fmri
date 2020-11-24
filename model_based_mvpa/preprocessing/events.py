@@ -155,7 +155,7 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     df_events = df_events.sort_values(by='onset')
     onsets = df_events['onset'].to_numpy()
     if use_duration:
-        durations = df['duration'].to_numpy()
+        durations = df_events['duration'].to_numpy()
     else:
         durations = np.array(list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
     
