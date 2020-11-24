@@ -37,8 +37,13 @@ logging.basicConfig(level=logging.INFO)
 
 This part is implemented to preprocess "event" files spread out in BIDS layout to make a BOLD like data of latent process.
 
-The latent process 
+The latent process means the values of intermediate state defined in computational modeling of behavior. (e.g. subjective utility in prospect theory model)
 
+This calculated latent process will be considered as "paremetric modulation" of GLM analysis. 
+
+So using onset, duration, and modulation value for each trial, the code will output BOLD like array data by convolving hemodynamic function ('glover_hrf' as default). 
+
+The output BOLDified data will serve as target (y) in MVPA.
 
 
 """
