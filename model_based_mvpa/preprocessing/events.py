@@ -38,7 +38,7 @@ def preprocess_events(root,
                       dm_model=None,
                       modulation=None, 
                       layout=None,
-                      preprocess=adjust_columns,
+                      preprocess=lambda x: x,
                       condition=lambda _: True,
                       df_events=None,
                       all_individual_params=None,
@@ -58,26 +58,30 @@ def preprocess_events(root,
     
     """
     Arguments:
-        root : root directory of BIDS layout
-        dm_model : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
-        latent_func : user defined function for calculating latent process. f(single_row_data_frame, model_parameter) -> single_row_data_frame_with_latent_state
-        layout : BIDSLayout by bids package. if not provided, it will be obtained using root info.
-        preprocess : user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
-        condition : user defined function for filtering behavioral data. f(single_row_data_frame) -> boolean
-        df_events : pd.DataFrame with 'onset', 'duration', 'modulation'. if not provided, it will be obtained by applyng hBayesDM modeling and user defined functions.
-        all_individual_params : pd.DataFrame with params_name columns and corresponding values for each subject if not provided, it will be obtained by fitting hBayesDM model
-        use_duration : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
-        hrf_model : specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
-        normalizer : normalization method to subject-wisely normalize BOLDified signal. "minimax" or "standard" 
-        save : boolean indicating whether save result if True, you will save y.npy, time_mask.npy and additionaly all_individual_params.tsv.
-        save_path : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
-        scale: feature range, default is -1 to 1.
+        root (str or Path) : root directory of BIDS layout
+        dm_model (str) : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
+        modulation (func(Series, dict)-> Series): user defined function for calculating latent process. f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state
+        layout (BIDSLayout) : BIDSLayout by bids package. if not provided, it will be obtained using root info.
+        preprocess (func(Series, dict)-> Series)): user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
+        condition (func(Series)-> boolean)): user defined function for filtering behavioral data. f(single_row_data_frame) -> True or False
+        df_events (DataFrame) : pandas dataframe with 'subjID', 'run','onset', 'duration', 'modulation'. if not provided, it will be obtained by applyng hBayesDM modeling and user defined functions.
+        all_individual_params (DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
+        use_duration (boolean) : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
+        hrf_model (str): specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
+        normalizer (str): normalization method to subject-wisely normalize BOLDified signal. "minimax" or "standard" 
+                          "minmax" will rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
+                          "standard" will rescale value by calculating subject-wise z_score
+        save (boolean): indicating whether save result if True, you will save y.npy, time_mask.npy and additionaly all_individual_params.tsv.
+        save_path (str or Path) : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
+        scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
     
     Return
         dm_model: hBayesDM model.
         df_events: integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
         signals: BOLD-like signal.
                  shape: subject # x (session # x run #) x time length of scan x voxel #
+        time_mask: binary mask indicating valid time point.
+                  shape: subject # x (session # x run #) x time length of scan
     """
 
 ################################################################################
@@ -125,12 +129,19 @@ def preprocess_events(root,
     pbar.update(1)
 ################################################################################
 # adjust columns in events file
+    
 
     pbar.set_description("adjusting event file columns..".ljust(50))
-
+    
+    # add event info to each dataframe row
+    df_events_list = [
+        _add_event_info( df_events, event_infos) 
+        for df_events, event_infos in zip(df_events_list, event_infos_list)
+    ]
+    
     df_events_list = [
         _preprocess_event(
-            preprocess, condition, df_events, event_infos
+            preprocess, condition, df_events
         ) for df_events, event_infos in zip(df_events_list, event_infos_list)
     ]
     pbar.update(1)
@@ -320,7 +331,45 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     return time_mask
 
 
-def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
+
+
+def _add_event_info(df_events, event_infos):
+    """
+    add subject, run, session info to dataframe of events of single 'run' 
+    """
+
+    """
+    Arguments:
+        df_events: dataframe for rows of one 'run' event data.
+        event_infos: a dictionary containing  'subject', 'run', (and 'session' if applicable).
+        
+    Return:
+        new_df: a dataframe with preprocessed rows
+    """
+    
+    new_df = []
+    df_events = df_events.sort_values(by='onset')
+    
+    def _add(row, info):
+        
+        row['subjID'] = info['subject']
+        row['run'] = info['run']
+        if 'session' in info.keys():
+            row['session'] = info['session'] # if applicable
+
+    return row
+
+    for _, row in df_events.iterrows():
+        new_df.append(_add(row, event_infos))
+    
+    new_df = pd.concat(
+        new_df, axis=1,
+        keys=[s.name for s in new_df]
+    ).transpose()
+
+    return new_df
+
+def _preprocess_event(preprocess, condition, df_events):
     """
     Preprocess dataframe of events of single 'run' 
     """
@@ -344,7 +393,7 @@ def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
     
     for _, row in df_events.iterrows():
         if condition is not None and condition(row):
-            new_df.append(preprocess(row, event_infos, **kwargs))
+            new_df.append(preprocess(row))
     
     new_df = pd.concat(
         new_df, axis=1,
@@ -387,16 +436,10 @@ def base_adjust_columns(row, info):
     """
     Arguments:
         row:
-        info:
 
     Return:
         row:
     """
-    ## mandatory field ##
-    row['subjID'] = info['subject']
-    row['run'] = info['run']
-    if 'session' in info.keys():
-        row['session'] = info['session'] # if applicable
     
     return row
 
@@ -418,10 +461,6 @@ example functions for tom 2007 (ds000005)
 """
 
 def example_tom_adjust_columns(row, info):
-    ## mandatory field ##
-    row['subjID'] = info['subject']
-    row['run'] = info['run'] 
-    
     ## user defined mapping ##
     row['gamble'] = 1 if row['respcat'] == 1 else 0
     row['cert'] = 0
@@ -443,11 +482,7 @@ def example_tom_modulation(row, info, param_dict):
 example functions for piva 2019 (ds001882)
 """
 
-def example_piva_adjust_columns(row, info):
-    ## mandatory field ##
-    row['subjID'] = info['subject']
-    row['run'] = info['run']
-    row['session'] = info['session'] # if applicable
+def example_piva_adjust_columns(row):
     
     ## user defined mapping ##
     if row['delay_left'] >= row['delay_right']:
