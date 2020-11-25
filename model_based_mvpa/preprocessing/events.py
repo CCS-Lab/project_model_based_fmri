@@ -346,7 +346,7 @@ def preprocess_events(root,
 
     pbar.set_description("calculating time masks..".ljust(50))
     
-    time_masks = []
+    time_mask = []
     for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
         time_mask_subject = []
         if n_session:
@@ -357,12 +357,12 @@ def preprocess_events(root,
             for name1, group1 in group0.groupby(["run"]):
                 time_mask_subject.append(_get_time_mask(condition, group1 , n_scans, t_r, use_duration))
                 
-        time_masks.append(time_mask_subject)
+        time_mask.append(time_mask_subject)
         
-    time_masks = np.array(time_masks)
+    time_mask = np.array(time_mask)
     
     if save:
-        np.save(sp / "time_masks.npy", time_masks)
+        np.save(sp / "time_mask.npy", time_mask)
 
     pbar.update(1)
     pbar.set_description("time mask preproecssing done!".ljust(50))
@@ -478,4 +478,4 @@ def preprocess_events(root,
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
 
-    return dm_model, df_events, signals, time_masks
+    return dm_model, df_events, signals, time_mask

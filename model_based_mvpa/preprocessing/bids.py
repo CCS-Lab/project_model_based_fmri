@@ -106,12 +106,12 @@ def bids_preprocess(root,
     nib.save(masked_data, sp / "masked_data.nii.gz")
     pbar.update(1)
 ################################################################################
-# image preprocessing using mutli process and thread
+# image preprocessing using mutli-processing and threading
 
     pbar.set_description("image preprocessing - fMRI data..".ljust(50))
     X = []
 
-    # todo: 
+    ## Todo ##
     chunk_size = int(np.log10(n_subject * n_run)) if n_session == 0 \
                     else int(np.log10(n_subject * n_session * n_run))
     chunk_size += 1

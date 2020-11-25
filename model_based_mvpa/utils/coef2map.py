@@ -29,14 +29,14 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
                      should be same shape with the original fMRI image data
         layout: layout info to get task_name if None, task_name should not be None instead
         task_name: if provided, the saved nii file will be named after this
-        map_type: the type of making map. 'z' or 't'
-                  'z': z_map by mean z_score among N mapped images.
+        map_type: the type of making map. ('z' or 't')
+                  'z': default type. z_map by mean z_score among N mapped images.
                   't': t_map by voxel-wise one sample t-test among N mapped images.
         save_path: path to save file. if None, then will be saved in 'results' directory fo current working directory
                    the result_map nii image file will be saved in 'save_path/{task_name}_{map_type}_map.nii'
         sigma: the sigma value for spatial gaussian smoothing for each converted map.  
                if 0, there will be no spatial smoothing of extracted coefficients.
-               higher the value, more smoother the final map will be
+               higher the value, more smoother the final map will be 
 
     return:
         result_map: a nii image of brain activation map.

@@ -128,8 +128,8 @@ def image_preprocess_mt(params, n_thread):
     """
     Arguments:
         params: params must have below contents.
-            image_path:
-            confounds_path:
+            image_path: str or Path, target image path.
+            confounds_path: str or Path, target image path.
             motion_confounds:
             masker:
             masked_data:
@@ -137,7 +137,7 @@ def image_preprocess_mt(params, n_thread):
 
     Return:
         preprocessed_images:
-        subject_id:
+        subject_id: subject number of preprocessed data.
     """
     image_paths, confounds_paths,\
     motion_confounds, masker,\
