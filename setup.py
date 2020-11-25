@@ -21,7 +21,7 @@ VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 VERSION += '' if ISRELEASED else '.9000'
 
 
-DESC = 'Python library for fMRI multivoxel pattern analysis'
+DESC = 'Python library for fMRI multi-voxel pattern analysis'
 # with open('README.rst', 'r', encoding='utf-8') as f:
 #     LONG_DESC = f.read()
 # LONG_DESC_TYPE = 'text/x-rst'

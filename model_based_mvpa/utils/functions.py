@@ -14,11 +14,32 @@ from scipy import stats
 import nibabel as nib
 from functools import reduce
 
+"""
+This file is utility functions sets, which not included in data, models, preprocessing.
+The functions that are not related to each module but are frequently used are implemented here.
+"""
+
 
 def array2pindex(array, p_value=0.05, flatten=False):
+    """
+    Alive only index above a given p value
+    """
+
+    """
+    Arguments:
+        array:
+        p_value:
+        flatten:
+
+    Return:
+        ret: binary array preprocessed by p-value.
+    """
+
     confidence = 1 - p_value
     flattened_array = array.flatten()
     
+    # Calculate confidence intervals using p-value.
+    # end is upper parts of the confidence interval.
     n = len(flattened_array)
     m = np.mean(flattened_array)
     std_err = stats.sem(flattened_array)
@@ -29,53 +50,57 @@ def array2pindex(array, p_value=0.05, flatten=False):
     return ret
 
 
-def prepare_data(root=None,
-                 X_path=None,
-                 y_path=None
-                 ):
-    
-    # get X, y for fitting model and making map
-    
-    
-    # if root is given and path for any of X, y is not given, then use default path.
-    if root is None:
-        assert(X_path is not None) or (y_path is not None)
-    else:
-        root = Path(root)
-        
-    if X_path is None:
-        X_path = root / DEFAULT_SAVE_PATH_X
-        
-    if y_path is None:
-        y_path = root / DEFAULT_SAVE_PATH_y
-    
-    # aggregate X fragmented by subject to one matrix
-    data_path_list = list(X_path.glob('X_*.npy'))
-    data_path_list.sort(key=lambda v: int(str(v).split('_')[-1].split('.')[0]))
-    X = np.concatenate([np.load(data_path) for data_path in data_path_list],0)
-    X = X.reshape(-1,X.shape[-1])
+def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
+    """
+    Get dataset for fitting model and time-masked brain map.
+    """
 
-    y = np.load(y_path / 'y.npy' , allow_pickle=True)
-    y = np.concatenate(y,0)
-    X = X.reshape(-1,X.shape[-1])
+    """
+    Arguments:
+        root: data path, if None, must be specified X, y, time_mask_path.
+              default path is imported from layout.
+        X_path: optional, X data path, if None, default is bids/derivates/data.
+        y_path: optional, y data path, if None, default is bids/derivates/data.
+        time_mask_path: optional, time mask data path, if None, default is bids/derivates/data.
+
+    Return:
+        TODO: explain to time points
+        X: X, which is adjusted dimension and masked time points for training
+        y: y, which is adjusted dimension and masked time points for training
+    """
+
+    # if root is given and path for any of X, y is not given, then use default path.
+    if root is not None:
+        root = Path(root)
+        X_path = root / 'mvpa'
+        y_path = root / 'mvpa'
+        time_mask_path = root / 'mvpa'
+    else:
+        assert X_path is not None, "If root is None, you must be indicate data path (X, Y, time mask)"
+        assert y_path is not None, "If root is None, you must be indicate data path (X, Y, time mask)"
+
+        X_path = Path(X_path)
+        y_path = Path(y_path)
+
+    # aggregate X fragmented by subject to one matrix
+    X_list = list(X_path.glob('X_*.npy'))
+    X_list.sort(key=lambda v: int(str(v).split('_')[-1].split('.')[0]))
+    X = np.concatenate([np.load(data_path) for data_path in X_list], 0)
+    X = X.reshape(-1, X.shape[-1])
+
+    y = np.load(y_path / 'y.npy', allow_pickle=True)
+    y = np.concatenate(y, 0)
+    X = X.reshape(-1, X.shape[-1])
     y = y.flatten()
 
-    # use data only at timepoints indicated in time_mask file.
-    time_mask = np.load(y_path / 'time_mask.npy', allow_pickle=True)
-    time_mask = np.concatenate(time_mask,0)
-    time_mask = time_mask.flatten()
+    if time_mask_path is not None:
+        # use data only at timepoints indicated in time_mask file.
+        time_mask_path = Path(time_mask_path)
+        time_mask = np.load(time_mask_path / 'time_mask.npy', allow_pickle=True)
+        time_mask = np.concatenate(time_mask, 0)
+        time_mask = time_mask.flatten()
 
-    X = X[time_mask>0]
-    y = y[time_mask>0]
+    X = X[time_mask > 0]
+    y = y[time_mask > 0]
     
     return X, y
-
-
-def get_mask_image(root=None,
-                 masked_data_path=None, 
-                 ):
-    
-    if masked_data_path is None:
-        masked_data_path = root / DEFAULT_SAVE_PATH_MASKED_DATA
-
-    return nib.load(masked_data_path / 'masked_data.nii.gz')

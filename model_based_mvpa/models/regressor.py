@@ -34,22 +34,18 @@ import logging
 DEFAULT_SAVE_PATH_TEMP = 'temp'
 logging.basicConfig(level=logging.INFO)
 
-"""
 
+"""
 This part is implemented to fit regression model and extract voxel-wise weights (coefficients). 
 
 Available Model:
-
-    Multi-Layer Perceptron (Keras): stacked perceptron layers intertwinned with "Drop out".
+    Multi-Layer Perceptron (tf.Keras): stacked perceptron layers intertwinned with "Drop out".
     Penalized linear regression (Keras): penalizing obejctive function with mixed L1 and L2 norm.
     ElasticNet (glmnet): penalized linear regression with automatical searching optimal amount of penalizing (shrinkage parameter).
-
-
 """
 
 
-def mlp_regression(X, y, # input data
-                   # specification for model design & training
+def mlp_regression(X, y,
                    layer_dims=[1024, 1024],
                    activation="linear",
                    activation_output="linear",
@@ -66,72 +62,47 @@ def mlp_regression(X, y, # input data
                    save=False,
                    save_path=None,
                    n_samples=30000):
-    
     """
-    fitting Multi-Layer Perceptron (MLP) as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
+    Fitting Multi-Layer Perceptron (MLP) as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
+    Mini-batch fitting with earlystopping using gradient descent (Adam).
+    Coefficient extraction is done by sequential matrix multiplication of layers. The activation function is assumed to be linear.
+    Repeat several times (=N) and return N coefficients.
+    """
+
+    """
+    Arguments:
+        -- Data --
+        X : flattened fMRI data. shape : data # x voxel #
+        y : parametric modulation values to regress X against. shape: data #
+
+        -- Model hyperparameters--
+        layer_dims: specification of # of hidden neurons in each linear layer. list(# of ith layer hidden dimension)
+                    MLP will be constructed by stacking layers with specified hidden dimension.
+        activation: activation function applied after each layer.
+                     e.g. 'linear' : f(x) = x, 'sigmoid' : f(x) = 1 / (1 + exp(-x))
+                     any other activation functions defined in Keras can be used.  (https://www.tensorflow.org/api_docs/python/tf/keras/activations)
+        activation_output: activation function applied after final layer. should reflect the nature of y. e.g. regression on y : use 'linear'
+        dropout_rate: drop out rate for drop out layers intertwinned between consecutive linear layers.
     
-    mini-batch fitting with earlystopping using gradient descent (Adam).
-    
-    coefficient extraction is done by sequential matrix multiplication of layers. The activation function is assumed to be linear.
-    
-    repeat several times (=N) and return N coefficients.
-    
-    
-    ## parameters ##
-    
-        -- data --
-        
-    @X : flattened fMRI data. shape : data # x voxel #
-    @y : parametric modulation values to regress X against. shape: data #
-    
-        -- model specification --
-        
-    @layer_dims : specification of # of hidden neurons in each linear layer. list(# of ith layer hidden dimension)
-                  MLP will be constructed by stacking layers with specified hidden dimension.
-                  
-    @activation : activation function applied after each layer. 
-                  e.g.
-                  'linear' : f(x) = x
-                  'sigmoid' : f(x) = 1/(1+exp(-x))
-                  
-                  any other activation functions defined in Keras can be used.  (https://keras.io/api/layers/activations/)
-                  
-    @activation_output : activation function applied after final layer. should reflect the nature of y. e.g. regression on y : use 'linear'
-    
-    @dropout_rate : drop out rate for drop out layers intertwinned between consecutive linear layers.
-    
-        -- model fitting specification --
-    
-    @epochs : maximum number of iteration
-    
-    @batch_size : number of instance used in a single mini-batch. 
-    
-    @patience : parameter for early stopping, indicating the maximum number for patiently seeking better model. 
-                if the better fitting validation performance is not reached within patience number, the fitting will end.
-   
-    @validation_split : the ratio of validation set. 
-                        e.g. 0.2 means 20 % of given data will be used for validation and 80 % will be used for training
-    
-    @optimizer : optimizer used for fitting model. default: 'Adam'
-                 please refer to Keras optimizer api to use another. (https://keras.io/api/optimizers/)
-    
-    @loss : objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
-            please refer to Keras loss api to use another. (https://keras.io/api/losses/)
-            
+        epochs: maximum number of iterations
+        batch_size: number of instance used in a single mini-batch.
+        patience: parameter for early stopping, indicating the maximum number for patiently seeking better model.
+                  if the better fitting validation performance is not reached within patience number, the fitting will end.
+        validation_split: the ratio of validation set.
+                          e.g. 0.2 means 20 % of given data will be used for validation and 80 % will be used for training
+        optimizer: optimizer used for fitting model. default: 'Adam'
+                   please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
+        loss: objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
+              please refer to Keras loss api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/losses)
+
         -- Others --
-    
-    @verbose : if > 0 then log fitting process and report a validation mse of each repitition.
-    
-    @save : if True save fitted weigths, else erase them.
-    
-    @save_path : save temporal model weights file. TODO : replace it with using invisible temp file
-    
-    @n_samples : maximum number of instance of data (X,y) used in a single repetition. 
-                
-    ## return ##
-    
-    @coefs : N fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #. 
-    
+        verbose: if > 0 then log fitting process and report a validation mse of each repitition.
+        save: if True save fitted weigths, else erase them.
+        save_path: save temporal model weights file. TODO : replace it with using invisible temp file
+        n_samples: maximum number of instance of data (X,y) used in a single repetition. 
+
+    Return:
+        coefs: N fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #. 
     """
 
     if verbose > 0:
@@ -233,9 +204,9 @@ def mlp_regression(X, y, # input data
     return coefs
 
 
-def penalized_linear_regression(X, y, # input data
-                                alpha=0.001, # mixing parameter
-                                lambda_par=0.8, # shrinkage parameter
+def penalized_linear_regression(X, y,
+                                alpha=0.001,
+                                lambda_param=0.8,
                                 epochs=100,
                                 patience=30,
                                 batch_size=64,
@@ -250,68 +221,44 @@ def penalized_linear_regression(X, y, # input data
                                 n_samples=30000
                                 ):
     """
-    fitting penalized linear regression model as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
-    
+    Fitting penalized linear regression model as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
     L1 norm and L2 norm is mixed as alpha * L1 + (1-alpha)/2 * L2
+    Total penalalty is modulated with shrinkage parameter: [alpha * L1 + (1-alpha)/2 * L2] * lambda
+    Mini-batch fitting with earlystopping using gradient descent (Adam).
+    Coefficient extraction is done by sequential matrix multiplication of layers.
+    The activation function is assumed to be linear.
+    Repeat several times (=N) and return N coefficients.
     
-    total penalalty is modulated with shrinkage parameter : [alpha * L1 + (1-alpha)/2 * L2] * lambda
+    Arguments:
+        -- Data --
+        X: flattened fMRI data. shape : data # x voxel #
+        y: parametric modulation values to regress X against. shape: data #
     
-    mini-batch fitting with earlystopping using gradient descent (Adam).
-    
-    coefficient extraction is done by sequential matrix multiplication of layers. The activation function is assumed to be linear.
-    
-    repeat several times (=N) and return N coefficients.
-    
-    
-    ## parameters ##
-    
-        -- data --
-        
-    @X : flattened fMRI data. shape : data # x voxel #
-    @y : parametric modulation values to regress X against. shape: data #
-    
-        -- model specification --
-                  
-    @alpha : mixing parameter
-    
-    @lambda_par : shrinkage parameter
-    
-        -- model fitting specification --
-    
-    @epochs : maximum number of iteration
-    
-    @batch_size : number of instance used in a single mini-batch. 
-    
-    @patience : parameter for early stopping, indicating the maximum number for patiently seeking better model. 
-                if the better fitting validation performance is not reached within patience number, the fitting will end.
-   
-    @validation_split : the ratio of validation set. 
-                        e.g. 0.2 means 20 % of given data will be used for validation and 80 % will be used for training
-    
-    @optimizer : optimizer used for fitting model. default: 'Adam'
-                 please refer to Keras optimizer api to use another. (https://keras.io/api/optimizers/)
-    
-    @loss : objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
-            please refer to Keras loss api to use another. (https://keras.io/api/losses/)
-            
+        -- Model hyperparameters --
+        alpha : mixing parameter
+        lambda_param : shrinkage parameter
+        epochs : maximum number of iterations.
+        batch_size : number of instance used in a single mini-batch.
+        patience : parameter for early stopping, indicating the maximum number for patiently seeking better model.
+                   if the better fitting validation performance is not reached within patience number, the fitting will end.
+        validation_split : the ratio of validation set. 
+                           e.g. 0.2 means 20 % of given data will be used for validation and 80 % will be used for training
+        optimizer : optimizer used for fitting model. default: 'Adam'
+                    please refer to Keras optimizer api to use another. (https://keras.io/api/optimizers/)
+        loss : objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
+               please refer to Keras loss api to use another. (https://keras.io/api/losses/)
+
         -- Others --
-    
-    @verbose : if > 0 then log fitting process and report a validation mse of each repitition.
-    
-    @save : if True save the results
-    
-    @save_path : save temporal model weights file. TODO : replace it with using invisible temp file
-    
-    @n_samples : maximum number of instance of data (X,y) used in a single repetition. 
-                
-    ## return ##
-    
-    @coefs : N fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #. 
-    
+        verbose: if > 0 then log fitting process and report a validation mse of each repitition.
+        save: if True save the results
+        save_path: save temporal model weights file. TODO : replace it with using invisible temp file
+        n_samples: maximum number of instance of data (X,y) used in a single repetition.
+
+    Return:
+        coefs: N fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #.
     """
-    
-    if verbose > 0:
-        logging.info("start running")
+
+    logging.info("start running")
         
     coefs = []
     
@@ -362,7 +309,7 @@ def penalized_linear_regression(X, y, # input data
             )
         
         # penalizing
-        kernel_regularizer = l1_l2(lambda_par * alpha, lambda_par * (1 - alpha) / 2)
+        kernel_regularizer = l1_l2(lambda_param * alpha, lambda_param * (1 - alpha) / 2)
         
         # model building
         model = Sequential()
@@ -409,86 +356,58 @@ def elasticnet(X, y,
                N=1,
                verbose=0,
                n_samples=30000):
-    
     """
-    this package is wrapping ElasticNet from "glmnet" python package. please refer to https://github.com/civisanalytics/python-glmnet 
-    
-    fitting ElasticNet as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
-    
+    This package is wrapping ElasticNet from "glmnet" python package. please refer to (https://github.com/civisanalytics/python-glmnet)
+    Fitting ElasticNet as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
     L1 norm and L2 norm is mixed as alpha * L1 + (1-alpha)/2 * L2
-    
-    total penalalty is modulated with shrinkage parameter : [alpha * L1 + (1-alpha)/2 * L2] * lambda
-    
-    shrinkage parameter is searched through "lambda_path" calculating N fold (=n_splits) cross-validation for each.
-    
-    lambda_path is determined by linearly slicing "lambda_search_num" times which exponentially decaying from "max_lambda" to "max_lambda" * "min_lambda_ratio"
-    
-    mini-batch fitting with earlystopping using gradient descent (Adam).
-    
-    coefficient extraction is done by sequential matrix multiplication of layers. The activation function is assumed to be linear.
-    
-    repeat several times (=N) and return N coefficients.
-    
-    
-    ## parameters ##
-    
-        -- data --
-        
-    @X : flattened fMRI data. shape : data # x voxel #
-    @y : parametric modulation values to regress X against. shape: data #
-    
-        -- model specification --
-                  
-    @alpha : mixing parameter
-    
-        -- model fitting specification --
-        
-    @n_splits : the number of N-fold cross validation
-        
-    @n_jobs : the number of cores for parallel computing
-    
-    @max_lambda : the maximum value of lambda to search
-    
-    @min_lambda_ratio : the ratio of minimum lambda value to maximum lambda value. 
-    
-    @lambda_search_num : the number of searching candidate.
-   
-       -- Others --
-    
-    @verbose : if > 0 then log fitting process and report a validation mse of each repitition.
-    
-    @save : if True save the results
-    
-    @save_path : save temporal model weights file. TODO : replace it with using invisible temp file
-    
-    @n_samples : maximum number of instance of data (X,y) used in a single repetition. 
-                
-    ## return ##
-    
-    @coefs : N fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #. 
-    
+    Total penalalty is modulated with shrinkage parameter : [alpha * L1 + (1-alpha)/2 * L2] * lambda
+    Shrinkage parameter is searched through "lambda_path" calculating N fold (=n_splits) cross-validation for each.
+    "lambda_path" is determined by linearly slicing "lambda_search_num" times which exponentially decaying from "max_lambda" to "max_lambda" * "min_lambda_ratio"
+    Mini-batch fitting with earlystopping using gradient descent (Adam).
+    Coefficient extraction is done by sequential matrix multiplication of layers. The activation function is assumed to be linear.
+    Repeat several times (=N) and return N coefficients.
     """
+
+    """
+    Arugments:
+        -- Data --
+        X: flattened fMRI data. shape : data # x voxel #
+        y: parametric modulation values to regress X against. shape: data #
     
-    if verbose > 0:
-        logging.info('start running')
-        
+        -- Model hyperparameters --
+        alpha: mixing parameter
+        n_splits : the number of N-fold cross validation
+        n_jobs : the number of cores for parallel computing
+        max_lambda : the maximum value of lambda to search
+        min_lambda_ratio : the ratio of minimum lambda value to maximum lambda value. 
+        lambda_search_num : the number of searching candidate.
+   
+        -- Others --
+        verbose : if > 0 then log fitting process and report a validation mse of each repitition.
+        save : if True save the results
+        save_path : save temporal model weights file. TODO : replace it with using invisible temp file
+        n_samples : maximum number of instance of data (X,y) used in a single repetition. 
+                
+    Return:
+        coefs : N fitted models' coefficients mapped to weight of each voxel.
+                shape: N x voxel #. 
+    """
+
+    logging.info('start running')
     coefs = []
-    
     exponent = np.linspace(
                     np.log(max_lambda),
                     np.log(max_lambda * min_lambda_ratio),
-                    lambda_search_num
-                )
+                    lambda_search_num)
 
     # making lambda candidate list for searching best lambda
     lambda_path = np.exp(exponent)
 
     for i in range(1, N + 1):
-        
         # random sampling "n_samples" if the given number of X,y instances is bigger
         np.random.seed(i * i)
-
         ids = np.arange(X.shape[0])
+
         if X.shape[0] > n_samples:
             np.random.shuffle(ids)
             ids = ids[:n_samples]
@@ -501,10 +420,9 @@ def elasticnet(X, y,
                     n_jobs =n_jobs,
                     scoring='mean_squared_error',
                     lambda_path=lambda_path,
-                    n_splits=n_splits
-                )
+                    n_splits=n_splits)
 
-        model = model.fit(X_data,y_data)
+        model = model.fit(X_data, y_data)
         y_pred = model.predict(X_data).flatten()
         error = mean_squared_error(y_pred, y_data)
         
@@ -515,15 +433,15 @@ def elasticnet(X, y,
         coef = model.coef_path_[:,lambda_best_idx]
         lambda_vals= np.log(np.array([lambda_best]))
         coefs.append(coef)
+        coefs = np.array(coefs)
         
         if verbose > 0:
-            
             # visualization of ElasticNet procedure
             logging.info(f'[{i}/{N}] - lambda_best: {lambda_best:.03f}/ mse: {error:.04f}')
-            plt.figure(figsize=(10,8))
-            plt.errorbar(np.log(lambda_path),-model.cv_mean_score_,yerr=model.cv_standard_error_*2.576,color='k',alpha=.5,elinewidth=1,capsize=2)
+            plt.figure(figsize=(10, 8))
+            plt.errorbar(np.log(lambda_path), -model.cv_mean_score_, yerr=model.cv_standard_error_*2.576,color='k',alpha=.5,elinewidth=1,capsize=2)
             # plot 99 % confidence interval
-            plt.plot(np.log(lambda_path),-model.cv_mean_score_, color='k', alpha = 0.9)
+            plt.plot(np.log(lambda_path), -model.cv_mean_score_, color='k', alpha = 0.9)
             plt.axvspan(lambda_vals.min(), lambda_vals.max(), color='skyblue', alpha=0.2, lw=1)
             plt.xlabel('log(lambda)',fontsize=20)
             plt.ylabel('cv average MSE',fontsize=20)
@@ -534,10 +452,7 @@ def elasticnet(X, y,
             plt.xlabel('log(lambda)',fontsize=20)
             plt.ylabel('coefficients',fontsize=20)
             plt.show()
-            
-    
-    coefs = np.array(coefs)
-    
+
     # coefs : N x voxel #
     return coefs
 
