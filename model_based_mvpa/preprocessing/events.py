@@ -32,213 +32,6 @@ DEFAULT_SAVE_DIR = 'mvpa'
 logging.basicConfig(level=logging.INFO)
 
 
-################################################################################
-"""
-example functions for tom 2007 (ds000005)
-"""
-
-def example_tom_adjust_columns(row, info):
-    ## mandatory field ##
-    row['subjID'] = info['subject']
-    row['run'] = info['run'] 
-    
-    ## user defined mapping ##
-    row['gamble'] = 1 if row['respcat'] == 1 else 0
-    row['cert'] = 0
-    
-    return row
-
-def example_tom_condition(row):
-    return True
-
-def example_tom_modulation(row, info, param_dict):
-    modulation = (row['gain'] ** param_dict['rho']) \
-            - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
-    row['modulation'] = modulation
-    
-    return row
-################################################################################
-
-################################################################################
-"""
-example functions for piva 2019 (ds001882)
-"""
-
-def example_piva_adjust_columns(row, info):
-    ## mandatory field ##
-    row['subjID'] = info['subject']
-    row['run'] = info['run']
-    row['session'] = info['session'] # if applicable
-    
-    ## user defined mapping ##
-    if row['delay_left'] >= row['delay_right']:
-        row['delay_later'] = row['delay_left']
-        row['delay_sooner'] = row['delay_right']
-        row['amount_later'] = row['money_left']
-        row['amount_sooner'] = row['money_right']
-        row['choice'] = 1 if row['choice'] == 1 else 0
-    else:
-        row['delay_later'] = row['delay_right']
-        row['delay_sooner'] = row['delay_left']
-        row['amount_later'] = row['money_right']
-        row['amount_sooner'] = row['money_left']
-        row['choice'] = 1 if row['choice'] == 2 else 0
-        
-    return row
-
-
-def example_piva_condition(row):
-    return row['agent'] == 0
-
-
-def example_piva_modulation(row, param_dict):
-    ev_later = row['amount_later'] / (1 + param_dict['k'] * row['delay_later'])
-    ev_sooner  = row['amount_sooner'] / (1 + param_dict['k'] * row['delay_sooner'])
-    modulation = ev_later - ev_sooner
-    row['modulation'] = modulation
-    
-    return row
-################################################################################
-
-def base_adjust_columns(row, info):
-    """
-    Arguments:
-        row:
-        info:
-
-    Return:
-        row:
-    """
-    ## mandatory field ##
-    row['subjID'] = info['subject']
-    row['run'] = info['run']
-    if 'session' in info.keys():
-        row['session'] = info['session'] # if applicable
-    
-    return row
-
-
-def base_condition(row):
-    """
-    Arguments:
-        row:
-
-    Return:
-        True:
-    """
-    return True
-
-
-# todo: remove
-def _get_individual_params(subject_id, all_individual_params):
-    # get individual parameter dictionary
-    try:
-        ind_pars = all_individual_params.loc[subject_id]
-    except:
-        ind_pars = all_individual_params.loc[int(subject_id)]
-
-    return dict(ind_pars)
-
-
-def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
-    """
-    Get binary masked data indicating time points in use
-    """
-
-    """
-    Arguments:
-        condition: a function : row --> boolean, to indicate if use the row or not 
-        df_events: dataframe for rows of one 'run' event data
-        time_length: the length of target BOLD signal 
-        t_r: time resolution
-        use_duration: if True, use 'duration' column for masking, 
-                      else use the gap between consecutive onsets as duration
-    Return:
-        time_mask: binary array.
-                   shape: time_length
-    """
-    
-    df_events = df_events.sort_values(by='onset')
-    onsets = df_events['onset'].to_numpy()
-    if use_duration:
-        durations = df_events['duration'].to_numpy()
-    else:
-        durations = np.array(list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
-    
-    mask = [condition(row) for _, row in df_events.iterrows()]
-    time_mask = np.zeros(time_length)
-    
-    for do_use, onset, duration in zip(mask, onsets, durations):
-        if do_use:
-            time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
-
-    return time_mask
-
-
-def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
-    """
-    Preprocess dataframe of events of single 'run' 
-    """
-
-    """
-    Arguments:
-        preprocess: a funcion, which is converting row data to new one to match the name of value with hBayesDM.
-                    preprocess must include the belows as the original event file would not have subject and run info.
-                    row['subjID'] = info['subject'] 
-                    row['run'] = f"{info['session']}_{info['run']}" (or row['run']=info['run'])
-        condition: func : row --> boolean, to indicate if use the row or not.
-        event_infos: a dictionary containing  'subject', 'run', (and 'session' if applicable).
-        df_events: dataframe for rows of one 'run' event data.
-
-    Return:
-        new_df: a dataframe with preprocessed rows
-    """
-    
-    new_df = []
-    df_events = df_events.sort_values(by='onset')
-    
-    for _, row in df_events.iterrows():
-        if condition is not None and condition(row):
-            new_df.append(preprocess(row, event_infos, **kwargs))
-    
-    new_df = pd.concat(
-        new_df, axis=1,
-        keys=[s.name for s in new_df]
-    ).transpose()
-
-    return new_df
-
-
-def _preprocess_event_latent_state(modulation, condition, df_events, param_dict):
-    """
-    add latent state value to for each row of dataframe of single 'run'
-    """
-    
-    """
-    Argumnets:
-        modulation: a function, which is conducting row, param_dict --> row, function for calcualte latent state (or parameteric modulation value) 
-        condition: a funcion, which is conducting row --> boolean, to indicate if use the row or not 
-        df_events: dataframe for rows of one 'run' event data
-        param_dict: a dictionary containing  model parameter value
-    
-    Return:
-        new_df: a dataframe with latent state value
-    """
-    new_df = []
-    df_events = df_events.sort_values(by='onset')
-    
-    for _, row in df_events.iterrows():
-        if condition is not None and condition(row):
-            new_df.append(modulation(row, param_dict))
-    
-    new_df = pd.concat(
-        new_df, axis=1,
-        keys=[s.name for s in new_df]
-    ).transpose()
-
-    return new_df
-
-
 def preprocess_events(root, 
                       hrf_model="glover",
                       normalizer="minmax",
@@ -479,3 +272,207 @@ def preprocess_events(root,
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
 
     return dm_model, df_events, signals, time_mask
+
+
+# todo: remove
+def _get_individual_params(subject_id, all_individual_params):
+    # get individual parameter dictionary
+    try:
+        ind_pars = all_individual_params.loc[subject_id]
+    except:
+        ind_pars = all_individual_params.loc[int(subject_id)]
+
+    return dict(ind_pars)
+
+
+def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
+    """
+    Get binary masked data indicating time points in use
+    """
+
+    """
+    Arguments:
+        condition: a function : row --> boolean, to indicate if use the row or not 
+        df_events: dataframe for rows of one 'run' event data
+        time_length: the length of target BOLD signal 
+        t_r: time resolution
+        use_duration: if True, use 'duration' column for masking, 
+                      else use the gap between consecutive onsets as duration
+    Return:
+        time_mask: binary array.
+                   shape: time_length
+    """
+    
+    df_events = df_events.sort_values(by='onset')
+    onsets = df_events['onset'].to_numpy()
+    if use_duration:
+        durations = df_events['duration'].to_numpy()
+    else:
+        durations = np.array(list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
+    
+    mask = [condition(row) for _, row in df_events.iterrows()]
+    time_mask = np.zeros(time_length)
+    
+    for do_use, onset, duration in zip(mask, onsets, durations):
+        if do_use:
+            time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
+
+    return time_mask
+
+
+def _preprocess_event(preprocess, condition, df_events, event_infos, **kwargs):
+    """
+    Preprocess dataframe of events of single 'run' 
+    """
+
+    """
+    Arguments:
+        preprocess: a funcion, which is converting row data to new one to match the name of value with hBayesDM.
+                    preprocess must include the belows as the original event file would not have subject and run info.
+                    row['subjID'] = info['subject'] 
+                    row['run'] = f"{info['session']}_{info['run']}" (or row['run']=info['run'])
+        condition: func : row --> boolean, to indicate if use the row or not.
+        event_infos: a dictionary containing  'subject', 'run', (and 'session' if applicable).
+        df_events: dataframe for rows of one 'run' event data.
+
+    Return:
+        new_df: a dataframe with preprocessed rows
+    """
+    
+    new_df = []
+    df_events = df_events.sort_values(by='onset')
+    
+    for _, row in df_events.iterrows():
+        if condition is not None and condition(row):
+            new_df.append(preprocess(row, event_infos, **kwargs))
+    
+    new_df = pd.concat(
+        new_df, axis=1,
+        keys=[s.name for s in new_df]
+    ).transpose()
+
+    return new_df
+
+
+def _preprocess_event_latent_state(modulation, condition, df_events, param_dict):
+    """
+    add latent state value to for each row of dataframe of single 'run'
+    """
+    
+    """
+    Argumnets:
+        modulation: a function, which is conducting row, param_dict --> row, function for calcualte latent state (or parameteric modulation value) 
+        condition: a funcion, which is conducting row --> boolean, to indicate if use the row or not 
+        df_events: dataframe for rows of one 'run' event data
+        param_dict: a dictionary containing  model parameter value
+    
+    Return:
+        new_df: a dataframe with latent state value
+    """
+    new_df = []
+    df_events = df_events.sort_values(by='onset')
+    
+    for _, row in df_events.iterrows():
+        if condition is not None and condition(row):
+            new_df.append(modulation(row, param_dict))
+    
+    new_df = pd.concat(
+        new_df, axis=1,
+        keys=[s.name for s in new_df]
+    ).transpose()
+
+    return new_df
+
+def base_adjust_columns(row, info):
+    """
+    Arguments:
+        row:
+        info:
+
+    Return:
+        row:
+    """
+    ## mandatory field ##
+    row['subjID'] = info['subject']
+    row['run'] = info['run']
+    if 'session' in info.keys():
+        row['session'] = info['session'] # if applicable
+    
+    return row
+
+
+def base_condition(row):
+    """
+    Arguments:
+        row:
+
+    Return:
+        True:
+    """
+    return True
+
+
+################################################################################
+"""
+example functions for tom 2007 (ds000005)
+"""
+
+def example_tom_adjust_columns(row, info):
+    ## mandatory field ##
+    row['subjID'] = info['subject']
+    row['run'] = info['run'] 
+    
+    ## user defined mapping ##
+    row['gamble'] = 1 if row['respcat'] == 1 else 0
+    row['cert'] = 0
+    
+    return row
+
+def example_tom_condition(row):
+    return True
+
+def example_tom_modulation(row, info, param_dict):
+    modulation = (row['gain'] ** param_dict['rho']) \
+            - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
+    row['modulation'] = modulation
+    
+    return row
+
+
+"""
+example functions for piva 2019 (ds001882)
+"""
+
+def example_piva_adjust_columns(row, info):
+    ## mandatory field ##
+    row['subjID'] = info['subject']
+    row['run'] = info['run']
+    row['session'] = info['session'] # if applicable
+    
+    ## user defined mapping ##
+    if row['delay_left'] >= row['delay_right']:
+        row['delay_later'] = row['delay_left']
+        row['delay_sooner'] = row['delay_right']
+        row['amount_later'] = row['money_left']
+        row['amount_sooner'] = row['money_right']
+        row['choice'] = 1 if row['choice'] == 1 else 0
+    else:
+        row['delay_later'] = row['delay_right']
+        row['delay_sooner'] = row['delay_left']
+        row['amount_later'] = row['money_right']
+        row['amount_sooner'] = row['money_left']
+        row['choice'] = 1 if row['choice'] == 2 else 0
+        
+    return row
+
+def example_piva_condition(row):
+    return row['agent'] == 0
+
+def example_piva_modulation(row, param_dict):
+    ev_later = row['amount_later'] / (1 + param_dict['k'] * row['delay_later'])
+    ev_sooner  = row['amount_sooner'] / (1 + param_dict['k'] * row['delay_sooner'])
+    modulation = ev_later - ev_sooner
+    row['modulation'] = modulation
+    
+    return row
+################################################################################
