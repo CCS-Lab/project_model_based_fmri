@@ -127,7 +127,7 @@ def image_preprocess(params):
     return fmri_masked, subject_id
 
 
-def image_preprocess_mt(params, n_thread):
+def image_preprocess_mt(params, nthread):
     """
     Call image_preprocess function using multithreading.
     """
@@ -157,8 +157,7 @@ def image_preprocess_mt(params, n_thread):
              masker, voxel_mask, subject_id])
 
     preprocessed_images = []
-    n_worker = n_thread if n_thread < 5 else n_thread // 2
-    n_worker += 1
+    n_worker = 4 if nthread > 4 else nthread
     
     with ThreadPoolExecutor(max_workers=n_worker) as executor:
         future_result = {
