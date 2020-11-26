@@ -17,6 +17,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
 from nilearn.datasets import load_mni152_brain_mask
+from scipy import stats
+from scipy.ndimage import gaussian_filter
 
 import nibabel as nib
 from ..utils import functions as F
@@ -26,28 +28,28 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-def custom_masking(mask_path, p_value, zoom,
-                   smoothing_fwhm, interpolation_func, standardize,
-                   flatten=False):
+def custom_masking(mask_path, threshold, zoom,
+                   smoothing_fwhm, interpolation_func, standardize):
     """
     Make custom ROI mask file to reduce the number of features.
     """
 
     """
     Arguments:
-        mask_path: 
-        p_value: 
-        zoom: 
-        smoothing_fwhm: 
-        interpolation_func: 
-        standardize: 
-        flatten: 
+        mask_path (str or Path): path for mask file with nii.gz format. encourage get files from Neurosynth
+        threshold (float): threshold for binarize masks
+        zoom ((float,float,float)): zoom window to reduce the spatial dimension. the dimension will be reduced by the factor of corresponding axis.
+                                    e.g. (2,2,2) will make the dimension half in all directions.
+        smoothing_fwhm (int): the amount of gaussian smoothing  
+        interpolation_func (numpy.func): to calculate representative value in the zooming window. e.g. numpy.mean, numpy.max
+                                         e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube to a single value of its mean.
+        standardize (boolean): if true, conduct gaussian normalization 
     Return:
-        masked_data: 
-        masker: 
-        m_true
+        voxel_mask (Nifti1Image): nifti image for voxel-wise binary mask
+        masker (NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
     """
-
+    
+    # list up mask image file
     if mask_path is None:
         mask_files = []
     else:
@@ -55,51 +57,56 @@ def custom_masking(mask_path, p_value, zoom,
             mask_path = Path(mask_path)
         mask_files = [file for file in mask_path.glob("*.nii.gz")]
 
-    image_sample = load_mni152_brain_mask()
+    mni_mask = load_mni152_brain_mask()
     
+    # integrate binary mask data
     if len(mask_files) > 0 :
-        m = F.array2pindex(nib.load(mask_files[0]).get_fdata(), p_value, flatten)
+        m = abs(gaussian_filter(nib.load(mask_files[0]).get_fdata(),1)) >= threshold # binarize
         for i in range(len(mask_files)-1):
-            m |= F.array2pindex(nib.load(mask_files[i]).get_fdata(), p_value, flatten)
+            m |= abs(gaussian_filter(nib.load(mask_files[0]).get_fdata(),1)) >= threshold # binarize and stack
     else:
-        m = F.array2pindex(image_sample.get_fdata(), p_value, flatten)
+        # if not provided, use min_152 mask instead.
+        m = mni_mask.get_fdata()
     
+    # reduce dimension by averaging zoom window
     if zoom != (1, 1, 1):
         m = block_reduce(m, zoom, interpolation_func)
     m = 1 * (m > 0)
 
-    m_true = np.array([i for i, v in enumerate(m.flatten()) if v != 0])
-    masked_data = nib.Nifti1Image(m, affine=image_sample.affine)
-    masker = NiftiMasker(mask_img=masked_data,
+    voxel_mask = nib.Nifti1Image(m, affine=mni_mask.affine)
+    
+    # masking is done by NiftiMasker provided by nilearn package
+    masker = NiftiMasker(mask_img=voxel_mask,
                          standardize=standardize,
                          smoothing_fwhm=smoothing_fwhm)
 
-    return masked_data, masker, m_true
+    return voxel_mask, masker
 
 
 def image_preprocess(params):
     """
     Make image that motion corrected and ROI masked.
+    This function wrapped up functions from nilearn package
     """
 
     """
     Arguments:
         params: params must have below contents
-            image_path:
-            confounds_path:
-            motion_confounds:
-            masker:
-            masked_data:
-            subject_id:
+            image_path (str or Path): path of fMRI nii file 
+            confounds_path (str or Path): path of corresponding motion confounds tsv file
+            motion_confounds (list[str]): list of name indicating motion confound names in confounds tsv file
+            masker (NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
+            voxel_mask (Nifti1Image): nifti image for voxel-wise binary mask
+            subject_id (str): subject ID. used to track the owner of the file in multiprocessing
 
     Return:
-        fmri_masked:
-        subject_id:
+        fmri_masked (array): preprocessed image
+        subject_id (str): subject ID. used to track the owner of the file in multiprocessing
     """
 
     image_path, confounds_path,\
     motion_confounds, masker,\
-    masked_data, subject_id = params
+    voxel_mask, subject_id = params
 
     preprocessed_images = []
     if confounds_path is not None:
@@ -114,7 +121,7 @@ def image_preprocess(params):
     # resample_to_img: need to target image including affine.
     # ref.: https://nilearn.github.io/modules/generated/nilearn.image.resample_img.html
     #       https://nilearn.github.io/modules/generated/nilearn.image.resample_to_img.html
-    fmri_masked = resample_to_img(image_path, masked_data)
+    fmri_masked = resample_to_img(image_path, voxel_mask)
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
 
     return fmri_masked, subject_id
@@ -127,27 +134,27 @@ def image_preprocess_mt(params, n_thread):
 
     """
     Arguments:
-        params: params must have below contents.
-            image_path: str or Path, target image path.
-            confounds_path: str or Path, target image path.
-            motion_confounds:
-            masker:
-            masked_data:
-            subject_id:
+        params: params must have below contents
+            image_path (str or Path): path of fMRI nii file 
+            confounds_path (str or Path): path of corresponding motion confounds tsv file
+            motion_confounds (list[str]): list of name indicating motion confound names in confounds tsv file
+            masker (NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
+            voxel_mask (Nifti1Image): nifti image for voxel-wise binary mask
+            subject_id (str): subject ID. used to track the owner of the file in multiprocessing
 
     Return:
-        preprocessed_images:
-        subject_id: subject number of preprocessed data.
+        fmri_masked (array): preprocessed image
+        subject_id (str): subject ID. used to track the owner of the file in multiprocessing
     """
     image_paths, confounds_paths,\
     motion_confounds, masker,\
-    masked_data, subject_id = params
+    voxel_mask, subject_id = params
 
     image_params = []
     for i in range(len(params[0])):
         image_params.append(
             [image_paths[i], confounds_paths[i], motion_confounds,
-             masker, masked_data, subject_id])
+             masker, voxel_mask, subject_id])
 
     preprocessed_images = []
     n_worker = n_thread if n_thread < 5 else n_thread // 2
