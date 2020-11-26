@@ -48,7 +48,6 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
     mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0]
 
     for coef in coefs:
-
         # converting flattened coefs to brain image.
         activation_map = np.zeros(masked_data.get_fdata().flatten().shape[0])
         for i, v in zip(mapping_id, coef):

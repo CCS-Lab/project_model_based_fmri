@@ -106,7 +106,6 @@ def mlp_regression(X, y,
     coefs = []
 
     for i in range(1, N + 1):
-
         # random sampling "n_samples" if the given number of X,y instances is bigger
         np.random.seed(i * i)
         tf.random.set_seed(i * i)
