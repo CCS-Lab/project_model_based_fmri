@@ -46,8 +46,8 @@ def bids_preprocess(# path info
                     standardize=True,
                     motion_confounds=["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"],
                     # multithreading option
-                    ncore=0, 
-                    nthread=0,
+                    ncore=2, 
+                    nthread=2,
                     # other specification
                     save=True):
     
@@ -70,7 +70,7 @@ def bids_preprocess(# path info
         threshold (float): threshold for binarize masks
         zoom ((float,float,float)): zoom window to reduce the spatial dimension. the dimension will be reduced by the factor of corresponding axis.
                                     e.g. (2,2,2) will make the dimension half in all directions.
-        smoothing_fwhm (int): the amount of gaussian smoothing  
+        smoothing_fwhm (int): the amount of gaussian smoothing. if None, image will not be smoothed.
         interpolation_func (numpy.func): to calculate representative value in the zooming window. e.g. numpy.mean, numpy.max
                                          e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube to a single value of its mean.
         standardize (boolean): if true, conduct gaussian normalization 
