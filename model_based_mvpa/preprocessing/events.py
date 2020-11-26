@@ -87,7 +87,7 @@ def events_preprocess(# path info
         signals: BOLD-like signal.
                  shape: subject # x (session # x run #) x time length of scan x voxel #
         time_mask: binary mask indicating valid time point.
-                  shape: subject # x (session # x run #) x time length of scan
+                   shape: subject # x (session # x run #) x time length of scan
     """
 
     ###########################################################################

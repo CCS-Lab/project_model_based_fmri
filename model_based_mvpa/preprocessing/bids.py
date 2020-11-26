@@ -21,6 +21,7 @@ from tqdm import tqdm
 
 from .fMRI import custom_masking, image_preprocess, image_preprocess_mt
 from ..utils import config
+import nibabel as nib
 
 import logging
 
@@ -146,7 +147,6 @@ def bids_preprocess(root,  # path info
     else:
         sp = Path(save_path)
         
-    # TODO: where does `nib` come from?
     nib.save(voxel_mask, sp / config.DEFAULT_VOXEL_MASK_FILENAME)
     pbar.update(1)
 
