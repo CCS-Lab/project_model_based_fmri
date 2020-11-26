@@ -9,7 +9,6 @@
 """
 
 import logging
-import os
 import time
 from pathlib import Path
 
@@ -21,8 +20,7 @@ from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
 
-import bids
-from bids import BIDSLayout, BIDSValidator
+from bids import BIDSLayout
 from tqdm import tqdm
 
 DEFAULT_SAVE_DIR = 'mvpa'
@@ -33,27 +31,26 @@ INDIV_PAR_FILENAME = "all_individual_params.tsv"
 logging.basicConfig(level=logging.INFO)
 
 
-def events_preprocess(  # directory info
-    root,
-    layout=None,
-    save_path=None,
-    # user-defined functions
-    preprocess=lambda x: x,
-    condition=lambda _: True,
-    modulation=None,
-    # computational model specification
-    dm_model=None,
-    all_individual_params=None,
-    # BOLDifying parameter
-    hrf_model="glover",
-    normalizer="minmax",
-    # Other specification
-    use_duration=False,
-    save=True,
-    scale=(-1, 1),
-    # hBayesDM fitting parameters
-    **kwargs
-):
+def events_preprocess(root,  # directory info
+                      layout=None,
+                      save_path=None,
+                      # user-defined functions
+                      preprocess=lambda x: x,
+                      condition=lambda _: True,
+                      modulation=None,
+                      # computational model specification
+                      dm_model=None,
+                      all_individual_params=None,
+                      # BOLDifying parameter
+                      hrf_model="glover",
+                      normalizer="minmax",
+                      # Other specification
+                      use_duration=False,
+                      save=True,
+                      scale=(-1, 1),
+                      # hBayesDM fitting parameters
+                      **kwargs,
+                      ):
     """
     Preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data.
     User can provide precalculated behaviral data through "df_events" argument,
@@ -63,9 +60,7 @@ def events_preprocess(  # directory info
 
     The time mask will be used for selecting data points included in model fitting
     The BOLD-like signal will be used for a target(y) in model fitting
-    """
 
-    """
     Arguments:
         root (str or Path): root directory of BIDS layout
         layout (BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained using root info.
@@ -82,7 +77,7 @@ def events_preprocess(  # directory info
         use_duration (boolean) : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
         save (boolean): indicating whether save result if True, you will save y.npy, time_mask.npy and additionaly all_individual_params.tsv.
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
-    
+
     Return
         dm_model: hBayesDM model.
         df_events: integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
@@ -92,8 +87,8 @@ def events_preprocess(  # directory info
                   shape: subject # x (session # x run #) x time length of scan
     """
 
-################################################################################
-# designate saving path
+    ###########################################################################
+    # designate saving path
 
     pbar = tqdm(total=6)
     s = time.time()
@@ -106,8 +101,8 @@ def events_preprocess(  # directory info
     if save and not sp.exists():
         sp.mkdir()
 
-################################################################################
-# load data from bids layout
+    ###########################################################################
+    # load data from bids layout
 
     if layout is None:
         pbar.set_description("loading bids dataset..".ljust(50))
@@ -116,6 +111,7 @@ def events_preprocess(  # directory info
         pbar.set_description("loading layout..".ljust(50))
 
     t_r = layout.get_tr()
+
     # this will aggregate all events file path in sorted way
     events = layout.get(suffix="events", extension="tsv")
 
@@ -134,11 +130,13 @@ def events_preprocess(  # directory info
 
     # collecting dataframe from event files spread in BIDS layout
     df_events_list = [event.get_df() for event in events]
+
     # event_info such as id number for subject, session, run
     event_infos_list = [event.get_entities() for event in events]
     pbar.update(1)
-################################################################################
-# adjust columns in events file
+
+    ###########################################################################
+    # adjust columns in events file
 
     pbar.set_description("adjusting event file columns..".ljust(50))
 
@@ -155,12 +153,13 @@ def events_preprocess(  # directory info
         ) for df_events, event_infos in zip(df_events_list, event_infos_list)
     ]
     pbar.update(1)
-################################################################################
-# get time masks
-# binary mask indicating valid time points will be obtained by applying user-defined function "condition"
-# "condition" function will censor each trial to decide whether include it or not
-# if use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
-# else the gap between consecutive trials will be used instead.
+
+    ###########################################################################
+    # get time masks
+    # binary mask indicating valid time points will be obtained by applying user-defined function "condition"
+    # "condition" function will censor each trial to decide whether include it or not
+    # if use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
+    # else the gap between consecutive trials will be used instead.
 
     pbar.set_description("calculating time masks..".ljust(50))
 
@@ -186,14 +185,16 @@ def events_preprocess(  # directory info
 
     pbar.update(1)
     pbar.set_description("time mask preproecssing done!".ljust(50))
-################################################################################
-# Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
-# if user provided the "df_events" with those fields, this part will be skipped
-# the fields except for 'modulation' already exist in "df_events_list",
-# so the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
-# obtained from fitting hierarchical bayesian model supported by hBayesDM package.
-# Here, user also can provide precalculated individual model parameters in dataframe form through the "all_individual_params" argument.
 
+    ###########################################################################
+    # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
+    # if user provided the "df_events" with those fields, this part will be skipped
+    # the fields except for 'modulation' already exist in "df_events_list",
+    # so the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
+    # obtained from fitting hierarchical bayesian model supported by hBayesDM package.
+    # Here, user also can provide precalculated individual model parameters in dataframe form through the "all_individual_params" argument.
+
+    # TODO: where does `df_events` come from?
     if df_events is None:
         # the case user does not provide precalculated bahavioral data
         # calculate latent process using user defined latent function
@@ -240,21 +241,22 @@ def events_preprocess(  # directory info
         pbar.update(1)
     else:
         pbar.update(2)
-################################################################################
-# get BOLDified signal
-# this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
-# by providing 'onset','duration', and 'modulation' values.
-# the final matrix will be shaped as subject # x run # x n_scan
-# n_scane means the number of time points in fMRI data
-# if there is multiple session, still there would be no dimension indicating sessions info,
-# but runs will be arranged as grouped by sessions number.
-# e.g. (subj-01, sess-01, run-01,:)
-#      (subj-01, sess-01, run-02,:)
-#                 ...
-#      (subj-01, sess-02, run-01,:)
-#      (subj-01, sess-02, run-02,:)
-#                 ...
-# this order should match with preprocessed fMRI image data
+
+    ###########################################################################
+    # get BOLDified signal
+    # this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
+    # by providing 'onset','duration', and 'modulation' values.
+    # the final matrix will be shaped as subject # x run # x n_scan
+    # n_scane means the number of time points in fMRI data
+    # if there is multiple session, still there would be no dimension indicating sessions info,
+    # but runs will be arranged as grouped by sessions number.
+    # e.g. (subj-01, sess-01, run-01,:)
+    #      (subj-01, sess-01, run-02,:)
+    #                 ...
+    #      (subj-01, sess-02, run-01,:)
+    #      (subj-01, sess-02, run-02,:)
+    #                 ...
+    # this order should match with preprocessed fMRI image data
 
     pbar.set_description("modulation signal making..".ljust(50))
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
@@ -301,14 +303,18 @@ def events_preprocess(  # directory info
         signals.append(normalized_signal)
     signals = np.array(signals)
     pbar.update(1)
-################################################################################
+
+    ###########################################################################
+
+    # TODO: where does `PREP_TGT_FILEPREFIX` come from?
     if save:
         np.save(sp / PREP_TGT_FILEPREFIX, signals)
 
     pbar.update(1)
 
-################################################################################
-# elapsed time check
+    ###########################################################################
+    # elapsed time check
+
     pbar.set_description("events preproecssing done!".ljust(50))
 
     e = time.time()
@@ -322,20 +328,18 @@ def _get_individual_params(subject_id, all_individual_params):
     """
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
-    """
 
-    """
     Arguments:
         subject_id (int or str): subject ID number
         all_individual_params (DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
-        
+
     Return:
         ind_pars (dict): individual parameter value. dictionary{parameter_name:value}
-        
+
     """
     try:
         ind_pars = all_individual_params.loc[subject_id]
-    except:
+    except Exception:
         ind_pars = all_individual_params.loc[int(subject_id)]
 
     return dict(ind_pars)
@@ -344,9 +348,7 @@ def _get_individual_params(subject_id, all_individual_params):
 def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     """
     Get binary masked data indicating time points in use
-    """
 
-    """
     Arguments:
         condition: a function : row --> boolean, to indicate if use the row or not 
         df_events: dataframe for rows of one 'run' event data
@@ -380,13 +382,11 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
 def _add_event_info(df_events, event_infos):
     """
     add subject, run, session info to dataframe of events of single 'run' 
-    """
 
-    """
     Arguments:
         df_events: dataframe for rows of one 'run' event data.
         event_infos: a dictionary containing  'subject', 'run', (and 'session' if applicable).
-        
+
     Return:
         new_df: a dataframe with preprocessed rows
     """
@@ -401,6 +401,8 @@ def _add_event_info(df_events, event_infos):
         if 'session' in info.keys():
             row['session'] = info['session']  # if applicable
 
+    # TODO: why is the return statement located in the middle of the function?
+    # TODO: where does `row` come from?
     return row
 
     for _, row in df_events.iterrows():
@@ -417,9 +419,7 @@ def _add_event_info(df_events, event_infos):
 def _preprocess_event(preprocess, condition, df_events):
     """
     Preprocess dataframe of events of single 'run' 
-    """
 
-    """
     Arguments:
         preprocess: a funcion, which is converting row data to new one to match the name of value with hBayesDM.
                     preprocess must include the belows as the original event file would not have subject and run info.
@@ -451,15 +451,13 @@ def _preprocess_event(preprocess, condition, df_events):
 def _preprocess_event_latent_state(modulation, condition, df_events, param_dict):
     """
     add latent state value to for each row of dataframe of single 'run'
-    """
 
-    """
     Argumnets:
         modulation: a function, which is conducting row, param_dict --> row, function for calcualte latent state (or parameteric modulation value) 
         condition: a funcion, which is conducting row --> boolean, to indicate if use the row or not 
         df_events: dataframe for rows of one 'run' event data
         param_dict: a dictionary containing  model parameter value
-    
+
     Return:
         new_df: a dataframe with latent state value
     """
@@ -479,6 +477,10 @@ def _preprocess_event_latent_state(modulation, condition, df_events, param_dict)
 
 
 ################################################################################
+
+# TODO: it's better to seperate codes for specific data from those for core
+# functions.
+
 """
 example functions for tom 2007 (ds000005)
 
@@ -564,4 +566,5 @@ def example_piva_modulation(row, param_dict):
     row['modulation'] = modulation
 
     return row
-################################################################################
+
+###############################################################################

@@ -1,11 +1,12 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """
 @author: Yedarm Seong
 @contact: mybirth0407@gmail.com
 @last modification: 2020.11.03
 """
+
+
+from pathlib import Path
 
 import numpy as np
 from tensorflow.keras.utils import Sequence
@@ -14,9 +15,7 @@ from tensorflow.keras.utils import Sequence
 def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
     """
     Get dataset for fitting model
-    """
 
-    """
     Arguments:
         root: data path, if None, must be specified X, y, time_mask_path.
               default path is imported from layout.
@@ -37,8 +36,9 @@ def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
         y_path = root / 'mvpa'
         time_mask_path = root / 'mvpa'
     else:
-        assert X_path is not None, "If root is None, you must be indicate data path (X, Y, time mask)"
-        assert y_path is not None, "If root is None, you must be indicate data path (X, Y, time mask)"
+        assert X_path is not None or y_path is not None, (
+            "If root is None, you must be indicate data path (X, Y, time mask)"
+        )
 
         X_path = Path(X_path)
         y_path = Path(y_path)
@@ -69,9 +69,11 @@ def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
 
 
 class DataGenerator(Sequence):
-
-    # data generator class required for fitting Keras model
-    # just a simple wrapper of feeding preprocessed fMRI data(X) and BOLD-like target data(y)
+    """
+    Data generator class required for fitting Keras model. This is just a
+    simple wrapper of feeding preprocessed fMRI data (:math:`X`) and BOLD-like
+    target data (:math:`y`).
+    """
 
     def __init__(self, X, y, batch_size, shuffle=True):
         self.X = X
@@ -79,13 +81,14 @@ class DataGenerator(Sequence):
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.indexes = np.arange(X.shape[0])
+
         self.on_epoch_end()
 
     # for printing the statistics of the function
     def on_epoch_end(self):
         "Updates indexes after each epoch"
 
-        if self.shuffle == True:
+        if self.shuffle:
             np.random.shuffle(self.indexes)
 
     def __len__(self):

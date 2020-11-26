@@ -17,11 +17,8 @@ import pandas as pd
 from nilearn.datasets import load_mni152_brain_mask
 from nilearn.image import resample_to_img
 from nilearn.input_data import NiftiMasker
-from scipy import stats
 from scipy.ndimage import gaussian_filter
 from skimage.measure import block_reduce
-
-from ..utils import functions as F
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,9 +27,7 @@ def custom_masking(mask_path, threshold, zoom,
                    smoothing_fwhm, interpolation_func, standardize):
     """
     Make custom ROI mask file to reduce the number of features.
-    """
 
-    """
     Arguments:
         mask_path (str or Path): path for mask file with nii.gz format. encourage get files from Neurosynth
         threshold (float): threshold for binarize masks
@@ -42,6 +37,7 @@ def custom_masking(mask_path, threshold, zoom,
         interpolation_func (numpy.func): to calculate representative value in the zooming window. e.g. numpy.mean, numpy.max
                                          e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube to a single value of its mean.
         standardize (boolean): if true, conduct gaussian normalization 
+
     Return:
         voxel_mask (Nifti1Image): nifti image for voxel-wise binary mask
         masker (NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
@@ -51,7 +47,7 @@ def custom_masking(mask_path, threshold, zoom,
     if mask_path is None:
         mask_files = []
     else:
-        if type(mask_path) is not type(Path()):
+        if isinstance(mask_path, str):
             mask_path = Path(mask_path)
         mask_files = [file for file in mask_path.glob("*.nii.gz")]
 
@@ -88,9 +84,7 @@ def image_preprocess(params):
     """
     Make image that motion corrected and ROI masked.
     This function wrapped up functions from nilearn package
-    """
 
-    """
     Arguments:
         params: params must have below contents
             image_path (str or Path): path of fMRI nii file 
@@ -109,6 +103,7 @@ def image_preprocess(params):
         motion_confounds, masker,\
         voxel_mask, subject_id = params
 
+    # TODO: why this `preprocessed_images` is defined?
     preprocessed_images = []
     if confounds_path is not None:
         confounds = pd.read_table(confounds_path, sep="\t")
@@ -131,9 +126,7 @@ def image_preprocess(params):
 def image_preprocess_mt(params, nthread):
     """
     Call image_preprocess function using multithreading.
-    """
 
-    """
     Arguments:
         params: params must have below contents
             image_path (str or Path): path of fMRI nii file 
@@ -162,7 +155,8 @@ def image_preprocess_mt(params, nthread):
 
     with ThreadPoolExecutor(max_workers=n_worker) as executor:
         future_result = {
-            executor.submit(image_preprocess, image_param): image_param for image_param in image_params
+            executor.submit(image_preprocess, image_param): image_param
+            for image_param in image_params
         }
 
         for future in as_completed(future_result):

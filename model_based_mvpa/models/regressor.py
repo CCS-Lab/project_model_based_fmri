@@ -6,35 +6,8 @@
 @contact: cjfwndnsl@gmail.com
           mybirth0407@gmail.com
 @last modification: 2020.11.16
-"""
-
-import logging
-import os
-import random
-from pathlib import Path
-
-import matplotlib.pyplot as plt
-import numpy as np
-import tensorflow as tf
-from glmnet import ElasticNet
-from scipy.stats import ttest_1samp
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
-from tensorflow import keras as K
-from tensorflow.keras import Sequential, datasets, layers, losses, optimizers
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.layers import BatchNormalization, Dense, Dropout, ReLU
-from tensorflow.keras.regularizers import l1_l2
-
-from tqdm import tqdm
-
-from ..data import loader
-
-DEFAULT_SAVE_PATH_TEMP = 'temp'
-logging.basicConfig(level=logging.INFO)
 
 
-"""
 This part is implemented to fit regression model and extract voxel-wise weights (coefficients). 
 
 Available Model:
@@ -42,6 +15,28 @@ Available Model:
     Penalized linear regression (Keras): penalizing obejctive function with mixed L1 and L2 norm.
     ElasticNet (glmnet): penalized linear regression with automatical searching optimal amount of penalizing (shrinkage parameter).
 """
+
+import logging
+import random
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from glmnet import ElasticNet
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from tensorflow.keras import Sequential
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.regularizers import l1_l2
+
+# TODO: replace this relative import with an absolute import.
+# e.g., from {package_name}.data import loader
+from ..data import loader
+
+DEFAULT_SAVE_PATH_TEMP = 'temp'
+logging.basicConfig(level=logging.INFO)
 
 
 def mlp_regression(X, y,
@@ -62,13 +57,14 @@ def mlp_regression(X, y,
                    save_path=None,
                    n_samples=30000):
     """
-    Fitting Multi-Layer Perceptron (MLP) as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
-    Mini-batch fitting with earlystopping using gradient descent (Adam).
-    Coefficient extraction is done by sequential matrix multiplication of layers. The activation function is assumed to be linear.
-    Repeat several times (=N) and return N coefficients.
-    """
+    Fitting Multi-Layer Perceptron (MLP) as a regression model for multi-voxel
+    pattern analysis and extracting fitted coefficients. Mini-batch fitting
+    with earlystopping using gradient descent (Adam).
 
-    """
+    Coefficient extraction is done by sequential matrix multiplication of
+    layers. The activation function is assumed to be linear.
+    Repeat several times (=N) and return N coefficients.
+
     Arguments:
         -- Data --
         X : flattened fMRI data. shape : data # x voxel #
@@ -82,7 +78,7 @@ def mlp_regression(X, y,
                      any other activation functions defined in Keras can be used.  (https://www.tensorflow.org/api_docs/python/tf/keras/activations)
         activation_output: activation function applied after final layer. should reflect the nature of y. e.g. regression on y : use 'linear'
         dropout_rate: drop out rate for drop out layers intertwinned between consecutive linear layers.
-    
+
         epochs: maximum number of iterations
         batch_size: number of instance used in a single mini-batch.
         patience: parameter for early stopping, indicating the maximum number for patiently seeking better model.
@@ -221,8 +217,7 @@ def penalized_linear_regression(X, y,
                                 layout=None,
                                 save=False,
                                 save_path=None,
-                                n_samples=30000
-                                ):
+                                n_samples=30000):
     """
     Fitting penalized linear regression model as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
     L1 norm and L2 norm is mixed as alpha * L1 + (1-alpha)/2 * L2
@@ -334,6 +329,7 @@ def penalized_linear_regression(X, y,
                   steps_per_epoch=train_steps,
                   validation_steps=val_steps)
 
+        # TODO: where does `bst_model_path` comes from?
         model.load_weights(bst_model_path)
 
         y_pred = model.predict(X_test)
@@ -374,14 +370,12 @@ def elasticnet(X, y,
     Mini-batch fitting with earlystopping using gradient descent (Adam).
     Coefficient extraction is done by sequential matrix multiplication of layers. The activation function is assumed to be linear.
     Repeat several times (=N) and return N coefficients.
-    """
 
-    """
     Arugments:
         -- Data --
         X: flattened fMRI data. shape : data # x voxel #
         y: parametric modulation values to regress X against. shape: data #
-    
+
         -- Model hyperparameters --
         alpha: mixing parameter
         n_splits : the number of N-fold cross validation
@@ -389,13 +383,13 @@ def elasticnet(X, y,
         max_lambda : the maximum value of lambda to search
         min_lambda_ratio : the ratio of minimum lambda value to maximum lambda value. 
         lambda_search_num : the number of searching candidate.
-   
+
         -- Others --
         verbose : if > 0 then log fitting process and report a validation mse of each repitition.
         save : if True save the results
         save_path : save temporal model weights file. TODO : replace it with using invisible temp file
         n_samples : maximum number of instance of data (X,y) used in a single repetition. 
-                
+
     Return:
         coefs : N fitted models' coefficients mapped to weight of each voxel.
                 shape: N x voxel #. 
