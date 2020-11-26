@@ -66,9 +66,9 @@ def events_preprocess(# directory info
     
     """
     Arguments:
-        root (str or Path) : root directory of BIDS layout
-        layout (BIDSLayout) : BIDSLayout by bids package. if not provided, it will be obtained using root info.
-        save_path (str or Path) : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path      
+        root (str or Path): root directory of BIDS layout
+        layout (BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained using root info.
+        save_path (str or Path): path for saving output. if not provided, BIDS root/derivatives/data will be set as default path      
         preprocess (func(Series, dict)-> Series)): user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
         condition (func(Series)-> boolean)): user defined function for filtering behavioral data. f(single_row_data_frame) -> True or False
         modulation (func(Series, dict)-> Series): user defined function for calculating latent process. f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
@@ -310,7 +310,7 @@ def events_preprocess(# directory info
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
 
-    return dm_model, df_events, signals, time_mask
+    return dm_model, df_events, signals, time_mask, layout
 
 
 # todo: remove
