@@ -7,23 +7,21 @@
 @last modification: 2020.11.13
 """
 
-import numpy as np
-import pandas as pd
-from pathlib import Path
-from skimage.measure import block_reduce
-
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-from nilearn.input_data import NiftiMasker
-from nilearn.image import resample_to_img
-from nilearn.datasets import load_mni152_brain_mask
-from scipy import stats
-from scipy.ndimage import gaussian_filter
+from pathlib import Path
 
 import nibabel as nib
-from ..utils import functions as F
+import numpy as np
+import pandas as pd
+from nilearn.datasets import load_mni152_brain_mask
+from nilearn.image import resample_to_img
+from nilearn.input_data import NiftiMasker
+from scipy import stats
+from scipy.ndimage import gaussian_filter
+from skimage.measure import block_reduce
 
-import logging
+from ..utils import functions as F
 
 logging.basicConfig(level=logging.INFO)
 
@@ -48,7 +46,7 @@ def custom_masking(mask_path, threshold, zoom,
         voxel_mask (Nifti1Image): nifti image for voxel-wise binary mask
         masker (NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
     """
-    
+
     # list up mask image file
     if mask_path is None:
         mask_files = []
@@ -58,23 +56,26 @@ def custom_masking(mask_path, threshold, zoom,
         mask_files = [file for file in mask_path.glob("*.nii.gz")]
 
     mni_mask = load_mni152_brain_mask()
-    
+
     # integrate binary mask data
-    if len(mask_files) > 0 :
-        m = abs(gaussian_filter(nib.load(mask_files[0]).get_fdata(),1)) >= threshold # binarize
+    if len(mask_files) > 0:
+        m = abs(gaussian_filter(
+            nib.load(mask_files[0]).get_fdata(), 1)) >= threshold  # binarize
         for i in range(len(mask_files)-1):
-            m |= abs(gaussian_filter(nib.load(mask_files[0]).get_fdata(),1)) >= threshold # binarize and stack
+            # binarize and stack
+            m |= abs(gaussian_filter(
+                nib.load(mask_files[0]).get_fdata(), 1)) >= threshold
     else:
         # if not provided, use min_152 mask instead.
         m = mni_mask.get_fdata()
-    
+
     # reduce dimension by averaging zoom window
     if zoom != (1, 1, 1):
         m = block_reduce(m, zoom, interpolation_func)
     m = 1 * (m > 0)
 
     voxel_mask = nib.Nifti1Image(m, affine=mni_mask.affine)
-    
+
     # masking is done by NiftiMasker provided by nilearn package
     masker = NiftiMasker(mask_img=voxel_mask,
                          standardize=standardize,
@@ -105,8 +106,8 @@ def image_preprocess(params):
     """
 
     image_path, confounds_path,\
-    motion_confounds, masker,\
-    voxel_mask, subject_id = params
+        motion_confounds, masker,\
+        voxel_mask, subject_id = params
 
     preprocessed_images = []
     if confounds_path is not None:
@@ -147,8 +148,8 @@ def image_preprocess_mt(params, nthread):
         subject_id (str): subject ID. used to track the owner of the file in multiprocessing
     """
     image_paths, confounds_paths,\
-    motion_confounds, masker,\
-    voxel_mask, subject_id = params
+        motion_confounds, masker,\
+        voxel_mask, subject_id = params
 
     image_params = []
     for i in range(len(params[0])):
@@ -158,7 +159,7 @@ def image_preprocess_mt(params, nthread):
 
     preprocessed_images = []
     n_worker = 4 if nthread > 4 else nthread
-    
+
     with ThreadPoolExecutor(max_workers=n_worker) as executor:
         future_result = {
             executor.submit(image_preprocess, image_param): image_param for image_param in image_params

@@ -8,6 +8,7 @@
 @last modification: 2020.11.03
 """
 
+
 class Model():
     def __init__(self):
         pass

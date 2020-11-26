@@ -1,4 +1,4 @@
-    #!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -8,20 +8,19 @@
 @last modification: 2020.11.13
 """
 
+import logging
 import os
-import numpy as np
+import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+
+import numpy as np
 
 import bids
 from bids import BIDSLayout, BIDSValidator
-
-from concurrent.futures import ProcessPoolExecutor, as_completed
-import time
 from tqdm import tqdm
+
 from .fMRI import *
-
-import logging
-
 
 DEFAULT_SAVE_DIR = "mvpa"
 DEFAULT_MASK_DIR = "masks"
@@ -32,25 +31,25 @@ bids.config.set_option("extension_initial_dot", True)
 logging.basicConfig(level=logging.INFO)
 
 
-def bids_preprocess(# path info
-                    root,
-                    layout=None,
-                    save_path=None,
-                    # ROI masking specification
-                    mask_path=None,
-                    threshold=2.58,
-                    # preprocessing specification
-                    zoom=(2, 2, 2),
-                    smoothing_fwhm=6,
-                    interpolation_func=np.mean,
-                    standardize=True,
-                    motion_confounds=["trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"],
-                    # multithreading option
-                    ncore=2, 
-                    nthread=2,
-                    # other specification
-                    save=True):
-    
+def bids_preprocess(  # path info
+    root,
+    layout=None,
+    save_path=None,
+    # ROI masking specification
+    mask_path=None,
+    threshold=2.58,
+    # preprocessing specification
+    zoom=(2, 2, 2),
+    smoothing_fwhm=6,
+    interpolation_func=np.mean,
+    standardize=True,
+    motion_confounds=["trans_x", "trans_y",
+                      "trans_z", "rot_x", "rot_y", "rot_z"],
+    # multithreading option
+    ncore=2,
+    nthread=2,
+    # other specification
+        save=True):
     """
     This function is implemented to preprocess fMRI image data in BIDS layout. 
     The major goals of this function are 1) remove motion artifacts and drift,2) reduce dimensionality by masking and pooling, and 3) re-organize data for fitting MVPA model.
@@ -93,7 +92,7 @@ def bids_preprocess(# path info
         layout = BIDSLayout(root, derivatives=True)
     else:
         pbar.set_description("loading layout..".ljust(50))
-    
+
     subjects = layout.get_subjects()
     n_subject = len(subjects)
     n_session = len(layout.get_session())
@@ -104,15 +103,16 @@ def bids_preprocess(# path info
 
     pbar.set_description("making custom voxel mask..".ljust(50))
     root = Path(root)
-    
+
     if mask_path is None:
-        mask_path = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_MASK_DIR
-    
+        mask_path = Path(
+            layout.derivatives["fMRIPrep"].root) / DEFAULT_MASK_DIR
+
     voxel_mask, masker = custom_masking(
         mask_path, threshold, zoom,
         smoothing_fwhm, interpolation_func, standardize
     )
-        
+
     pbar.update(1)
 ################################################################################
 # setting parameter
@@ -134,7 +134,8 @@ def bids_preprocess(# path info
                  masker, voxel_mask, subject]
         params.append(param)
 
-    assert len(params) == n_subject, "length of params list and the number of subjects are not validate"
+    assert len(
+        params) == n_subject, "length of params list and the number of subjects are not validate"
     pbar.update(1)
 ################################################################################
 # create path for data
@@ -144,7 +145,7 @@ def bids_preprocess(# path info
         sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_DIR
     else:
         sp = Path(save_path)
-        
+
     nib.save(voxel_mask, sp / VOXEL_MASK_FILENAME)
     pbar.update(1)
 ################################################################################
@@ -156,7 +157,8 @@ def bids_preprocess(# path info
     ## Todo ##
     chunk_size = 4 if nthread > 4 else ncore
 
-    params_chunks = [params[i:i + chunk_size] for i in range(0, len(params), chunk_size)]
+    params_chunks = [params[i:i + chunk_size]
+                     for i in range(0, len(params), chunk_size)]
 
     for i, params_chunk in enumerate(params_chunks):
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
@@ -183,6 +185,6 @@ def bids_preprocess(# path info
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
     logging.info(f"result\nmasking data shape: {voxel_mask.shape}\n"
-               + f"number of voxels: {m_true.shape}")
+                 + f"number of voxels: {m_true.shape}")
 
     return X, voxel_mask, layout

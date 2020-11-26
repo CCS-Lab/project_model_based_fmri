@@ -8,24 +8,22 @@
 @last modification: 2020.11.16
 """
 
+import logging
 import os
+import time
 from pathlib import Path
-import bids
-from bids import BIDSLayout, BIDSValidator
-
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import minmax_scale
-from scipy.stats import zscore
-
-from nilearn.glm.first_level.hemodynamic_models import compute_regressor
-import nibabel as nib
-from tqdm import tqdm
 
 import hbayesdm.models
-import time
+import nibabel as nib
+import numpy as np
+import pandas as pd
+from nilearn.glm.first_level.hemodynamic_models import compute_regressor
+from scipy.stats import zscore
+from sklearn.preprocessing import minmax_scale
 
-import logging
+import bids
+from bids import BIDSLayout, BIDSValidator
+from tqdm import tqdm
 
 DEFAULT_SAVE_DIR = 'mvpa'
 PREP_TGT_FILENAME = 'y.npy'
@@ -35,38 +33,38 @@ INDIV_PAR_FILENAME = "all_individual_params.tsv"
 logging.basicConfig(level=logging.INFO)
 
 
-def events_preprocess(# directory info
-                      root,
-                      layout=None,
-                      save_path=None,
-                      # user-defined functions
-                      preprocess=lambda x: x,
-                      condition=lambda _: True,
-                      modulation=None,
-                      # computational model specification
-                      dm_model=None,
-                      all_individual_params=None,
-                      # BOLDifying parameter
-                      hrf_model="glover",
-                      normalizer="minmax",
-                      # Other specification
-                      use_duration=False,
-                      save=True,
-                      scale=(-1, 1),
-                      # hBayesDM fitting parameters
-                      **kwargs 
-                      ):
+def events_preprocess(  # directory info
+    root,
+    layout=None,
+    save_path=None,
+    # user-defined functions
+    preprocess=lambda x: x,
+    condition=lambda _: True,
+    modulation=None,
+    # computational model specification
+    dm_model=None,
+    all_individual_params=None,
+    # BOLDifying parameter
+    hrf_model="glover",
+    normalizer="minmax",
+    # Other specification
+    use_duration=False,
+    save=True,
+    scale=(-1, 1),
+    # hBayesDM fitting parameters
+    **kwargs
+):
     """
     Preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data.
     User can provide precalculated behaviral data through "df_events" argument,
     which is the DataFrame with subjID, run, onset, duration, and modulation. (also session if applicable)
     if not, it will calculate latent process by using hierarchical Bayesian modeling using "hBayesDM" package.
     User also can provide precalculated individual model parameter values, through "all_individual_params" argument.
-    
+
     The time mask will be used for selecting data points included in model fitting
     The BOLD-like signal will be used for a target(y) in model fitting
     """
-    
+
     """
     Arguments:
         root (str or Path): root directory of BIDS layout
@@ -99,12 +97,12 @@ def events_preprocess(# directory info
 
     pbar = tqdm(total=6)
     s = time.time()
-    
+
     if save_path is None:
         sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_DIR
     else:
         sp = Path(save_path)
-    
+
     if save and not sp.exists():
         sp.mkdir()
 
@@ -133,23 +131,23 @@ def events_preprocess(# directory info
             extension="nii.gz")[0]
     )
     n_scans = image_sample.shape[-1]
-    
+
     # collecting dataframe from event files spread in BIDS layout
     df_events_list = [event.get_df() for event in events]
-    # event_info such as id number for subject, session, run 
+    # event_info such as id number for subject, session, run
     event_infos_list = [event.get_entities() for event in events]
     pbar.update(1)
 ################################################################################
 # adjust columns in events file
-    
+
     pbar.set_description("adjusting event file columns..".ljust(50))
-    
+
     # add event info to each dataframe row
     df_events_list = [
-        _add_event_info( df_events, event_infos) 
+        _add_event_info(df_events, event_infos)
         for df_events, event_infos in zip(df_events_list, event_infos_list)
     ]
-    
+
     # modify trial data by user-defined function "preprocess"
     df_events_list = [
         _preprocess_event(
@@ -164,24 +162,25 @@ def events_preprocess(# directory info
 # if use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
 # else the gap between consecutive trials will be used instead.
 
-
     pbar.set_description("calculating time masks..".ljust(50))
-    
+
     time_mask = []
     for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
         time_mask_subject = []
         if n_session:
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
-                    time_mask_subject.append(_get_time_mask(condition, group1 , n_scans, t_r, use_duration))
-        else:       
+                    time_mask_subject.append(_get_time_mask(
+                        condition, group1, n_scans, t_r, use_duration))
+        else:
             for name1, group1 in group0.groupby(["run"]):
-                time_mask_subject.append(_get_time_mask(condition, group1 , n_scans, t_r, use_duration))
-                
+                time_mask_subject.append(_get_time_mask(
+                    condition, group1, n_scans, t_r, use_duration))
+
         time_mask.append(time_mask_subject)
-        
+
     time_mask = np.array(time_mask)
-    
+
     if save:
         np.save(sp / TIMEMASK_FILENAME, time_mask)
 
@@ -189,8 +188,8 @@ def events_preprocess(# directory info
     pbar.set_description("time mask preproecssing done!".ljust(50))
 ################################################################################
 # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
-# if user provided the "df_events" with those fields, this part will be skipped 
-# the fields except for 'modulation' already exist in "df_events_list", 
+# if user provided the "df_events" with those fields, this part will be skipped
+# the fields except for 'modulation' already exist in "df_events_list",
 # so the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
 # obtained from fitting hierarchical bayesian model supported by hBayesDM package.
 # Here, user also can provide precalculated individual model parameters in dataframe form through the "all_individual_params" argument.
@@ -198,44 +197,45 @@ def events_preprocess(# directory info
     if df_events is None:
         # the case user does not provide precalculated bahavioral data
         # calculate latent process using user defined latent function
-        
+
         assert modulation is not None, "if df_events is None, must be assigned to latetn_function"
-        
-        if all_individual_params is None: 
+
+        if all_individual_params is None:
             # the case user does not provide individual model parameter values
             # obtain parameter values using hBayesDM package
-            
+
             assert dm_model is not None, "if df_events is None, must be assigned to dm_model."
-            
-            pbar.set_description("hbayesdm doing (model: %s)..".ljust(50) % dm_model)
-            
+
+            pbar.set_description(
+                "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
+
             if type(dm_model) == str:
                 dm_model = getattr(
                     hbayesdm.models, dm_model)(
                         data=pd.concat(df_events_list),
                         **kwargs
-                    )
-            
+                )
+
             pbar.update(1)
             all_individual_params = dm_model.all_ind_pars
 
             if save:
                 all_individual_params.to_csv(sp / INDIV_PAR_FILENAME, sep="\t")
-                
+
         else:
             dm_model = None
             pbar.update(1)
-        
+
         pbar.set_description("calculating modulation..".ljust(50))
-        
+
         # calculate latent process using user-defined function "modulation"
-        df_events_list =[
+        df_events_list = [
             _preprocess_event_latent_state(
                 modulation, condition, df_events,
-                    _get_individual_params(
-                        event_infos["subject"], all_individual_params)
-                    ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
-        
+                _get_individual_params(
+                    event_infos["subject"], all_individual_params)
+            ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
+
         df_events = pd.concat(df_events_list)
         pbar.update(1)
     else:
@@ -246,7 +246,7 @@ def events_preprocess(# directory info
 # by providing 'onset','duration', and 'modulation' values.
 # the final matrix will be shaped as subject # x run # x n_scan
 # n_scane means the number of time points in fMRI data
-# if there is multiple session, still there would be no dimension indicating sessions info, 
+# if there is multiple session, still there would be no dimension indicating sessions info,
 # but runs will be arranged as grouped by sessions number.
 # e.g. (subj-01, sess-01, run-01,:)
 #      (subj-01, sess-01, run-02,:)
@@ -256,7 +256,6 @@ def events_preprocess(# directory info
 #                 ...
 # this order should match with preprocessed fMRI image data
 
-    
     pbar.set_description("modulation signal making..".ljust(50))
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
 
@@ -266,7 +265,8 @@ def events_preprocess(# directory info
         if n_session:
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
-                    exp_condition = group2[["onset", "duration", "modulation"]].to_numpy().T
+                    exp_condition = group2[[
+                        "onset", "duration", "modulation"]].to_numpy().T
                     exp_condition = exp_condition.astype(float)
                     signal, name = compute_regressor(
                         exp_condition=exp_condition,
@@ -275,27 +275,28 @@ def events_preprocess(# directory info
                     signal_subject.append(signal)
         else:
             for name1, group1 in group0.groupby(["run"]):
-                exp_condition = group1[["onset", "duration", "modulation"]].to_numpy().T
+                exp_condition = group1[[
+                    "onset", "duration", "modulation"]].to_numpy().T
                 exp_condition = exp_condition.astype(float)
                 signal, name = compute_regressor(
                     exp_condition=exp_condition,
                     hrf_model=hrf_model,
                     frame_times=frame_times)
                 signal_subject.append(signal)
-        
+
         signal_subject = np.array(signal_subject)
         reshape_target = signal_subject.shape
-        
+
         # method for normalizing signal
         if normalizer == "standard":
             # standard normalization by calculating zscore
-            normalized_signal = zscore(signal_subject.flatten(),axis=None)
+            normalized_signal = zscore(signal_subject.flatten(), axis=None)
         else:
             # default is using minmax
             normalized_signal = minmax_scale(
                 signal_subject.flatten(), feature_range=(-1, 1), axis=0, copy=True
             )
-            
+
         normalized_signal = normalized_signal.reshape(reshape_target)
         signals.append(normalized_signal)
     signals = np.array(signals)
@@ -303,13 +304,13 @@ def events_preprocess(# directory info
 ################################################################################
     if save:
         np.save(sp / PREP_TGT_FILEPREFIX, signals)
-        
+
     pbar.update(1)
 
 ################################################################################
 # elapsed time check
     pbar.set_description("events preproecssing done!".ljust(50))
-    
+
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
 
@@ -322,7 +323,7 @@ def _get_individual_params(subject_id, all_individual_params):
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
     """
-    
+
     """
     Arguments:
         subject_id (int or str): subject ID number
@@ -357,24 +358,23 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
         time_mask: binary array.
                    shape: time_length
     """
-    
+
     df_events = df_events.sort_values(by='onset')
     onsets = df_events['onset'].to_numpy()
     if use_duration:
         durations = df_events['duration'].to_numpy()
     else:
-        durations = np.array(list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
-    
+        durations = np.array(
+            list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
+
     mask = [condition(row) for _, row in df_events.iterrows()]
     time_mask = np.zeros(time_length)
-    
+
     for do_use, onset, duration in zip(mask, onsets, durations):
         if do_use:
             time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
 
     return time_mask
-
-
 
 
 def _add_event_info(df_events, event_infos):
@@ -390,28 +390,29 @@ def _add_event_info(df_events, event_infos):
     Return:
         new_df: a dataframe with preprocessed rows
     """
-    
+
     new_df = []
     df_events = df_events.sort_values(by='onset')
-    
+
     def _add(row, info):
-        
+
         row['subjID'] = info['subject']
         row['run'] = info['run']
         if 'session' in info.keys():
-            row['session'] = info['session'] # if applicable
+            row['session'] = info['session']  # if applicable
 
     return row
 
     for _, row in df_events.iterrows():
         new_df.append(_add(row, event_infos))
-    
+
     new_df = pd.concat(
         new_df, axis=1,
         keys=[s.name for s in new_df]
     ).transpose()
 
     return new_df
+
 
 def _preprocess_event(preprocess, condition, df_events):
     """
@@ -431,14 +432,14 @@ def _preprocess_event(preprocess, condition, df_events):
     Return:
         new_df: a dataframe with preprocessed rows
     """
-    
+
     new_df = []
     df_events = df_events.sort_values(by='onset')
-    
+
     for _, row in df_events.iterrows():
         if condition is not None and condition(row):
             new_df.append(preprocess(row))
-    
+
     new_df = pd.concat(
         new_df, axis=1,
         keys=[s.name for s in new_df]
@@ -451,7 +452,7 @@ def _preprocess_event_latent_state(modulation, condition, df_events, param_dict)
     """
     add latent state value to for each row of dataframe of single 'run'
     """
-    
+
     """
     Argumnets:
         modulation: a function, which is conducting row, param_dict --> row, function for calcualte latent state (or parameteric modulation value) 
@@ -464,11 +465,11 @@ def _preprocess_event_latent_state(modulation, condition, df_events, param_dict)
     """
     new_df = []
     df_events = df_events.sort_values(by='onset')
-    
+
     for _, row in df_events.iterrows():
         if condition is not None and condition(row):
             new_df.append(modulation(row, param_dict))
-    
+
     new_df = pd.concat(
         new_df, axis=1,
         keys=[s.name for s in new_df]
@@ -484,30 +485,33 @@ example functions for tom 2007 (ds000005)
 The ra_prospect model in hBayesDM is applied for modeling Mixed Gamble task used in the paper
 """
 
+
 def example_tom_adjust_columns(row, info):
-    
+
     ## rename data in a row to the name which can match hbayesdm.ra_prospect requirements ##
-    
+
     row['gamble'] = 1 if row['respcat'] == 1 else 0
     row['cert'] = 0
-    
+
     return row
 
+
 def example_tom_condition(row):
-    
-    ## include all trial data
-    
+
+    # include all trial data
+
     return True
 
+
 def example_tom_modulation(row, param_dict):
-    
-    ## calculate subjectives utility for choosing Gamble over Safe option
-    ## prospect theory with loss aversion and risk aversion is adopted
-    
+
+    # calculate subjectives utility for choosing Gamble over Safe option
+    # prospect theory with loss aversion and risk aversion is adopted
+
     modulation = (row['gain'] ** param_dict['rho']) \
-            - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
+        - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
     row['modulation'] = modulation
-    
+
     return row
 
 
@@ -517,10 +521,11 @@ example functions for piva 2019 (ds001882)
 The dd_hyperbolic model in hBayesDM is applied for modeling Delayed Discount task used in the paper.
 """
 
+
 def example_piva_adjust_columns(row):
-    
+
     ## rename data in a row to the name which can match hbayesdm.dd_hyperbolic requirements ##
-    
+
     if row['delay_left'] >= row['delay_right']:
         row['delay_later'] = row['delay_left']
         row['delay_sooner'] = row['delay_right']
@@ -533,27 +538,30 @@ def example_piva_adjust_columns(row):
         row['amount_later'] = row['money_right']
         row['amount_sooner'] = row['money_left']
         row['choice'] = 1 if row['choice'] == 2 else 0
-        
+
     return row
 
+
 def example_piva_condition(row):
-    
-    ## in the paper, the condition for trial varies in a single run, 
-    ## agent == 0 for making a choice for him or herself
-    ## agent == 1 for making a choice for other
-    ## to consider only non-social choice behavior, select only the cases with agent == 0
-    
+
+    # in the paper, the condition for trial varies in a single run,
+    # agent == 0 for making a choice for him or herself
+    # agent == 1 for making a choice for other
+    # to consider only non-social choice behavior, select only the cases with agent == 0
+
     return row['agent'] == 0
 
+
 def example_piva_modulation(row, param_dict):
-    
-    ## calculate subjective utility for choosing later option over sooner option
-    ## hyperbolic discount function is adopted
-    
+
+    # calculate subjective utility for choosing later option over sooner option
+    # hyperbolic discount function is adopted
+
     ev_later = row['amount_later'] / (1 + param_dict['k'] * row['delay_later'])
-    ev_sooner  = row['amount_sooner'] / (1 + param_dict['k'] * row['delay_sooner'])
+    ev_sooner = row['amount_sooner'] / \
+        (1 + param_dict['k'] * row['delay_sooner'])
     modulation = ev_later - ev_sooner
     row['modulation'] = modulation
-    
+
     return row
 ################################################################################
