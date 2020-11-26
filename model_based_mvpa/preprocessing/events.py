@@ -28,6 +28,9 @@ import time
 import logging
 
 DEFAULT_SAVE_DIR = 'mvpa'
+PREP_TGT_FILENAME = 'y.npy'
+TIMEMASK_FILENAME = 'time_mask.npy'
+INDIV_PAR_FILENAME = "all_individual_params.tsv"
 
 logging.basicConfig(level=logging.INFO)
 
@@ -180,7 +183,7 @@ def events_preprocess(# directory info
     time_mask = np.array(time_mask)
     
     if save:
-        np.save(sp / "time_mask.npy", time_mask)
+        np.save(sp / TIMEMASK_FILENAME, time_mask)
 
     pbar.update(1)
     pbar.set_description("time mask preproecssing done!".ljust(50))
@@ -217,7 +220,7 @@ def events_preprocess(# directory info
             all_individual_params = dm_model.all_ind_pars
 
             if save:
-                all_individual_params.to_csv(sp / "all_individual_params.tsv", sep="\t")
+                all_individual_params.to_csv(sp / INDIV_PAR_FILENAME, sep="\t")
                 
         else:
             dm_model = None
@@ -299,7 +302,7 @@ def events_preprocess(# directory info
     pbar.update(1)
 ################################################################################
     if save:
-        np.save(sp / "y.npy", signals)
+        np.save(sp / PREP_TGT_FILEPREFIX, signals)
         
     pbar.update(1)
 

@@ -52,7 +52,13 @@ def bids_preprocess(# path info
                     save=True):
     
     """
-    Make custom ROI mask file to reduce the number of features.
+    This function is implemented to preprocess fMRI image data in BIDS layout. 
+    The major goals of this function are 1) remove motion artifacts and drift,2) reduce dimensionality by masking and pooling, and 3) re-organize data for fitting MVPA model.
+    1) is done by wrapping functions in nilearn package.
+    2) is important as the high dimensionality is an obstacle for fitting regression model, in terms of both computing time and optimization.
+    To do so, here, mask images (downloaded from Neurosynth by user) are integrated to make a binary voxel-wise mask. So only voxel with mask value of 1 will survive, reducing the total number of voxels. 
+    For 3), the preprocessed image will be saved subject-wisely.
+    Also, to reduce total computing time, parallel computing is utilized in this function.
     """
 
     """
