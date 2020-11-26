@@ -116,7 +116,7 @@ def events_preprocess(# path info
     t_r = layout.get_tr()
 
     # this will aggregate all events file path in sorted way
-    events = layout.get(suffix="events", extension="tsv")
+    df_events = layout.get(suffix="events", extension="tsv")
 
     subjects = layout.get_subjects()
     n_subject = len(subjects)
@@ -196,7 +196,6 @@ def events_preprocess(# path info
     # obtained from fitting hierarchical bayesian model supported by hBayesDM package.
     # Here, user also can provide precalculated individual model parameters in dataframe form through the "all_individual_params" argument.
 
-    # TODO: where does `df_events` come from?
     if df_events is None:
         # the case user does not provide precalculated bahavioral data
         # calculate latent process using user defined latent function
@@ -222,7 +221,8 @@ def events_preprocess(# path info
             all_individual_params = dm_model.all_ind_pars
 
             if save:
-                all_individual_params.to_csv(sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME, sep="\t")
+                all_individual_params.to_csv(
+                    sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME, sep="\t")
                 
         else:
             dm_model = None
@@ -285,8 +285,8 @@ def events_preprocess(# path info
         else:
             # default is using minmax
             normalized_signal = minmax_scale(
-                signal_subject.flatten(), feature_range=(-1, 1), axis=0, copy=True
-            )
+                signal_subject.flatten(),
+                feature_range=(-1, 1), axis=0, copy=True)
 
         normalized_signal = normalized_signal.reshape(reshape_target)
         signals.append(normalized_signal)
@@ -295,7 +295,6 @@ def events_preprocess(# path info
 
     ###########################################################################
 
-    # TODO: where does `PREP_TGT_FILEPREFIX` come from?
     if save:
         np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
     pbar.update(1)
@@ -389,10 +388,10 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
 
 def _add_event_info(df_events, event_infos):
     """
-    add subject, run, session info to dataframe of events of single 'run' 
+    Add subject, run, session info to dataframe of events of single 'run' 
 
     Arguments:
-        df_events: dataframe for rows of one 'run' event data.
+        df_events: a dataframe for rows of one 'run' event data.
         event_infos: a dictionary containing  'subject', 'run', (and 'session' if applicable).
 
     Return:
@@ -403,15 +402,12 @@ def _add_event_info(df_events, event_infos):
     df_events = df_events.sort_values(by='onset')
 
     def _add(row, info):
-
         row['subjID'] = info['subject']
         row['run'] = info['run']
         if 'session' in info.keys():
             row['session'] = info['session']  # if applicable
 
-    # TODO: why is the return statement located in the middle of the function?
-    # TODO: where does `row` come from?
-    return row
+        return row
 
     for _, row in df_events.iterrows():
         new_df.append(_add(row, event_infos))
@@ -435,7 +431,7 @@ def _preprocess_event(preprocess, condition, df_events):
                     row['run'] = f"{info['session']}_{info['run']}" (or row['run']=info['run'])
         condition: func : row --> boolean, to indicate if use the row or not.
         event_infos: a dictionary containing  'subject', 'run', (and 'session' if applicable).
-        df_events: dataframe for rows of one 'run' event data.
+        df_events: a dataframe for rows of one 'run' event data.
 
     Return:
         new_df: a dataframe with preprocessed rows
@@ -458,7 +454,7 @@ def _preprocess_event(preprocess, condition, df_events):
 
 def _preprocess_event_latent_state(modulation, condition, df_events, param_dict):
     """
-    add latent state value to for each row of dataframe of single 'run'
+    Aadd latent state value to for each row of dataframe of single 'run'
 
     Argumnets:
         modulation: a function, which is conducting row, param_dict --> row, function for calcualte latent state (or parameteric modulation value) 

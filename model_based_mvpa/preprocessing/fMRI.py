@@ -103,8 +103,6 @@ def image_preprocess(params):
         motion_confounds, masker,\
         voxel_mask, subject_id = params
 
-    # TODO: why this `preprocessed_images` is defined?
-    preprocessed_images = []
     if confounds_path is not None:
         confounds = pd.read_table(confounds_path, sep="\t")
         confounds = confounds[motion_confounds]

@@ -102,8 +102,8 @@ def bids_preprocess(root,  # path info
     root = Path(root)
 
     if mask_path is None:
-    # TODO: where does `custom_masking` come from?
-        mask_path = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_MASK_DIR
+        mask_path = Path(
+            layout.derivatives["fMRIPrep"].root) / config.DEFAULT_MASK_DIR
       
     voxel_mask, masker = custom_masking(
         mask_path, threshold, zoom,
@@ -164,7 +164,6 @@ def bids_preprocess(root,  # path info
 
     for i, params_chunk in enumerate(params_chunks):
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
-            # TODO: where does `image_preprocess_mt` come from?
             future_result = {
                 executor.submit(
                     image_preprocess_mt, param, n_run): param for param in params_chunk
@@ -172,7 +171,8 @@ def bids_preprocess(root,  # path info
 
             for future in as_completed(future_result):
                 data, subject = future.result()
-                np.save(sp / f"{config.DEFAULT_FEATURE_PREFIX}_{subject}.npy", data)
+                np.save(
+                    sp / f"{config.DEFAULT_FEATURE_PREFIX}_{subject}.npy", data)
                 X.append(data)
 
             pbar.set_description(
@@ -189,9 +189,6 @@ def bids_preprocess(root,  # path info
 
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
-
-    # TODO: where does `m_true` come from?
-    logging.info(f"result\nmasking data shape: {voxel_mask.shape}\n"
-                 + f"number of voxels: {m_true.shape}")
+    logging.info(f"result\nmasking data shape: {voxel_mask.shape}\n")
 
     return X, voxel_mask, layout

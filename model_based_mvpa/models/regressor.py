@@ -145,8 +145,7 @@ def mlp_regression(X, y,
         mc = ModelCheckpoint(
             best_model_filepath,
             save_best_only=True, save_weights_only=True,
-            monitor="val_loss", mode="min"
-        )
+            monitor="val_loss", mode="min")
         es = EarlyStopping(monitor="val_loss", patience=patience)
 
         # MLP model building
@@ -154,8 +153,7 @@ def mlp_regression(X, y,
         model.add(Dense(layer_dims[0],
                         activation=activation,
                         input_shape=(X.shape[-1],),
-                        use_bias=False)
-                  )
+                        use_bias=False))
         model.add(Dropout(dropout_rate))
 
         for dim in layer_dims[1:]:
@@ -171,8 +169,7 @@ def mlp_regression(X, y,
                   verbose=0, callbacks=[mc, es],
                   validation_data=val_generator,
                   steps_per_epoch=train_steps,
-                  validation_steps=val_steps
-                  )
+                  validation_steps=val_steps)
 
         # load best model
         model.load_weights(best_model_filepath)
@@ -299,15 +296,13 @@ def penalized_linear_regression(X, y,
         mc = ModelCheckpoint(
             best_model_filepath,
             save_best_only=True, save_weights_only=True,
-            monitor="val_loss", mode="min"
-        )
+            monitor="val_loss", mode="min")
 
         es = EarlyStopping(monitor="val_loss",
                            patience=patience,
                            save_best_only=True,
                            save_weights_only=True,
-                           mode="min"
-                           )
+                           mode="min")
 
         # penalizing
         kernel_regularizer = l1_l2(
@@ -329,8 +324,7 @@ def penalized_linear_regression(X, y,
                   steps_per_epoch=train_steps,
                   validation_steps=val_steps)
 
-        # TODO: where does `bst_model_path` comes from?
-        model.load_weights(bst_model_path)
+        model.load_weights(best_model_filepath)
 
         y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
