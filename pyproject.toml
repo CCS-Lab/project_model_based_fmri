@@ -40,11 +40,11 @@ tensorflow = "^2.3.1"
 numpy = "^1.18.5"
 pandas = "^1.1.4"
 sklearn = "^0.0"
+scipy = "^1.5.4"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.4"
 jupyterlab = "^2.2.9"
-mypy = "^0.790"
 jupyter = "^1.0.0"
 pylint = "^2.6.0"
 pytest = "^6.1.2"
