@@ -146,8 +146,9 @@ def bids_preprocess(root,  # path info
         sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
     else:
         sp = Path(save_path)
-        
-    nib.save(voxel_mask, sp / config.DEFAULT_VOXEL_MASK_FILENAME)
+    
+    if save:
+        nib.save(voxel_mask, sp / config.DEFAULT_VOXEL_MASK_FILENAME)
     pbar.update(1)
 
     ###########################################################################
