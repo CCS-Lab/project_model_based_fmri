@@ -32,47 +32,54 @@ DEFAULT_SAVE_DIR = 'mvpa'
 logging.basicConfig(level=logging.INFO)
 
 
-def preprocess_events(root, 
-                      hrf_model="glover",
-                      normalizer="minmax",
-                      dm_model=None,
-                      modulation=None, 
+def events_preprocess(# directory info
+                      root,
                       layout=None,
+                      save_path=None,
+                      # user-defined functions
                       preprocess=lambda x: x,
                       condition=lambda _: True,
-                      df_events=None,
+                      modulation=None,
+                      # computational model specification
+                      dm_model=None,
                       all_individual_params=None,
+                      # BOLDifying parameter
+                      hrf_model="glover",
+                      normalizer="minmax",
+                      # Other specification
                       use_duration=False,
                       save=True,
-                      save_path=None,
                       scale=(-1, 1),
-                      **kwargs # hBayesDM fitting parameters
+                      # hBayesDM fitting parameters
+                      **kwargs 
                       ):
     """
     Preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data.
     User can provide precalculated behaviral data through "df_events" argument,
     which is the DataFrame with subjID, run, onset, duration, and modulation. (also session if applicable)
     if not, it will calculate latent process by using hierarchical Bayesian modeling using "hBayesDM" package.
-    User also can provide precalculated individual model parameter values, through "all_individual_params" argument. 
+    User also can provide precalculated individual model parameter values, through "all_individual_params" argument.
+    
+    The time mask will be used for selecting data points included in model fitting
+    The BOLD-like signal will be used for a target(y) in model fitting
     """
     
     """
     Arguments:
         root (str or Path) : root directory of BIDS layout
-        dm_model (str) : model name specification for hBayesDM package. should be same as model name e.g. 'ra_prospect'
-        modulation (func(Series, dict)-> Series): user defined function for calculating latent process. f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state
         layout (BIDSLayout) : BIDSLayout by bids package. if not provided, it will be obtained using root info.
+        save_path (str or Path) : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path      
         preprocess (func(Series, dict)-> Series)): user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
         condition (func(Series)-> boolean)): user defined function for filtering behavioral data. f(single_row_data_frame) -> True or False
-        df_events (DataFrame) : pandas dataframe with 'subjID', 'run','onset', 'duration', 'modulation'. if not provided, it will be obtained by applyng hBayesDM modeling and user defined functions.
+        modulation (func(Series, dict)-> Series): user defined function for calculating latent process. f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
+        dm_model (str or hbayesdm.model) : model for hBayesDM package. should be provided as model name (e.g. 'ra_prospect') or model object.
         all_individual_params (DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
-        use_duration (boolean) : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
         hrf_model (str): specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
         normalizer (str): normalization method to subject-wisely normalize BOLDified signal. "minimax" or "standard" 
                           "minmax" will rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
                           "standard" will rescale value by calculating subject-wise z_score
+        use_duration (boolean) : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
         save (boolean): indicating whether save result if True, you will save y.npy, time_mask.npy and additionaly all_individual_params.tsv.
-        save_path (str or Path) : path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
     
     Return
@@ -85,6 +92,8 @@ def preprocess_events(root,
     """
 
 ################################################################################
+# designate saving path
+
     pbar = tqdm(total=6)
     s = time.time()
     
@@ -106,7 +115,7 @@ def preprocess_events(root,
         pbar.set_description("loading layout..".ljust(50))
 
     t_r = layout.get_tr()
-    # this will aggregate all events file path in sorted way.
+    # this will aggregate all events file path in sorted way
     events = layout.get(suffix="events", extension="tsv")
 
     subjects = layout.get_subjects()
@@ -122,7 +131,7 @@ def preprocess_events(root,
     )
     n_scans = image_sample.shape[-1]
     
-    # collecting dataframe data from event files in BIDS layout
+    # collecting dataframe from event files spread in BIDS layout
     df_events_list = [event.get_df() for event in events]
     # event_info such as id number for subject, session, run 
     event_infos_list = [event.get_entities() for event in events]
@@ -130,7 +139,6 @@ def preprocess_events(root,
 ################################################################################
 # adjust columns in events file
     
-
     pbar.set_description("adjusting event file columns..".ljust(50))
     
     # add event info to each dataframe row
@@ -139,6 +147,7 @@ def preprocess_events(root,
         for df_events, event_infos in zip(df_events_list, event_infos_list)
     ]
     
+    # modify trial data by user-defined function "preprocess"
     df_events_list = [
         _preprocess_event(
             preprocess, condition, df_events
@@ -146,7 +155,12 @@ def preprocess_events(root,
     ]
     pbar.update(1)
 ################################################################################
-# calculating time masks
+# get time masks
+# binary mask indicating valid time points will be obtained by applying user-defined function "condition"
+# "condition" function will censor each trial to decide whether include it or not
+# if use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
+# else the gap between consecutive trials will be used instead.
+
 
     pbar.set_description("calculating time masks..".ljust(50))
     
@@ -171,6 +185,13 @@ def preprocess_events(root,
     pbar.update(1)
     pbar.set_description("time mask preproecssing done!".ljust(50))
 ################################################################################
+# Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
+# if user provided the "df_events" with those fields, this part will be skipped 
+# the fields except for 'modulation' already exist in "df_events_list", 
+# so the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
+# obtained from fitting hierarchical bayesian model supported by hBayesDM package.
+# Here, user also can provide precalculated individual model parameters in dataframe form through the "all_individual_params" argument.
+
     if df_events is None:
         # the case user does not provide precalculated bahavioral data
         # calculate latent process using user defined latent function
@@ -184,11 +205,14 @@ def preprocess_events(root,
             assert dm_model is not None, "if df_events is None, must be assigned to dm_model."
             
             pbar.set_description("hbayesdm doing (model: %s)..".ljust(50) % dm_model)
-            dm_model = getattr(
-                hbayesdm.models, dm_model)(
-                    data=pd.concat(df_events_list),
-                    **kwargs
-                )
+            
+            if type(dm_model) == str:
+                dm_model = getattr(
+                    hbayesdm.models, dm_model)(
+                        data=pd.concat(df_events_list),
+                        **kwargs
+                    )
+            
             pbar.update(1)
             all_individual_params = dm_model.all_ind_pars
 
@@ -196,11 +220,12 @@ def preprocess_events(root,
                 all_individual_params.to_csv(sp / "all_individual_params.tsv", sep="\t")
                 
         else:
+            dm_model = None
             pbar.update(1)
         
         pbar.set_description("calculating modulation..".ljust(50))
         
-        # calculate latent process using user defined latent function
+        # calculate latent process using user-defined function "modulation"
         df_events_list =[
             _preprocess_event_latent_state(
                 modulation, condition, df_events,
@@ -213,18 +238,21 @@ def preprocess_events(root,
     else:
         pbar.update(2)
 ################################################################################
-    # get boldified signal
-    # will be shaped as subject # x run # x n_scan
-    # n_scane means the number of time points in fMRI data
-    # if there is multiple session, still there would be no dimension indicating sessions info, 
-    # but runs will be arranged as grouped by sessions number.
-    # e.g. (subj-01, sess-01, run-01,:)
-    #      (subj-01, sess-01, run-02,:)
-    #                 ...
-    #      (subj-01, sess-02, run-01,:)
-    #      (subj-01, sess-02, run-02,:)
-    #                 ...
-    # this order should match with preprocessed fMRI image data
+# get BOLDified signal
+# this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
+# by providing 'onset','duration', and 'modulation' values.
+# the final matrix will be shaped as subject # x run # x n_scan
+# n_scane means the number of time points in fMRI data
+# if there is multiple session, still there would be no dimension indicating sessions info, 
+# but runs will be arranged as grouped by sessions number.
+# e.g. (subj-01, sess-01, run-01,:)
+#      (subj-01, sess-01, run-02,:)
+#                 ...
+#      (subj-01, sess-02, run-01,:)
+#      (subj-01, sess-02, run-02,:)
+#                 ...
+# this order should match with preprocessed fMRI image data
+
     
     pbar.set_description("modulation signal making..".ljust(50))
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
@@ -287,7 +315,20 @@ def preprocess_events(root,
 
 # todo: remove
 def _get_individual_params(subject_id, all_individual_params):
-    # get individual parameter dictionary
+    """
+    Get individual parameter dictionary
+    so the value can be referred by its name (type:str)
+    """
+    
+    """
+    Arguments:
+        subject_id (int or str): subject ID number
+        all_individual_params (DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
+        
+    Return:
+        ind_pars (dict): individual parameter value. dictionary{parameter_name:value}
+        
+    """
     try:
         ind_pars = all_individual_params.loc[subject_id]
     except:
@@ -432,45 +473,34 @@ def _preprocess_event_latent_state(modulation, condition, df_events, param_dict)
 
     return new_df
 
-def base_adjust_columns(row, info):
-    """
-    Arguments:
-        row:
-
-    Return:
-        row:
-    """
-    
-    return row
-
-
-def base_condition(row):
-    """
-    Arguments:
-        row:
-
-    Return:
-        True:
-    """
-    return True
-
 
 ################################################################################
 """
 example functions for tom 2007 (ds000005)
+
+The ra_prospect model in hBayesDM is applied for modeling Mixed Gamble task used in the paper
 """
 
 def example_tom_adjust_columns(row, info):
-    ## user defined mapping ##
+    
+    ## rename data in a row to the name which can match hbayesdm.ra_prospect requirements ##
+    
     row['gamble'] = 1 if row['respcat'] == 1 else 0
     row['cert'] = 0
     
     return row
 
 def example_tom_condition(row):
+    
+    ## include all trial data
+    
     return True
 
-def example_tom_modulation(row, info, param_dict):
+def example_tom_modulation(row, param_dict):
+    
+    ## calculate subjectives utility for choosing Gamble over Safe option
+    ## prospect theory with loss aversion and risk aversion is adopted
+    
     modulation = (row['gain'] ** param_dict['rho']) \
             - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
     row['modulation'] = modulation
@@ -480,11 +510,14 @@ def example_tom_modulation(row, info, param_dict):
 
 """
 example functions for piva 2019 (ds001882)
+
+The dd_hyperbolic model in hBayesDM is applied for modeling Delayed Discount task used in the paper.
 """
 
 def example_piva_adjust_columns(row):
     
-    ## user defined mapping ##
+    ## rename data in a row to the name which can match hbayesdm.dd_hyperbolic requirements ##
+    
     if row['delay_left'] >= row['delay_right']:
         row['delay_later'] = row['delay_left']
         row['delay_sooner'] = row['delay_right']
@@ -501,9 +534,19 @@ def example_piva_adjust_columns(row):
     return row
 
 def example_piva_condition(row):
+    
+    ## in the paper, the condition for trial varies in a single run, 
+    ## agent == 0 for making a choice for him or herself
+    ## agent == 1 for making a choice for other
+    ## to consider only non-social choice behavior, select only the cases with agent == 0
+    
     return row['agent'] == 0
 
 def example_piva_modulation(row, param_dict):
+    
+    ## calculate subjective utility for choosing later option over sooner option
+    ## hyperbolic discount function is adopted
+    
     ev_later = row['amount_later'] / (1 + param_dict['k'] * row['delay_later'])
     ev_sooner  = row['amount_sooner'] / (1 + param_dict['k'] * row['delay_sooner'])
     modulation = ev_later - ev_sooner

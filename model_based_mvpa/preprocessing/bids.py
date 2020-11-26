@@ -43,6 +43,25 @@ def bids_preprocess(root,
                     ncore=0,
                     nthread=0,
                     standardize=True):
+    
+    """
+    Make custom ROI mask file to reduce the number of features.
+    """
+
+    """
+    Arguments:
+        mask_path: 
+        p_value: 
+        zoom: 
+        smoothing_fwhm: 
+        interpolation_func: 
+        standardize: 
+        flatten: 
+    Return:
+        masked_data: 
+        masker: 
+        m_true
+    """
 
     pbar = tqdm(total=6)
     s = time.time()
