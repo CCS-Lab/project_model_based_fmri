@@ -148,9 +148,7 @@ def bids_preprocess(# path info
     X = []
 
     ## Todo ##
-    chunk_size = int(np.log10(n_subject * n_run)) if n_session == 0 \
-                    else int(np.log10(n_subject * n_session * n_run))
-    chunk_size += 1
+    chunk_size = 4 if nthread > 4 else ncore
 
     params_chunks = [params[i:i + chunk_size] for i in range(0, len(params), chunk_size)]
 
