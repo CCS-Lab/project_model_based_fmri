@@ -142,7 +142,8 @@ def bids_preprocess(root=None,  # path info
     pbar.set_description("image preprocessing - making path..".ljust(50))
     if save_path is None:
         sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
-        sp.mkdir()
+        if not sp.exists():
+            sp.mkdir()
     else:
         sp = Path(save_path)
     
