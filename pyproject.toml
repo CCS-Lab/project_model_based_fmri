@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "model_based_fmri"
+version = "0.0.3"
+description = "Python library for fMRI multi-voxel pattern analysis"
+license = "GPL-3.0"
+authors = [
+  "Yedarm Seong <mybirth0407@gmail.com>",
+  "Cheoljun Cho <cjfwndnsl@snu.ac.kr>",
+  "CCS-Lab <ccsl.snu@gmail.com>"
+]
+readme = "README.md"
+repository = "https://github.com/CCS-Lab/project_model_based_fmri"
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.6.1"
+hbayesdm = "^1.0.1"
+nibabel = "^3.2.0"
+nilearn = "^0.7.0"
+glmnet = "^2.2.1"
+pystan = "^2.19.1"
+bids = "^0.0"
+scikit-image = "^0.17.2"
+matplotlib = "^3.3.3"
+tensorflow = "^2.3.1"
+numpy = "^1.18.5"
+pandas = "^1.1.4"
+sklearn = "^0.0"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.5.4"
+jupyterlab = "^2.2.9"
+mypy = "^0.790"
+jupyter = "^1.0.0"
+pylint = "^2.6.0"
+pytest = "^6.1.2"
+flake8 = "^3.8.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
