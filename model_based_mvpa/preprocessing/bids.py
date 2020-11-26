@@ -30,7 +30,7 @@ bids.config.set_option("extension_initial_dot", True)
 logging.basicConfig(level=logging.INFO)
 
 
-def bids_preprocess(root,  # path info
+def bids_preprocess(root=None,  # path info
                     layout=None,
                     save_path=None,
                     # ROI masking specification
@@ -142,6 +142,7 @@ def bids_preprocess(root,  # path info
     pbar.set_description("image preprocessing - making path..".ljust(50))
     if save_path is None:
         sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
+        sp.mkdir()
     else:
         sp = Path(save_path)
     
@@ -159,7 +160,7 @@ def bids_preprocess(root,  # path info
     chunk_size = 4 if nthread > 4 else ncore
 
     params_chunks = [params[i:i + chunk_size]
-                     for i in range(0, len(params), chunk_size)]
+                        for i in range(0, len(params), chunk_size)]
     task_size = len(params_chunks)
 
     for i, params_chunk in enumerate(params_chunks):
@@ -176,7 +177,7 @@ def bids_preprocess(root,  # path info
                 X.append(data)
 
             pbar.set_description(
-                f"image preprocessing - fMRI data {i+1} / {task_size} done".ljust(50))
+                f"image preprocessing - fMRI data.. {i+1} / {task_size} done..".ljust(50))
 
     X = np.array(X)
     pbar.update(1)

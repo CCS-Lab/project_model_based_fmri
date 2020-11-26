@@ -45,13 +45,12 @@ def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
 
     # aggregate X fragmented by subject to one matrix
     X_list = list(X_path.glob('X_*.npy'))
-    X_list.sort(key=lambda v: int(str(v).split('_')[-1].split('.')[0]))
+    X_list.sort(key=lambda x: int(str(x).split('_')[-1].split('.')[0]))
     X = np.concatenate([np.load(data_path) for data_path in X_list], 0)
     X = X.reshape(-1, X.shape[-1])
 
     y = np.load(y_path / 'y.npy', allow_pickle=True)
     y = np.concatenate(y, 0)
-    X = X.reshape(-1, X.shape[-1])
     y = y.flatten()
 
     if time_mask_path is not None:
