@@ -27,12 +27,13 @@ import time
 
 import logging
 
+
 DEFAULT_SAVE_DIR = 'mvpa'
 
 logging.basicConfig(level=logging.INFO)
 
 
-def preprocess_events(root, 
+def events_preprocess(root, 
                       hrf_model="glover",
                       normalizer="minmax",
                       dm_model=None,
@@ -437,7 +438,6 @@ def example_tom_modulation(row, info, param_dict):
     row['modulation'] = modulation
     
     return row
-
 
 """
 example functions for piva 2019 (ds001882)
