@@ -7,12 +7,12 @@
 @last modification: 2020.11.02
 """
 
+from pathlib import Path
+
 import nibabel as nib
 import numpy as np
-from scipy.stats import ttest_1samp, zscore
 from scipy.ndimage import gaussian_filter
-
-from pathlib import Path
+from scipy.stats import ttest_1samp, zscore
 
 
 def get_map(coefs, masked_data, layout=None, task_name=None,
@@ -43,20 +43,20 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
     """
 
     assert (not(layout is None and task_name is None))
-    
+
     activation_maps = []
     mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0]
-    
+
     for coef in coefs:
-        
-        #converting flattened coefs to brain image.
+
+        # converting flattened coefs to brain image.
         activation_map = np.zeros(masked_data.get_fdata().flatten().shape[0])
         for i, v in zip(mapping_id, coef):
             activation_map[i] = v
 
         activation_map = activation_map.reshape(masked_data.shape)
         if sigma > 0:
-            activation_map = gaussian_filter(activation_map,sigma)
+            activation_map = gaussian_filter(activation_map, sigma)
         activation_maps.append(activation_map)
 
     activation_maps = np.array(activation_maps)
@@ -68,15 +68,15 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
     else:
         # averaging z_score of each voxel
         m = zscore(activation_maps, axis=None).mean(0)
-        
+
     m[np.isnan(m)] = 0
     m *= masked_data.get_fdata()
     result_map = nib.Nifti1Image(m, affine=masked_data.affine)
-    
+
     # saving
     if save_path is None:
         sp = Path('./results')
-    else: 
+    else:
         sp = Path(save_path)
 
     if not sp.exists():
