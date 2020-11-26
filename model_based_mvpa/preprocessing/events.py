@@ -27,15 +27,13 @@ import time
 
 import logging
 
-DEFAULT_SAVE_DIR = 'mvpa'
-PREP_TGT_FILENAME = 'y.npy'
-TIMEMASK_FILENAME = 'time_mask.npy'
-INDIV_PAR_FILENAME = "all_individual_params.tsv"
+from ..utils import config
+
 
 logging.basicConfig(level=logging.INFO)
 
 
-def events_preprocess(# directory info
+def events_preprocess(# path info
                       root,
                       layout=None,
                       save_path=None,
@@ -71,12 +69,12 @@ def events_preprocess(# directory info
     Arguments:
         root (str or Path): root directory of BIDS layout
         layout (BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained using root info.
-        save_path (str or Path): path for saving output. if not provided, BIDS root/derivatives/data will be set as default path      
+        save_path (str or Path): path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
         preprocess (func(Series, dict)-> Series)): user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
         condition (func(Series)-> boolean)): user defined function for filtering behavioral data. f(single_row_data_frame) -> True or False
         modulation (func(Series, dict)-> Series): user defined function for calculating latent process. f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
         dm_model (str or hbayesdm.model) : model for hBayesDM package. should be provided as model name (e.g. 'ra_prospect') or model object.
-        all_individual_params (DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
+        all_individual_params (pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         hrf_model (str): specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
         normalizer (str): normalization method to subject-wisely normalize BOLDified signal. "minimax" or "standard" 
                           "minmax" will rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
@@ -183,10 +181,9 @@ def events_preprocess(# directory info
     time_mask = np.array(time_mask)
     
     if save:
-        np.save(sp / TIMEMASK_FILENAME, time_mask)
+        np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask)
 
     pbar.update(1)
-    pbar.set_description("time mask preproecssing done!".ljust(50))
 ################################################################################
 # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
 # if user provided the "df_events" with those fields, this part will be skipped 
@@ -216,15 +213,14 @@ def events_preprocess(# directory info
                         **kwargs
                     )
             
-            pbar.update(1)
             all_individual_params = dm_model.all_ind_pars
 
             if save:
-                all_individual_params.to_csv(sp / INDIV_PAR_FILENAME, sep="\t")
+                all_individual_params.to_csv(sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME, sep="\t")
                 
         else:
             dm_model = None
-            pbar.update(1)
+        pbar.update(1)
         
         pbar.set_description("calculating modulation..".ljust(50))
         
@@ -241,7 +237,7 @@ def events_preprocess(# directory info
     else:
         pbar.update(2)
 ################################################################################
-# get BOLDified signal
+# Get boldified signals.
 # this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
 # by providing 'onset','duration', and 'modulation' values.
 # the final matrix will be shaped as subject # x run # x n_scan
@@ -254,9 +250,8 @@ def events_preprocess(# directory info
 #      (subj-01, sess-02, run-01,:)
 #      (subj-01, sess-02, run-02,:)
 #                 ...
-# this order should match with preprocessed fMRI image data
+# this order should match with preprocessed fMRI image data.
 
-    
     pbar.set_description("modulation signal making..".ljust(50))
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
 
@@ -266,21 +261,13 @@ def events_preprocess(# directory info
         if n_session:
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
-                    exp_condition = group2[["onset", "duration", "modulation"]].to_numpy().T
-                    exp_condition = exp_condition.astype(float)
-                    signal, name = compute_regressor(
-                        exp_condition=exp_condition,
-                        hrf_model=hrf_model,
-                        frame_times=frame_times)
+                    modulation_ = group2[["onset", "duration", "modulation"]].to_numpy().T
+                    signal = _make_boldify(modulation_, hrf_model, frame_times)
                     signal_subject.append(signal)
         else:
             for name1, group1 in group0.groupby(["run"]):
-                exp_condition = group1[["onset", "duration", "modulation"]].to_numpy().T
-                exp_condition = exp_condition.astype(float)
-                signal, name = compute_regressor(
-                    exp_condition=exp_condition,
-                    hrf_model=hrf_model,
-                    frame_times=frame_times)
+                modulation_ = group1[["onset", "duration", "modulation"]].to_numpy().T
+                signal = _make_boldify(modulation_, hrf_model, frame_times)
                 signal_subject.append(signal)
         
         signal_subject = np.array(signal_subject)
@@ -302,7 +289,7 @@ def events_preprocess(# directory info
     pbar.update(1)
 ################################################################################
     if save:
-        np.save(sp / PREP_TGT_FILEPREFIX, signals)
+        np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
         
     pbar.update(1)
 
@@ -316,6 +303,26 @@ def events_preprocess(# directory info
     return dm_model, df_events, signals, time_mask, layout
 
 
+def _make_boldify(modulation_, hrf_model, frame_times):
+    """
+    Arguments:
+        modulation_ (numpy.array): 
+        hrf_model (str): 
+        frame_times (numpy.array or list): 
+        
+    Return:
+        boldified_signals (numpy.array): 
+        
+    """
+
+    boldified_signals, name = compute_regressor(
+        exp_condition=modulation_.astype(float),
+        hrf_model=hrf_model,
+        frame_times=frame_times)
+
+    return boldified_signals, name
+
+
 # todo: remove
 def _get_individual_params(subject_id, all_individual_params):
     """
@@ -326,7 +333,7 @@ def _get_individual_params(subject_id, all_individual_params):
     """
     Arguments:
         subject_id (int or str): subject ID number
-        all_individual_params (DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
+        all_individual_params (pandas.DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
         
     Return:
         ind_pars (dict): individual parameter value. dictionary{parameter_name:value}
@@ -375,8 +382,6 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     return time_mask
 
 
-
-
 def _add_event_info(df_events, event_infos):
     """
     add subject, run, session info to dataframe of events of single 'run' 
@@ -412,6 +417,7 @@ def _add_event_info(df_events, event_infos):
     ).transpose()
 
     return new_df
+
 
 def _preprocess_event(preprocess, condition, df_events):
     """
@@ -488,8 +494,8 @@ def example_tom_adjust_columns(row, info):
     
     ## rename data in a row to the name which can match hbayesdm.ra_prospect requirements ##
     
-    row['gamble'] = 1 if row['respcat'] == 1 else 0
-    row['cert'] = 0
+    row["gamble"] = 1 if row["respcat"] == 1 else 0
+    row["cert"] = 0
     
     return row
 
@@ -504,12 +510,11 @@ def example_tom_modulation(row, param_dict):
     ## calculate subjectives utility for choosing Gamble over Safe option
     ## prospect theory with loss aversion and risk aversion is adopted
     
-    modulation = (row['gain'] ** param_dict['rho']) \
-            - (param_dict['lambda'] * (row['loss'] ** param_dict['rho']))
-    row['modulation'] = modulation
+    modulation = (row["gain"] ** param_dict["rho"]) \
+            - (param_dict["lambda"] * (row["loss"] ** param_dict["rho"]))
+    row["modulation"] = modulation
     
     return row
-
 
 """
 example functions for piva 2019 (ds001882)
@@ -521,18 +526,18 @@ def example_piva_adjust_columns(row):
     
     ## rename data in a row to the name which can match hbayesdm.dd_hyperbolic requirements ##
     
-    if row['delay_left'] >= row['delay_right']:
-        row['delay_later'] = row['delay_left']
-        row['delay_sooner'] = row['delay_right']
-        row['amount_later'] = row['money_left']
-        row['amount_sooner'] = row['money_right']
-        row['choice'] = 1 if row['choice'] == 1 else 0
+    if row["delay_left"] >= row["delay_right"]:
+        row["delay_later"] = row["delay_left"]
+        row["delay_sooner"] = row["delay_right"]
+        row["amount_later"] = row["money_left"]
+        row["amount_sooner"] = row["money_right"]
+        row["choice"] = 1 if row["choice"] == 1 else 0
     else:
-        row['delay_later'] = row['delay_right']
-        row['delay_sooner'] = row['delay_left']
-        row['amount_later'] = row['money_right']
-        row['amount_sooner'] = row['money_left']
-        row['choice'] = 1 if row['choice'] == 2 else 0
+        row["delay_later"] = row["delay_right"]
+        row["delay_sooner"] = row["delay_left"]
+        row["amount_later"] = row["money_right"]
+        row["amount_sooner"] = row["money_left"]
+        row["choice"] = 1 if row["choice"] == 2 else 0
         
     return row
 
@@ -543,17 +548,17 @@ def example_piva_condition(row):
     ## agent == 1 for making a choice for other
     ## to consider only non-social choice behavior, select only the cases with agent == 0
     
-    return row['agent'] == 0
+    return row["agent"] == 0
 
 def example_piva_modulation(row, param_dict):
     
     ## calculate subjective utility for choosing later option over sooner option
     ## hyperbolic discount function is adopted
     
-    ev_later = row['amount_later'] / (1 + param_dict['k'] * row['delay_later'])
-    ev_sooner  = row['amount_sooner'] / (1 + param_dict['k'] * row['delay_sooner'])
+    ev_later = row["amount_later"] / (1 + param_dict["k"] * row["delay_later"])
+    ev_sooner  = row["amount_sooner"] / (1 + param_dict["k"] * row["delay_sooner"])
     modulation = ev_later - ev_sooner
-    row['modulation'] = modulation
+    row["modulation"] = modulation
     
     return row
 ################################################################################

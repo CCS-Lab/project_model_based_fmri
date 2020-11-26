@@ -19,14 +19,10 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import time
 from tqdm import tqdm
 from .fMRI import *
+from ..utils import config
 
 import logging
 
-
-DEFAULT_SAVE_DIR = "mvpa"
-DEFAULT_MASK_DIR = "masks"
-VOXEL_MASK_FILENAME = "voxel_mask.nii.gz"
-PREP_IMG_FILEPREFIX = 'X'
 
 bids.config.set_option("extension_initial_dot", True)
 logging.basicConfig(level=logging.INFO)
@@ -106,7 +102,7 @@ def bids_preprocess(# path info
     root = Path(root)
     
     if mask_path is None:
-        mask_path = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_MASK_DIR
+        mask_path = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_MASK_DIR
     
     voxel_mask, masker = custom_masking(
         mask_path, threshold, zoom,
@@ -141,11 +137,11 @@ def bids_preprocess(# path info
 
     pbar.set_description("image preprocessing - making path..".ljust(50))
     if save_path is None:
-        sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_DIR
+        sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
     else:
         sp = Path(save_path)
         
-    nib.save(voxel_mask, sp / VOXEL_MASK_FILENAME)
+    nib.save(voxel_mask, sp / config.DEFAULT_VOXEL_MASK_FILENAME)
     pbar.update(1)
 ################################################################################
 # image preprocessing using mutli-processing and threading
@@ -167,7 +163,7 @@ def bids_preprocess(# path info
 
             for future in as_completed(future_result):
                 data, subject = future.result()
-                np.save(sp / f"{PREP_IMG_FILEPREFIX}_{subject}.npy", data)
+                np.save(sp / f"{config.DEFAULT_FEATURE_PREFIX}_{subject}.npy", data)
                 X.append(data)
             pbar.set_description(
                 f"image preprocessing - fMRI data {i+1} / {len(params_chunks)}..".ljust(50))
