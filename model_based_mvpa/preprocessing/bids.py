@@ -122,12 +122,10 @@ def bids_preprocess(root,  # path info
     for subject in subjects:
         nii_layout = layout.derivatives["fMRIPrep"].get(
             subject=subject, return_type="file", suffix="bold",
-            extension="nii.gz"
-        )
+            extension="nii.gz")
         reg_layout = layout.derivatives["fMRIPrep"].get(
             subject=subject, return_type="file", suffix="regressors",
-            extension="tsv"
-        )
+            extension="tsv")
 
         param = [nii_layout, reg_layout, motion_confounds,
                  masker, voxel_mask, subject]
