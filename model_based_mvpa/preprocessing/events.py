@@ -97,7 +97,7 @@ def events_preprocess(# path info
     s = time.time()
 
     if save_path is None:
-        sp = Path(layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_DIR
+        sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
     else:
         sp = Path(save_path)
 

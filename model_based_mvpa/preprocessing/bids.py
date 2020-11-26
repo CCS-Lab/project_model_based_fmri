@@ -162,6 +162,7 @@ def bids_preprocess(root,  # path info
 
     params_chunks = [params[i:i + chunk_size]
                      for i in range(0, len(params), chunk_size)]
+    task_size = len(params_chunks)
 
     for i, params_chunk in enumerate(params_chunks):
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
@@ -177,7 +178,7 @@ def bids_preprocess(root,  # path info
                 X.append(data)
 
             pbar.set_description(
-                f"image preprocessing - fMRI data {i+1} / {len(params_chunks)}..".ljust(50))
+                f"image preprocessing - fMRI data {i+1} / {task_size} done".ljust(50))
 
     X = np.array(X)
     pbar.update(1)
