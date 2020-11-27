@@ -58,7 +58,7 @@ def custom_masking(mask_path, threshold, zoom,
         m = abs(nib.load(mask_files[0]).get_fdata()) >= threshold  # binarize
         for i in range(1, len(mask_files)):
             # binarize and stack
-            m |= abs(nib.load(mask_files[0]).get_fdata()) >= threshold
+            m |= abs(nib.load(mask_files[i]).get_fdata()) >= threshold
     else:
         # if not provided, use min_152 mask instead.
         m = mni_mask.get_fdata()
