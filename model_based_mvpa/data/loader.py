@@ -10,15 +10,18 @@ from pathlib import Path
 
 import numpy as np
 from tensorflow.keras.utils import Sequence
+from ..utils import config
 
 
-def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
+def prepare_dataset(root=None, layout=None,
+                    X_path=None, y_path=None, time_mask_path=None):
     """
     Get dataset for fitting model
 
     Arguments:
         root: data path, if None, must be specified X, y, time_mask_path.
               default path is imported from layout.
+        layout: 
         X_path: optional, X data path, if None, default is bids/derivates/data.
         y_path: optional, y data path, if None, default is bids/derivates/data.
         time_mask_path: optional, time mask data path, if None, default is bids/derivates/data.
@@ -29,12 +32,30 @@ def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
         y: y, which is adjusted dimension and masked time points for training
     """
 
+    def _load_and_reshape(data_path):
+        """
+
+        """
+
+        """
+        Arguments:
+            data_path (str, or pathlib.Path): 
+
+        Return:
+            reshaped_data (numpy.array): 
+        """
+
+        data = np.load(data_path)
+        reshaped_data = data.reshape(-1, data.shape[-1])
+        return reshaped_data
+
+
     # if root is given and path for any of X, y is not given, then use default path.
     if root is not None:
         root = Path(root)
-        X_path = root / 'mvpa'
-        y_path = root / 'mvpa'
-        time_mask_path = root / 'mvpa'
+        X_path = root / config.DEFAULT_SAVE_DIR
+        y_path = root / config.DEFAULT_SAVE_DIR
+        time_mask_path = root / config.DEFAULT_SAVE_DIR
     else:
         assert X_path is not None or y_path is not None, (
             "If root is None, you must be indicate data path (X, Y, time mask)"
@@ -44,9 +65,11 @@ def prepare_dataset(root=None, X_path=None, y_path=None, time_mask_path=None):
         y_path = Path(y_path)
 
     # aggregate X fragmented by subject to one matrix
-    X_list = list(X_path.glob('X_*.npy'))
+    X_list = list(X_path.glob(f'{config.DEFAULT_FEATURE_PREFIX}_*.npy'))
     X_list.sort(key=lambda x: int(str(x).split('_')[-1].split('.')[0]))
-    X = np.concatenate([np.load(data_path) for data_path in X_list], 0)
+
+
+    X = np.concatenate([_load_and_reshape(data_path) for data_path in X_list], 0)
     X = X.reshape(-1, X.shape[-1])
 
     y = np.load(y_path / 'y.npy', allow_pickle=True)

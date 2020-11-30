@@ -153,7 +153,7 @@ def events_preprocess(# path info
     # modify trial data by user-defined function "preprocess"
     df_events_list = [
         _preprocess_event(
-            preprocess, condition, df_events
+            preprocess, df_events
         ) for df_events, event_infos in zip(df_events_list, event_infos_list)
     ]
     pbar.update(1)
@@ -174,7 +174,7 @@ def events_preprocess(# path info
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
                     time_mask_subject.append(_get_time_mask(
-                        condition, group1, n_scans, t_r, use_duration))
+                        condition, group2, n_scans, t_r, use_duration))
         else:
             for name1, group1 in group0.groupby(["run"]):
                 time_mask_subject.append(_get_time_mask(
@@ -216,16 +216,17 @@ def events_preprocess(# path info
                 dm_model = getattr(
                     hbayesdm.models, dm_model)(
                         data=pd.concat(df_events_list),
-                        **kwargs
-                    )
+                        **kwargs)
             
             all_individual_params = dm_model.all_ind_pars
-            all_individual_params.columns[0] = "subjID"
-
+            cols = list(all_individual_params.columns)
+            cols[0] = 'subjID'
+            all_individual_params.columns = cols
+            
             if save:
                 all_individual_params.to_csv(
-                    sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME, sep='\t')
-                
+                    sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
+                    sep="\t")
         else:
             assert (
                 (type(all_individual_params_path) == str)
@@ -233,11 +234,11 @@ def events_preprocess(# path info
                 "")
 
             all_individual_params = pd.read_csv(
-                all_individual_params_path, sep='\t')
-            s = len(str(all_individual_params['subjID'].max()))
-            all_individual_params['subjID'] =\
-                all_individual_params['subjID'].apply(
-                    lambda x: f'{x:0{s}}')
+                all_individual_params_path, sep="\t")
+            s = len(str(all_individual_params["subjID"].max()))
+            all_individual_params["subjID"] =\
+                all_individual_params["subjID"].apply(
+                    lambda x: f"{x:0{s}}")
             dm_model = None
 
         pbar.update(1)
@@ -255,7 +256,7 @@ def events_preprocess(# path info
         pbar.update(1)
     else:
         pbar.update(2)
-    ################################################################################
+    ###########################################################################
     # Get boldified signals.
     # this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
     # by providing 'onset','duration', and 'modulation' values.
@@ -432,7 +433,7 @@ def _add_event_info(df_events, event_infos):
     return new_df
 
 
-def _preprocess_event(preprocess, condition, df_events):
+def _preprocess_event(preprocess, df_events):
     """
     Preprocess dataframe of events of single 'run' 
 
@@ -453,8 +454,7 @@ def _preprocess_event(preprocess, condition, df_events):
     df_events = df_events.sort_values(by='onset')
 
     for _, row in df_events.iterrows():
-        if condition is not None and condition(row):
-            new_df.append(preprocess(row))
+        new_df.append(preprocess(row))
 
     new_df = pd.concat(
         new_df, axis=1,

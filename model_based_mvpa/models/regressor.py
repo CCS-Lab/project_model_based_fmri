@@ -34,8 +34,9 @@ from tensorflow.keras.regularizers import l1_l2
 # TODO: replace this relative import with an absolute import.
 # e.g., from {package_name}.data import loader
 from ..data import loader
+from ..utils import config
 
-DEFAULT_SAVE_PATH_TEMP = 'temp'
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -134,12 +135,13 @@ def mlp_regression(X, y,
 
         if save_path is None:
             sp = Path(
-                layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_PATH_TEMP
+                layout.derivatives["fMRIPrep"].root)\
+                / config.DEFAULT_SAVE_PATH_CKPT / "MLP"
         else:
             sp = Path(save_path)
 
         best_model_filepath = sp / \
-            f'temp{int(random.random()*100000)}_best_mlp.h5'
+            f"mlp_repeat_{i:0{len(str(N))}}.cpkt"
 
         mc = ModelCheckpoint(
             best_model_filepath,
@@ -176,10 +178,10 @@ def mlp_regression(X, y,
         # results = model.evaluate(X_test, y_test)
         y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
-        actual_epoch = len(model.history['val_loss'])
+        # best_epoch = len(model.history['val_loss'])
         if verbose > 0:
             logging.info(
-                f"[{i}/{N}] - val_{loss}: {error:.04f}, epoch:{actual_epoch}")
+                f"[{i}/{N}] - val_loss: {error:.04f}")
 
         # extracting voxel-wise mapped weight (coefficient) map
         weights = []
@@ -285,12 +287,13 @@ def penalized_linear_regression(X, y,
 
         if save_path is None:
             sp = Path(
-                layout.derivatives["fMRIPrep"].root) / DEFAULT_SAVE_PATH_TEMP
+                layout.derivatives["fMRIPrep"].root)\
+                / config.DEFAULT_SAVE_PATH_CKPT / "PLR"
         else:
             sp = Path(save_path)
 
         best_model_filepath = sp / \
-            f'temp{int(random.random()*100000)}_best_mlp.h5'
+            f"plr_repeat_{i:0{len(str(N))}}.ckpt"
 
         mc = ModelCheckpoint(
             best_model_filepath,
@@ -327,11 +330,11 @@ def penalized_linear_regression(X, y,
 
         y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
-        actual_epoch = len(model.history['val_loss'])
+        best_epoch = len(model.history['val_loss'])
 
         if verbose > 0:
             logging.info(
-                f"[{i}/{N}] - val_{loss}: {error:.04f}, epoch:{actual_epoch}")
+                f"[{i}/{N}] - val_{loss}: {error:.04f}, epoch:{best_epoch}")
 
         # extracting coefficients
         coef = model.layers[0].get_weights()[0]

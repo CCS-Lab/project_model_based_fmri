@@ -100,7 +100,6 @@ def bids_preprocess(root=None,  # path info
     # make voxel mask
 
     pbar.set_description("making custom voxel mask..".ljust(50))
-    root = Path(root)
 
     if mask_path is None:
         mask_path = Path(
