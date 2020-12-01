@@ -167,22 +167,7 @@ def events_preprocess(# path info
 
     pbar.set_description("calculating time masks..".ljust(50))
 
-    time_mask = []
-    for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
-        time_mask_subject = []
-        if n_session:
-            for name1, group1 in group0.groupby(["session"]):
-                for name2, group2 in group1.groupby(["run"]):
-                    time_mask_subject.append(_get_time_mask(
-                        condition, group2, n_scans, t_r, use_duration))
-        else:
-            for name1, group1 in group0.groupby(["run"]):
-                time_mask_subject.append(_get_time_mask(
-                    condition, group1, n_scans, t_r, use_duration))
-
-        time_mask.append(time_mask_subject)
-
-    time_mask = np.array(time_mask)
+    time_mask = get_time_masks(condition, df_events_list, time_length, t_r, use_duration)
 
     if save:
         np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask)
@@ -252,10 +237,20 @@ def events_preprocess(# path info
                     event_infos["subject"], all_individual_params)
             ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
 
-        df_events = pd.concat(df_events_list)
+        df_events_ready = pd.concat(df_events_list)
         pbar.update(1)
     else:
+        # sanity check
+        assert 'modulation' in df_events_custom.columns
+        assert 'subjID' in df_events_custom.columns
+        assert 'run' in df_events_custom.columns
+        assert 'onset' in df_events_custom.columns
+        assert 'duration' in df_events_custom.columns
+        assert 'modulation' in df_events_custom.columns
+        
+        df_events_ready = df_events_custom
         pbar.update(2)
+        
     ###########################################################################
     # Get boldified signals.
     # this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
@@ -273,39 +268,7 @@ def events_preprocess(# path info
     # this order should match with preprocessed fMRI image data.
 
     pbar.set_description("modulation signal making..".ljust(50))
-    frame_times = t_r * (np.arange(n_scans) + t_r / 2)
-
-    signals = []
-    for name0, group0 in df_events.groupby(["subjID"]):
-        signal_subject = []
-        if n_session:
-            for name1, group1 in group0.groupby(["session"]):
-                for name2, group2 in group1.groupby(["run"]):
-                    modulation_ = group2[["onset", "duration", "modulation"]].to_numpy().T
-                    signal, _ = _make_boldify(modulation_, hrf_model, frame_times)
-                    signal_subject.append(signal)
-        else:
-            for name1, group1 in group0.groupby(["run"]):
-                modulation_ = group1[["onset", "duration", "modulation"]].to_numpy().T
-                signal, _ = _make_boldify(modulation_, hrf_model, frame_times)
-                signal_subject.append(signal)
-
-        signal_subject = np.array(signal_subject)
-        reshape_target = signal_subject.shape
-
-        # method for normalizing signal
-        if normalizer == "standard":
-            # standard normalization by calculating zscore
-            normalized_signal = zscore(signal_subject.flatten(), axis=None)
-        else:
-            # default is using minmax
-            normalized_signal = minmax_scale(
-                signal_subject.flatten(),
-                feature_range=(-1, 1), axis=0)
-
-        normalized_signal = normalized_signal.reshape(reshape_target)
-        signals.append(normalized_signal)
-    signals = np.array(signals)
+    signals = convert_event_to_boldlike_signal(df_events_ready, t_r, hrf_model,normalizer)
     pbar.update(1)
 
     ###########################################################################
@@ -325,24 +288,6 @@ def events_preprocess(# path info
     return dm_model, df_events, signals, time_mask, layout
 
 
-def _make_boldify(modulation_, hrf_model, frame_times):
-    """
-    Arguments:
-        modulation_ (numpy.array): 
-        hrf_model (str): 
-        frame_times (numpy.array or list): 
-        
-    Return:
-        boldified_signals (numpy.array): 
-        
-    """
-
-    boldified_signals, name = compute_regressor(
-        exp_condition=modulation_.astype(float),
-        hrf_model=hrf_model,
-        frame_times=frame_times)
-
-    return boldified_signals, name
 
 
 # todo: remove
@@ -364,6 +309,40 @@ def _get_individual_params(subject_id, all_individual_params):
 
     return dict(ind_pars)
 
+def get_time_masks(condition, df_events_list, time_length, t_r, use_duration=False):
+    
+    """
+    Get binary masked data indicating time points in use
+
+    Arguments:
+        condition: a function : row --> boolean, to indicate if use the row or not 
+        df_events_list: list of dataframe for rows of one 'run' event data
+        time_length: the length of target BOLD signal 
+        t_r: time resolution
+        use_duration: if True, use 'duration' column for masking, 
+                      else use the gap between consecutive onsets as duration
+    Return:
+        time_mask: binary array.
+                   shape: time_length
+    """
+    time_mask = []
+    for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
+        time_mask_subject = []
+        if n_session:
+            for name1, group1 in group0.groupby(["session"]):
+                for name2, group2 in group1.groupby(["run"]):
+                    time_mask_subject.append(_get_time_mask(
+                        condition, group2, n_scans, t_r, use_duration))
+        else:
+            for name1, group1 in group0.groupby(["run"]):
+                time_mask_subject.append(_get_time_mask(
+                    condition, group1, n_scans, t_r, use_duration))
+
+        time_mask.append(time_mask_subject)
+
+    time_mask = np.array(time_mask)
+    
+    return time_mask
 
 def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     """
@@ -398,6 +377,77 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
 
     return time_mask
 
+def _make_boldify(modulation_, hrf_model, frame_times):
+    
+    """
+    BOLDify event data.
+    
+    Arguments:
+        modulation_ (numpy.array): a array with onset, duration, and modulation values. shape : 3 x time point #
+        hrf_model (str): name for hemodynamic model
+        frame_times (numpy.array or list): frame array indicating time slot for BOLD-like signals
+        
+    Return:
+        boldified_signals (numpy.array): BOLD-like signal. 
+        
+    """
+
+    boldified_signals, name = compute_regressor(
+        exp_condition=modulation_.astype(float),
+        hrf_model=hrf_model,
+        frame_times=frame_times)
+
+    return boldified_signals, name
+
+def convert_event_to_boldlike_signal(df_events, t_r, hrf_model="glover",normalizer='minmax'):
+    
+    """
+    Arguments:
+        df_events (DataFrame): preprocessed dataframe which is ready to BOLDify 
+        t_r (float): time resolution (second)
+        hrf_model(str): name for hemodynamic model
+        normalizer(str): method name for normalizing output BOLD-like signal. 'minmax' or 'standard' (=z_score)
+        
+    Return:
+        boldified_signals (numpy.array): BOLD-like signal. 
+        
+    """
+    
+    frame_times = t_r * (np.arange(n_scans) + t_r / 2)
+
+    signals = []
+    for name0, group0 in df_events.groupby(["subjID"]):
+        signal_subject = []
+        if n_session:
+            for name1, group1 in group0.groupby(["session"]):
+                for name2, group2 in group1.groupby(["run"]):
+                    modulation_ = group2[["onset", "duration", "modulation"]].to_numpy().T
+                    signal, _ = _make_boldify(modulation_, hrf_model, frame_times)
+                    signal_subject.append(signal)
+        else:
+            for name1, group1 in group0.groupby(["run"]):
+                modulation_ = group1[["onset", "duration", "modulation"]].to_numpy().T
+                signal, _ = _make_boldify(modulation_, hrf_model, frame_times)
+                signal_subject.append(signal)
+
+        signal_subject = np.array(signal_subject)
+        reshape_target = signal_subject.shape
+
+        # method for normalizing signal
+        if normalizer == "standard":
+            # standard normalization by calculating zscore
+            normalized_signal = zscore(signal_subject.flatten(), axis=None)
+        else:
+            # default is using minmax
+            normalized_signal = minmax_scale(
+                signal_subject.flatten(),
+                feature_range=(-1, 1), axis=0)
+
+        normalized_signal = normalized_signal.reshape(reshape_target)
+        signals.append(normalized_signal)
+    signals = np.array(signals)
+    
+    return signals
 
 def _add_event_info(df_events, event_infos):
     """
