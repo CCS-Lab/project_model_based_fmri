@@ -8,6 +8,7 @@
 
 from pathlib import Path
 
+import nibabel as nib
 import numpy as np
 from tensorflow.keras.utils import Sequence
 from ..utils import config
@@ -77,7 +78,7 @@ def prepare_dataset(root=None, layout=None):
     X = X[time_mask > 0]
     y = y[time_mask > 0]
 
-    voxel_mask = data_path / config.DEFAULT_VOXEL_MASK_FILENAME
+    voxel_mask = nib.load(data_path / config.DEFAULT_VOXEL_MASK_FILENAME)
 
     return X, y, voxel_mask
 
