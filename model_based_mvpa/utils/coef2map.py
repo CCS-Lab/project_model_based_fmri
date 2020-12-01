@@ -15,8 +15,8 @@ from scipy.ndimage import gaussian_filter
 from scipy.stats import ttest_1samp, zscore
 
 
-def get_map(coefs, masked_data, layout=None, task_name=None,
-            map_type='z', save=False, save_path=None, sigma=1):
+def get_map(coefs, voxel_mask, layout=None, task_name=None,
+            map_type='z', save=True, save_path=None, sigma=1):
     """
     make nii image file from coefficients of model using masking info.
     """
@@ -25,7 +25,7 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
     Arguments:
         coefs: extracted coefs by fitting model.
                shape: N x voxel #
-        masked_data: a binary nii image of masking info. type : nibabel.nifti1.Nifti1Image, 
+        voxel_mask: a binary nii image of masking info. type : nibabel.nifti1.Nifti1Image, 
                      should be same shape with the original fMRI image data
         layout: layout info to get task_name if None, task_name should not be None instead
         task_name: if provided, the saved nii file will be named after this
@@ -45,15 +45,15 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
     assert (not(layout is None and task_name is None))
 
     activation_maps = []
-    mapping_id = np.nonzero(masked_data.get_fdata().flatten())[0]
+    mapping_id = np.nonzero(voxel_mask.get_fdata().flatten())[0]
 
     for coef in coefs:
         # converting flattened coefs to brain image.
-        activation_map = np.zeros(masked_data.get_fdata().flatten().shape[0])
+        activation_map = np.zeros(voxel_mask.get_fdata().flatten().shape[0])
         for i, v in zip(mapping_id, coef):
             activation_map[i] = v
 
-        activation_map = activation_map.reshape(masked_data.shape)
+        activation_map = activation_map.reshape(voxel_mask.shape)
         if sigma > 0:
             activation_map = gaussian_filter(activation_map, sigma)
         activation_maps.append(activation_map)
@@ -69,8 +69,8 @@ def get_map(coefs, masked_data, layout=None, task_name=None,
         m = zscore(activation_maps, axis=None).mean(0)
 
     m[np.isnan(m)] = 0
-    m *= masked_data.get_fdata()
-    result_map = nib.Nifti1Image(m, affine=masked_data.affine)
+    m *= voxel_mask.get_fdata()
+    result_map = nib.Nifti1Image(m, affine=voxel_mask.affine)
 
     # saving
     if save_path is None:
