@@ -70,13 +70,16 @@ def events_preprocess(# path info
         root (str or Path): the root directory of BIDS layout
         layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         save_path (str or Path): a path for the directory to save outputs (y, time_mask) and intermediate data (individual_params, df_events). if not provided, "BIDS root/derivatives/data" will be set as default path      
-        preprocess (func(pandas.Series, dict)-> pandas.Series)): a user-defined function for modifying each row of behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
-        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. f(single_row_data_frame) -> True or False
-        modulation (func(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
+        preprocess (func(pandas.Series, dict)-> pandas.Series)): a user-defined function for modifying each row of behavioral data. 
+            - f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data check
+        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
+            - f(single_row_data_frame) -> True or False
+        modulation (func(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
+            - f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
         dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
         individual_params (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
-            the below notes are retrieved from the code of wrapping function nilearn.glm.first_level.hemodynamic_models.compute_regressor 
+            the below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
             (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
             
             The different hemodynamic models can be understood as follows:
@@ -89,9 +92,9 @@ def events_preprocess(# path info
                  - 'glover + derivative + dispersion': idem + dispersion derivative
                                                     (3 regressors)
             
-        normalizer (str): a name for normalization method, which will normalize BOLDified signal. "minimax" or "standard" 
-            "minmax" will rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
-            "standard" will rescale value by calculating subject-wise z_score
+        normalizer (str): a name for normalization method, which will normalize BOLDified signal. 'minimax' or 'standard' 
+            - 'minmax': rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
+            - 'standard': rescale value by calculating subject-wise z_score
         use_duration (boolean) : if True use 'duration' column to make time mask, if False regard gap between consecuting trials' onset values as duration
         save (boolean): if True, it will save "y.npy," "time_mask.npy" and additionaly "all_individual_params.tsv."
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
@@ -179,7 +182,7 @@ def events_preprocess(# path info
 
     pbar.set_description("calculating time masks..".ljust(50))
 
-    time_mask = get_time_masks(condition, df_events_list, time_length, t_r, use_duration)
+    time_mask = _get_total_time_mask(condition, df_events_list, time_length, t_r, use_duration)
 
     if save:
         np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask)
@@ -281,7 +284,7 @@ def events_preprocess(# path info
     # this order should match with preprocessed fMRI image data.
 
     pbar.set_description("modulation signal making..".ljust(50))
-    signals = convert_event_to_boldlike_signal(df_events_ready, t_r, hrf_model,normalizer)
+    signals = _convert_event_to_boldlike_signal(df_events_ready, t_r, hrf_model,normalizer)
     pbar.update(1)
 
     ###########################################################################
@@ -322,42 +325,7 @@ def _get_individual_params(subject_id, all_individual_params):
 
     return dict(ind_pars)
 
-def get_time_masks(condition, df_events_list, time_length, t_r, use_duration=False):
-    
-    """
-    Get binary masked data indicating time points in use
-
-    Arguments:
-        condition: a function : row --> boolean, to indicate if use the row or not 
-        df_events_list: list of dataframe for rows of one 'run' event data
-        time_length: the length of target BOLD signal 
-        t_r: time resolution
-        use_duration: if True, use 'duration' column for masking, 
-                      else use the gap between consecutive onsets as duration
-    Return:
-        time_mask: binary array.
-                   shape: time_length
-    """
-    time_mask = []
-    for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
-        time_mask_subject = []
-        if n_session:
-            for name1, group1 in group0.groupby(["session"]):
-                for name2, group2 in group1.groupby(["run"]):
-                    time_mask_subject.append(_get_time_mask(
-                        condition, group2, n_scans, t_r, use_duration))
-        else:
-            for name1, group1 in group0.groupby(["run"]):
-                time_mask_subject.append(_get_time_mask(
-                    condition, group1, n_scans, t_r, use_duration))
-
-        time_mask.append(time_mask_subject)
-
-    time_mask = np.array(time_mask)
-    
-    return time_mask
-
-def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
+def _get_single_time_mask(condition, df_events, time_length, t_r, use_duration=False):
     """
     Get binary masked data indicating time points in use
 
@@ -369,8 +337,7 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
         use_duration: if True, use 'duration' column for masking, 
                       else use the gap between consecutive onsets as duration
     Return:
-        time_mask: binary array.
-                   shape: time_length
+        time_mask: binary array with shape: time_length
     """
 
     df_events = df_events.sort_values(by='onset')
@@ -389,6 +356,41 @@ def _get_time_mask(condition, df_events, time_length, t_r, use_duration=False):
             time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
 
     return time_mask
+
+def _get_total_time_mask(condition, df_events_list, time_length, t_r, use_duration=False):
+    
+    """
+    Get binary masked data indicating time points in use
+
+    Arguments:
+        condition: a function : row --> boolean, to indicate if use the row or not 
+        df_events_list: list of dataframe for rows of one 'run' event data
+        time_length: the length of target BOLD signal 
+        t_r: time resolution
+        use_duration: if True, use 'duration' column for masking, 
+                      else use the gap between consecutive onsets as duration
+    Return:
+        time_mask: binary array with shape: subject # x run # x time_length
+    """
+    time_mask = []
+    for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
+        time_mask_subject = []
+        if n_session:
+            for name1, group1 in group0.groupby(["session"]):
+                for name2, group2 in group1.groupby(["run"]):
+                    time_mask_subject.append(_get_time_single_mask(
+                        condition, group2, n_scans, t_r, use_duration))
+        else:
+            for name1, group1 in group0.groupby(["run"]):
+                time_mask_subject.append(_get_time_single_mask(
+                    condition, group1, n_scans, t_r, use_duration))
+
+        time_mask.append(time_mask_subject)
+
+    time_mask = np.array(time_mask)
+    
+    return time_mask
+
 
 def _make_boldify(modulation_, hrf_model, frame_times):
     
@@ -412,7 +414,7 @@ def _make_boldify(modulation_, hrf_model, frame_times):
 
     return boldified_signals, name
 
-def convert_event_to_boldlike_signal(df_events, t_r, hrf_model="glover",normalizer='minmax'):
+def _convert_event_to_boldlike_signal(df_events, t_r, hrf_model="glover",normalizer='minmax'):
     
     """
     Arguments:
