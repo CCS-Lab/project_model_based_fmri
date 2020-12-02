@@ -2,7 +2,7 @@
 
 Yedarm Seong: mybirth0407@gmail.com
 
-CheolJun Cho: cjfwndnsl@snu.ac.kr
+CheolJun Cho: cjfwndnsl@gmail.com
 
 
 ## Example data
