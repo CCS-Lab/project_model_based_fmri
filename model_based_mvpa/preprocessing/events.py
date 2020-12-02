@@ -128,7 +128,7 @@ def events_preprocess(# path info
     
     events = layout.get(suffix="events", extension="tsv") # this will aggregate all events file path in sorted way
     df_events_list = [event.get_df() for event in events] # collecting dataframe from event files spread in BIDS layout
-    event_infos_list = [event.get_entities() for event in events] # event_info such as id number for subject, session, run
+    event_infos_list = [event.get_entities() for event in events] # event_info contains ID number for subject, session, run
     
     pbar.update(1)
 
@@ -167,26 +167,23 @@ def events_preprocess(# path info
     ###########################################################################
     # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
     # if user provided the "df_events" with those fields, this part will be skipped
-    # the fields except for 'modulation' already exist in "df_events_list",
-    # so the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
-    # obtained from fitting hierarchical bayesian model supported by hBayesDM package.
-    # Here, user also can provide precalculated individual model parameters in dataframe form through the "individual_params" argument.
+    
+    
 
-    if df_events_custom is None:
-        # the case user does not provide precalculated bahavioral data
-        # calculate latent process using user defined latent function
+    if df_events_custom is None: # the case user does not provide precalculated bahavioral data
 
         assert modulation is not None, "if df_events is None, must be assigned to latent_function"
         
-        if condition_for_modeling  is None:
+        if condition_for_modeling is None:
             condition_for_modeling = condition
-            
+        
+        # get individual parameter values in computational model which will be used to calculate the latent process('modulation').
         individual_params = _get_individual_params(individual_params,dm_model,condition_for_modeling,df_events_list)
         
         pbar.update(1)
         pbar.set_description("calculating modulation..".ljust(50))
-
-        # calculate latent process using user-defined function "modulation"
+        
+        # the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
         df_events_ready = _add_latent_process_as_modulation(individual_params,modulation, condition, df_events_list, event_infos_list)
         
         pbar.update(1)
@@ -205,26 +202,11 @@ def events_preprocess(# path info
         
     ###########################################################################
     # Get boldified signals.
-    # this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
-    # by providing 'onset','duration', and 'modulation' values.
-    # the final matrix will be shaped as subject # x run # x n_scan
-    # n_scane means the number of time points in fMRI data
-    # if there is multiple session, still there would be no dimension indicating sessions info, 
-    # but runs will be arranged as grouped by sessions number.
-    # e.g. (subj-01, sess-01, run-01,:)
-    #      (subj-01, sess-01, run-02,:)
-    #                 ...
-    #      (subj-01, sess-02, run-01,:)
-    #      (subj-01, sess-02, run-02,:)
-    #                 ...
-    # this order should match with preprocessed fMRI image data.
 
     pbar.set_description("modulation signal making..".ljust(50))
     signals = _convert_event_to_boldlike_signal(df_events_ready, t_r, hrf_model,normalizer)
     pbar.update(1)
-
-    ###########################################################################
-
+    
     if save:
         np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
     pbar.update(1)
@@ -238,6 +220,9 @@ def events_preprocess(# path info
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
 
     return dm_model, df_events, signals, time_mask, layout
+
+
+
 
 
 ### helper functions ###
@@ -289,8 +274,7 @@ def _adjust_behavior_dataframes(preprocess,df_events_list,event_infos_list):
     ]
     return df_events_list
 
-# todo: remove
-def _get_individual_params(subject_id, individual_params):
+def _get_indiv_param_dict(subject_id, individual_params):
     """
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
@@ -381,6 +365,10 @@ def _get_total_time_mask(condition, df_events_list, time_length, t_r, use_durati
 
 
 def _get_individual_params(individual_params,dm_model,condition_for_modeling,df_events_list):
+    
+    # obtained from fitting hierarchical bayesian model supported by hBayesDM package.
+    # Here, user also can provide precalculated individual model parameters in dataframe form through the "individual_params" argument.
+    
     if individual_params is None:
         # the case user does not provide individual model parameter values
         # obtain parameter values using hBayesDM package
@@ -428,7 +416,7 @@ def _add_latent_process_as_modulation(individual_params,modulation, condition, d
     df_events_list = [
             _preprocess_event_latent_state(
                 modulation, condition, df_events,
-                _get_individual_params(
+                _get_indiv_param_dict(
                     event_infos["subject"], individual_params)
             ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
     return pd.concat(df_events_list)
@@ -458,6 +446,20 @@ def _make_boldify(modulation_, hrf_model, frame_times):
 def _convert_event_to_boldlike_signal(df_events, t_r, hrf_model="glover",normalizer='minmax'):
     
     """
+    # this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
+    # by providing 'onset','duration', and 'modulation' values.
+    # the final matrix will be shaped as subject # x run # x n_scan
+    # n_scane means the number of time points in fMRI data
+    # if there is multiple session, still there would be no dimension indicating sessions info, 
+    # but runs will be arranged as grouped by sessions number.
+    # e.g. (subj-01, sess-01, run-01,:)
+    #      (subj-01, sess-01, run-02,:)
+    #                 ...
+    #      (subj-01, sess-02, run-01,:)
+    #      (subj-01, sess-02, run-02,:)
+    #                 ...
+    # this order should match with preprocessed fMRI image data.
+    
     Arguments:
         df_events (DataFrame): preprocessed dataframe which is ready to BOLDify 
         t_r (float): time resolution (second)
