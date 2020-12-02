@@ -20,7 +20,7 @@ from bids import BIDSLayout
 from tqdm import tqdm
 
 from .fMRI import custom_masking, image_preprocess, image_preprocess_mt
-from ..utils import config
+from ..utils import config # configuration for default names used in the package
 import nibabel as nib
 
 import logging
@@ -82,25 +82,25 @@ def bids_preprocess(root=None,  # path info
     
     """
     Arguments:
-        root (str or Path) : root directory of BIDS layout
-        layout (BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained using root info.
-        save_path (str or Path): path for saving output. if not provided, BIDS root/derivatives/data will be set as default path      
-        mask_path (str or Path): path for mask file with nii.gz format. encourage get files from Neurosynth
-        threshold (float): threshold for binarizing masks
+        root (str or Path) : the root directory of BIDS layout
+        layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
+        save_path (str or Path): a path for the directory to save output (X, voxel_mask). if not provided, "BIDS root/derivatives/data" will be set as default path      
+        mask_path (str or Path): a path for the directory containing mask files (nii or nii.gz). encourage get files from Neurosynth
+        threshold (float): threshold for binarizing mask images
         zoom ((float,float,float)): zoom window, indicating a scaling factor for each dimension in x,y,z. the dimension will be reduced by the factor of corresponding axis.
-                                    e.g. (2,2,2) will make the dimension half in all directions, 2x2x2=8 voxels will be 1 voxel.
+                                    e.g. (2,2,2) will make the dimension half in all directions, so 2x2x2=8 voxels will be 1 voxel.
         smoothing_fwhm (int): the amount of spatial smoothing. if None, image will not be smoothed.
-        interpolation_func (numpy.func): to calculate representative value in the zooming window. e.g. numpy.mean, numpy.max
+        interpolation_func (numpy.func): a method to calculate a representative value in the zooming window. e.g. numpy.mean, numpy.max
                                          e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube into a single value of its mean.
-        standardize (boolean): if true, conduct gaussian normalization 
-        motion_confounds (list[str]): list of motion confound names in confounds tsv file
-        ncore (int): number of core 
-        nthread (int): number of thread
+        standardize (boolean): if true, conduct standard normalization within each image of a single run. 
+        motion_confounds (list[str]): list of motion confound names in confounds tsv file. 
+        ncore (int): the number of core for the tparallel computing 
+        nthread (int): the number of thread for the parallel computing
     Return:
-        X (array): subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint #
-        voxel_mask (Nifti1Image): nifti image for voxel-wise binary mask
-        masker (NiftiMasker): masker object. fitted and used for correcting motion confounds, and masking.
-        layout (BIDSLayout): loaded layout. 
+        X (numpy.array): subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #
+        voxel_mask (nibabel.Nifti1Image): a nifti image for voxel-wise binary mask (ROI mask)
+        masker (nilearn.NiftiMasker): the masker object. fitted and used for correcting motion confounds, and masking.
+        layout (nibabel.BIDSLayout): the loaded layout. 
     """
 
     pbar = tqdm(total=6)

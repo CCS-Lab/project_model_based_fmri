@@ -28,7 +28,7 @@ import time
 
 import logging
 
-from ..utils import config
+from ..utils import config # configuration for default names used in the package
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,7 +43,7 @@ def events_preprocess(# path info
                       modulation=None,
                       # computational model specification
                       dm_model=None,
-                      all_individual_params_path=None,
+                      individual_params=None,
                       # BOLDifying parameter
                       hrf_model="glover",
                       normalizer="minmax",
@@ -56,39 +56,51 @@ def events_preprocess(# path info
                       **kwargs,
                       ):
     """
-    Preprocessing event data to get BOLD-like signal and time mask for indicating valid range of data.
+    This function is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
+    Also, the time mask for indicating valid range of data will be obtained.
     User can provide precalculated behaviral data through "df_events" argument,
-    which is the DataFrame with subjID, run, onset, duration, and modulation. (also session if applicable)
-    if not, it will calculate latent process by using hierarchical Bayesian modeling using "hBayesDM" package.
-    User also can provide precalculated individual model parameter values, through "all_individual_params" argument.
+    which is the DataFrame with 'subjID', 'run', 'onset', 'duration', and 'modulation.' (also 'session' if applicable)
+    if not, it will calculate latent process (or 'modulation') by using hierarchical Bayesian modeling by running "hBayesDM" package.
+    User can also provide precalculated individual model parameter values, through "all_individual_params" argument.
 
-    The time mask will be used for selecting data points included in model fitting
-    The BOLD-like signal will be used for a target(y) in model fitting
+    The BOLD-like signal will be used for a target(y) in MVPA.
+    The time mask will be used for selecting time points  in the data, which will be included in MVPA.
 
     Arguments:
-        root (str or Path): root directory of BIDS layout
-        layout (BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained using root info.
-        save_path (str or Path): path for saving output. if not provided, BIDS root/derivatives/data will be set as default path
-        preprocess (func(Series, dict)-> Series)): user defined function for modifying behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
-        condition (func(Series)-> boolean)): user defined function for filtering behavioral data. f(single_row_data_frame) -> True or False
-        modulation (func(Series, dict)-> Series): user defined function for calculating latent process. f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
-        dm_model (str or hbayesdm.model) : model for hBayesDM package. should be provided as model name (e.g. 'ra_prospect') or model object.
-        all_individual_params_path (str or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
-        hrf_model (str): specification for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
-        normalizer (str): normalization method to subject-wisely normalize BOLDified signal. "minimax" or "standard" 
-                          "minmax" will rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
-                          "standard" will rescale value by calculating subject-wise z_score
-        use_duration (boolean) : if True use 'duration' column info to make time mask, if False regard gap between consecuting onsets as duration
-        save (boolean): indicating whether save result if True, you will save y.npy, time_mask.npy and additionaly all_individual_params.tsv.
+        root (str or Path): the root directory of BIDS layout
+        layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
+        save_path (str or Path): a path for the directory to save outputs (y, time_mask) and intermediate data (individual_params, df_events). if not provided, "BIDS root/derivatives/data" will be set as default path      
+        preprocess (func(pandas.Series, dict)-> pandas.Series)): a user-defined function for modifying each row of behavioral data. f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data
+        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. f(single_row_data_frame) -> True or False
+        modulation (func(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
+        dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
+        individual_params (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
+        hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
+            the below notes are retrieved from the code of wrapping function nilearn.glm.first_level.hemodynamic_models.compute_regressor 
+            (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
+            
+            The different hemodynamic models can be understood as follows:
+                 - 'spm': this is the hrf model used in SPM
+                 - 'spm + derivative': SPM model plus its time derivative (2 regressors)
+                 - 'spm + time + dispersion': idem, plus dispersion derivative
+                                            (3 regressors)
+                 - 'glover': this one corresponds to the Glover hrf
+                 - 'glover + derivative': the Glover hrf + time derivative (2 regressors)
+                 - 'glover + derivative + dispersion': idem + dispersion derivative
+                                                    (3 regressors)
+            
+        normalizer (str): a name for normalization method, which will normalize BOLDified signal. "minimax" or "standard" 
+            "minmax" will rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
+            "standard" will rescale value by calculating subject-wise z_score
+        use_duration (boolean) : if True use 'duration' column to make time mask, if False regard gap between consecuting trials' onset values as duration
+        save (boolean): if True, it will save "y.npy," "time_mask.npy" and additionaly "all_individual_params.tsv."
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
 
     Return
-        dm_model: hBayesDM model.
-        df_events: integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
-        signals: BOLD-like signal.
-                 shape: subject # x (session # x run #) x time length of scan x voxel #
-        time_mask: binary mask indicating valid time point.
-                   shape: subject # x (session # x run #) x time length of scan
+        dm_model (hbayesdm.model): hBayesDM model.
+        df_events (pandas.DataFrame): integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
+        signals (numpy.array): BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
+        time_mask (numpy.array): a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
     """
 
     pbar = tqdm(total=6)
@@ -186,9 +198,9 @@ def events_preprocess(# path info
         # the case user does not provide precalculated bahavioral data
         # calculate latent process using user defined latent function
 
-        assert modulation is not None, "if df_events is None, must be assigned to latetn_function"
-
-        if all_individual_params_path is None:
+        assert modulation is not None, "if df_events is None, must be assigned to latent_function"
+        
+        if individual_params is None:
             # the case user does not provide individual model parameter values
             # obtain parameter values using hBayesDM package
 
@@ -203,27 +215,27 @@ def events_preprocess(# path info
                         data=pd.concat(df_events_list),
                         **kwargs)
             
-            all_individual_params = dm_model.all_ind_pars
-            cols = list(all_individual_params.columns)
+            individual_params = dm_model.all_ind_pars
+            cols = list(individual_params.columns)
             cols[0] = 'subjID'
-            all_individual_params.columns = cols
+            individual_params.columns = cols
             
             if save:
-                all_individual_params.to_csv(
+                individual_params.to_csv(
                     sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
                     sep="\t")
         else:
-            assert (
-                (type(all_individual_params_path) == str)
-                or (type(all_individual_params_path) == Path())), (
-                "")
-
-            all_individual_params = pd.read_csv(
-                all_individual_params_path, sep="\t")
-            s = len(str(all_individual_params["subjID"].max()))
-            all_individual_params["subjID"] =\
-                all_individual_params["subjID"].apply(
-                    lambda x: f"{x:0{s}}")
+            
+            if type(individual_params) == str or type(individual_params) == type(Path()):
+                individual_params = pd.read_csv(
+                    individual_params, sep="\t")
+                s = len(str(individual_params["subjID"].max()))
+                individual_params["subjID"] =\
+                    individual_params["subjID"].apply(
+                        lambda x: f"{x:0{s}}")
+            else:
+                assert type(individual_params) == pd.DataFrame
+                
             dm_model = None
 
         pbar.update(1)
@@ -241,12 +253,13 @@ def events_preprocess(# path info
         pbar.update(1)
     else:
         # sanity check
-        assert 'modulation' in df_events_custom.columns
-        assert 'subjID' in df_events_custom.columns
-        assert 'run' in df_events_custom.columns
-        assert 'onset' in df_events_custom.columns
-        assert 'duration' in df_events_custom.columns
-        assert 'modulation' in df_events_custom.columns
+        assert (
+            ('modulation' in df_events_custom.columns)
+            and ('subjID' in df_events_custom.columns)
+            and ('run' in df_events_custom.columns)
+            and ('onset' in df_events_custom.columns)
+            and ('duration' in df_events_custom.columns)
+            and ('modulation' in df_events_custom.columns)), ("missing column in behavior data")
         
         df_events_ready = df_events_custom
         pbar.update(2)

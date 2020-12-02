@@ -1,3 +1,5 @@
+# configuration for default names used in the package
+
 DEFAULT_SAVE_DIR = "mvpa"
 DEFAULT_MASK_DIR = "masks"
 DEFAULT_VOXEL_MASK_FILENAME = "voxel_mask.nii.gz"
