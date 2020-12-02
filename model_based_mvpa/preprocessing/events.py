@@ -42,6 +42,7 @@ def events_preprocess(# path info
                       condition=lambda _: True,
                       modulation=None,
                       # computational model specification
+                      condition_for_modeling=None,
                       dm_model=None,
                       individual_params=None,
                       # BOLDifying parameter
@@ -60,11 +61,11 @@ def events_preprocess(# path info
     Also, the time mask for indicating valid range of data will be obtained.
     User can provide precalculated behaviral data through "df_events" argument,
     which is the DataFrame with 'subjID', 'run', 'onset', 'duration', and 'modulation.' (also 'session' if applicable)
-    if not, it will calculate latent process (or 'modulation') by using hierarchical Bayesian modeling by running "hBayesDM" package.
-    User can also provide precalculated individual model parameter values, through "all_individual_params" argument.
+    If not, it will calculate latent process (or 'modulation') by using hierarchical Bayesian modeling by running "hBayesDM" package.
+    User can also skip fitting a model by providing precalculated individual model parameter values, through "individual_params" argument.
 
-    The BOLD-like signal will be used for a target(y) in MVPA.
-    The time mask will be used for selecting time points  in the data, which will be included in MVPA.
+    The BOLD-like signals will be used for a target(y) in MVPA.
+    The time mask will be used for selecting time points in the data of both fMRI and target, which will be included in MVPA.
 
     Arguments:
         root (str or Path): the root directory of BIDS layout
@@ -76,6 +77,9 @@ def events_preprocess(# path info
             - f(single_row_data_frame) -> True or False
         modulation (func(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
             - f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
+        condition_for_modeling (None or func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
+            - None : "condition" function will be used.
+            - f(single_row_data_frame) -> True or False
         dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
         individual_params (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
@@ -117,30 +121,15 @@ def events_preprocess(# path info
         layout = BIDSLayout(root, derivatives=True)
     else:
         pbar.set_description("loading layout..".ljust(50))
-
-    t_r = layout.get_tr()
-
-    # this will aggregate all events file path in sorted way
-    events = layout.get(suffix="events", extension="tsv")
-
-    subjects = layout.get_subjects()
-    n_subject = len(subjects)
-    n_session = len(layout.get_session())
-    n_run = len(layout.get_run())
-
-    image_sample = nib.load(
-        layout.derivatives["fMRIPrep"].get(
-            return_type="file",
-            suffix="bold",
-            extension="nii.gz")[0]
-    )
-    n_scans = image_sample.shape[-1]
-
-    # collecting dataframe from event files spread in BIDS layout
-    df_events_list = [event.get_df() for event in events]
-
-    # event_info such as id number for subject, session, run
-    event_infos_list = [event.get_entities() for event in events]
+    
+    # get meta info
+    n_subject, n_session, n_run, n_scans, t_r = _get_metainfo(layout)
+    
+    
+    events = layout.get(suffix="events", extension="tsv") # this will aggregate all events file path in sorted way
+    df_events_list = [event.get_df() for event in events] # collecting dataframe from event files spread in BIDS layout
+    event_infos_list = [event.get_entities() for event in events] # event_info such as id number for subject, session, run
+    
     pbar.update(1)
 
     ###########################################################################
@@ -159,26 +148,12 @@ def events_preprocess(# path info
 
     pbar.set_description("adjusting event file columns..".ljust(50))
 
-    # add event info to each dataframe row
-    df_events_list = [
-        _add_event_info(df_events, event_infos)
-        for df_events, event_infos in zip(df_events_list, event_infos_list)
-    ]
-
-    # modify trial data by user-defined function "preprocess"
-    df_events_list = [
-        _preprocess_event(
-            preprocess, df_events
-        ) for df_events, event_infos in zip(df_events_list, event_infos_list)
-    ]
+    df_events_list = _adjust_behavior_dataframes(preprocess,df_events_list,event_infos_list)
+    
     pbar.update(1)
 
     ###########################################################################
     # get time masks
-    # binary mask indicating valid time points will be obtained by applying user-defined function "condition"
-    # "condition" function will censor each trial to decide whether include it or not
-    # if use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
-    # else the gap between consecutive trials will be used instead.
 
     pbar.set_description("calculating time masks..".ljust(50))
 
@@ -195,7 +170,7 @@ def events_preprocess(# path info
     # the fields except for 'modulation' already exist in "df_events_list",
     # so the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
     # obtained from fitting hierarchical bayesian model supported by hBayesDM package.
-    # Here, user also can provide precalculated individual model parameters in dataframe form through the "all_individual_params" argument.
+    # Here, user also can provide precalculated individual model parameters in dataframe form through the "individual_params" argument.
 
     if df_events_custom is None:
         # the case user does not provide precalculated bahavioral data
@@ -203,56 +178,17 @@ def events_preprocess(# path info
 
         assert modulation is not None, "if df_events is None, must be assigned to latent_function"
         
-        if individual_params is None:
-            # the case user does not provide individual model parameter values
-            # obtain parameter values using hBayesDM package
-
-            assert dm_model is not None, "if df_events is None, must be assigned to dm_model."
-
-            pbar.set_description(
-                "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
-
-            if type(dm_model) == str:
-                dm_model = getattr(
-                    hbayesdm.models, dm_model)(
-                        data=pd.concat(df_events_list),
-                        **kwargs)
+        if condition_for_modeling  is None:
+            condition_for_modeling = condition
             
-            individual_params = dm_model.all_ind_pars
-            cols = list(individual_params.columns)
-            cols[0] = 'subjID'
-            individual_params.columns = cols
-            
-            if save:
-                individual_params.to_csv(
-                    sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
-                    sep="\t")
-        else:
-            
-            if type(individual_params) == str or type(individual_params) == type(Path()):
-                individual_params = pd.read_csv(
-                    individual_params, sep="\t")
-                s = len(str(individual_params["subjID"].max()))
-                individual_params["subjID"] =\
-                    individual_params["subjID"].apply(
-                        lambda x: f"{x:0{s}}")
-            else:
-                assert type(individual_params) == pd.DataFrame
-                
-            dm_model = None
-
+        individual_params = _get_individual_params(individual_params,dm_model,condition_for_modeling,df_events_list)
+        
         pbar.update(1)
         pbar.set_description("calculating modulation..".ljust(50))
 
         # calculate latent process using user-defined function "modulation"
-        df_events_list = [
-            _preprocess_event_latent_state(
-                modulation, condition, df_events,
-                _get_individual_params(
-                    event_infos["subject"], all_individual_params)
-            ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
-
-        df_events_ready = pd.concat(df_events_list)
+        df_events_ready = _add_latent_process_as_modulation(individual_params,modulation, condition, df_events_list, event_infos_list)
+        
         pbar.update(1)
     else:
         # sanity check
@@ -304,24 +240,71 @@ def events_preprocess(# path info
     return dm_model, df_events, signals, time_mask, layout
 
 
+### helper functions ###
 
+
+
+def _get_metainfo(layout):
+    """
+    Get meta information of fMRI experiment.
+    """
+    n_subject = len(layout.get_subjects())
+    n_session = len(layout.get_session())
+    n_run = len(layout.get_run())
+
+    image_sample = nib.load(
+        layout.derivatives["fMRIPrep"].get(
+            return_type="file",
+            suffix="bold",
+            extension="nii.gz")[0]
+    )
+    n_scans = image_sample.shape[-1]
+    t_r = layout.get_tr()
+    
+    return n_subject, n_session, n_run, n_scans, t_r
+
+def _adjust_behavior_dataframes(preprocess,df_events_list,event_infos_list):
+    """
+    Adjust columns in events file
+    
+    Arguments:
+        preprocess:
+        df_events_list:
+        event_infos_list:
+    
+    Return:
+        df_events_list:
+    """
+    # add event info to each dataframe row
+    df_events_list = [
+        _add_event_info(df_events, event_infos)
+        for df_events, event_infos in zip(df_events_list, event_infos_list)
+    ]
+
+    # modify trial data by user-defined function "preprocess"
+    df_events_list = [
+        _preprocess_event(
+            preprocess, df_events
+        ) for df_events, event_infos in zip(df_events_list, event_infos_list)
+    ]
+    return df_events_list
 
 # todo: remove
-def _get_individual_params(subject_id, all_individual_params):
+def _get_individual_params(subject_id, individual_params):
     """
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
 
     Arguments:
         subject_id (int or str): subject ID number
-        all_individual_params (pandas.DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
+        individual_params (pandas.DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
 
     Return:
         ind_pars (dict): individual parameter value. dictionary{parameter_name:value}
 
     """
-    ind_pars = all_individual_params[
-        all_individual_params["subjID"] == subject_id]
+    ind_pars = individual_params[
+        individual_params["subjID"] == subject_id]
 
     return dict(ind_pars)
 
@@ -361,6 +344,11 @@ def _get_total_time_mask(condition, df_events_list, time_length, t_r, use_durati
     
     """
     Get binary masked data indicating time points in use
+    
+    binary mask indicating valid time points will be obtained by applying user-defined function "condition"
+    "condition" function will censor each trial to decide whether include it or not
+    if use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
+    else the gap between consecutive trials will be used instead.
 
     Arguments:
         condition: a function : row --> boolean, to indicate if use the row or not 
@@ -392,6 +380,59 @@ def _get_total_time_mask(condition, df_events_list, time_length, t_r, use_durati
     return time_mask
 
 
+def _get_individual_params(individual_params,dm_model,condition_for_modeling,df_events_list):
+    if individual_params is None:
+        # the case user does not provide individual model parameter values
+        # obtain parameter values using hBayesDM package
+
+        assert dm_model is not None, "if df_events is None, must be assigned to dm_model."
+
+        pbar.set_description(
+            "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
+        
+        df_events_list = [df_events[condition_for_modeling(df_events)] for df_events in df_events_list]
+        
+        if type(dm_model) == str:
+            dm_model = getattr(
+                hbayesdm.models, dm_model)(
+                    data=pd.concat(df_events_list),
+                    **kwargs)
+
+        individual_params = dm_model.all_ind_pars
+        cols = list(individual_params.columns)
+        cols[0] = 'subjID'
+        individual_params.columns = cols
+
+        if save:
+            individual_params.to_csv(
+                sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
+                sep="\t")
+    else:
+
+        if type(individual_params) == str or type(individual_params) == type(Path()):
+            individual_params = pd.read_csv(
+                individual_params, sep="\t")
+            s = len(str(individual_params["subjID"].max()))
+            individual_params["subjID"] =\
+                individual_params["subjID"].apply(
+                    lambda x: f"{x:0{s}}")
+        else:
+            assert type(individual_params) == pd.DataFrame
+
+        dm_model = None
+        
+    return individual_params
+
+def _add_latent_process_as_modulation(individual_params,modulation, condition, df_events_list, event_infos_list):
+    # calculate latent process using user-defined function "modulation"
+    df_events_list = [
+            _preprocess_event_latent_state(
+                modulation, condition, df_events,
+                _get_individual_params(
+                    event_infos["subject"], individual_params)
+            ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
+    return pd.concat(df_events_list)
+            
 def _make_boldify(modulation_, hrf_model, frame_times):
     
     """
