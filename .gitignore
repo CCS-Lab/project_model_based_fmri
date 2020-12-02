@@ -145,3 +145,4 @@ examples/*/*.nii*
 examples/*/*.tsv
 examples/*/*.pkl
 examples/*/*scratch*
+examples/scratch/*
