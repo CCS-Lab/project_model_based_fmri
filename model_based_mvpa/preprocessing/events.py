@@ -185,7 +185,7 @@ def events_preprocess(# path info
     time_mask = _get_total_time_mask(condition, df_events_list, time_length, t_r, use_duration)
 
     if save:
-        np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask)
+        np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask) 
 
     pbar.update(1)
 
