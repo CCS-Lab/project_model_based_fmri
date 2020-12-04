@@ -143,10 +143,14 @@ def bids_preprocess(root=None,  # path info
     pbar.set_description("image preprocessing - parameter setting..".ljust(50))
 
     params = []
+    
     for subject in subjects:
+        # get a list of nii file paths of fMRI images spread in BIDS layout
         nii_layout = layout.derivatives["fMRIPrep"].get(
             subject=subject, return_type="file", suffix="bold",
-            extension="nii.gz")
+            extension="nii.gz") 
+        # get a list of tsv file paths of regressors spread in BIDS layout
+        # e.g. tsv file with motion confound parameters. 
         reg_layout = layout.derivatives["fMRIPrep"].get(
             subject=subject, return_type="file", suffix="regressors",
             extension="tsv")

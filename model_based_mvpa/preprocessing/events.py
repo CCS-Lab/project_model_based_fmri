@@ -103,7 +103,7 @@ def events_preprocess(# path info
         save (boolean): if True, it will save "y.npy," "time_mask.npy" and additionaly "all_individual_params.tsv."
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
 
-    Return
+    Returns:
         dm_model (hbayesdm.model): hBayesDM model.
         df_events (pandas.DataFrame): integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
         signals (numpy.array): BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
@@ -167,8 +167,6 @@ def events_preprocess(# path info
     ###########################################################################
     # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
     # if user provided the "df_events" with those fields, this part will be skipped
-    
-    
 
     if df_events_custom is None: # the case user does not provide precalculated bahavioral data
 
@@ -220,8 +218,6 @@ def events_preprocess(# path info
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
 
     return dm_model, df_events, signals, time_mask, layout
-
-
 
 
 
