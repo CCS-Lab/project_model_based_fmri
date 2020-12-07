@@ -19,7 +19,7 @@ import bids
 from bids import BIDSLayout
 from tqdm import tqdm
 
-from .fMRI import custom_masking, image_preprocess, image_preprocess_mt
+from .fMRI import custom_masking, image_preprocess, image_preprocess_multithreading
 from ..utils import config # configuration for default names used in the package
 import nibabel as nib
 
@@ -127,6 +127,7 @@ def bids_preprocess(root=None,  # path info
     pbar.set_description("making custom voxel mask..".ljust(50))
 
     if mask_path is None:
+        # if mask_path is not provided, find mask files in DEFAULT_MASK_DIR
         mask_path = Path(
             layout.derivatives["fMRIPrep"].root) / config.DEFAULT_MASK_DIR
       
@@ -143,10 +144,14 @@ def bids_preprocess(root=None,  # path info
     pbar.set_description("image preprocessing - parameter setting..".ljust(50))
 
     params = []
+    
     for subject in subjects:
+        # get a list of nii file paths of fMRI images spread in BIDS layout
         nii_layout = layout.derivatives["fMRIPrep"].get(
             subject=subject, return_type="file", suffix="bold",
-            extension="nii.gz")
+            extension="nii.gz") 
+        # get a list of tsv file paths of regressors spread in BIDS layout
+        # e.g. tsv file with motion confound parameters. 
         reg_layout = layout.derivatives["fMRIPrep"].get(
             subject=subject, return_type="file", suffix="regressors",
             extension="tsv")
@@ -192,7 +197,7 @@ def bids_preprocess(root=None,  # path info
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
             future_result = {
                 executor.submit(
-                    image_preprocess_mt, param, n_run): param for param in params_chunk
+                    image_preprocess_multithreading, param, n_run): param for param in params_chunk
             }
 
             for future in as_completed(future_result):

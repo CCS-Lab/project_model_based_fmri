@@ -19,28 +19,25 @@ def prepare_dataset(root=None, layout=None):
     Get dataset for fitting model
 
     Arguments:
-        root: data path, if None, must be specified X, y, time_mask_path.
+        root (str or pathlib.Path): data path, if None, must be specified X, y, time_mask_path.
               default path is imported from layout.
-        layout: 
-        time_mask_path: optional, time mask data path, if None, default is bids/derivates/data.
+        layout (nibabel.BIDSLayout): BIDS layout object for the data you working on.
+        time_mask_path: optional, time mask data path, if None, default is BIDS_root/derivates/data.
 
-    Return:
-        TODO: explain to time points
-        X: X, which is adjusted dimension and masked time points for training
-        y: y, which is adjusted dimension and masked time points for training
+    Returns:
+        X (numpy.array): X, which is adjusted dimension and masked time points for training with shape: data # x voxel #
+        y (numpy.array): y, which is adjusted dimension and masked time points for training with shape: data # 
     """
 
     def _load_and_reshape(data_p):
         """
-
-        """
-
-        """
+        Load preprocessed fMRI image data and reshape it to 2-dimension array
+        
         Arguments:
-            data_p (str, or pathlib.Path): 
+            data_p (str, or pathlib.Path): path for the data
 
-        Return:
-            reshaped_data (numpy.array): 
+        Returns:
+            reshaped_data (numpy.array): loaded and reshaped data with shape (subject # x run # x time_point #) x voxel #
         """
 
         data = np.load(data_p)
@@ -53,7 +50,7 @@ def prepare_dataset(root=None, layout=None):
         data_path = root / config.DEFAULT_SAVE_DIR
     else:
         assert data_path is not None or data_path is not None, (
-            "If root is None, you must be indicate data path (X, Y, time mask)"
+            "If root is None, you must indicate data path (X, Y, time mask)"
         )
 
     data_path = Path(data_path)
@@ -63,13 +60,13 @@ def prepare_dataset(root=None, layout=None):
     X_list.sort(key=lambda x: int(str(x).split('_')[-1].split('.')[0]))
 
     X = np.concatenate([_load_and_reshape(data_p) for data_p in X_list], 0)
-    X = X.reshape(-1, X.shape[-1])
+    X = X.reshape(-1, X.shape[-1]) # numpy.reshape makes X 2-d array. 
 
     y = np.load(data_path / "y.npy", allow_pickle=True)
     y = np.concatenate(y, 0)
-    y = y.flatten()
+    y = y.flatten() # numpy.flatten makes it 1-d array.
 
-    # use data only at timepoints indicated in time_mask file.
+    # use data only at the timepoints indicated in time_mask file.
     time_mask = np.load(
         data_path / "time_mask.npy", allow_pickle=True)
     time_mask = np.concatenate(time_mask, 0)
@@ -85,9 +82,22 @@ def prepare_dataset(root=None, layout=None):
 
 class DataGenerator(Sequence):
     """
-    Data generator class required for fitting Keras model. This is just a
-    simple wrapper of feeding preprocessed fMRI data (:math:`X`) and BOLD-like
+    Data generator required for fitting Keras model. This is just a
+    simple wrapper of generating preprocessed fMRI data (:math:`X`) and BOLD-like
     target data (:math:`y`).
+    
+    Please refer to the below links for examples of using DataGenerator for Keras deep learning framework.
+        - https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly
+        
+    Also, this class is used to generate a chunk of data called 'batch', 
+    which means a fragment aggregatin the specified number ('batch_size') of data (X,y).
+    This partitioning data to small size is intended for utilizing the mini-batch gradient descent (or stochastic gradient descent).
+    Please refer to the below link for the framework.
+    
+        - https://www.stat.cmu.edu/~ryantibs/convexopt/lectures/stochastic-gd.pdf
+        
+    # TODO find a better reference
+    
     """
 
     def __init__(self, X, y, batch_size, shuffle=True):
@@ -111,6 +121,7 @@ class DataGenerator(Sequence):
         return len(self.indexes) // self.batch_size
 
     def __getitem__(self, index):
+        "Get a batch of data X,y"
         # index : batch no.
         # Generate indexes of the batch
         indexes = self.indexes[index *

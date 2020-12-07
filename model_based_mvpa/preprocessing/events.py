@@ -6,6 +6,9 @@
 @contact: mybirth0407@gmail.com
           cjfwndnsl@gmail.com
 @last modification: 2020.11.16
+
+This code is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
+
 """
 
 import logging
@@ -19,6 +22,9 @@ import pandas as pd
 from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
+from .event_utils import _get_metainfo, _process_behavior_dataframes, _make_total_time_mask, \
+                        _get_individual_params, _add_latent_process_as_modulation, \
+                        _convert_event_to_boldlike_signal
 
 from bids import BIDSLayout
 from tqdm import tqdm
@@ -29,7 +35,6 @@ import time
 import logging
 
 from ..utils import config # configuration for default names used in the package
-
 logging.basicConfig(level=logging.INFO)
 
 
@@ -58,15 +63,20 @@ def events_preprocess(# path info
                       ):
     """
     This function is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
-    Also, the time mask for indicating valid range of data will be obtained.
-    User can provide precalculated behaviral data through "df_events" argument,
-    which is the DataFrame with 'subjID', 'run', 'onset', 'duration', and 'modulation.' (also 'session' if applicable)
-    If not, it will calculate latent process (or 'modulation') by using hierarchical Bayesian modeling by running "hBayesDM" package.
-    User can also skip fitting a model by providing precalculated individual model parameter values, through "individual_params" argument.
-
     The BOLD-like signals will be used for a target(y) in MVPA.
-    The time mask will be used for selecting time points in the data of both fMRI and target, which will be included in MVPA.
-
+    Also, it will produce time masks which are binary arrays with the same size as the time dimension of the data
+    to indicate which time point of data will be included in MVPA.
+    
+    Note :
+        The default setting is calculating latent process (or 'modulation') 
+        by using hierarchical Bayesian modeling by running "hBayesDM" package.
+        
+        User can optionally skip the steps in this process in the following possible scenarios
+        1) User can provide precalculated behavioral data through "df_events_custom" argument. 
+           In this case, it will skip both fitting model and extracting latent process. 
+        2) User can provide precalculated individual model parameter values through "individual_params" argument.
+           In this case, it will only skip model fitting part.
+           
     Arguments:
         root (str or Path): the root directory of BIDS layout
         layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
@@ -100,10 +110,10 @@ def events_preprocess(# path info
             - 'minmax': rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
             - 'standard': rescale value by calculating subject-wise z_score
         use_duration (boolean) : if True use 'duration' column to make time mask, if False regard gap between consecuting trials' onset values as duration
-        save (boolean): if True, it will save "y.npy," "time_mask.npy" and additionaly "all_individual_params.tsv."
+        save (boolean): if True, it will save "y.npy," "time_mask.npy" and additionally "all_individual_params.tsv."
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
 
-    Return
+    Returns:
         dm_model (hbayesdm.model): hBayesDM model.
         df_events (pandas.DataFrame): integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
         signals (numpy.array): BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
@@ -147,11 +157,11 @@ def events_preprocess(# path info
         sp.mkdir()
 
     ###########################################################################
-    # adjust columns in events file
+    # process columns in events file
 
-    pbar.set_description("adjusting event file columns..".ljust(50))
+    pbar.set_description("processing event file columns..".ljust(50))
 
-    df_events_list = _adjust_behavior_dataframes(
+    df_events_list = _process_behavior_dataframes(
         preprocess,df_events_list,event_infos_list)
     
     pbar.update(1)
@@ -161,7 +171,7 @@ def events_preprocess(# path info
 
     pbar.set_description("calculating time masks..".ljust(50))
 
-    time_mask = _get_total_time_mask(
+    time_mask = _make_total_time_mask(
         condition, df_events_list, time_length, t_r, use_duration)
 
     if save:
@@ -173,7 +183,7 @@ def events_preprocess(# path info
     # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
     # if user provided the "df_events" with those fields, this part will be skipped
 
-    # the case user does not provide precalculated bahavioral data.
+    # the case user does not provide precalculated behavioral data.
     if df_events_custom is None:
         assert modulation is not None, (
             "if df_events is None, must be assigned to latent_function")
@@ -200,7 +210,8 @@ def events_preprocess(# path info
         
         pbar.update(1)
     else:
-        # sanity check
+        # sanity check. the user provided dataframe should contain following data.
+        # else, raise error.
         assert (
             ("modulation" in df_events_custom.columns)
             and ("subjID" in df_events_custom.columns)
@@ -680,3 +691,5 @@ def _preprocess_event_latent_state(modulation, condition,
     ).transpose()
 
     return new_df
+=======
+>>>>>>> cbc051f3c103a4f448e370ae36230b6cfbdbeefb

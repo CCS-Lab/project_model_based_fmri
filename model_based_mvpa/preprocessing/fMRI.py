@@ -129,7 +129,7 @@ def image_preprocess(params):
     return fmri_masked, subject_id
 
 
-def image_preprocess_mt(params, nthread):
+def image_preprocess_multithreading(params, nthread):
     """
     Call image_preprocess function using multithreading.
     """
