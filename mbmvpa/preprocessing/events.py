@@ -172,7 +172,7 @@ def events_preprocess(# path info
     pbar.set_description("calculating time masks..".ljust(50))
 
     time_mask = _make_total_time_mask(
-        condition, df_events_list, time_length, t_r, use_duration)
+        condition, df_events_list, n_scans, t_r, use_duration)
 
     if save:
         np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask) 
