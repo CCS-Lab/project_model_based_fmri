@@ -46,7 +46,7 @@ CLASSIFIERS = [
 ]
 
 setup(
-    name='model-based fMRI and multi-variate pattern analysis',
+    name='mb-mvpa',
     version=VERSION,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
