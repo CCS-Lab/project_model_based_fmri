@@ -61,9 +61,11 @@ def custom_masking(mask_path, threshold, zoom,
     
     # integrate binary mask data
     if len(mask_files) > 0 :
-        m = abs(gaussian_filter(nib.load(mask_files[0]).get_fdata(),1)) >= threshold # binarize
+        # binarize
+        m = abs(nib.load(mask_files[0]).get_fdata(), 1) >= threshold
         for i in range(len(mask_files)-1):
-            m |= abs(gaussian_filter(nib.load(mask_files[0]).get_fdata(),1)) >= threshold # binarize and stack
+            # binarize and stack
+            m |= abs(nib.load(mask_files[0]).get_fdata(), 1) >= threshold
     else:
         # if not provided, use min_152 mask instead.
         m = mni_mask.get_fdata()
@@ -161,7 +163,9 @@ def image_preprocess_mt(params, nthread):
     
     with ThreadPoolExecutor(max_workers=n_worker) as executor:
         future_result = {
-            executor.submit(image_preprocess, image_param): image_param for image_param in image_params
+            executor.submit(
+                image_preprocess, image_param): image_param \
+                    for image_param in image_params
         }
 
         for future in as_completed(future_result):

@@ -59,19 +59,19 @@ def prepare_dataset(root=None, layout=None):
     data_path = Path(data_path)
 
     # aggregate X fragmented by subject to one matrix
-    X_list = list(data_path.glob(f'{config.DEFAULT_FEATURE_PREFIX}_*.npy'))
+    X_list = list(data_path.glob(f"{config.DEFAULT_FEATURE_PREFIX}_*.npy"))
     X_list.sort(key=lambda x: int(str(x).split('_')[-1].split('.')[0]))
 
     X = np.concatenate([_load_and_reshape(data_p) for data_p in X_list], 0)
     X = X.reshape(-1, X.shape[-1])
 
-    y = np.load(data_path / 'y.npy', allow_pickle=True)
+    y = np.load(data_path / "y.npy", allow_pickle=True)
     y = np.concatenate(y, 0)
     y = y.flatten()
 
     # use data only at timepoints indicated in time_mask file.
     time_mask = np.load(
-        data_path / 'time_mask.npy', allow_pickle=True)
+        data_path / "time_mask.npy", allow_pickle=True)
     time_mask = np.concatenate(time_mask, 0)
     time_mask = time_mask.flatten()
 
