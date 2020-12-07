@@ -212,14 +212,13 @@ def events_preprocess(# path info
     else:
         # sanity check. the user provided dataframe should contain following data.
         # else, raise error.
-        assert (
-            ("modulation" in df_events_custom.columns)
-            and ("subjID" in df_events_custom.columns)
-            and ("run" in df_events_custom.columns)
-            and ("onset" in df_events_custom.columns)
-            and ("duration" in df_events_custom.columns)
-            and ("modulation" in df_events_custom.columns)),
-        ("missing column in behavior data")
+        assert (("modulation" in df_events_custom.columns
+            and "subjID" in df_events_custom.columns
+            and "run" in df_events_custom.columns
+            and "onset" in df_events_custom.columns
+            and "duration" in df_events_custom.columns
+            and "modulation" in df_events_custom.columns),
+        ("missing column in behavior data"))
         
         df_events_ready = df_events_custom
         pbar.update(2)
@@ -691,5 +690,3 @@ def _preprocess_event_latent_state(modulation, condition,
     ).transpose()
 
     return new_df
-=======
->>>>>>> cbc051f3c103a4f448e370ae36230b6cfbdbeefb
