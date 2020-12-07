@@ -74,7 +74,7 @@ def get_map(coefs, voxel_mask, layout=None, task_name=None,
 
     # saving
     if save_path is None:
-        sp = Path('./results')
+        sp = Path("./results")
     else:
         sp = Path(save_path)
 
@@ -85,6 +85,6 @@ def get_map(coefs, voxel_mask, layout=None, task_name=None,
         task_name = layout.get_task()[0]
 
     if save:
-        result_map.to_filename(sp / f'{task_name}_{map_type}_map.nii')
+        result_map.to_filename(sp / f"{task_name}_{map_type}_map.nii")
 
     return result_map

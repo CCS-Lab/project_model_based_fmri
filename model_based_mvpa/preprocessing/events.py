@@ -125,10 +125,12 @@ def events_preprocess(# path info
     # get meta info
     n_subject, n_session, n_run, n_scans, t_r = _get_metainfo(layout)
     
-    
-    events = layout.get(suffix="events", extension="tsv") # this will aggregate all events file path in sorted way
-    df_events_list = [event.get_df() for event in events] # collecting dataframe from event files spread in BIDS layout
-    event_infos_list = [event.get_entities() for event in events] # event_info contains ID number for subject, session, run
+    # this will aggregate all events file path in sorted way
+    events = layout.get(suffix="events", extension="tsv")
+    # collecting dataframe from event files spread in BIDS layout
+    df_events_list = [event.get_df() for event in events]
+    # event_info contains ID number for subject, session, run
+    event_infos_list = [event.get_entities() for event in events]
     
     pbar.update(1)
 
@@ -136,7 +138,8 @@ def events_preprocess(# path info
     # designate saving path
 
     if save_path is None:
-        sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
+        sp = Path(
+            layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
     else:
         sp = Path(save_path)
 
@@ -148,7 +151,8 @@ def events_preprocess(# path info
 
     pbar.set_description("adjusting event file columns..".ljust(50))
 
-    df_events_list = _adjust_behavior_dataframes(preprocess,df_events_list,event_infos_list)
+    df_events_list = _adjust_behavior_dataframes(
+        preprocess,df_events_list,event_infos_list)
     
     pbar.update(1)
 
@@ -157,7 +161,8 @@ def events_preprocess(# path info
 
     pbar.set_description("calculating time masks..".ljust(50))
 
-    time_mask = _get_total_time_mask(condition, df_events_list, time_length, t_r, use_duration)
+    time_mask = _get_total_time_mask(
+        condition, df_events_list, time_length, t_r, use_duration)
 
     if save:
         np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask) 
@@ -168,32 +173,42 @@ def events_preprocess(# path info
     # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
     # if user provided the "df_events" with those fields, this part will be skipped
 
-    if df_events_custom is None: # the case user does not provide precalculated bahavioral data
-
-        assert modulation is not None, "if df_events is None, must be assigned to latent_function"
+    # the case user does not provide precalculated bahavioral data.
+    if df_events_custom is None:
+        assert modulation is not None, (
+            "if df_events is None, must be assigned to latent_function")
         
         if condition_for_modeling is None:
             condition_for_modeling = condition
         
         # get individual parameter values in computational model which will be used to calculate the latent process('modulation').
-        individual_params, dm_model = _get_individual_params(individual_params,dm_model,condition_for_modeling,df_events_list,**kwargs)
+        individual_params, dm_model = _get_individual_params(
+            individual_params,dm_model,
+            condition_for_modeling,
+            df_events_list,
+            **kwargs)
         
         pbar.update(1)
         pbar.set_description("calculating modulation..".ljust(50))
         
         # the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
-        df_events_ready = _add_latent_process_as_modulation(individual_params,modulation, condition, df_events_list, event_infos_list)
+        df_events_ready = _add_latent_process_as_modulation(
+            individual_params,modulation,
+            condition,
+            df_events_list,
+            event_infos_list)
         
         pbar.update(1)
     else:
         # sanity check
         assert (
-            ('modulation' in df_events_custom.columns)
-            and ('subjID' in df_events_custom.columns)
-            and ('run' in df_events_custom.columns)
-            and ('onset' in df_events_custom.columns)
-            and ('duration' in df_events_custom.columns)
-            and ('modulation' in df_events_custom.columns)), ("missing column in behavior data")
+            ("modulation" in df_events_custom.columns)
+            and ("subjID" in df_events_custom.columns)
+            and ("run" in df_events_custom.columns)
+            and ("onset" in df_events_custom.columns)
+            and ("duration" in df_events_custom.columns)
+            and ("modulation" in df_events_custom.columns)),
+        ("missing column in behavior data")
         
         df_events_ready = df_events_custom
         pbar.update(2)
@@ -202,7 +217,8 @@ def events_preprocess(# path info
     # Get boldified signals.
 
     pbar.set_description("modulation signal making..".ljust(50))
-    signals = _convert_event_to_boldlike_signal(df_events_ready, t_r, hrf_model,normalizer)
+    signals = _convert_event_to_boldlike_signal(
+        df_events_ready, t_r, hrf_model,normalizer)
     pbar.update(1)
     
     if save:
@@ -219,11 +235,7 @@ def events_preprocess(# path info
 
     return dm_model, df_events, signals, time_mask, layout
 
-
-
 ### helper functions ###
-
-
 
 def _get_metainfo(layout):
     """
@@ -255,7 +267,8 @@ def _get_metainfo(layout):
     
     return n_subject, n_session, n_run, n_scans, t_r
 
-def _adjust_behavior_dataframes(preprocess,df_events_list,event_infos_list):
+
+def _adjust_behavior_dataframes(preprocess, df_events_list, event_infos_list):
     """
     Adjust columns in events file
     
@@ -282,6 +295,7 @@ def _adjust_behavior_dataframes(preprocess,df_events_list,event_infos_list):
     ]
     return df_events_list
 
+
 def _get_indiv_param_dict(subject_id, individual_params):
     """
     Get individual parameter dictionary
@@ -295,12 +309,14 @@ def _get_indiv_param_dict(subject_id, individual_params):
         ind_pars (dict): individual parameter value. dictionary{parameter_name:value}
 
     """
-    ind_pars = individual_params[
-        individual_params["subjID"] == subject_id]
+    ind_pars = individual_params[individual_params["subjID"] == subject_id]
 
     return dict(ind_pars)
 
-def _get_single_time_mask(condition, df_events, time_length, t_r, use_duration=False):
+
+def _get_single_time_mask(condition, df_events, time_length, t_r,
+                          use_duration=False
+                          ):
     """
     Get binary masked data indicating time points in use
 
@@ -316,13 +332,13 @@ def _get_single_time_mask(condition, df_events, time_length, t_r, use_duration=F
         time_mask (numpy.array): binary array with shape: time_length
     """
 
-    df_events = df_events.sort_values(by='onset')
-    onsets = df_events['onset'].to_numpy()
+    df_events = df_events.sort_values(by="onset")
+    onsets = df_events["onset"].to_numpy()
     if use_duration:
-        durations = df_events['duration'].to_numpy()
+        durations = df_events["duration"].to_numpy()
     else:
         durations = np.array(
-            list(df_events['onset'][1:]) + [time_length * t_r]) - onsets
+            list(df_events["onset"][1:]) + [time_length * t_r]) - onsets
 
     mask = [condition(row) for _, row in df_events.iterrows()]
     time_mask = np.zeros(time_length)
@@ -333,7 +349,9 @@ def _get_single_time_mask(condition, df_events, time_length, t_r, use_duration=F
 
     return time_mask
 
-def _get_total_time_mask(condition, df_events_list, time_length, t_r, use_duration=False):
+
+def _get_total_time_mask(condition, df_events_list, time_length, t_r,
+                         use_duration=False):
     
     """
     Get binary masked data indicating time points in use
@@ -374,7 +392,9 @@ def _get_total_time_mask(condition, df_events_list, time_length, t_r, use_durati
     return time_mask
 
 
-def _get_individual_params(individual_params,dm_model,condition_for_modeling,df_events_list,**kwargs):
+def _get_individual_params(individual_params, dm_model, condition_for_modeling,
+                           df_events_list, **kwargs
+                           ):
     """
     Get individual parameter values of the model, either obtained from fitting hierarchical bayesian model supported by hBayesDM package or
     provided by user through the "individual_params" argument.
@@ -396,12 +416,14 @@ def _get_individual_params(individual_params,dm_model,condition_for_modeling,df_
         # the case user does not provide individual model parameter values
         # obtain parameter values using hBayesDM package
 
-        assert dm_model is not None, "if df_events is None, must be assigned to dm_model."
+        assert dm_model is not None, (
+            "if df_events is None, must be assigned to dm_model.")
 
         pbar.set_description(
             "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
         
-        df_events_list = [df_events[condition_for_modeling(df_events)] for df_events in df_events_list]
+        df_events_list = [df_events[condition_for_modeling(df_events)] 
+                            for df_events in df_events_list]
         
         if type(dm_model) == str:
             dm_model = getattr(
@@ -411,7 +433,7 @@ def _get_individual_params(individual_params,dm_model,condition_for_modeling,df_
 
         individual_params = dm_model.all_ind_pars
         cols = list(individual_params.columns)
-        cols[0] = 'subjID'
+        cols[0] = "subjID"
         individual_params.columns = cols
 
         if save:
@@ -420,7 +442,9 @@ def _get_individual_params(individual_params,dm_model,condition_for_modeling,df_
                 sep="\t")
     else:
 
-        if type(individual_params) == str or type(individual_params) == type(Path()):
+        if type(individual_params) == str\
+            or type(individual_params) == type(Path()):
+
             individual_params = pd.read_csv(
                 individual_params, sep="\t")
             s = len(str(individual_params["subjID"].max()))
@@ -434,7 +458,10 @@ def _get_individual_params(individual_params,dm_model,condition_for_modeling,df_
         
     return individual_params, dm_model
 
-def _add_latent_process_as_modulation(individual_params,modulation, condition, df_events_list, event_infos_list):
+
+def _add_latent_process_as_modulation(individual_params, modulation, condition,
+                                      df_events_list, event_infos_list
+                                      ):
     """
     Calculate latent process using user-defined function "modulation", and add it to dataframe as a 'modulation' column.
     
@@ -457,12 +484,14 @@ def _add_latent_process_as_modulation(individual_params,modulation, condition, d
                 modulation, condition, df_events,
                 _get_indiv_param_dict(
                     event_infos["subject"], individual_params)
-            ) for df_events, event_infos in zip(df_events_list, event_infos_list)]
+            ) for df_events, event_infos in\
+                 zip(df_events_list, event_infos_list)]
     
     df_events_ready =  pd.concat(df_events_list)
     
     return df_events_ready
-            
+
+
 def _make_boldify(modulation_, hrf_model, frame_times):
     
     """
@@ -485,7 +514,11 @@ def _make_boldify(modulation_, hrf_model, frame_times):
 
     return boldified_signals, name
 
-def _convert_event_to_boldlike_signal(df_events, t_r, hrf_model="glover",normalizer='minmax'):
+
+def _convert_event_to_boldlike_signal(df_events, t_r,
+                                      hrf_model="glover",
+                                      normalizer='minmax'
+                                      ):
     
     """
     BOLDify the preprocessed behavioral (event) data.
@@ -523,12 +556,15 @@ def _convert_event_to_boldlike_signal(df_events, t_r, hrf_model="glover",normali
         if n_session:
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
-                    modulation_ = group2[["onset", "duration", "modulation"]].to_numpy().T
-                    signal, _ = _make_boldify(modulation_, hrf_model, frame_times)
+                    modulation_ = group2[
+                        ["onset", "duration", "modulation"]].to_numpy().T
+                    signal, _ = _make_boldify(
+                        modulation_, hrf_model, frame_times)
                     signal_subject.append(signal)
         else:
             for name1, group1 in group0.groupby(["run"]):
-                modulation_ = group1[["onset", "duration", "modulation"]].to_numpy().T
+                modulation_ = group1[
+                ["onset", "duration", "modulation"]].to_numpy().T
                 signal, _ = _make_boldify(modulation_, hrf_model, frame_times)
                 signal_subject.append(signal)
 
@@ -551,26 +587,27 @@ def _convert_event_to_boldlike_signal(df_events, t_r, hrf_model="glover",normali
     
     return signals
 
+
 def _add_event_info(df_events, event_infos):
     """
     Add subject, run, session info to dataframe of events of single 'run' 
 
     Arguments:
         df_events (pandas.Daataframe): a dataframe retrieved from "evnts.tsv" file
-        event_infos (dict): a dictionary containing  'subject', 'run', (and 'session' if applicable).
+        event_infos (dict): a dictionary containing 'subject', 'run', (and 'session' if applicable).
 
     Return:
         new_df (pandas.Daataframe): a dataframe with event info
     """
 
     new_df = []
-    df_events = df_events.sort_values(by='onset')
+    df_events = df_events.sort_values(by="onset")
 
     def _add(row, info):
-        row['subjID'] = info['subject']
-        row['run'] = info['run']
-        if 'session' in info.keys():
-            row['session'] = info['session']  # if applicable
+        row["subjID"] = info["subject"]
+        row["run"] = info["run"]
+        if "session" in info.keys():
+            row["session"] = info["session"]  # if applicable
 
         return row
 
@@ -599,7 +636,7 @@ def _preprocess_event(preprocess, df_events):
     """
 
     new_df = []
-    df_events = df_events.sort_values(by='onset')
+    df_events = df_events.sort_values(by="onset")
 
     for _, row in df_events.iterrows():
         new_df.append(preprocess(row))
@@ -612,7 +649,9 @@ def _preprocess_event(preprocess, df_events):
     return new_df
 
 
-def _preprocess_event_latent_state(modulation, condition, df_events, param_dict):
+def _preprocess_event_latent_state(modulation, condition,
+                                   df_events, param_dict
+                                   ):
     """
     Aadd latent state value to for each row of dataframe of single 'run'
 
@@ -628,7 +667,7 @@ def _preprocess_event_latent_state(modulation, condition, df_events, param_dict)
         new_df (pandas.DataFrame): a dataframe with latent state value ('modulation')
     """
     new_df = []
-    df_events = df_events.sort_values(by='onset')
+    df_events = df_events.sort_values(by="onset")
 
     for _, row in df_events.iterrows():
         if condition is not None and condition(row):
@@ -640,4 +679,3 @@ def _preprocess_event_latent_state(modulation, condition, df_events, param_dict)
     ).transpose()
 
     return new_df
-    
