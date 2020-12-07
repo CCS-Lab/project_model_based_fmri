@@ -46,7 +46,7 @@ def _get_metainfo(layout):
         n_session (int): the number of sessions
         n_run (int): the number of runs
         n_scans (int): the time length in a single run. 
-        TR (float): time resolution (second) of scanning
+        t_r (float): time resolution (second) of scanning
     """
     
     n_subject = len(layout.get_subjects())
@@ -60,9 +60,9 @@ def _get_metainfo(layout):
             extension="nii.gz")[0]
     )
     n_scans = image_sample.shape[-1]
-    TR = layout.get_tr()
+    t_r = layout.get_tr()
     
-    return n_subject, n_session, n_run, n_scans, TR
+    return n_subject, n_session, n_run, n_scans, t_r
 
 
 def _make_single_time_mask(condition, df_events, time_length, t_r,
