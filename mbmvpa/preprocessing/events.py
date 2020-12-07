@@ -22,9 +22,9 @@ import pandas as pd
 from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
-from .event_utils import _get_metainfo, _process_behavior_dataframes, _make_total_time_mask, \
-                        _get_individual_params, _add_latent_process_as_modulation, \
-                        _convert_event_to_boldlike_signal
+from .event_utils import _get_metainfo, _process_behavior_dataframes, _make_total_time_mask
+from .event_utils import _get_individual_params, _add_latent_process_as_modulation
+from .event_utils import _convert_event_to_boldlike_signal
 
 from bids import BIDSLayout
 from tqdm import tqdm
@@ -228,7 +228,7 @@ def events_preprocess(# path info
 
     pbar.set_description("modulation signal making..".ljust(50))
     signals = _convert_event_to_boldlike_signal(
-        df_events_ready, t_r, hrf_model,normalizer)
+        df_events_ready, t_r, hrf_model, normalizer)
     pbar.update(1)
     
     if save:
@@ -307,7 +307,7 @@ def _adjust_behavior_dataframes(preprocess, df_events_list, event_infos_list):
     return df_events_list
 
 
-def _get_indiv_param_dict(subject_id, individual_params):
+def _get_individual_param_dict(subject_id, individual_params):
     """
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
@@ -493,7 +493,7 @@ def _add_latent_process_as_modulation(individual_params, modulation, condition,
     df_events_list = [
             _preprocess_event_latent_state(
                 modulation, condition, df_events,
-                _get_indiv_param_dict(
+                _get_individual_param_dict(
                     event_infos["subject"], individual_params)
             ) for df_events, event_infos in\
                  zip(df_events_list, event_infos_list)]

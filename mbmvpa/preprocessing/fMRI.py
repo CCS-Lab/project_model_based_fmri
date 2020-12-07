@@ -21,7 +21,6 @@ from scipy import stats
 from scipy.ndimage import gaussian_filter
 
 import nibabel as nib
-from ..utils import functions as F
 
 import logging
 
@@ -62,10 +61,10 @@ def custom_masking(mask_path, threshold, zoom,
     # integrate binary mask data
     if len(mask_files) > 0 :
         # binarize
-        m = abs(nib.load(mask_files[0]).get_fdata(), 1) >= threshold
+        m = abs(nib.load(mask_files[0]).get_fdata()) >= threshold
         for i in range(len(mask_files)-1):
             # binarize and stack
-            m |= abs(nib.load(mask_files[0]).get_fdata(), 1) >= threshold
+            m |= abs(nib.load(mask_files[0]).get_fdata()) >= threshold
     else:
         # if not provided, use min_152 mask instead.
         m = mni_mask.get_fdata()
