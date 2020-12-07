@@ -18,8 +18,9 @@ Available Model:
 Understanding the part dependent on tensorflow.Keras might require the basic knowledge in deep learning frameworks. 
 
 The helpful links:
-    - the tutorial of image classification using tf.Keras : https://www.tensorflow.org/tutorials/keras/classification 
-    - #TODO 
+    - the tutorial of image classification using tf.Keras: https://www.tensorflow.org/tutorials/keras/classification 
+    - the github repo for glmnet Python package: https://github.com/civisanalytics/python-glmnet
+    - TODO
 """
 
 import logging
