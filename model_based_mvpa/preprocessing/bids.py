@@ -186,14 +186,16 @@ def bids_preprocess(root=None,  # path info
     pbar.set_description("image preprocessing - fMRI data..".ljust(50))
     X = []
 
-    ## Todo ##
+    # TODO : optimize the size of mutliprocessing chunks
     chunk_size = 4 if nthread > 4 else ncore
-
     params_chunks = [params[i:i + chunk_size]
                         for i in range(0, len(params), chunk_size)]
     task_size = len(params_chunks)
 
     for i, params_chunk in enumerate(params_chunks):
+        # parallel computing using multiple threads.
+        # please refer to 'concurrent' api of Python.
+        # it might require basic knowledge in multiprocessing.
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
             future_result = {
                 executor.submit(
