@@ -160,7 +160,6 @@ def events_preprocess(# path info
     # process columns in events file
 
     progress_bar.set_description("processing event file columns..".ljust(50))
-
     df_events_list = _process_behavior_dataframes(
         preprocess,df_events_list,event_infos_list)
     
@@ -170,7 +169,6 @@ def events_preprocess(# path info
     # get time masks
 
     progress_bar.set_description("calculating time masks..".ljust(50))
-
     time_mask = _make_total_time_mask(
         condition, df_events_list, n_scans, t_r, n_session, use_duration)
 
