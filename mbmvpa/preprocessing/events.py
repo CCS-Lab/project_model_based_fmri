@@ -43,8 +43,8 @@ def events_preprocess(# path info
                       layout=None,
                       save_path=None,
                       # user-defined functions
-                      preprocess=None,
-                      condition=None,
+                      preprocess=lambda x: x,
+                      condition=lambda _: True,
                       modulation=None,
                       # computational model specification
                       condition_for_modeling=None,
