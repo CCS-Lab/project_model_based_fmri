@@ -276,7 +276,7 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
         assert dm_model is not None, (
             "if df_events is None, must be assigned to dm_model.")
 
-        df_events_list = [df_events[condition_for_modeling(df_events)] 
+        df_events_list = [df_events[[condition_for_modeling(row) for _, row in df_events.iterows()]] 
                             for df_events in df_events_list_]
         
         if type(dm_model) == str:
