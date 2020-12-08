@@ -43,8 +43,8 @@ def events_preprocess(# path info
                       layout=None,
                       save_path=None,
                       # user-defined functions
-                      preprocess=lambda x: x,
-                      condition=lambda _: True,
+                      preprocess=None,
+                      condition=None,
                       modulation=None,
                       # computational model specification
                       condition_for_modeling=None,
@@ -160,7 +160,7 @@ def events_preprocess(# path info
     # process columns in events file
 
     pbar.set_description("processing event file columns..".ljust(50))
-
+    
     df_events_list = _process_behavior_dataframes(
         preprocess,df_events_list,event_infos_list)
     
