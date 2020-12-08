@@ -12,10 +12,11 @@ if sys.version_info[:2] < (3, 6):
 
 PATH_ROOT = Path(__file__).absolute().parent
 
+DISTNAME = 'mb-mvpa'
 
 MAJOR = 0
-MINOR = 0
-MICRO = 3
+MINOR = 1
+MICRO = 0
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 VERSION += '' if ISRELEASED else '.9000'
@@ -45,7 +46,7 @@ CLASSIFIERS = [
 ]
 
 setup(
-    name='model based mvpa',
+    name='mb-mvpa',
     version=VERSION,
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,

@@ -32,7 +32,9 @@ import logging
 
 from ..utils import config # configuration for default names used in the package
 
+
 logging.basicConfig(level=logging.INFO)
+
 
 def _get_metainfo(layout):
     """
@@ -46,7 +48,7 @@ def _get_metainfo(layout):
         n_session (int): the number of sessions
         n_run (int): the number of runs
         n_scans (int): the time length in a single run. 
-        TR (float): time resolution (second) of scanning
+        t_r (float): time resolution (second) of scanning
     """
     
     n_subject = len(layout.get_subjects())
@@ -60,14 +62,13 @@ def _get_metainfo(layout):
             extension="nii.gz")[0]
     )
     n_scans = image_sample.shape[-1]
-    TR = layout.get_tr()
+    t_r = layout.get_tr()
     
-    return n_subject, n_session, n_run, n_scans, TR
+    return n_subject, n_session, n_run, n_scans, t_r
 
 
-def _make_single_time_mask(condition, df_events, time_length, t_r,
-                          use_duration=False
-                          ):
+def _make_single_time_mask(condition, df_events, time_length, t_r, 
+                           use_duration=False):
     """
     Get binary masked data indicating time points in use
 
@@ -102,8 +103,7 @@ def _make_single_time_mask(condition, df_events, time_length, t_r,
 
 
 def _make_total_time_mask(condition, df_events_list, time_length, t_r,
-                         use_duration=False):
-    
+                          n_session, use_duration=False):
     """
     Get binary masked data indicating time points in use
     
@@ -123,6 +123,7 @@ def _make_total_time_mask(condition, df_events_list, time_length, t_r,
     Return:
         time_mask (numpy.array): binary array with shape: subject # x run # x time_length
     """
+
     time_mask = []
     for name0, group0 in pd.concat(df_events_list).groupby(["subjID"]):
         time_mask_subject = []
@@ -130,11 +131,11 @@ def _make_total_time_mask(condition, df_events_list, time_length, t_r,
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
                     time_mask_subject.append(_make_single_time_mask(
-                        condition, group2, n_scans, t_r, use_duration))
+                        condition, group2, time_length, t_r, use_duration))
         else:
             for name1, group1 in group0.groupby(["run"]):
                 time_mask_subject.append(_make_single_time_mask(
-                    condition, group1, n_scans, t_r, use_duration))
+                    condition, group1, time_length, t_r, use_duration))
 
         time_mask.append(time_mask_subject)
 
@@ -215,6 +216,7 @@ def _process_behavior_dataframes(preprocess, df_events_list, event_infos_list):
     Return:
         df_events_list (list(pandas.DataFrame)): a list of preprocessed dataframe with required info for computaional modeling, and BOLDifying.
     """
+
     # add event info to each dataframe row
     df_events_list = [
         _add_event_info(df_events, event_infos)
@@ -248,10 +250,8 @@ def _get_indiv_param_dict(subject_id, individual_params):
     return dict(ind_pars)
 
 
-
 def _get_individual_params(individual_params, dm_model, condition_for_modeling,
-                           df_events_list, **kwargs
-                           ):
+                           df_events_list_, **kwargs):
     """
     Get individual parameter values of the model, either obtained from fitting hierarchical bayesian model supported by hBayesDM package or
     provided by user through the "individual_params" argument.
@@ -261,7 +261,7 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
         dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
         condition_for_modeling (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - f(single_row_data_frame) -> True or False
-        df_events_list (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files and preprocessed in the previous stage.
+        df_events_list_ (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files and preprocessed in the previous stage.
     
     Returns:
         individual_params (pandas.DataFrame): the dataframe containing parameter values for each subject
@@ -276,11 +276,8 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
         assert dm_model is not None, (
             "if df_events is None, must be assigned to dm_model.")
 
-        pbar.set_description(
-            "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
-        
         df_events_list = [df_events[condition_for_modeling(df_events)] 
-                            for df_events in df_events_list]
+                            for df_events in df_events_list_]
         
         if type(dm_model) == str:
             dm_model = getattr(
@@ -298,7 +295,6 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
                 sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
                 sep="\t")
     else:
-
         if type(individual_params) == str\
             or type(individual_params) == type(Path()):
 
@@ -317,8 +313,7 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
 
 
 def _add_latent_process_single_eventdata(modulation, condition,
-                                   df_events, param_dict
-                                   ):
+                                         df_events, param_dict):
     """
     Aadd latent state value to for each row of dataframe of single 'run'
 
