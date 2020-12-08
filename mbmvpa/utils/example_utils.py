@@ -10,7 +10,7 @@ import zipfile
 def load_example(name):
     if example_download(name):
         print(f"data download success! ({name})")
-        data_path = unzip_example(name):
+        data_path = unzip_example(name)
         if data_path is not None:
             print(f"data load success! ({name})")
             return data_path
