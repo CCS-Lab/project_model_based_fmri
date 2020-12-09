@@ -49,6 +49,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def mlp_regression(X, y,
+                   layout,
                    layer_dims=[1024, 1024],
                    activation="linear",
                    activation_output="linear",
@@ -61,7 +62,6 @@ def mlp_regression(X, y,
                    verbose=0,
                    optimizer="adam",
                    loss="mse",
-                   layout=None,
                    save=False,
                    save_path=None,
                    n_samples=30000):
@@ -223,6 +223,7 @@ def mlp_regression(X, y,
 
 
 def penalized_linear_regression(X, y,
+                                layout,
                                 alpha=0.001,
                                 lambda_param=0.8,
                                 epochs=100,
@@ -233,7 +234,6 @@ def penalized_linear_regression(X, y,
                                 verbose=0,
                                 optimizer="adam",
                                 loss="mse",
-                                layout=None,
                                 save=False,
                                 save_path=None,
                                 n_samples=30000):
@@ -315,9 +315,8 @@ def penalized_linear_regression(X, y,
             X_test, y_test, batch_size, shuffle=False)
 
         if save_path is None:
-            sp = Path(
-                layout.derivatives["fMRIPrep"].root)\
-                / config.DEFAULT_SAVE_PATH_CKPT / "PLR"
+            sp = Path(layout.derivatives["fMRIPrep"].root)\
+                    / config.DEFAULT_SAVE_PATH_CKPT / "PLR"
         else:
             sp = Path(save_path)
 
@@ -334,8 +333,6 @@ def penalized_linear_regression(X, y,
         # the training will stop
         es = EarlyStopping(monitor="val_loss",
                            patience=patience,
-                           save_best_only=True,
-                           save_weights_only=True,
                            mode="min")
     
         # define penalties
@@ -344,7 +341,7 @@ def penalized_linear_regression(X, y,
 
         # model building
         model = Sequential()
-        model.add(Dense(1, activation="linear", input_shape=(X.shape[-1]),
+        model.add(Dense(1, activation="linear", input_shape=(X.shape[-1], ),
                         use_bias=True, kernel_regularizer=kernel_regularizer))
         model.compile(loss=loss, optimizer=optimizer)
 
@@ -363,11 +360,10 @@ def penalized_linear_regression(X, y,
         # validation 
         y_pred = model.predict(X_test)
         error = mean_squared_error(y_pred, y_test)
-        best_epoch = len(model.history['val_loss'])
 
         if verbose > 0:
             logging.info(
-                f"[{i}/{N}] - val_{loss}: {error:.04f}, epoch:{best_epoch}")
+                f"[{i}/{N}] - val_{loss}: {error:.04f}")
 
         # extracting coefficients
         coef = model.layers[0].get_weights()[0]
@@ -380,6 +376,7 @@ def penalized_linear_regression(X, y,
 
 
 def elasticnet(X, y,
+               layout,
                alpha=0.001,
                n_splits=5,
                n_jobs=16,
@@ -466,9 +463,7 @@ def elasticnet(X, y,
         lambda_vals = np.log(np.array([lambda_best]))
         coefs.append(coef)
         coefs = np.array(coefs)
-        
-        
-        
+
         if verbose > 0:
             # visualization of ElasticNet procedure
             logging.info(
