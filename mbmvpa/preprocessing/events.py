@@ -120,17 +120,17 @@ def events_preprocess(# path info
         time_mask (numpy.array): a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
     """
 
-    pbar = tqdm(total=6)
+    progress_bar = tqdm(total=6)
     s = time.time()
 
     ###########################################################################
     # load data from bids layout
 
     if layout is None:
-        pbar.set_description("loading bids dataset..".ljust(50))
+        progress_bar.set_description("loading bids dataset..".ljust(50))
         layout = BIDSLayout(root, derivatives=True)
     else:
-        pbar.set_description("loading layout..".ljust(50))
+        progress_bar.set_description("loading layout..".ljust(50))
     
     # get meta info
     n_subject, n_session, n_run, n_scans, t_r = _get_metainfo(layout)
@@ -142,7 +142,7 @@ def events_preprocess(# path info
     # event_info contains ID number for subject, session, run
     event_infos_list = [event.get_entities() for event in events]
     
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # designate saving path
@@ -159,25 +159,23 @@ def events_preprocess(# path info
     ###########################################################################
     # process columns in events file
 
-    pbar.set_description("processing event file columns..".ljust(50))
-
+    progress_bar.set_description("processing event file columns..".ljust(50))
     df_events_list = _process_behavior_dataframes(
         preprocess,df_events_list,event_infos_list)
     
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # get time masks
 
-    pbar.set_description("calculating time masks..".ljust(50))
-
+    progress_bar.set_description("calculating time masks..".ljust(50))
     time_mask = _make_total_time_mask(
         condition, df_events_list, n_scans, t_r, n_session, use_duration)
 
     if save:
         np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask) 
 
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
@@ -191,7 +189,7 @@ def events_preprocess(# path info
         if condition_for_modeling is None:
             condition_for_modeling = condition
         
-        pbar.set_description(
+        progress_bar.set_description(
             "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
         # get individual parameter values in computational model which will be used to calculate the latent process('modulation').
         individual_params, dm_model = _get_individual_params(
@@ -200,8 +198,8 @@ def events_preprocess(# path info
             df_events_list,
             **kwargs)
         
-        pbar.update(1)
-        pbar.set_description("calculating modulation..".ljust(50))
+        progress_bar.update(1)
+        progress_bar.set_description("calculating modulation..".ljust(50))
         # the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
         df_events_ready = _add_latent_process_as_modulation(
             individual_params,modulation,
@@ -209,7 +207,7 @@ def events_preprocess(# path info
             df_events_list,
             event_infos_list)
         
-        pbar.update(1)
+        progress_bar.update(1)
     else:
         # sanity check. the user provided dataframe should contain following data.
         # else, raise error.
@@ -222,24 +220,24 @@ def events_preprocess(# path info
         ("missing column in behavior data"))
         
         df_events_ready = df_events_custom
-        pbar.update(2)
+        progress_bar.update(2)
         
     ###########################################################################
     # Get boldified signals.
 
-    pbar.set_description("modulation signal making..".ljust(50))
+    progress_bar.set_description("modulation signal making..".ljust(50))
     signals = _convert_event_to_boldlike_signal(
         df_events_ready, t_r, hrf_model, normalizer)
-    pbar.update(1)
+    progress_bar.update(1)
     
     if save:
         np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # elapsed time check
 
-    pbar.set_description("events preproecssing done!".ljust(50))
+    progress_bar.set_description("events preproecssing done!".ljust(50))
 
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")

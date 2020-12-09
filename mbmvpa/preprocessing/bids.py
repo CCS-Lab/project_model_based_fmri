@@ -103,28 +103,28 @@ def bids_preprocess(root=None,  # path info
         layout (nibabel.BIDSLayout): the loaded layout. 
     """
 
-    pbar = tqdm(total=6)
+    progress_bar = tqdm(total=6)
     s = time.time()
 
     ###########################################################################
     # load bids layout
 
     if layout is None:
-        pbar.set_description("loading bids dataset..".ljust(50))
+        progress_bar.set_description("loading bids dataset..".ljust(50))
         layout = BIDSLayout(root, derivatives=True)
     else:
-        pbar.set_description("loading layout..".ljust(50))
+        progress_bar.set_description("loading layout..".ljust(50))
 
     subjects = layout.get_subjects()
     n_subject = len(subjects)
     n_session = len(layout.get_session())
     n_run = len(layout.get_run())
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # make voxel mask
 
-    pbar.set_description("making custom voxel mask..".ljust(50))
+    progress_bar.set_description("making custom voxel mask..".ljust(50))
 
     if mask_path is None:
         # if mask_path is not provided, find mask files in DEFAULT_MASK_DIR
@@ -136,12 +136,12 @@ def bids_preprocess(root=None,  # path info
         smoothing_fwhm, interpolation_func, standardize
     )
 
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # setting parameter
 
-    pbar.set_description("image preprocessing - parameter setting..".ljust(50))
+    progress_bar.set_description("image preprocessing - parameter setting..".ljust(50))
 
     params = []
     
@@ -163,12 +163,12 @@ def bids_preprocess(root=None,  # path info
     assert len(params) == n_subject, (
         "The length of params list and number of subjects are not validated."
     )
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # create path for data
 
-    pbar.set_description("image preprocessing - making path..".ljust(50))
+    progress_bar.set_description("image preprocessing - making path..".ljust(50))
     if save_path is None:
         sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
         if not sp.exists():
@@ -178,12 +178,12 @@ def bids_preprocess(root=None,  # path info
     
     if save:
         nib.save(voxel_mask, sp / config.DEFAULT_VOXEL_MASK_FILENAME)
-    pbar.update(1)
+    progress_bar.update(1)
 
     ###########################################################################
     # image preprocessing using mutli-processing and threading
 
-    pbar.set_description("image preprocessing - fMRI data..".ljust(50))
+    progress_bar.set_description("image preprocessing - fMRI data..".ljust(50))
     X = []
 
     # TODO : optimize the size of mutliprocessing chunks
@@ -208,17 +208,17 @@ def bids_preprocess(root=None,  # path info
                     sp / f"{config.DEFAULT_FEATURE_PREFIX}_{subject}.npy", data)
                 X.append(data)
 
-            pbar.set_description(
+            progress_bar.set_description(
                 f"image preprocessing - fMRI data.. {i+1} / {task_size} done..".ljust(50))
 
     X = np.array(X)
-    pbar.update(1)
+    progress_bar.update(1)
 
     ################################################################################
     # elapsed time check
 
-    pbar.set_description("bids preprocessing done!".ljust(50))
-    pbar.update(1)
+    progress_bar.set_description("bids preprocessing done!".ljust(50))
+    progress_bar.update(1)
 
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
