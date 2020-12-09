@@ -220,6 +220,6 @@ def bids_preprocess(root=None,  # path info
 
     e = time.time()
     logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
-    logging.info(f"result\nmasking data shape: {voxel_mask.shape}\n")
+    logging.info(f"masking data shape: {voxel_mask.shape}")
 
     return X, voxel_mask, layout

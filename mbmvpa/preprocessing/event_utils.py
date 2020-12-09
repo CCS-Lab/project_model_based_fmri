@@ -232,7 +232,7 @@ def _process_behavior_dataframes(preprocess, df_events_list, event_infos_list):
     return df_events_list
 
 
-def _get_indiv_param_dict(subject_id, individual_params):
+def _get_individual_param_dict(subject_id, individual_params):
     """
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
@@ -276,8 +276,9 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
         assert dm_model is not None, (
             "if df_events is None, must be assigned to dm_model.")
 
-        df_events_list = [df_events[[condition_for_modeling(row) for _, row in df_events.iterows()]] 
-                            for df_events in df_events_list_]
+        df_events_list = [df_events[[condition_for_modeling(row) \
+                            for _, row in df_events.iterrows()]] \
+                                for df_events in df_events_list_]
         
         if type(dm_model) == str:
             dm_model = getattr(
@@ -289,11 +290,6 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
         cols = list(individual_params.columns)
         cols[0] = "subjID"
         individual_params.columns = cols
-
-        if save:
-            individual_params.to_csv(
-                sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
-                sep="\t")
     else:
         if type(individual_params) == str\
             or type(individual_params) == type(Path()):
@@ -306,7 +302,6 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
                     lambda x: f"{x:0{s}}")
         else:
             assert type(individual_params) == pd.DataFrame
-
         dm_model = None
         
     return individual_params, dm_model
@@ -344,8 +339,7 @@ def _add_latent_process_single_eventdata(modulation, condition,
 
 
 def _add_latent_process_as_modulation(individual_params, modulation, condition,
-                                      df_events_list, event_infos_list
-                                      ):
+                                      df_events_list, event_infos_list):
     """
     Calculate latent process using user-defined function "modulation", and add it to dataframe as a 'modulation' column.
     
@@ -366,7 +360,7 @@ def _add_latent_process_as_modulation(individual_params, modulation, condition,
     df_events_list = [
             _add_latent_process_single_eventdata(
                 modulation, condition, df_events,
-                _get_indiv_param_dict(
+                _get_individual_param_dict(
                     event_infos["subject"], individual_params)
             ) for df_events, event_infos in\
                  zip(df_events_list, event_infos_list)]
@@ -402,8 +396,7 @@ def _boldify(modulation_, hrf_model, frame_times):
 
 def _convert_event_to_boldlike_signal(df_events, t_r,
                                       hrf_model="glover",
-                                      normalizer='minmax'
-                                      ):
+                                      normalizer='minmax'):
     
     """
     BOLDify the preprocessed behavioral (event) data 
@@ -472,7 +465,6 @@ def _convert_event_to_boldlike_signal(df_events, t_r,
     signals = np.array(signals)
     
     return signals
-
 
 
 
