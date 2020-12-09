@@ -56,7 +56,6 @@ def events_preprocess(# path info
                       # Other specification
                       df_events_custom=None,
                       use_duration=False,
-                      save=True,
                       scale=(-1, 1),
                       # hBayesDM fitting parameters
                       **kwargs,
@@ -110,7 +109,6 @@ def events_preprocess(# path info
             - 'minmax': rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
             - 'standard': rescale value by calculating subject-wise z_score
         use_duration (boolean) : if True use 'duration' column to make time mask, if False regard gap between consecuting trials' onset values as duration
-        save (boolean): if True, it will save "y.npy," "time_mask.npy" and additionally "all_individual_params.tsv."
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
 
     Returns:
@@ -153,13 +151,14 @@ def events_preprocess(# path info
     else:
         sp = Path(save_path)
 
-    if save and not sp.exists():
+    if not sp.exists():
         sp.mkdir()
 
     ###########################################################################
     # process columns in events file
 
     progress_bar.set_description("processing event file columns..".ljust(50))
+
     df_events_list = _process_behavior_dataframes(
         preprocess,df_events_list,event_infos_list)
     
@@ -169,11 +168,11 @@ def events_preprocess(# path info
     # get time masks
 
     progress_bar.set_description("calculating time masks..".ljust(50))
+
     time_mask = _make_total_time_mask(
         condition, df_events_list, n_scans, t_r, n_session, use_duration)
 
-    if save:
-        np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask) 
+    np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask) 
 
     progress_bar.update(1)
 
@@ -197,12 +196,17 @@ def events_preprocess(# path info
             condition_for_modeling,
             df_events_list,
             **kwargs)
+        # if calculate individual params.
+        if dm_model is not None:
+            individual_params.to_csv(
+                sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
+                sep="\t", index=False)
         
         progress_bar.update(1)
         progress_bar.set_description("calculating modulation..".ljust(50))
         # the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
         df_events_ready = _add_latent_process_as_modulation(
-            individual_params,modulation,
+            individual_params, modulation,
             condition,
             df_events_list,
             event_infos_list)
@@ -211,13 +215,13 @@ def events_preprocess(# path info
     else:
         # sanity check. the user provided dataframe should contain following data.
         # else, raise error.
-        assert (("modulation" in df_events_custom.columns
+        assert ("modulation" in df_events_custom.columns
             and "subjID" in df_events_custom.columns
             and "run" in df_events_custom.columns
             and "onset" in df_events_custom.columns
             and "duration" in df_events_custom.columns
-            and "modulation" in df_events_custom.columns),
-        ("missing column in behavior data"))
+            and "modulation" in df_events_custom.columns),\
+        ("missing column in behavior data")
         
         df_events_ready = df_events_custom
         progress_bar.update(2)
@@ -227,19 +231,17 @@ def events_preprocess(# path info
 
     progress_bar.set_description("modulation signal making..".ljust(50))
     signals = _convert_event_to_boldlike_signal(
-        df_events_ready, t_r, hrf_model, normalizer)
-    progress_bar.update(1)
+        df_events_ready, t_r, n_scans, n_session, hrf_model, normalizer)
     
-    if save:
-        np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
+    np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
     progress_bar.update(1)
 
     ###########################################################################
     # elapsed time check
 
-    progress_bar.set_description("events preproecssing done!".ljust(50))
-
     e = time.time()
-    logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
+    m0 = "events preproecssing done!"
+    m1 = f" {(e-s) / 60:.2f} minutes"
+    progress_bar.set_description(m0 + m1.ljust(50))
 
-    return dm_model, df_events, signals, time_mask, layout
+    return dm_model, df_events_ready, signals, time_mask, layout

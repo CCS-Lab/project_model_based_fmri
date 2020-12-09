@@ -4,38 +4,39 @@
 from tqdm import tqdm
 import requests
 from pathlib import Path
-import zipfile
+import tarfile
 
 
-def load_example(name):
+def load_example_data(name):
     if example_download(name):
-        print(f"data download success! ({name})")
-        data_path = unzip_example(name)
-        if data_path is not None:
+        datapath = extract_example(name)
+        if datapath is not None:
             print(f"data load success! ({name})")
-            return data_path
+            return datapath
         else:
-            print(f"data unizp failed..")
+            print(f"data exctract failed..")
     else:
         print("download error..")
 
+
 def example_download(name):
-    url = f"https://example-mbmvpa.s3-ap-northeast-2.amazonaws.com/{name}_example.zip" #big file test
+    url = f"https://example-mbmvpa.s3-ap-northeast-2.amazonaws.com/{name}_example.tar.gz" #big file test
     # Streaming, so we can iterate over the response.
     response = requests.get(url, stream=True)
     total_size_in_bytes= int(response.headers.get("content-length", 0))
-    block_size = 1024 #1 Kibibyte
-    progress_bar = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
+    block_size = 1024 * 1024 #1 Mibibyte
     
-    data_path = Path("../data")
-    if not data_path.exists():
-        data_path.mkdir()
-    elif (data_path / f"{name}_example.zip").exists():
+    datapath = Path("../data")
+    filepath = datapath / f"{name}_example.tar.gz"
+    if not datapath.exists():
+        datapath.mkdir()
+    elif filepath.exists():
         return True
     else:
         pass
 
-    with open(data_path / f"{name}_example.zip", "wb") as f:
+    progress_bar = tqdm(total=total_size_in_bytes, unit="iB", unit_scale=True)
+    with open(datapath / f"{name}_example.tar.gz", "wb") as f:
         for data in response.iter_content(block_size):
             progress_bar.update(len(data))
             f.write(data)
@@ -46,15 +47,19 @@ def example_download(name):
         return False
     return True
 
-def unzip_example(name):
-    z_path = Path(f"../data/{name}_example.zip")
+
+def extract_example(name):
+    datapath = Path(f"../data/{name}_example")
+    if datapath.exists():
+        return datapath
+
+    tar_path = Path(f"../data/{name}_example.tar.gz")
     try:
-        z = zipfile.ZipFile(z_path)
-        data_path = f"../data/{name}_example"
-        z.extractall(data_path)
-    except:
+        tar = tarfile.open(tar_path, mode="r:gz")
+        tar.extractall('../data')
+    except Exception as e:
+        print(e)
         return None
-    z.close()
+    tar.close()
 
-    return data_path
-
+    return datapath

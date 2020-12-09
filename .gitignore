@@ -1,3 +1,4 @@
+data/
 sftp-config.json
 test/
 dev/
@@ -140,6 +141,7 @@ dmypy.json
 .pyre/
 
 # Example data
+*scratch*
 examples/*/*.npy
 examples/*/*.nii*
 examples/*/*.tsv

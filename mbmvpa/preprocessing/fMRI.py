@@ -160,6 +160,12 @@ def image_preprocess_multithreading(params, nthread):
     preprocessed_images = []
     n_worker = 4 if nthread > 4 else nthread
     
+    # Parallel processing for images with thread pool
+    # Thread pool has the advantage of saving memory compared to process pool.
+    # 1. Crate thread pool - ThreadPoolExecutor
+    # 2. Create parameters to use for each task in thread - image params
+    # 3. Thread returns a return value after job completion - future.result()
+    # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
     with ThreadPoolExecutor(max_workers=n_worker) as executor:
         future_result = {
             executor.submit(

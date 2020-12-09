@@ -232,7 +232,7 @@ def _process_behavior_dataframes(preprocess, df_events_list, event_infos_list):
     return df_events_list
 
 
-def _get_indiv_param_dict(subject_id, individual_params):
+def _get_individual_param_dict(subject_id, individual_params):
     """
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
@@ -276,8 +276,9 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
         assert dm_model is not None, (
             "if df_events is None, must be assigned to dm_model.")
 
-        df_events_list = [df_events[[condition_for_modeling(row) for _, row in df_events.iterows()]] 
-                            for df_events in df_events_list_]
+        df_events_list = [df_events[[condition_for_modeling(row) \
+                            for _, row in df_events.iterrows()]] \
+                                for df_events in df_events_list_]
         
         if type(dm_model) == str:
             dm_model = getattr(
@@ -285,15 +286,9 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
                     data=pd.concat(df_events_list),
                     **kwargs)
 
-        individual_params = dm_model.all_ind_pars
-        cols = list(individual_params.columns)
-        cols[0] = "subjID"
-        individual_params.columns = cols
-
-        if save:
-            individual_params.to_csv(
-                sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
-                sep="\t")
+        individual_params = pd.DataFrame(dm_model.all_ind_pars)
+        individual_params.index.name = "subjID"
+        individual_params = individual_params.reset_index()
     else:
         if type(individual_params) == str\
             or type(individual_params) == type(Path()):
@@ -306,7 +301,6 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
                     lambda x: f"{x:0{s}}")
         else:
             assert type(individual_params) == pd.DataFrame
-
         dm_model = None
         
     return individual_params, dm_model
@@ -336,16 +330,14 @@ def _add_latent_process_single_eventdata(modulation, condition,
             new_df.append(modulation(row, param_dict))
 
     new_df = pd.concat(
-        new_df, axis=1,
-        keys=[s.name for s in new_df]
+        new_df, axis=1, keys=[s.name for s in new_df]
     ).transpose()
 
     return new_df
 
 
 def _add_latent_process_as_modulation(individual_params, modulation, condition,
-                                      df_events_list, event_infos_list
-                                      ):
+                                      df_events_list, event_infos_list):
     """
     Calculate latent process using user-defined function "modulation", and add it to dataframe as a 'modulation' column.
     
@@ -366,7 +358,7 @@ def _add_latent_process_as_modulation(individual_params, modulation, condition,
     df_events_list = [
             _add_latent_process_single_eventdata(
                 modulation, condition, df_events,
-                _get_indiv_param_dict(
+                _get_individual_param_dict(
                     event_infos["subject"], individual_params)
             ) for df_events, event_infos in\
                  zip(df_events_list, event_infos_list)]
@@ -400,10 +392,9 @@ def _boldify(modulation_, hrf_model, frame_times):
     return boldified_signals, name
 
 
-def _convert_event_to_boldlike_signal(df_events, t_r,
+def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
                                       hrf_model="glover",
-                                      normalizer='minmax'
-                                      ):
+                                      normalizer='minmax'):
     
     """
     BOLDify the preprocessed behavioral (event) data 
@@ -433,13 +424,12 @@ def _convert_event_to_boldlike_signal(df_events, t_r,
         boldified_signals (numpy.array): BOLD-like signal. 
         
     """
-    
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
 
     signals = []
     for name0, group0 in df_events.groupby(["subjID"]):
         signal_subject = []
-        if n_session:
+        if is_session:
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
                     modulation_ = group2[
@@ -472,7 +462,6 @@ def _convert_event_to_boldlike_signal(df_events, t_r,
     signals = np.array(signals)
     
     return signals
-
 
 
 
