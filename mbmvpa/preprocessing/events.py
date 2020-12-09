@@ -200,7 +200,7 @@ def events_preprocess(# path info
         if dm_model is not None:
             individual_params.to_csv(
                 sp / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
-                sep="\t")
+                sep="\t", index=False)
         
         progress_bar.update(1)
         progress_bar.set_description("calculating modulation..".ljust(50))
@@ -231,8 +231,7 @@ def events_preprocess(# path info
 
     progress_bar.set_description("modulation signal making..".ljust(50))
     signals = _convert_event_to_boldlike_signal(
-        df_events_ready, t_r, hrf_model, normalizer)
-    progress_bar.update(1)
+        df_events_ready, t_r, n_scans, n_session, hrf_model, normalizer)
     
     np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
     progress_bar.update(1)
@@ -240,9 +239,9 @@ def events_preprocess(# path info
     ###########################################################################
     # elapsed time check
 
-    progress_bar.set_description("events preproecssing done!".ljust(50))
-
     e = time.time()
-    logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
+    m0 = "events preproecssing done!"
+    m1 = f" {(e-s) / 60:.2f} minutes"
+    progress_bar.set_description(m0 + m1.ljust(50))
 
-    return dm_model, df_events, signals, time_mask, layout
+    return dm_model, df_events_ready, signals, time_mask, layout

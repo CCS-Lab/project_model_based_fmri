@@ -181,33 +181,42 @@ def bids_preprocess(root=None,  # path info
     progress_bar.update(1)
 
     ###########################################################################
-    # image preprocessing using mutli-processing and threading
+    # Image preprocessing using mutli-processing and threading
 
     progress_bar.set_description("image preprocessing - fMRI data..".ljust(50))
     X = []
 
-    ## Todo ##
+    # Chunk size is thread #
     chunk_size = 4 if nthread > 4 else ncore
 
     params_chunks = [params[i:i + chunk_size]
                         for i in range(0, len(params), chunk_size)]
     task_size = len(params_chunks)
 
+    # Parallel processing for images process with process pool
+    # Process pool has the advantage of high performance compared to thread pool.
+    # 1. Crate process pool - ProcessPoolExecutor
+    # 2. Create parameters to use for each task in process - params_chunk
+    # 3. Thread returns a return value after job completion - future.result()
+    # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
     for i, params_chunk in enumerate(params_chunks):
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
             future_result = {
                 executor.submit(
-                    image_preprocess_multithreading, param, n_run): param for param in params_chunk
+                    image_preprocess_multithreading, param, n_run): \
+                        param for param in params_chunk
             }
 
             for future in as_completed(future_result):
                 data, subject = future.result()
                 np.save(
-                    sp / f"{config.DEFAULT_FEATURE_PREFIX}_{subject}.npy", data)
+                    sp / f"{config.DEFAULT_FEATURE_PREFIX}_{subject}.npy",
+                    data)
                 X.append(data)
 
             progress_bar.set_description(
-                f"image preprocessing - fMRI data.. {i+1} / {task_size} done..".ljust(50))
+                f"image preprocessing - fMRI data.. {i+1} / {task_size} done.."\
+                .ljust(50))
 
     X = np.array(X)
     progress_bar.update(1)

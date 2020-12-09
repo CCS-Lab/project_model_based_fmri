@@ -49,6 +49,10 @@ def example_download(name):
 
 
 def extract_example(name):
+    datapath = Path(f"../data/{name}_example")
+    if datapath.exists():
+        return datapath
+
     tar_path = Path(f"../data/{name}_example.tar.gz")
     try:
         tar = tarfile.open(tar_path, mode="r:gz")
@@ -58,5 +62,4 @@ def extract_example(name):
         return None
     tar.close()
 
-    datapath = f"../data/{name}_example"
     return datapath

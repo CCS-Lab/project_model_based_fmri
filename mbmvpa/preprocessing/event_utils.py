@@ -286,10 +286,9 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
                     data=pd.concat(df_events_list),
                     **kwargs)
 
-        individual_params = dm_model.all_ind_pars
-        cols = list(individual_params.columns)
-        cols[0] = "subjID"
-        individual_params.columns = cols
+        individual_params = pd.DataFrame(dm_model.all_ind_pars)
+        individual_params.index.name = "subjID"
+        individual_params = individual_params.reset_index()
     else:
         if type(individual_params) == str\
             or type(individual_params) == type(Path()):
@@ -331,8 +330,7 @@ def _add_latent_process_single_eventdata(modulation, condition,
             new_df.append(modulation(row, param_dict))
 
     new_df = pd.concat(
-        new_df, axis=1,
-        keys=[s.name for s in new_df]
+        new_df, axis=1, keys=[s.name for s in new_df]
     ).transpose()
 
     return new_df
@@ -394,7 +392,7 @@ def _boldify(modulation_, hrf_model, frame_times):
     return boldified_signals, name
 
 
-def _convert_event_to_boldlike_signal(df_events, t_r,
+def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
                                       hrf_model="glover",
                                       normalizer='minmax'):
     
@@ -426,13 +424,12 @@ def _convert_event_to_boldlike_signal(df_events, t_r,
         boldified_signals (numpy.array): BOLD-like signal. 
         
     """
-    
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
 
     signals = []
     for name0, group0 in df_events.groupby(["subjID"]):
         signal_subject = []
-        if n_session:
+        if is_session:
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
                     modulation_ = group2[
