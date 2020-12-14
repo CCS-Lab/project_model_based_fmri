@@ -245,9 +245,8 @@ def _get_individual_param_dict(subject_id, individual_params):
         ind_pars (dict): individual parameter value. dictionary{parameter_name:value}
 
     """
-    ind_pars = individual_params[individual_params["subjID"] == subject_id]
-
-    return dict(ind_pars)
+    return \
+        individual_params[individual_params["subjID"] == int(subject_id)]
 
 
 def _get_individual_params(individual_params, dm_model, condition_for_modeling,
@@ -289,16 +288,14 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
         individual_params = pd.DataFrame(dm_model.all_ind_pars)
         individual_params.index.name = "subjID"
         individual_params = individual_params.reset_index()
+        individual_params["subjID"] = individual_params["subjID"].astype(int)
     else:
         if type(individual_params) == str\
             or type(individual_params) == type(Path()):
 
-            individual_params = pd.read_csv(
-                individual_params, sep="\t")
-            s = len(str(individual_params["subjID"].max()))
-            individual_params["subjID"] =\
-                individual_params["subjID"].apply(
-                    lambda x: f"{x:0{s}}")
+            individual_params = pd.read_table(individual_params)
+            individual_params["subjID"] = \
+                individual_params["subjID"].astype(int)
         else:
             assert type(individual_params) == pd.DataFrame
         dm_model = None
@@ -324,7 +321,6 @@ def _add_latent_process_single_eventdata(modulation, condition,
     """
     new_df = []
     df_events = df_events.sort_values(by="onset")
-
     for _, row in df_events.iterrows():
         if condition is not None and condition(row):
             new_df.append(modulation(row, param_dict))
@@ -364,12 +360,10 @@ def _add_latent_process_as_modulation(individual_params, modulation, condition,
                  zip(df_events_list, event_infos_list)]
     
     df_events_ready =  pd.concat(df_events_list)
-    
     return df_events_ready
 
 
 def _boldify(modulation_, hrf_model, frame_times):
-    
     """
     BOLDify event data.
     by converting behavior data to weighted impulse seqeunce and convolve it with hemodynamic response function. 
@@ -433,14 +427,15 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
                     modulation_ = group2[
-                        ["onset", "duration", "modulation"]].to_numpy().T
+                        ["onset", "duration", "modulation"]].to_numpy(
+                            dtype=float).T
                     signal, _ = _boldify(
                         modulation_, hrf_model, frame_times)
                     signal_subject.append(signal)
         else:
             for name1, group1 in group0.groupby(["run"]):
                 modulation_ = group1[
-                ["onset", "duration", "modulation"]].to_numpy().T
+                ["onset", "duration", "modulation"]].to_numpy(dtype=float).T
                 signal, _ = _boldify(modulation_, hrf_model, frame_times)
                 signal_subject.append(signal)
 

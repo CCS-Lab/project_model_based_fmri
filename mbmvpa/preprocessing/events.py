@@ -49,7 +49,7 @@ def events_preprocess(# path info
                       # computational model specification
                       condition_for_modeling=None,
                       dm_model=None,
-                      individual_params=None,
+                      individual_params_custom=None,
                       # BOLDifying parameter
                       hrf_model="glover",
                       normalizer="minmax",
@@ -73,13 +73,13 @@ def events_preprocess(# path info
         User can optionally skip the steps in this process in the following possible scenarios
         1) User can provide precalculated behavioral data through "df_events_custom" argument. 
            In this case, it will skip both fitting model and extracting latent process. 
-        2) User can provide precalculated individual model parameter values through "individual_params" argument.
+        2) User can provide precalculated individual model parameter values through "individual_params_custom" argument.
            In this case, it will only skip model fitting part.
            
     Arguments:
         root (str or Path): the root directory of BIDS layout
         layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
-        save_path (str or Path): a path for the directory to save outputs (y, time_mask) and intermediate data (individual_params, df_events). if not provided, "BIDS root/derivatives/data" will be set as default path      
+        save_path (str or Path): a path for the directory to save outputs (y, time_mask) and intermediate data (individual_params_custom, df_events). if not provided, "BIDS root/derivatives/data" will be set as default path      
         preprocess (func(pandas.Series, dict)-> pandas.Series)): a user-defined function for modifying each row of behavioral data. 
             - f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data check
         condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
@@ -90,7 +90,7 @@ def events_preprocess(# path info
             - None : "condition" function will be used.
             - f(single_row_data_frame) -> True or False
         dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
-        individual_params (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
+        individual_params_custom (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
             the below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
             (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
@@ -192,10 +192,12 @@ def events_preprocess(# path info
             "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
         # get individual parameter values in computational model which will be used to calculate the latent process('modulation').
         individual_params, dm_model = _get_individual_params(
-            individual_params,dm_model,
+            individual_params_custom, dm_model,
             condition_for_modeling,
             df_events_list,
             **kwargs)
+
+        print(individual_params)
         # if calculate individual params.
         if dm_model is not None:
             individual_params.to_csv(
@@ -207,10 +209,9 @@ def events_preprocess(# path info
         # the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
         df_events_ready = _add_latent_process_as_modulation(
             individual_params, modulation,
-            condition,
+            condition, 
             df_events_list,
             event_infos_list)
-        
         progress_bar.update(1)
     else:
         # sanity check. the user provided dataframe should contain following data.
@@ -219,8 +220,7 @@ def events_preprocess(# path info
             and "subjID" in df_events_custom.columns
             and "run" in df_events_custom.columns
             and "onset" in df_events_custom.columns
-            and "duration" in df_events_custom.columns
-            and "modulation" in df_events_custom.columns),\
+            and "duration" in df_events_custom.columns),\
         ("missing column in behavior data")
         
         df_events_ready = df_events_custom
