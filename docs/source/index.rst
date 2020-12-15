@@ -7,7 +7,7 @@ Welcome to MB-MVPA's documentation!
 ===================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
    
    modules
