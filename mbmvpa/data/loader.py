@@ -13,7 +13,7 @@ from tensorflow.keras.utils import Sequence
 from ..utils import config
 
 
-def prepare_dataset(root=None, layout=None):
+def prepare_dataset(root, time_masking=True, voxel_masking=True):
     """
     Get dataset for fitting model
     """
@@ -22,7 +22,6 @@ def prepare_dataset(root=None, layout=None):
     Arguments:
         root (str or pathlib.Path): data path, if None, must be specified X, y, time_mask_path.
               default path is imported from layout.
-        layout (bids.BIDSLayout): BIDS layout object for the data you working on.
         time_mask_path (str or pathlib.Path): optional, time mask data path, if None, default is BIDS_root/derivates/data.
 
     Returns:
@@ -45,16 +44,14 @@ def prepare_dataset(root=None, layout=None):
         reshaped_data = data.reshape(-1, data.shape[-1])
         return reshaped_data
 
-    # if root is given and path for any of X, y is not given, then use default path.
-    if root is not None:
-        root = Path(root)
-        data_path = root / config.DEFAULT_SAVE_DIR
-    else:
-        assert data_path is not None or data_path is not None, (
-            "If root is None, you must indicate data path (X, Y, time mask)"
-        )
+    assert (isinstance(root, str)
+        or isinstance(root, Path))
+    assert (isinstance(time_mask_path, str)
+        or isinstance(time_mask_path, Path))
 
-    data_path = Path(data_path)
+    # if root is given and path for any of X, y is not given, then use default path.
+    root = Path(root)
+    data_path = Path(root / config.DEFAULT_SAVE_DIR)
 
     # aggregate X fragmented by subject to one matrix.
     X_list = list(data_path.glob(f"{config.DEFAULT_FEATURE_PREFIX}_*.npy"))
@@ -70,16 +67,23 @@ def prepare_dataset(root=None, layout=None):
     # numpy.flatten makes it 1-d array.
     y = y.flatten()
 
+    assert X.shape == y.shape
+
     # use data only at the timepoints indicated in time_mask file.
-    time_mask = np.load(
-        data_path / "time_mask.npy", allow_pickle=True)
-    time_mask = np.concatenate(time_mask, 0)
-    time_mask = time_mask.flatten()
+    if time_masking:
+        time_mask = np.load(
+            data_path / "time_mask.npy", allow_pickle=True)
+        time_mask = np.concatenate(time_mask, 0)
+        time_mask = time_mask.flatten()
 
-    X = X[time_mask > 0]
-    y = y[time_mask > 0]
+        X = X[time_mask > 0]
+        y = y[time_mask > 0]
+        assert X.shape == y.shape
 
-    voxel_mask = nib.load(data_path / config.DEFAULT_VOXEL_MASK_FILENAME)
+    if voxel_masking:
+        voxel_mask = nib.load(data_path / config.DEFAULT_VOXEL_MASK_FILENAME)
+    else:
+        voxel_mask = None
 
     return X, y, voxel_mask
 
