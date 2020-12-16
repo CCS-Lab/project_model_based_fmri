@@ -35,7 +35,7 @@ def get_map(coefs, voxel_mask, task_name,
                if 0, there will be no spatial smoothing of extracted coefficients.
                higher the value, more smoother the final map will be 
 
-    return:
+    Return:
         result_map (nibabel.nifti1.Nifti1Image): a nii image of brain activation map.
     """
 
@@ -43,7 +43,7 @@ def get_map(coefs, voxel_mask, task_name,
     # parameter check
 
     assert (isinstance(coefs, list)
-        or isinstance(coefs, np.array))
+        or isinstance(coefs, np.ndarray))
     assert isinstance(voxel_mask, nibabel.nifti1.Nifti1Image)
     assert isinstance(task_name, str)
     assert isinstance(map_type, str)
