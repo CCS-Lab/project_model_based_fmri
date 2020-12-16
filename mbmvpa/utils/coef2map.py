@@ -44,7 +44,7 @@ def get_map(coefs, voxel_mask, task_name,
 
     assert (isinstance(coefs, list)
         or isinstance(coef, np.array))
-    assert (isinstance(voxel_mask, nibabel.nifti1.Nifti1Image))
+    assert isinstance(voxel_mask, nibabel.nifti1.Nifti1Image)
     assert isinstance(task_name, str)
     assert isinstance(map_type, str)
     assert (isinstance(save_path, str)

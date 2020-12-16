@@ -158,7 +158,7 @@ def _image_preprocess_multithreading(params, nthread):
     with ThreadPoolExecutor(max_workers=n_worker) as executor:
         future_result = {
             executor.submit(
-                image_preprocess, image_param): image_param \
+                _image_preprocess, image_param): image_param \
                     for image_param in image_params
         }
 

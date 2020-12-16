@@ -36,9 +36,6 @@ from tqdm import tqdm
 from ..utils import config # configuration for default names used in the package
 
 
-bids.config.set_option("extension_initial_dot", True)
-
-
 def events_preprocess(# path informations
                       root=None,
                       layout=None,
@@ -118,46 +115,39 @@ def events_preprocess(# path informations
         assert (layout is not None)
         from_root = False
 
-    if save_path is None:
-        pass
-    else:
-        assert (isinstance(save_path, str)
-            or isinstance(save_path, Path))
+    assert (save_path is None
+        or isinstance(save_path, str)
+        or isinstance(save_path, Path))
 
     # user-defined functions
-    assert (isinstance(preprocess, "__call__"))
-    assert (isinstance(condition, "__call__"))
-    if modulation is None:
-        pass
-    else:
-        assert (isinstance(modulation, "__call__"))
+    assert callable(preprocess)
+    assert callable(condition)
+    assert (modulation is None
+        or callable(modulation))
 
-    if condition_for_modeling is None:
-        pass
-    else:
-        assert (isinstance(condition_for_modeling, "__call__"))
+    assert (condition_for_modeling is None
+        or callable(condition_for_modeling))
 
     assert (isinstance(dm_model, str)
         or isinstance(dm_model, Path)
         or isinstance(dm_model, hbayesdm.model))
 
-    if individual_params_custom is None:
-        pass
-    else:
-        assert (isinstance(individual_params_custom, str)
-            or isinstance(individual_params_custom, Path)
-            or isinstance(individual_params_custom, pd.DataFrame))
+    assert (individual_params_custom is None
+        or isinstance(individual_params_custom, str)
+        or isinstance(individual_params_custom, Path)
+        or isinstance(individual_params_custom, pd.DataFrame))
 
     # BOLDifying parameter
-    assert (isinstance(hrf_model, str))
-    assert (isinstance(normalization, str))
+    assert isinstance(hrf_model, str)
+    assert isinstance(normalizer, str)
 
     # Other specification
-    assert (isinstance(df_events_custom, str)
+    assert (df_events_custom is None
+        or isinstance(df_events_custom, str)
         or isinstance(df_events_custom, Path)
         or isinstance(df_events_custom, pd.DataFrame))
 
-    assert (isinstance(use_duration, bool))
+    assert isinstance(use_duration, bool)
     assert (isinstance(scale, list)
         or isinstance(scale, tuple))
     assert (isinstance(scale[0], int))

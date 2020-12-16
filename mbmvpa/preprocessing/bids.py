@@ -69,7 +69,7 @@ def bids_preprocess(# path informations
                     ncore=2,
                     nthread=2):
     """Preprocessing fMRI image data organized in BIDS layout.
-    
+
     What you need as input:
     
     - **fMRI image data** organized in **BIDS** layout 
@@ -114,18 +114,14 @@ def bids_preprocess(# path informations
         assert (layout is not None)
         from_root = False
 
-    if save_path is None:
-        pass
-    else:
-        assert (isinstance(save_path, str)
-            or isinstance(save_path, Path))
+    assert (save_path is None
+        or isinstance(save_path, str)
+        or isinstance(save_path, Path))
 
     # ROI masking specification
-    if mask_path is None:
-        pass
-    else:
-        assert (isinstance(mask_path, str)
-            or isinstance(mask_path, Path))
+    assert (mask_path is None
+        or isinstance(mask_path, str)
+        or isinstance(mask_path, Path))
 
     assert (isinstance(threshold, float)
         or isinstance(threshold, int))
@@ -135,15 +131,16 @@ def bids_preprocess(# path informations
         or isinstance(zoom, tuple))
     assert isinstance(zoom[0], int)
 
-    assert (isinstance(smoothing_fwhm, int))
-    assert (isinstance(interpolation_func, "__call__"))
-    assert (standardize, bool)
+    assert (smoothing_fwhm is None
+        or isinstance(smoothing_fwhm, int))
+    assert callable(interpolation_func)
+    assert isinstance(standardize, bool)
     assert (isinstance(motion_confounds, list)
         or isinstance(motion_confounds, tuple))
-    assert (isinstance(motion_confounds[0], str))
+    assert isinstance(motion_confounds[0], str)
     # multithreading option
-    assert (isinstance(ncore, int))
-    assert (isinstance(nthread, int))
+    assert isinstance(ncore, int)
+    assert isinstance(nthread, int)
     progress_bar.update(1)
     ###########################################################################
     # load bids layout

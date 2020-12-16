@@ -16,7 +16,7 @@ DISTNAME = 'mb-mvpa'
 
 MAJOR = 0
 MINOR = 2
-MICRO = .
+MICRO = 0
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 VERSION += '' if ISRELEASED else '.9000'
