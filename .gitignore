@@ -2,11 +2,11 @@ example_data/
 sftp-config.json
 test/
 dev/
-*.npy
-*.h5
 results/
+*.ckpt
 
 # data and model binary files
+*.npy
 *.pkl
 *.h5
 # Byte-compiled / optimized / DLL files
