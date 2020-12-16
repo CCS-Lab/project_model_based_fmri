@@ -6,14 +6,17 @@
 ## last modification: 2020.11.13
 
 """
-Goals of this code:
+Input fMRI image data organized in BIDS layout should be preprocessed to 1. be motion corrected, 2. have a reduced dimension and 3. be aggregated subject-wise.
+
 1. **To remove motion artifacts and drift** 
-    - Done by wrapping functions in *nilearn* package.
+
+    Done by wrapping functions in *nilearn* package.
+    
 2. **To reduce dimensionality by masking and pooling**
 
-    - It is an important process as the high dimensionality is an obstacle for fitting regression model, in terms of both computing time and convergence.
+    It is an important process as the high dimensionality is an obstacle for fitting regression model, in terms of both computing time and convergence.
 
-    2-a. Masking - Related argument (``mask_path``),(``threshold``)
+    2-a. Masking - Related argument (*mask_path*,``mask_path``),(*threshold*,``threshold``)
         Probabilistic maps are integrated to make the maps as ROIs (a binary voxel-wise mask). 
         It is needed to threshold the map so that you create a mask that only includes voxels with a z-score of a specific value greater than the threshold.
         After thresholding, the surviving voxels are binarized - in other words, set to 1.
@@ -21,14 +24,16 @@ Goals of this code:
         -> This process reduces the total number of voxels that will be included in the analysis.
         If the masking information is not provided, all the voxels in MNI 152 space will be included in the data.
 
-    2-b. Pooling - Related argument (``zoom``), (``interpolation_func``)
+    2-b. Pooling - Related argument (*zoom*,``zoom``), (*interpolation_func*,``interpolation_func``)
         The number of voxels is further diminished by zooming (or resacling) fMRI images to a coarse-grained resolution. 
         You can give a tuple indicating a zooming window size in x,y,z directions. e.g. (2,2,2)
         Voxels in a cube with the zooming window size will be converted to one representative value reducing resolution and the total number of voxels.
         You can also indicate the method to extract representative value with numpy function. e.g. np.mean means using the average value.
 
 3. **To re-organize data for fitting MVPA model** 
-    - The preprocessed image will be saved subject-wise.
+
+    The preprocessed image will be saved subject-wise.
+    
 """
 
 import logging
@@ -76,33 +81,35 @@ def bids_preprocess(root=None,  # path info
     """Preprocessing fMRI image data organized in BIDS layout.
 
     What you need as input:
-    1) fMRI image data organized in BIDS layout 
-        ** you need to provide fMRI data which has gone through the conventional primary preprocessing pipeline (recommended link: https://fmriprep.org/en/stable/), and should be in "BIDSroot/derivatives/fmriprep" 
-    2) mask images (nii or nii.gz format) either downloaded from Neurosynth or created by the user
-
-    """
     
-    """
-    Arguments:
+    - **fMRI image data** organized in **BIDS** layout 
+    
+    *Reamark* you need to provide fMRI data which has gone through the conventional primary preprocessing pipeline (recommended link: https://fmriprep.org/en/stable/), and should be in "BIDSroot/derivatives/fmriprep" 
+    
+    - **mask images** (nii or nii.gz format) either downloaded from Neurosynth or created by the user
+
+    Args:
         root (str or Path) : the root directory of BIDS layout
         layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         save_path (str or Path): a path for the directory to save output (X, voxel_mask). if not provided, "BIDS root/derivatives/data" will be set as default path      
         mask_path (str or Path): a path for the directory containing mask files (nii or nii.gz). encourage get files from Neurosynth
         threshold (float): threshold for binarizing mask images
-        zoom ((float,float,float)): zoom window, indicating a scaling factor for each dimension in x,y,z. the dimension will be reduced by the factor of corresponding axis.
+        zoom (tuple[float,float,float]): zoom window, indicating a scaling factor for each dimension in x,y,z. the dimension will be reduced by the factor of corresponding axis.
                                     e.g. (2,2,2) will make the dimension half in all directions, so 2x2x2=8 voxels will be 1 voxel.
         smoothing_fwhm (int): the amount of spatial smoothing. if None, image will not be smoothed.
         interpolation_func (numpy.func): a method to calculate a representative value in the zooming window. e.g. numpy.mean, numpy.max
                                          e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube into a single value of its mean.
-        standardize (boolean): if true, conduct standard normalization within each image of a single run. 
+        standardize (bool): if true, conduct standard normalization within each image of a single run. 
         motion_confounds (list[str]): list of motion confound names in confounds tsv file. 
         ncore (int): the number of core for the tparallel computing 
         nthread (int): the number of thread for the parallel computing
-    Return:
-        X (numpy.array): subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #
-        voxel_mask (nibabel.Nifti1Image): a nifti image for voxel-wise binary mask (ROI mask)
-        masker (nilearn.NiftiMasker): the masker object. fitted and used for correcting motion confounds, and masking.
-        layout (nibabel.BIDSLayout): the loaded layout. 
+        
+    Returns:
+        tuple[numpy.array, nibabel.Nifti1Image, nilearn.NiftiMasker, nibabel.BIDSLayout]: 
+        - **X** (*numpy.array*) - input data for MVPA(:math:`X`). subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #
+        - **voxel_mask** (*nibabel.Nifti1Image*) - a nifti image for voxel-wise binary mask (ROI mask)
+        - **masker** (*nilearn.NiftiMasker*) - the masker object. fitted and used for correcting motion confounds, and masking.
+        - **layout** (*nibabel.BIDSLayout*) - the loaded layout. 
     """
 
     progress_bar = tqdm(total=6)
