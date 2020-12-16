@@ -1,11 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+## author: Yedarm Seong, Cheoljun cho
+## contact: mybirth0407@gmail.com, cjfwndnsl@gmail.com
+## last modification: 2020.11.13
+
 """
-@author: Yedarm Seong, Cheoljun cho
-@contact: mybirth0407@gmail.com
-          cjfwndnsl@gmail.com
-@last modification: 2020.11.13
+Goals of this code:
+1) Remove motion artifacts and drift - Done by wrapping functions in nilearn package
+2) Reduce dimensionality by masking and pooling 
+    - an important process as the high dimensionality is an obstacle for fitting regression model, in terms of both computing time and convergence.
+
+    2-1) Masking - Related argument (mask_path),(threshold)
+        Probabilistic maps are integrated to make the maps as ROIs (a binary voxel-wise mask). 
+        It is needed to threshold the map so that you create a mask that only includes voxels with a z-score of a specific value greater than the threshold.
+        After thresholding, the surviving voxels are binarized - in other words, set to 1.
+        The mask extracts the data from voxels within that region (We can extract the voxels from the mask / Only voxel whose mask value is 1 will be  extracted)
+        -> This process reduces the total number of voxels that will be included in the analysis.
+        If the masking information is not provided, all the voxels in MNI 152 space will be included in the data.
+
+    2-2) Pooling - Related argument (zoom), (interpolation_func)
+        The number of voxels is further diminished by zooming (or resacling) fMRI images to a coarse-grained resolution. 
+        You can give a tuple indicating a zooming window size in x,y,z directions. e.g. (2,2,2)
+        Voxels in a cube with the zooming window size will be converted to one representative value reducing resolution and the total number of voxels.
+        You can also indicate the method to extract representative value with numpy function. e.g. np.mean means using the average value.
+
+3) re-organize data for fitting MVPA model - the preprocessed image will be saved subject-wise.
 """
 
 import logging
@@ -50,34 +70,13 @@ def bids_preprocess(root=None,  # path info
                     # other specification
                     save=True):
     
-    """
-    This function is for preprocessing fMRI image data organized in BIDS layout.
+    """Preprocessing fMRI image data organized in BIDS layout.
 
     What you need as input:
     1) fMRI image data organized in BIDS layout 
         ** you need to provide fMRI data which has gone through the conventional primary preprocessing pipeline (recommended link: https://fmriprep.org/en/stable/), and should be in "BIDSroot/derivatives/fmriprep" 
     2) mask images (nii or nii.gz format) either downloaded from Neurosynth or created by the user
 
-    Goals of this function:
-    1) Remove motion artifacts and drift - Done by wrapping functions in nilearn package
-    2) Reduce dimensionality by masking and pooling 
-        - an important process as the high dimensionality is an obstacle for fitting regression model, in terms of both computing time and convergence.
-
-        2-1) Masking - Related argument (mask_path),(threshold)
-            Probabilistic maps are integrated to make the maps as ROIs (a binary voxel-wise mask). 
-            It is needed to threshold the map so that you create a mask that only includes voxels with a z-score of a specific value greater than the threshold.
-            After thresholding, the surviving voxels are binarized - in other words, set to 1.
-            The mask extracts the data from voxels within that region (We can extract the voxels from the mask / Only voxel whose mask value is 1 will be  extracted)
-            -> This process reduces the total number of voxels that will be included in the analysis.
-            If the masking information is not provided, all the voxels in MNI 152 space will be included in the data.
-
-        2-2) Pooling - Related argument (zoom), (interpolation_func)
-            The number of voxels is further diminished by zooming (or resacling) fMRI images to a coarse-grained resolution. 
-            You can give a tuple indicating a zooming window size in x,y,z directions. e.g. (2,2,2)
-            Voxels in a cube with the zooming window size will be converted to one representative value reducing resolution and the total number of voxels.
-            You can also indicate the method to extract representative value with numpy function. e.g. np.mean means using the average value.
-
-    3) re-organize data for fitting MVPA model - the preprocessed image will be saved subject-wise.
     """
     
     """
