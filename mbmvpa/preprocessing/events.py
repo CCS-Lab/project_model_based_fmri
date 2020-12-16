@@ -96,7 +96,7 @@ def events_preprocess(# path informations
     Return:
         tuple[hbayesdm.model,pandasDataFrame,numpy,array,numpy.ndarray]:
         - **dm_model** (*str or hbayesdm.model*) - hBayesDM model or model name.
-        - **df_events** (*pandas.DataFrame*) - integrated event DataFrame (preprocessed if not provided) with "onset","duration","modulation".
+        - **df_events** (*pandas.DataFrame*) - Integrated event DataFrame (preprocessed if not provided) with "onset","duration","modulation".
         - **signals** (*numpy.ndarray*) - BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #.
         - **time_mask** (*numpy.ndarray*) - A binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan.
     """
