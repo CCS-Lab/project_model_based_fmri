@@ -26,7 +26,7 @@ def example_download(name):
     total_size_in_bytes= int(response.headers.get("content-length", 0))
     block_size = 1024 * 1024 #1 Mibibyte
     
-    datapath = Path("../data")
+    datapath = Path("../example_data")
     filepath = datapath / f"{name}_example.tar.gz"
     if not datapath.exists():
         datapath.mkdir()
@@ -49,14 +49,14 @@ def example_download(name):
 
 
 def extract_example(name):
-    datapath = Path(f"../data/{name}_example")
+    datapath = Path(f"../example_data/{name}_example")
     if datapath.exists():
         return datapath
 
-    tar_path = Path(f"../data/{name}_example.tar.gz")
+    tar_path = Path(f"../example_data/{name}_example.tar.gz")
     try:
         tar = tarfile.open(tar_path, mode="r:gz")
-        tar.extractall('../data')
+        tar.extractall('../example_data')
     except Exception as e:
         print(e)
         return None

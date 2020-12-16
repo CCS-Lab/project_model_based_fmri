@@ -1,4 +1,4 @@
-data/
+example_data/
 sftp-config.json
 test/
 dev/
