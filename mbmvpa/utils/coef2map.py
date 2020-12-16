@@ -14,7 +14,7 @@ from scipy.stats import ttest_1samp, zscore
 
 
 def get_map(coefs, voxel_mask, task_name,
-            map_type='z', save_path=None, sigma=1):
+            map_type="z", save_path=None, sigma=1):
     """
     make nii image file from coefficients of model using masking info.
     """
@@ -26,11 +26,11 @@ def get_map(coefs, voxel_mask, task_name,
             a binary nii image of masking info.
             should be same shape with the original fMRI image data
         task_name (str): if provided, the saved nii file will be named after this
-        map_type (str): the type of making map. ('z' or 't')
-            'z': default type. z_map by mean z_score among N mapped images.
-            't': t_map by voxel-wise one sample t-test among N mapped images.
-        save_path (str or pathlib.Path): path to save file. if None, then will be saved in 'results' directory fo current working directory
-            the result_map nii image file will be saved in 'save_path/{task_name}_{map_type}_map.nii'
+        map_type (str): the type of making map. ("z" or "t")
+            "z": default type. z_map by mean z_score among N mapped images.
+            "t": t_map by voxel-wise one sample t-test among N mapped images.
+        save_path (str or pathlib.Path): path to save file. if None, then will be saved in "results" directory fo current working directory
+            the result_map nii image file will be saved in "save_path/{task_name}_{map_type}_map.nii"
         sigma (int): the sigma value for spatial gaussian smoothing for each converted map.  
                if 0, there will be no spatial smoothing of extracted coefficients.
                higher the value, more smoother the final map will be 
@@ -70,7 +70,7 @@ def get_map(coefs, voxel_mask, task_name,
     activation_maps = np.array(activation_maps)
     activation_maps[np.isnan(activation_maps)] = 0
 
-    if map_type == 't':
+    if map_type == "t":
         # voxel-wise one sample ttest
         m = ttest_1samp(activation_maps, 0).statistic
     else:

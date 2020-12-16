@@ -63,7 +63,7 @@ def _make_single_time_mask(condition, df_events, time_length, t_r,
         df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
         time_length (int): the length of target BOLD signal 
         t_r (float): time resolution
-        use_duration (boolean): if True, use 'duration' column for masking, 
+        use_duration (boolean): if True, use "duration" column for masking, 
                       else use the gap between consecutive onsets as duration
     Return:
         time_mask (numpy.array): binary array with shape: time_length
@@ -96,7 +96,7 @@ def _make_total_time_mask(condition, df_events_list, time_length, t_r,
     Binary mask indicating valid time points will be obtained by applying user-defined function "condition"
     "condition" function will censor each trial to decide whether include it or not.
     
-    If use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
+    If use_duration == True then "duration" column data will be considered as a valid duration for selected trials,
     else the gap between consecutive trials will be used instead.
 
     Arguments:
@@ -105,7 +105,7 @@ def _make_total_time_mask(condition, df_events_list, time_length, t_r,
         df_events_list (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files
         time_length (int): the length of target BOLD signal 
         t_r (float): time resolution
-        use_duration (boolean): if True, use 'duration' column for masking, 
+        use_duration (boolean): if True, use "duration" column for masking, 
                       else use the gap between consecutive onsets as duration
     Return:
         time_mask (numpy.array): binary array with shape: subject # x run # x time_length
@@ -132,12 +132,12 @@ def _make_total_time_mask(condition, df_events_list, time_length, t_r,
 
 def _add_event_info(df_events, event_infos):
     """
-    Add subject, run, session info to dataframe of events of single 'run' 
+    Add subject, run, session info to dataframe of events of single "run" 
     """
     """
     Arguments:
         df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
-        event_infos (dict): a dictionary containing 'subject', 'run', (and 'session' if applicable).
+        event_infos (dict): a dictionary containing "subject", "run", (and "session" if applicable).
 
     Return:
         new_df (pandas.Dataframe): a dataframe with event info
@@ -166,7 +166,7 @@ def _add_event_info(df_events, event_infos):
 
 def _preprocess_event(preprocess, df_events):
     """
-    Preprocess dataframe of events of single 'run' 
+    Preprocess dataframe of events of single "run" 
     """
     """
     Arguments:
@@ -251,7 +251,7 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
     """
     Arguments:
         individual_params (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
-        dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
+        dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
         condition_for_modeling (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - f(single_row_data_frame) -> True or False
         df_events_list_ (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files and preprocessed in the previous stage.
@@ -300,7 +300,7 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
 def _add_latent_process_single_eventdata(modulation, condition,
                                          df_events, param_dict):
     """
-    Add latent state value to for each row of dataframe of single 'run'
+    Add latent state value to for each row of dataframe of single "run"
     """
     """
     Argumnets:
@@ -312,7 +312,7 @@ def _add_latent_process_single_eventdata(modulation, condition,
         param_dict (dict): a dictionary containing model parameter value
 
     Return:
-        new_df (pandas.DataFrame): a dataframe with latent state value ('modulation')
+        new_df (pandas.DataFrame): a dataframe with latent state value ("modulation")
     """
     new_df = []
     df_events = df_events.sort_values(by="onset")
@@ -330,7 +330,7 @@ def _add_latent_process_single_eventdata(modulation, condition,
 def _add_latent_process_as_modulation(individual_params, modulation, condition,
                                       df_events_list, event_infos_list):
     """
-    Calculate latent process using user-defined function "modulation", and add it to dataframe as a 'modulation' column.
+    Calculate latent process using user-defined function "modulation", and add it to dataframe as a "modulation" column.
     """
     """
     Arguments:
@@ -343,7 +343,7 @@ def _add_latent_process_as_modulation(individual_params, modulation, condition,
         event_infos_list (list(dict)): a list of dictionary containing information for each file. (ID number for subject, session, run)
     
     Returns:
-        df_events_ready (pandas.DataFrame): a integrated dataframe with 'modulation' which is ready for BOLDification
+        df_events_ready (pandas.DataFrame): a integrated dataframe with "modulation" which is ready for BOLDification
 
     """
     df_events_list = [
@@ -384,7 +384,7 @@ def _boldify(modulation_, hrf_model, frame_times):
 
 def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
                                       hrf_model="glover",
-                                      normalizer='minmax'):
+                                      normalizer="minmax"):
     
     """
     BOLDify the preprocessed behavioral (event) data 
@@ -409,7 +409,7 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
         df_events (DataFrame): preprocessed dataframe which is ready to BOLDify.
         t_r (float): time resolution (second).
         hrf_model(str): name for hemodynamic model.
-        normalizer(str): method name for normalizing output BOLD-like signal. 'minmax' or 'standard' (equal z_score).
+        normalizer(str): method name for normalizing output BOLD-like signal. "minmax" or "standard" (equal z_score).
         
     Return:
         boldified_signals (numpy.array): BOLD-like signal.

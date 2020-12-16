@@ -10,7 +10,7 @@ It is for preprocessing behavior data ("events.tsv") to convert them to BOLD-lik
 The result BOLD-like signals will be used for a target(y) in MVPA.
 Also, it will produce time masks which are binary arrays with the same size as the time dimension of the data 
 to indicate which time point of data will be included in MVPA.
-The default setting is calculating latent process (or 'modulation') 
+The default setting is calculating latent process (or "modulation") 
 by using hierarchical Bayesian modeling by running "hBayesDM" package.
 
 User can optionally skip the steps in this process in the following possible scenarios
@@ -73,32 +73,32 @@ def events_preprocess(# path informations
         condition_for_modeling (None or func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - None : "condition" function will be used.
             - f(single_row_data_frame) -> True or False
-        dm_model (str or pathlib.Path or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
+        dm_model (str or pathlib.Path or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
         individual_params_custom (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
             the below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
             (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
             
             The different hemodynamic models can be understood as follows:
-                 - 'spm': this is the hrf model used in SPM
-                 - 'spm + derivative': SPM model plus its time derivative (2 regressors)
-                 - 'spm + time + dispersion': idem, plus dispersion derivative
+                 - "spm": this is the hrf model used in SPM
+                 - "spm + derivative": SPM model plus its time derivative (2 regressors)
+                 - "spm + time + dispersion": idem, plus dispersion derivative
                                             (3 regressors)
-                 - 'glover': this one corresponds to the Glover hrf
-                 - 'glover + derivative': the Glover hrf + time derivative (2 regressors)
-                 - 'glover + derivative + dispersion': idem + dispersion derivative
+                 - "glover": this one corresponds to the Glover hrf
+                 - "glover + derivative": the Glover hrf + time derivative (2 regressors)
+                 - "glover + derivative + dispersion": idem + dispersion derivative
                                                     (3 regressors)
         df_events_custom (str or Path or pandas.DataFrame): TODO
-        normalizer (str): a name for normalization method, which will normalize BOLDified signal. 'minimax' or 'standard' 
-            - 'minmax': rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
-            - 'standard': rescale value by calculating subject-wise z_score
-        use_duration (boolean) : if True use 'duration' column to make time mask, if False regard gap between consecuting trials' onset values as duration
-        scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
+        normalizer (str): a name for normalization method, which will normalize BOLDified signal. "minimax" or "standard" 
+            - "minmax": rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
+            - "standard": rescale value by calculating subject-wise z_score
+        use_duration (boolean) : if True use "duration" column to make time mask, if False regard gap between consecuting trials" onset values as duration
+        scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if "standard" normalization is selected. default is -1 to 1.
 
     Returns:
         tuple[hbayesdm.model,pandasDataFrame,numpy,array,numpy.array]:
         - **dm_model** (*hbayesdm.model*) - hBayesDM model.
-        - **df_events** (*pandas.DataFrame*) - integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
+        - **df_events** (*pandas.DataFrame*) - integrated event DataFrame (preprocessed if not provided) with "onset","duration","modulation"
         - **signals** (*numpy.array*) - BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
         - **time_mask** (*numpy.array*) - a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
     """
@@ -204,7 +204,7 @@ def events_preprocess(# path informations
 
     progress_bar.update(1)
     ###########################################################################
-    # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
+    # Get dataframe with "subjID","run","duration","onset","duration" and "modulation" which are required fields for making BOLD-like signal
     # if user provided the "df_events" with those fields, this part will be skipped
 
     # the case user does not provide precalculated behavioral data.
@@ -217,7 +217,7 @@ def events_preprocess(# path informations
         
         progress_bar.set_description(
             "hbayesdm doing (model: %s)..".ljust(50) % dm_model)
-        # get individual parameter values in computational model which will be used to calculate the latent process('modulation').
+        # get individual parameter values in computational model which will be used to calculate the latent process("modulation").
         individual_params, dm_model = _get_individual_params(
             individual_params_custom, dm_model,
             condition_for_modeling,
@@ -232,7 +232,7 @@ def events_preprocess(# path informations
         
         progress_bar.update(1)
         progress_bar.set_description("calculating modulation..".ljust(50))
-        # the 'modulation' values are obtained by applying user-defined function "modulation" with model parameter values
+        # the "modulation" values are obtained by applying user-defined function "modulation" with model parameter values
         df_events_ready = _add_latent_process_as_modulation(
             individual_params, modulation,
             condition, 

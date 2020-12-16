@@ -228,7 +228,7 @@ def bids_preprocess(# path informations
     X = []
     for i, params_chunk in enumerate(params_chunks):
         # parallel computing using multiple threads.
-        # please refer to 'concurrent' api of Python.
+        # please refer to "concurrent" api of Python.
         # it might require basic knowledge in multiprocessing.
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
             future_result = {
