@@ -73,7 +73,7 @@ def events_preprocess(# path informations
         condition_for_modeling (None or func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - None : "condition" function will be used.
             - f(single_row_data_frame) -> True or False
-        dm_model (str or pathlib.Path or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
+        dm_model (str or pathlib.Path or hbayesdm.models) : computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
         individual_params_custom (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
             the below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
@@ -112,7 +112,7 @@ def events_preprocess(# path informations
     # path informations
     from_root = True
     if root is None:
-        assert (layout is not None)
+        assert layout is not None
         from_root = False
 
     assert (save_path is None
@@ -128,9 +128,8 @@ def events_preprocess(# path informations
     assert (condition_for_modeling is None
         or callable(condition_for_modeling))
 
-    assert (isinstance(dm_model, str)
-        or isinstance(dm_model, Path)
-        or isinstance(dm_model, hbayesdm.model))
+    assert (dm_model is None
+        or isinstance(dm_model, str))
 
     assert (individual_params_custom is None
         or isinstance(individual_params_custom, str)
