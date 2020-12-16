@@ -67,7 +67,7 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
     # numpy.flatten makes it 1-d array.
     y = y.flatten()
 
-    assert X.shape == y.shape
+    assert X.shape[0] == y.shape[0]
 
     # use data only at the timepoints indicated in time_mask file.
     if time_masking:
@@ -78,7 +78,7 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
 
         X = X[time_mask > 0]
         y = y[time_mask > 0]
-        assert X.shape == y.shape
+        assert X.shape[0] == y.shape[0]
 
     if voxel_masking:
         voxel_mask = nib.load(data_path / config.DEFAULT_VOXEL_MASK_FILENAME)
