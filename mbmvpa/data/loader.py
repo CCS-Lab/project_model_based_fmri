@@ -17,7 +17,6 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
     """
     Get dataset for fitting model
     """
-
     """
     Arguments:
         root (str or pathlib.Path): data path, if None, must be specified X, y, time_mask_path.
@@ -44,13 +43,15 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
         reshaped_data = data.reshape(-1, data.shape[-1])
         return reshaped_data
 
+    ###########################################################################
+    # parameter check
     assert (isinstance(root, str)
         or isinstance(root, Path))
-    assert (isinstance(time_mask_path, str)
-        or isinstance(time_mask_path, Path))
+    assert isinstance(time_masking, bool)
+    assert isinstance(voxel_masking, bool)
+    ###########################################################################
 
     # if root is given and path for any of X, y is not given, then use default path.
-    root = Path(root)
     data_path = Path(root / config.DEFAULT_SAVE_DIR)
 
     # aggregate X fragmented by subject to one matrix.

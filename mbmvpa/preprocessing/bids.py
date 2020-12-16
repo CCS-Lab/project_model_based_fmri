@@ -171,7 +171,8 @@ def bids_preprocess(# path informations
     ###########################################################################
     # setting parameter
 
-    progress_bar.set_description("image preprocessing - parameter setting..".ljust(50))
+    progress_bar.set_description(
+        "image preprocessing - parameter setting..".ljust(50))
     params = []
     for subject in subjects:
         # get a list of nii file paths of fMRI images spread in BIDS layout
@@ -195,7 +196,8 @@ def bids_preprocess(# path informations
     ###########################################################################
     # create path for data
 
-    progress_bar.set_description("image preprocessing - making path..".ljust(50))
+    progress_bar.set_description(
+        "image preprocessing - making path..".ljust(50))
     if save_path is None:
         sp = Path(layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
         if not sp.exists():
@@ -208,7 +210,8 @@ def bids_preprocess(# path informations
     ###########################################################################
     # Image preprocessing using mutli-processing and threading
 
-    progress_bar.set_description("image preprocessing - fMRI data..".ljust(50))
+    progress_bar.set_description(
+        "image preprocessing - fMRI data..".ljust(50))
     # "chunk_size" is the number of threads.
     # In generalm this number improves performance as it grows,
     # but we recommend less than 4 because it consumes more memory.
@@ -252,4 +255,4 @@ def bids_preprocess(# path informations
     progress_bar.update(1)
 
     progress_bar.set_description("bids preprocessing done!".ljust(50))
-    return X, voxel_mask, layout
+    return X, voxel_mask, layout, layout.derivatives["fMRIPrep"].root
