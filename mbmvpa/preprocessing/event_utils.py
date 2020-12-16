@@ -251,7 +251,7 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
     """
     Arguments:
         individual_params (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
-        dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
+        dm_model (str or hbayesdm.models) : computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
         condition_for_modeling (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - f(single_row_data_frame) -> True or False
         df_events_list_ (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files and preprocessed in the previous stage.

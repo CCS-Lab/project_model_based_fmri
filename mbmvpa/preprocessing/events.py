@@ -59,7 +59,6 @@ def events_preprocess(# path informations
                       **kwargs,
                       ):
     """
-           
     Args:
         root (None or str or Path): The root directory of BIDS layout
         layout (None or bids.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
@@ -81,14 +80,12 @@ def events_preprocess(# path informations
             (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
             
             The different hemodynamic models can be understood as follows:
-                 - "spm": this is the hrf model used in SPM
-                 - "spm + derivative": SPM model plus its time derivative (2 regressors)
-                 - "spm + time + dispersion": idem, plus dispersion derivative
-                                            (3 regressors)
-                 - "glover": this one corresponds to the Glover hrf
-                 - "glover + derivative": the Glover hrf + time derivative (2 regressors)
-                 - "glover + derivative + dispersion": idem + dispersion derivative
-                                                    (3 regressors)
+                 - "spm": this is the hrf model used in SPM.
+                 - "spm + derivative": SPM model plus its time derivative (2 regressors).
+                 - "spm + time + dispersion": idem, plus dispersion derivative. (3 regressors)
+                 - "glover": this one corresponds to the Glover hrf.
+                 - "glover + derivative": the Glover hrf + time derivative (2 regressors).
+                 - "glover + derivative + dispersion": idem + dispersion derivative. (3 regressors)
         normalizer (str): A name for normalization method, which will normalize BOLDified signal. "minimax" or "standard".
             - "minmax": rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively.
             - "standard": rescale value by calculating subject-wise z_score.
@@ -96,15 +93,15 @@ def events_preprocess(# path informations
         use_duration (boolean): If True use "duration" column to make time mask, if False regard gap between consecuting trials" onset values as duration.
         scale (tuple(float, float)): Lower bound and upper bound for minmax scaling. will be ignored if "standard" normalization is selected. default is -1 to 1.
 
-    Returns:
+    Return:
         tuple[hbayesdm.model,pandasDataFrame,numpy,array,numpy.ndarray]:
-        - **dm_model** (*hbayesdm.model*) - hBayesDM model.
-        - **df_events** (*pandas.DataFrame*) - integrated event DataFrame (preprocessed if not provided) with "onset","duration","modulation"
-        - **signals** (*numpy.ndarray*) - BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
-        - **time_mask** (*numpy.ndarray*) - a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
+        - **dm_model** (*str or hbayesdm.model*) - hBayesDM model or model name.
+        - **df_events** (*pandas.DataFrame*) - integrated event DataFrame (preprocessed if not provided) with "onset","duration","modulation".
+        - **signals** (*numpy.ndarray*) - BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #.
+        - **time_mask** (*numpy.ndarray*) - A binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan.
     """
 
-    progress_bar = tqdm(total=6)
+    progress_bar = tqdm(total=7)
     ###########################################################################
     # parameter check
 
