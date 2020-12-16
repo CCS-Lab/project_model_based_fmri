@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-@author: Yedarm Seong, Cheoljun cho
-@contact: mybirth0407@gmail.com
-          cjfwndnsl@gmail.com
-@last modification: 2020.11.16
+## author: Yedarm Seong, Cheoljun cho
+## contact: mybirth0407@gmail.com, cjfwndnsl@gmail.com
+## last modification: 2020.11.13
 
-This code is for helper functions of preprocessing behavior data
+"""
+Helper functions for preprocessing behavior data
 
 """
 import logging
@@ -37,18 +36,18 @@ logging.basicConfig(level=logging.INFO)
 
 
 def _get_metainfo(layout):
-    """
-    Get meta information of fMRI experiment.
+    """Get meta information of fMRI experiment.
     
     Arguments:
         layout (nibabel.BIDSLayout): BIDSLayout by bids package.
         
     Returns:
-        n_subject (int): the number of subjects
-        n_session (int): the number of sessions
-        n_run (int): the number of runs
-        n_scans (int): the time length in a single run. 
-        t_r (float): time resolution (second) of scanning
+        tuple[int,int,int,int,float]:
+        - **n_subject** (*int*) - the number of subjects
+        - **n_session** (*int*): the number of sessions
+        - **n_run** (*int*) - the number of runs
+        - **n_scans** (*int*) - the time length in a single run. 
+        - **t_r** (*float*) - time resolution (second) of scanning
     """
     
     n_subject = len(layout.get_subjects())
