@@ -4,7 +4,7 @@
 """
 @author: Cheol Jun Cho
 @contact: cjfwndnsl@gmail.com
-@last modification: 2020.11.02
+@last modification: 2020.12.17
 """
 
 from pathlib import Path
@@ -15,34 +15,45 @@ from scipy.ndimage import gaussian_filter
 from scipy.stats import ttest_1samp, zscore
 
 
-def get_map(coefs, voxel_mask, layout=None, task_name=None,
-            map_type='z', save=True, save_path=None, sigma=1):
+def get_map(coefs, voxel_mask, task_name,
+            map_type='z', save_path=None, sigma=1):
     """
     make nii image file from coefficients of model using masking info.
     """
-
     """
     Arguments:
-        coefs: extracted coefs by fitting model.
-               shape: N x voxel #
-        voxel_mask: a binary nii image of masking info. type : nibabel.nifti1.Nifti1Image, 
-                     should be same shape with the original fMRI image data
-        layout: layout info to get task_name if None, task_name should not be None instead
-        task_name: if provided, the saved nii file will be named after this
-        map_type: the type of making map. ('z' or 't')
-                  'z': default type. z_map by mean z_score among N mapped images.
-                  't': t_map by voxel-wise one sample t-test among N mapped images.
-        save_path: path to save file. if None, then will be saved in 'results' directory fo current working directory
-                   the result_map nii image file will be saved in 'save_path/{task_name}_{map_type}_map.nii'
-        sigma: the sigma value for spatial gaussian smoothing for each converted map.  
+        coefs (list or numpy.array): extracted coefs by fitting model.
+            shape: N x voxel #
+        voxel_mask (nibabel.nifti1.Nifti1Image):
+            a binary nii image of masking info.
+            should be same shape with the original fMRI image data
+        task_name (str): if provided, the saved nii file will be named after this
+        map_type (str): the type of making map. ('z' or 't')
+            'z': default type. z_map by mean z_score among N mapped images.
+            't': t_map by voxel-wise one sample t-test among N mapped images.
+        save_path (str or pathlib.Path): path to save file. if None, then will be saved in 'results' directory fo current working directory
+            the result_map nii image file will be saved in 'save_path/{task_name}_{map_type}_map.nii'
+        sigma (int): the sigma value for spatial gaussian smoothing for each converted map.  
                if 0, there will be no spatial smoothing of extracted coefficients.
                higher the value, more smoother the final map will be 
 
     return:
-        result_map: a nii image of brain activation map.
+        result_map (nibabel.nifti1.Nifti1Image): a nii image of brain activation map.
     """
 
-    assert (not(layout is None and task_name is None))
+    ###########################################################################
+    # parameter check
+
+    assert (isinstance(coefs, list)
+        or isinstance(coef, np.array))
+    assert (isinstance(voxel_mask, nibabel.nifti1.Nifti1Image))
+    assert isinstance(task_name, str)
+    assert isinstance(map_type, str)
+    assert (isinstance(save_path, str)
+        or isinstance(save_path, pathlib.Path))
+    assert isinstance(sigma, int)
+    ###########################################################################
+    # make result map
 
     activation_maps = []
     mapping_id = np.nonzero(voxel_mask.get_fdata().flatten())[0]
@@ -71,20 +82,16 @@ def get_map(coefs, voxel_mask, layout=None, task_name=None,
     m[np.isnan(m)] = 0
     m *= voxel_mask.get_fdata()
     result_map = nib.Nifti1Image(m, affine=voxel_mask.affine)
-
+    ###########################################################################
     # saving
     if save_path is None:
-        sp = Path("./results")
+        sp = Path(".")
     else:
         sp = Path(save_path)
 
     if not sp.exists():
         sp.mkdir()
 
-    if task_name is None:
-        task_name = layout.get_task()[0]
-
-    if save:
-        result_map.to_filename(sp / f"{task_name}_{map_type}_map.nii")
+    result_map.to_filename(sp / f"{task_name}_{map_type}_map.nii")
 
     return result_map

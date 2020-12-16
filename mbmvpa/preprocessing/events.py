@@ -5,14 +5,12 @@
 @author: Yedarm Seong, Cheoljun cho
 @contact: mybirth0407@gmail.com
           cjfwndnsl@gmail.com
-@last modification: 2020.11.16
+@last modification: 2020.12.17
 
 This code is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
 
 """
 
-import logging
-import time
 from pathlib import Path
 
 import hbayesdm.models
@@ -25,20 +23,16 @@ from sklearn.preprocessing import minmax_scale
 from .event_utils import _get_metainfo, _process_behavior_dataframes, _make_total_time_mask
 from .event_utils import _get_individual_params, _add_latent_process_as_modulation
 from .event_utils import _convert_event_to_boldlike_signal
-
 from bids import BIDSLayout
 from tqdm import tqdm
 
-import hbayesdm.models
-import time
-
-import logging
-
 from ..utils import config # configuration for default names used in the package
-logging.basicConfig(level=logging.INFO)
 
 
-def events_preprocess(# path info
+bids.config.set_option("extension_initial_dot", True)
+
+
+def events_preprocess(# path informations
                       root=None,
                       layout=None,
                       save_path=None,
@@ -89,7 +83,7 @@ def events_preprocess(# path info
         condition_for_modeling (None or func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - None : "condition" function will be used.
             - f(single_row_data_frame) -> True or False
-        dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
+        dm_model (str or pathlib.Path or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
         individual_params_custom (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
             the below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
@@ -104,7 +98,7 @@ def events_preprocess(# path info
                  - 'glover + derivative': the Glover hrf + time derivative (2 regressors)
                  - 'glover + derivative + dispersion': idem + dispersion derivative
                                                     (3 regressors)
-            
+        df_events_custom (str or Path or pandas.DataFrame): TODO
         normalizer (str): a name for normalization method, which will normalize BOLDified signal. 'minimax' or 'standard' 
             - 'minmax': rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
             - 'standard': rescale value by calculating subject-wise z_score
@@ -119,17 +113,70 @@ def events_preprocess(# path info
     """
 
     progress_bar = tqdm(total=6)
-    s = time.time()
+    ###########################################################################
+    # parameter check
 
+    progress_bar.set_description("checking parameters..".ljust(50))
+
+    # path informations
+    from_root = True
+    if root is None:
+        assert (layout is not None)
+        from_root = False
+
+    if save_path is None:
+        pass
+    else:
+        assert (isinstance(save_path, str)
+            or isinstance(save_path, Path))
+
+    # user-defined functions
+    assert (isinstance(preprocess, "__call__"))
+    assert (isinstance(condition, "__call__"))
+    if modulation is None:
+        pass
+    else:
+        assert (isinstance(modulation, "__call__"))
+
+    if condition_for_modeling is None:
+        pass
+    else:
+        assert (isinstance(condition_for_modeling, "__call__"))
+
+    assert (isinstance(dm_model, str)
+        or isinstance(dm_model, Path)
+        or isinstance(dm_model, hbayesdm.model))
+
+    if individual_params_custom is None:
+        pass
+    else:
+        assert (isinstance(individual_params_custom, str)
+            or isinstance(individual_params_custom, Path)
+            or isinstance(individual_params_custom, pd.DataFrame))
+
+    # BOLDifying parameter
+    assert (isinstance(hrf_model, str))
+    assert (isinstance(normalization, str))
+
+    # Other specification
+    assert (isinstance(df_events_custom, str)
+        or isinstance(df_events_custom, Path)
+        or isinstance(df_events_custom, pd.DataFrame))
+
+    assert (isinstance(use_duration, bool))
+    assert (isinstance(scale, list)
+        or isinstance(scale, tuple))
+    assert (isinstance(scale[0], int))
+    progress_bar.update(1)
     ###########################################################################
     # load data from bids layout
 
-    if layout is None:
+    if from_root:
         progress_bar.set_description("loading bids dataset..".ljust(50))
         layout = BIDSLayout(root, derivatives=True)
     else:
         progress_bar.set_description("loading layout..".ljust(50))
-    
+
     # get meta info
     n_subject, n_session, n_run, n_scans, t_r = _get_metainfo(layout)
     
@@ -141,7 +188,6 @@ def events_preprocess(# path info
     event_infos_list = [event.get_entities() for event in events]
     
     progress_bar.update(1)
-
     ###########################################################################
     # designate saving path
 
@@ -153,7 +199,6 @@ def events_preprocess(# path info
 
     if not sp.exists():
         sp.mkdir()
-
     ###########################################################################
     # process columns in events file
 
@@ -163,7 +208,6 @@ def events_preprocess(# path info
         preprocess,df_events_list,event_infos_list)
     
     progress_bar.update(1)
-
     ###########################################################################
     # get time masks
 
@@ -175,7 +219,6 @@ def events_preprocess(# path info
     np.save(sp / config.DEFAULT_TIME_MASK_FILENAME, time_mask) 
 
     progress_bar.update(1)
-
     ###########################################################################
     # Get dataframe with 'subjID','run','duration','onset','duration' and 'modulation' which are required fields for making BOLD-like signal
     # if user provided the "df_events" with those fields, this part will be skipped
@@ -197,7 +240,6 @@ def events_preprocess(# path info
             df_events_list,
             **kwargs)
 
-        print(individual_params)
         # if calculate individual params.
         if dm_model is not None:
             individual_params.to_csv(
@@ -225,7 +267,6 @@ def events_preprocess(# path info
         
         df_events_ready = df_events_custom
         progress_bar.update(2)
-        
     ###########################################################################
     # Get boldified signals.
 
@@ -236,12 +277,6 @@ def events_preprocess(# path info
     np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
     progress_bar.update(1)
 
-    ###########################################################################
-    # elapsed time check
-
-    e = time.time()
-    m0 = "events preproecssing done!"
-    m1 = f" {(e-s) / 60:.2f} minutes"
-    progress_bar.set_description(m0 + m1.ljust(50))
+    progress_bar.set_description("events preproecssing done!".ljust(50))
 
     return dm_model, df_events_ready, signals, time_mask, layout

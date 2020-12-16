@@ -15,8 +15,8 @@ PATH_ROOT = Path(__file__).absolute().parent
 DISTNAME = 'mb-mvpa'
 
 MAJOR = 0
-MINOR = 1
-MICRO = 0
+MINOR = 2
+MICRO = .
 ISRELEASED = True
 VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 VERSION += '' if ISRELEASED else '.9000'

@@ -3,7 +3,7 @@
 
 ## author: Yedarm Seong, Cheoljun cho
 ## contact: mybirth0407@gmail.com, cjfwndnsl@gmail.com
-## last modification: 2020.11.13
+## last modification: 2020.12.17
 
 """
 Goals of this code:
@@ -28,30 +28,24 @@ Goals of this code:
 3) re-organize data for fitting MVPA model - the preprocessed image will be saved subject-wise.
 """
 
-import logging
-import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from .event_utils import _get_metainfo
 from pathlib import Path
-
 import numpy as np
-
 import bids
 from bids import BIDSLayout
 from tqdm import tqdm
-
-from .fMRI import custom_masking, image_preprocess, image_preprocess_multithreading
-from ..utils import config # configuration for default names used in the package
+from .fMRI import _custom_masking, _image_preprocess_multithreading
 import nibabel as nib
 
-import logging
+from ..utils import config # configuration for default names used in the package
 
 
 bids.config.set_option("extension_initial_dot", True)
-logging.basicConfig(level=logging.INFO)
 
 
-
-def bids_preprocess(root=None,  # path info
+def bids_preprocess(# path informations
+                    root=None,
                     layout=None,
                     save_path=None,
                     # ROI masking specification
@@ -64,86 +58,111 @@ def bids_preprocess(root=None,  # path info
                     standardize=True,
                     motion_confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
-                    # multithreading option
                     ncore=2,
-                    nthread=2,
-                    # other specification
-                    save=True):
-    
+                    nthread=2):
     """Preprocessing fMRI image data organized in BIDS layout.
-
     What you need as input:
     1) fMRI image data organized in BIDS layout 
         ** you need to provide fMRI data which has gone through the conventional primary preprocessing pipeline (recommended link: https://fmriprep.org/en/stable/), and should be in "BIDSroot/derivatives/fmriprep" 
     2) mask images (nii or nii.gz format) either downloaded from Neurosynth or created by the user
-
     """
-    
     """
     Arguments:
         root (str or Path) : the root directory of BIDS layout
-        layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
+        layout (bids.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         save_path (str or Path): a path for the directory to save output (X, voxel_mask). if not provided, "BIDS root/derivatives/data" will be set as default path      
         mask_path (str or Path): a path for the directory containing mask files (nii or nii.gz). encourage get files from Neurosynth
         threshold (float): threshold for binarizing mask images
-        zoom ((float,float,float)): zoom window, indicating a scaling factor for each dimension in x,y,z. the dimension will be reduced by the factor of corresponding axis.
+        zoom ((float, float, float)): zoom window, indicating a scaling factor for each dimension in x,y,z. the dimension will be reduced by the factor of corresponding axis.
                                     e.g. (2,2,2) will make the dimension half in all directions, so 2x2x2=8 voxels will be 1 voxel.
         smoothing_fwhm (int): the amount of spatial smoothing. if None, image will not be smoothed.
-        interpolation_func (numpy.func): a method to calculate a representative value in the zooming window. e.g. numpy.mean, numpy.max
-                                         e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube into a single value of its mean.
+        interpolation_func (numpy.function): a method to calculate a representative value in the zooming window. e.g. numpy.mean, numpy.max
+            e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube into a single value of its mean.
         standardize (boolean): if true, conduct standard normalization within each image of a single run. 
-        motion_confounds (list[str]): list of motion confound names in confounds tsv file. 
-        ncore (int): the number of core for the tparallel computing 
-        nthread (int): the number of thread for the parallel computing
+        motion_confounds (list[str, str, ..., str]): list of motion confound names in confounds tsv file. 
+        (no-use!) ncore (int): the number of core for the multicore computing 
+        nthread (int): the number of core for the multithreading computing 
     Return:
         X (numpy.array): subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #
         voxel_mask (nibabel.Nifti1Image): a nifti image for voxel-wise binary mask (ROI mask)
         masker (nilearn.NiftiMasker): the masker object. fitted and used for correcting motion confounds, and masking.
-        layout (nibabel.BIDSLayout): the loaded layout. 
+        layout (bids.BIDSLayout): the loaded layout. 
     """
 
     progress_bar = tqdm(total=6)
-    s = time.time()
+    ###########################################################################
+    # parameter check
 
+    progress_bar.set_description("checking parameters..".ljust(50))
+
+    # path informations
+    from_root = True
+    if root is None:
+        assert (layout is not None)
+        from_root = False
+
+    if save_path is None:
+        pass
+    else:
+        assert (isinstance(save_path, str)
+            or isinstance(save_path, Path))
+
+    # ROI masking specification
+    if mask_path is None:
+        pass
+    else:
+        assert (isinstance(mask_path, str)
+            or isinstance(mask_path, Path))
+
+    assert (isinstance(threshold, float)
+        or isinstance(threshold, int))
+
+    # preprocessing specification
+    assert (isinstance(zoom, list)
+        or isinstance(zoom, tuple))
+    assert isinstance(zoom[0], int)
+
+    assert (isinstance(smoothing_fwhm, int))
+    assert (isinstance(interpolation_func, "__call__"))
+    assert (standardize, bool)
+    assert (isinstance(motion_confounds, list)
+        or isinstance(motion_confounds, tuple))
+    assert (isinstance(motion_confounds[0], str))
+    # multithreading option
+    assert (isinstance(ncore, int))
+    assert (isinstance(nthread, int))
+    progress_bar.update(1)
     ###########################################################################
     # load bids layout
 
-    if layout is None:
+    if from_root:
         progress_bar.set_description("loading bids dataset..".ljust(50))
         layout = BIDSLayout(root, derivatives=True)
     else:
         progress_bar.set_description("loading layout..".ljust(50))
 
     subjects = layout.get_subjects()
-    n_subject = len(subjects)
-    n_session = len(layout.get_session())
-    n_run = len(layout.get_run())
+    n_subject, n_session, n_run, _0, _1 = _get_metainfo(layout)
     progress_bar.update(1)
-
     ###########################################################################
     # make voxel mask
 
     progress_bar.set_description("making custom voxel mask..".ljust(50))
-
     if mask_path is None:
         # if mask_path is not provided, find mask files in DEFAULT_MASK_DIR
         mask_path = Path(
             layout.derivatives["fMRIPrep"].root) / config.DEFAULT_MASK_DIR
       
-    voxel_mask, masker = custom_masking(
+    voxel_mask, masker = _custom_masking(
         mask_path, threshold, zoom,
         smoothing_fwhm, interpolation_func, standardize
     )
-
     progress_bar.update(1)
-
     ###########################################################################
     # setting parameter
 
     progress_bar.set_description("image preprocessing - parameter setting..".ljust(50))
-
     params = []
-    
     for subject in subjects:
         # get a list of nii file paths of fMRI images spread in BIDS layout
         nii_layout = layout.derivatives["fMRIPrep"].get(
@@ -163,7 +182,6 @@ def bids_preprocess(root=None,  # path info
         "The length of params list and number of subjects are not validated."
     )
     progress_bar.update(1)
-
     ###########################################################################
     # create path for data
 
@@ -175,18 +193,18 @@ def bids_preprocess(root=None,  # path info
     else:
         sp = Path(save_path)
     
-    if save:
-        nib.save(voxel_mask, sp / config.DEFAULT_VOXEL_MASK_FILENAME)
+    nib.save(voxel_mask, sp / config.DEFAULT_VOXEL_MASK_FILENAME)
     progress_bar.update(1)
-
     ###########################################################################
     # Image preprocessing using mutli-processing and threading
 
     progress_bar.set_description("image preprocessing - fMRI data..".ljust(50))
-    X = []
-
-    # Chunk size is thread #
-    chunk_size = 4 if nthread > 4 else ncore
+    # "chunk_size" is the number of threads.
+    # In generalm this number improves performance as it grows,
+    # but we recommend less than 4 because it consumes more memory.
+    # TODO: We can specify only the number of threads at this time,
+    #       but we must specify only the number of cores or both later.
+    chunk_size = 4 if nthread > 4 else nthread
     params_chunks = [params[i:i + chunk_size]
                         for i in range(0, len(params), chunk_size)]
     task_size = len(params_chunks)
@@ -197,6 +215,7 @@ def bids_preprocess(root=None,  # path info
     # 2. Create parameters to use for each task in process - params_chunk
     # 3. Thread returns a return value after job completion - future.result()
     # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
+    X = []
     for i, params_chunk in enumerate(params_chunks):
         # parallel computing using multiple threads.
         # please refer to 'concurrent' api of Python.
@@ -204,7 +223,7 @@ def bids_preprocess(root=None,  # path info
         with ProcessPoolExecutor(max_workers=chunk_size) as executor:
             future_result = {
                 executor.submit(
-                    image_preprocess_multithreading, param, n_run): \
+                    _image_preprocess_multithreading, param, n_run): \
                         param for param in params_chunk
             }
 
@@ -216,20 +235,11 @@ def bids_preprocess(root=None,  # path info
                 X.append(data)
 
             progress_bar.set_description(
-                f"image preprocessing - fMRI data.. {i+1} / {task_size} done.."\
+                f"image preprocessing - fMRI data.. {i+1} / {task_size} done.."
                 .ljust(50))
 
     X = np.array(X)
     progress_bar.update(1)
 
-    ################################################################################
-    # elapsed time check
-
     progress_bar.set_description("bids preprocessing done!".ljust(50))
-    progress_bar.update(1)
-
-    e = time.time()
-    logging.info(f"time elapsed: {(e-s) / 60:.2f} minutes")
-    logging.info(f"masking data shape: {voxel_mask.shape}")
-
     return X, voxel_mask, layout

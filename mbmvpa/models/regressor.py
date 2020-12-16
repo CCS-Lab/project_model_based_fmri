@@ -7,19 +7,18 @@
           mybirth0407@gmail.com
 @last modification: 2020.11.16
 
-
 This part is implemented to fit regression model and extract voxel-wise weights (coefficients). 
 
 Available Model:
-    Multi-Layer Perceptron (tf.Keras): stacked perceptron layers intertwined with "Drop out".
-    Penalized linear regression (tf.Keras): penalizing objective function with mixed L1 and L2 norm.
+    Multi-Layer Perceptron (tensorflow.keras): stacked perceptron layers intertwined with "Drop out".
+    Penalized linear regression (tensorflow.keras): penalizing objective function with mixed L1 and L2 norm.
     ElasticNet (glmnet): penalized linear regression with automatical searching optimal amount of penalizing (shrinkage parameter).
     
-Understanding the part dependent on tensorflow.Keras might require the basic knowledge in deep learning frameworks. 
+Understanding the part dependent on tensorflow.Keras might require the basic knowledge in deep learning frameworks.
 
 The helpful links:
-    - the tutorial of image classification using tf.Keras: https://www.tensorflow.org/tutorials/keras/classification 
-    - the github repo for glmnet Python package: https://github.com/civisanalytics/python-glmnet
+    - The tutorial of image classification using tensorflow.keras: https://www.tensorflow.org/tutorials/keras/classification.
+    - The github repo for glmnet Python package: https://github.com/civisanalytics/python-glmnet
     - TODO
 """
 
@@ -113,17 +112,13 @@ def mlp_regression(X, y,
     Return:
         coefs (numpy.array): fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #. 
     """
-
-    if verbose > 0:
-        logging.info("start running")
-
     coefs = []
 
     for i in range(1, N + 1):
         # random sampling "n_samples" if the given number of X,y instances is bigger
         # than maximum allowed number for training
-        np.random.seed(i * i)
-        tf.random.set_seed(i * i) # also need to set random seed in tensorflow
+        np.random.seed(i)
+        tf.random.set_seed(i) # also need to set random seed in tensorflow
         ids = np.arange(X.shape[0])
 
         if X.shape[0] > n_samples:
@@ -132,7 +127,7 @@ def mlp_regression(X, y,
 
         # split data to training set and validation set
         train_ids, test_ids = train_test_split(
-            ids, test_size=validation_split, random_state=(i * i)
+            ids, test_size=validation_split, random_state=i
         )
         train_steps = len(train_ids) // batch_size
         val_steps = len(test_ids) // batch_size
@@ -280,16 +275,13 @@ def penalized_linear_regression(X, y,
     Return:
         coefs (numpy.array): fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #.
     """
-
-    logging.info("start running")
-
     coefs = []
 
     for i in range(1, N + 1):
         # random sampling "n_samples" if the given number of X,y instances is bigger
         # than maximum allowed number for training
-        np.random.seed(i * i)
-        tf.random.set_seed(i * i) # also need to set random seed in tensorflow
+        np.random.seed(i)
+        tf.random.set_seed(i) # also need to set random seed in tensorflow
 
         ids = np.arange(X.shape[0])
         if X.shape[0] > n_samples:
@@ -298,7 +290,7 @@ def penalized_linear_regression(X, y,
 
         # split data to training set and validation set
         train_ids, test_ids = train_test_split(
-            ids, test_size=validation_split, random_state=42 + (i * i))
+            ids, test_size=validation_split, random_state=i)
         train_steps = len(train_ids) // batch_size
         val_steps = len(test_ids) // batch_size
 
@@ -421,8 +413,6 @@ def elasticnet(X, y,
         coefs (numpy.array): fitted models' coefficients mapped to weight of each voxel.
                 shape: N x voxel #. 
     """
-
-    logging.info('start running')
     coefs = []
     exponent = np.linspace(
         np.log(max_lambda),
@@ -434,7 +424,7 @@ def elasticnet(X, y,
 
     for i in range(1, N + 1):
         # random sampling "n_samples" if the given number of X,y instances is bigger
-        np.random.seed(i * i)
+        np.random.seed(i)
         ids = np.arange(X.shape[0])
 
         if X.shape[0] > n_samples:

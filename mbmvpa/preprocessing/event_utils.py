@@ -5,15 +5,12 @@
 @author: Yedarm Seong, Cheoljun cho
 @contact: mybirth0407@gmail.com
           cjfwndnsl@gmail.com
-@last modification: 2020.11.16
+@last modification: 2020.12.17
 
 This code is for helper functions of preprocessing behavior data
-
 """
-import logging
-import time
-from pathlib import Path
 
+from pathlib import Path
 import hbayesdm.models
 import nibabel as nib
 import numpy as np
@@ -22,33 +19,23 @@ from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
 
-from bids import BIDSLayout
-from tqdm import tqdm
-
-import hbayesdm.models
-import time
-
-import logging
-
 from ..utils import config # configuration for default names used in the package
-
-
-logging.basicConfig(level=logging.INFO)
 
 
 def _get_metainfo(layout):
     """
-    Get meta information of fMRI experiment.
-    
+    Get meta information of fMRI experiments.
+    """
+    """
     Arguments:
-        layout (nibabel.BIDSLayout): BIDSLayout by bids package.
+        layout (bids.BIDSLayout): BIDSLayout by bids package.
         
     Returns:
-        n_subject (int): the number of subjects
-        n_session (int): the number of sessions
-        n_run (int): the number of runs
-        n_scans (int): the time length in a single run. 
-        t_r (float): time resolution (second) of scanning
+        n_subject (int): the number of subjects.
+        n_session (int): the number of sessions.
+        n_run (int): the number of runs.
+        n_scans (int): the time length in a single run.
+        t_r (float): time resolution (second) of scanning.
     """
     
     n_subject = len(layout.get_subjects())
@@ -59,8 +46,7 @@ def _get_metainfo(layout):
         layout.derivatives["fMRIPrep"].get(
             return_type="file",
             suffix="bold",
-            extension="nii.gz")[0]
-    )
+            extension="nii.gz")[0])
     n_scans = image_sample.shape[-1]
     t_r = layout.get_tr()
     
@@ -71,11 +57,12 @@ def _make_single_time_mask(condition, df_events, time_length, t_r,
                            use_duration=False):
     """
     Get binary masked data indicating time points in use
-
+    """
+    """
     Arguments:
-        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
+        condition (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
             - f(single_row_data_frame) -> True or False
-        df_events (pandas.Daataframe): a dataframe retrieved from "events.tsv" file
+        df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
         time_length (int): the length of target BOLD signal 
         t_r (float): time resolution
         use_duration (boolean): if True, use 'duration' column for masking, 
@@ -106,14 +93,16 @@ def _make_total_time_mask(condition, df_events_list, time_length, t_r,
                           n_session, use_duration=False):
     """
     Get binary masked data indicating time points in use
+    """
+    """
+    Binary mask indicating valid time points will be obtained by applying user-defined function "condition"
+    "condition" function will censor each trial to decide whether include it or not.
     
-    binary mask indicating valid time points will be obtained by applying user-defined function "condition"
-    "condition" function will censor each trial to decide whether include it or not
-    if use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
+    If use_duration == True then 'duration' column data will be considered as a valid duration for selected trials,
     else the gap between consecutive trials will be used instead.
 
     Arguments:
-        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
+        condition (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
             - f(single_row_data_frame) -> True or False
         df_events_list (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files
         time_length (int): the length of target BOLD signal 
@@ -146,13 +135,14 @@ def _make_total_time_mask(condition, df_events_list, time_length, t_r,
 def _add_event_info(df_events, event_infos):
     """
     Add subject, run, session info to dataframe of events of single 'run' 
-
+    """
+    """
     Arguments:
-        df_events (pandas.Daataframe): a dataframe retrieved from "events.tsv" file
+        df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
         event_infos (dict): a dictionary containing 'subject', 'run', (and 'session' if applicable).
 
     Return:
-        new_df (pandas.Daataframe): a dataframe with event info
+        new_df (pandas.Dataframe): a dataframe with event info
     """
 
     new_df = []
@@ -163,7 +153,6 @@ def _add_event_info(df_events, event_infos):
         row["run"] = info["run"]
         if "session" in info.keys():
             row["session"] = info["session"]  # if applicable
-
         return row
 
     for _, row in df_events.iterrows():
@@ -180,14 +169,16 @@ def _add_event_info(df_events, event_infos):
 def _preprocess_event(preprocess, df_events):
     """
     Preprocess dataframe of events of single 'run' 
-
+    """
+    """
     Arguments:
-        preprocess (func(pandas.Series, dict)-> pandas.Series)): a user-defined function for modifying each row of behavioral data. 
+        preprocess (function(pandas.Series, dict)-> pandas.Series)):
+            a user-defined function for modifying each row of behavioral data.
             - f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data check
-        df_events (pandas.Daataframe): a dataframe retrieved from "events.tsv" file
+        df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
 
     Return:
-        new_df (pandas.Daataframe): a dataframe with preprocessed rows
+        new_df (pandas.Dataframe): a dataframe with preprocessed rows
     """
 
     new_df = []
@@ -203,12 +194,15 @@ def _preprocess_event(preprocess, df_events):
 
     return new_df
 
+
 def _process_behavior_dataframes(preprocess, df_events_list, event_infos_list):
     """
     Process columns in events file
-    
+    """
+    """
     Arguments:
-        preprocess (func(pandas.Series, dict)-> pandas.Series)): a user-defined function for modifying each row of behavioral data. 
+        preprocess (function(pandas.Series, dict)-> pandas.Series)):
+            a user-defined function for modifying each row of behavioral data. 
             - f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data check
         df_events_list (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files
         event_infos_list (list(dict)): a list of dictionary containing information for each file. (ID number for subject, session, run)
@@ -236,7 +230,8 @@ def _get_individual_param_dict(subject_id, individual_params):
     """
     Get individual parameter dictionary
     so the value can be referred by its name (type:str)
-
+    """
+    """
     Arguments:
         subject_id (int or str): subject ID number
         individual_params (pandas.DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
@@ -254,11 +249,12 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
     """
     Get individual parameter values of the model, either obtained from fitting hierarchical bayesian model supported by hBayesDM package or
     provided by user through the "individual_params" argument.
-    
+    """
+    """
     Arguments:
         individual_params (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
         dm_model (str or hbayesdm.model) : computational model by hBayesDM package. should be provided as the name of the model (e.g. 'ra_prospect') or a model object.
-        condition_for_modeling (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
+        condition_for_modeling (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - f(single_row_data_frame) -> True or False
         df_events_list_ (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files and preprocessed in the previous stage.
     
@@ -306,12 +302,13 @@ def _get_individual_params(individual_params, dm_model, condition_for_modeling,
 def _add_latent_process_single_eventdata(modulation, condition,
                                          df_events, param_dict):
     """
-    Aadd latent state value to for each row of dataframe of single 'run'
-
+    Add latent state value to for each row of dataframe of single 'run'
+    """
+    """
     Argumnets:
-        modulation (func(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
+        modulation (function(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
             - f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
-        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
+        condition (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
             - f(single_row_data_frame) -> True or False
         df_events (pandas.DataFrame): a dataframe retrieved from "events.tsv" file and preprocessed in the previous stage.
         param_dict (dict): a dictionary containing model parameter value
@@ -336,12 +333,13 @@ def _add_latent_process_as_modulation(individual_params, modulation, condition,
                                       df_events_list, event_infos_list):
     """
     Calculate latent process using user-defined function "modulation", and add it to dataframe as a 'modulation' column.
-    
+    """
+    """
     Arguments:
         individual_params (pandas.DataFrame): the dataframe containing parameter values for each subject
-        modulation (func(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
+        modulation (function(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
             - f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
-        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
+        condition (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
             - f(single_row_data_frame) -> True or False
         df_events_list (list(pandas.DataFrame)): a list of dataframe retrieved from "events.tsv" files and preprocessed in the previous stage.
         event_infos_list (list(dict)): a list of dictionary containing information for each file. (ID number for subject, session, run)
@@ -350,13 +348,12 @@ def _add_latent_process_as_modulation(individual_params, modulation, condition,
         df_events_ready (pandas.DataFrame): a integrated dataframe with 'modulation' which is ready for BOLDification
 
     """
-    
     df_events_list = [
             _add_latent_process_single_eventdata(
                 modulation, condition, df_events,
                 _get_individual_param_dict(
                     event_infos["subject"], individual_params)
-            ) for df_events, event_infos in\
+            ) for df_events, event_infos in \
                  zip(df_events_list, event_infos_list)]
     
     df_events_ready =  pd.concat(df_events_list)
@@ -367,7 +364,8 @@ def _boldify(modulation_, hrf_model, frame_times):
     """
     BOLDify event data.
     by converting behavior data to weighted impulse seqeunce and convolve it with hemodynamic response function. 
-    
+    """
+    """
     Arguments:
         modulation_ (numpy.array): a array with onset, duration, and modulation values. shape : 3 x time point #
         hrf_model (str): name for hemodynamic model
@@ -393,11 +391,12 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
     """
     BOLDify the preprocessed behavioral (event) data 
     by converting behavior data to weighted impulse seqeunces and convolve them with hemodynamic response function. 
-    
-    this is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
-    by providing 'onset','duration', and 'modulation' values.
-    the final matrix will be shaped as subject # x run # x n_scan
-    n_scane means the number of time points in fMRI data
+    """
+    """
+    This is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
+    by providing "onset","duration", and "modulation" values.
+    the final matrix will be shaped as the number of subject * of run * of n_scan
+    "n_scan" means the number of time points in fMRI data
     if there is multiple session, still there would be no dimension indicating sessions info, 
     but runs will be arranged as grouped by sessions number.
     e.g. (subj-01, sess-01, run-01,:)
@@ -406,18 +405,18 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
          (subj-01, sess-02, run-01,:)
          (subj-01, sess-02, run-02,:)
                     ...
-    this order should match with preprocessed fMRI image data.
+    This order should match with preprocessed fMRI image data.
     
     Arguments:
-        df_events (DataFrame): preprocessed dataframe which is ready to BOLDify 
-        t_r (float): time resolution (second)
-        hrf_model(str): name for hemodynamic model
-        normalizer(str): method name for normalizing output BOLD-like signal. 'minmax' or 'standard' (=z_score)
+        df_events (DataFrame): preprocessed dataframe which is ready to BOLDify.
+        t_r (float): time resolution (second).
+        hrf_model(str): name for hemodynamic model.
+        normalizer(str): method name for normalizing output BOLD-like signal. 'minmax' or 'standard' (equal z_score).
         
     Return:
-        boldified_signals (numpy.array): BOLD-like signal. 
-        
+        boldified_signals (numpy.array): BOLD-like signal.
     """
+    # The reason for adding t_r / 2 is to provide sufficient convolution operation.
     frame_times = t_r * (np.arange(n_scans) + t_r / 2)
 
     signals = []
@@ -457,6 +456,3 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
     signals = np.array(signals)
     
     return signals
-
-
-

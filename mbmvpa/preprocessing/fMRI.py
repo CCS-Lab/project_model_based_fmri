@@ -4,30 +4,21 @@
 """
 @author: Yedarm Seong
 @contact: mybirth0407@gmail.com
-@last modification: 2020.11.13
+@last modification: 2020.12.17
 """
 
 import numpy as np
 import pandas as pd
 from pathlib import Path
 from skimage.measure import block_reduce
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
 from nilearn.datasets import load_mni152_brain_mask
-from scipy import stats
-from scipy.ndimage import gaussian_filter
-
 import nibabel as nib
 
-import logging
 
-logging.basicConfig(level=logging.INFO)
-
-
-def custom_masking(mask_path, threshold, zoom,
+def _custom_masking(mask_path, threshold, zoom,
                    smoothing_fwhm, interpolation_func, standardize):
     """
     Make custom ROI mask to reduce the number of features.
@@ -84,7 +75,7 @@ def custom_masking(mask_path, threshold, zoom,
     return voxel_mask, masker
 
 
-def image_preprocess(params):
+def _image_preprocess(params):
     """
     Make image that is motion corrected and ROI masked.
     This function wrapped up functions from nilearn package.
@@ -128,7 +119,7 @@ def image_preprocess(params):
     return fmri_masked, subject_id
 
 
-def image_preprocess_multithreading(params, nthread):
+def _image_preprocess_multithreading(params, nthread):
     """
     Call image_preprocess function using multithreading.
     """
