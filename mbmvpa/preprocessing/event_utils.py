@@ -36,9 +36,10 @@ logging.basicConfig(level=logging.INFO)
 
 
 def _get_metainfo(layout):
+    
     """Get meta information of fMRI experiment.
     
-    Arguments:
+    Args:
         layout (nibabel.BIDSLayout): BIDSLayout by bids package.
         
     Returns:
