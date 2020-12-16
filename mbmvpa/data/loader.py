@@ -19,14 +19,15 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
     """
     """
     Arguments:
-        root (str or pathlib.Path): data path, if None, must be specified X, y, time_mask_path.
-              default path is imported from layout.
-        time_masking (bool): TODO
-        voxel_masking (bool):TODO
+        root (str or pathlib.Path): Path where created data (X, y, time_mask, voxel_mask) is stored.
+            default path is imported from layout.
+        time_masking (bool): Whether to do time masking or not.
+        voxel_masking (bool):Whether to do voxel masking or not.
 
     Returns:
-        X (numpy.ndarray): X, which is adjusted dimension and masked time points for training with shape: data # x voxel #
-        y (numpy.ndarray): y, which is adjusted dimension and masked time points for training with shape: data # 
+        X (numpy.ndarray): X, which is adjusted dimension and masked time points for training with shape: data # x voxel #.
+        y (numpy.ndarray): y, which is adjusted dimension and masked time points for training with shape: data #.
+        voxel_mask (nibabel.nifti1.Nifti1Image): Voxel mask file for get result brain map.
     """
 
     def _load_and_reshape(data_p):
