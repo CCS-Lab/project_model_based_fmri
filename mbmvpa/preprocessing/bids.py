@@ -86,8 +86,8 @@ def bids_preprocess(# path informations
         threshold (float): threshold for binarizing mask images
         zoom (tuple[float, float, float]): zoom window, indicating a scaling factor for each dimension in x,y,z. the dimension will be reduced by the factor of corresponding axis.
             e.g. (2,2,2) will make the dimension half in all directions, so 2x2x2=8 voxels will be 1 voxel.
-        smoothing_fwhm (int): the amount of spatial smoothing. if None, image will not be smoothed.
-        interpolation_func (numpy.func): a method to calculate a representative value in the zooming window. e.g. numpy.mean, numpy.max
+        smoothing_fwhm (int or None): the amount of spatial smoothing. if None, image will not be smoothed.
+        interpolation_func (numpy.function): a method to calculate a representative value in the zooming window. e.g. numpy.mean, numpy.max
             e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube into a single value of its mean.
         standardize (bool): if true, conduct standard normalization within each image of a single run. 
         motion_confounds ((list[str, str, ..., str])): list of motion confound names in confounds tsv file. 
@@ -95,11 +95,11 @@ def bids_preprocess(# path informations
         nthread (int): the number of thread for the parallel computing.
         
     Returns:
-        tuple[numpy.array, nibabel.nifti1.Nifti1Image, nilearn.NiftiMasker, nibabel.BIDSLayout]: 
-        - **X** (*numpy.ndarray*) - input data for MVPA(:math:`X`). subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #
-        - **voxel_mask** (*nibabel.nifti1.Nifti1Image*) - a nifti image for voxel-wise binary mask (ROI mask)
-        - **masker** (*nilearn.input_data.NiftiMasker*) - the masker object. fitted and used for correcting motion confounds, and masking.
-        - **layout** (*bids.BIDSLayout*) - the loaded layout.
+        tuple[numpy.ndarray, nibabel.nifti1.Nifti1Image, bids.BIDSLayout, str]:
+            - **X** (*numpy.ndarray*): input data for MVPA(:math:`X`). subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #.
+            - **voxel_mask** (*nibabel.nifti1.Nifti1Image*): a nifti image for voxel-wise binary mask (ROI mask).
+            - **layout** (*bids.BIDSLayout*): The loaded layout.
+            - **data_root** (*bids.BIDSLayout*): Equal to layout.derivatives["fMRI"].root.
     """
 
     progress_bar = tqdm(total=6)

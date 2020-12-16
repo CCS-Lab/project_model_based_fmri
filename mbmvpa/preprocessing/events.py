@@ -61,22 +61,23 @@ def events_preprocess(# path informations
     """
            
     Args:
-        root (str or Path): the root directory of BIDS layout
-        layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
-        save_path (str or Path): a path for the directory to save outputs (y, time_mask) and intermediate data (individual_params_custom, df_events). if not provided, "BIDS root/derivatives/data" will be set as default path      
-        preprocess (func(pandas.Series, dict)-> pandas.Series)): a user-defined function for modifying each row of behavioral data. 
-            - f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data check
-        condition (func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
+        root (None or str or Path): The root directory of BIDS layout
+        layout (None or bids.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
+        save_path (None or str or Path): A path for the directory to save outputs (y, time_mask) and intermediate data (individual_params_custom, df_events).
+            if not provided, "BIDS root/derivatives/data" will be set as default path      
+        preprocess (function(pandas.Series, dict)-> pandas.Series)): A user-defined function for modifying each row of behavioral data.
+            - f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data check.
+        condition (function(pandas.Series)-> boolean)): A user-defined function for filtering each row of behavioral data.
             - f(single_row_data_frame) -> True or False
-        modulation (func(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
-            - f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
-        condition_for_modeling (None or func(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
+        modulation (function(pandas.Series, dict)-> Series): A user-defined function for calculating latent process (modulation).
+            - f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state.
+        condition_for_modeling (None or function(pandas.Series)-> boolean)): A user-defined function for filtering each row of behavioral data which will be used for fitting computational model.
             - None : "condition" function will be used.
             - f(single_row_data_frame) -> True or False
-        dm_model (str or pathlib.Path or hbayesdm.models) : computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
-        individual_params_custom (str or Path or pandas.DataFrame) : pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
-        hrf_model (str): the name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal
-            the below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
+        dm_model (str or pathlib.Path or hbayesdm.models): Computational model by hBayesDM package. should be provided as the name of the model (e.g. "ra_prospect") or a model object.
+        individual_params_custom (None or str or Path or pandas.DataFrame): pandas dataframe with params_name columns and corresponding values for each subject. if not provided, it will be obtained by fitting hBayesDM model
+        hrf_model (str): The name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal.
+            The below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
             (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
             
             The different hemodynamic models can be understood as follows:
@@ -88,12 +89,12 @@ def events_preprocess(# path informations
                  - "glover + derivative": the Glover hrf + time derivative (2 regressors)
                  - "glover + derivative + dispersion": idem + dispersion derivative
                                                     (3 regressors)
+        normalizer (str): A name for normalization method, which will normalize BOLDified signal. "minimax" or "standard".
+            - "minmax": rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively.
+            - "standard": rescale value by calculating subject-wise z_score.
         df_events_custom (str or Path or pandas.DataFrame): TODO
-        normalizer (str): a name for normalization method, which will normalize BOLDified signal. "minimax" or "standard" 
-            - "minmax": rescale value by putting minimum value and maximum value for each subject to be given lower bound and upper bound respectively
-            - "standard": rescale value by calculating subject-wise z_score
-        use_duration (boolean) : if True use "duration" column to make time mask, if False regard gap between consecuting trials" onset values as duration
-        scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if "standard" normalization is selected. default is -1 to 1.
+        use_duration (boolean): If True use "duration" column to make time mask, if False regard gap between consecuting trials" onset values as duration.
+        scale (tuple(float, float)): Lower bound and upper bound for minmax scaling. will be ignored if "standard" normalization is selected. default is -1 to 1.
 
     Returns:
         tuple[hbayesdm.model,pandasDataFrame,numpy,array,numpy.ndarray]:
