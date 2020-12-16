@@ -51,8 +51,7 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
     assert isinstance(voxel_masking, bool)
     ###########################################################################
 
-    # if root is given and path for any of X, y is not given, then use default path.
-    data_path = Path(root / config.DEFAULT_SAVE_DIR)
+    data_path = Path(root) / config.DEFAULT_SAVE_DIR
 
     # aggregate X fragmented by subject to one matrix.
     X_list = list(data_path.glob(f"{config.DEFAULT_FEATURE_PREFIX}_*.npy"))
