@@ -21,7 +21,8 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
     Arguments:
         root (str or pathlib.Path): data path, if None, must be specified X, y, time_mask_path.
               default path is imported from layout.
-        time_mask_path (str or pathlib.Path): optional, time mask data path, if None, default is BIDS_root/derivates/data.
+        time_masking (bool): TODO
+        voxel_masking (bool):TODO
 
     Returns:
         X (numpy.ndarray): X, which is adjusted dimension and masked time points for training with shape: data # x voxel #
