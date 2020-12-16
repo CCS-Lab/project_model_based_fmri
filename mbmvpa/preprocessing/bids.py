@@ -7,11 +7,13 @@
 
 """
 Goals of this code:
-1) Remove motion artifacts and drift - Done by wrapping functions in nilearn package
-2) Reduce dimensionality by masking and pooling 
-    - an important process as the high dimensionality is an obstacle for fitting regression model, in terms of both computing time and convergence.
+1. **To remove motion artifacts and drift** 
+    - Done by wrapping functions in *nilearn* package.
+2. **To reduce dimensionality by masking and pooling**
 
-    2-1) Masking - Related argument (mask_path),(threshold)
+    - It is an important process as the high dimensionality is an obstacle for fitting regression model, in terms of both computing time and convergence.
+
+    2-a. Masking - Related argument (``mask_path``),(``threshold``)
         Probabilistic maps are integrated to make the maps as ROIs (a binary voxel-wise mask). 
         It is needed to threshold the map so that you create a mask that only includes voxels with a z-score of a specific value greater than the threshold.
         After thresholding, the surviving voxels are binarized - in other words, set to 1.
@@ -19,13 +21,14 @@ Goals of this code:
         -> This process reduces the total number of voxels that will be included in the analysis.
         If the masking information is not provided, all the voxels in MNI 152 space will be included in the data.
 
-    2-2) Pooling - Related argument (zoom), (interpolation_func)
+    2-b. Pooling - Related argument (``zoom``), (``interpolation_func``)
         The number of voxels is further diminished by zooming (or resacling) fMRI images to a coarse-grained resolution. 
         You can give a tuple indicating a zooming window size in x,y,z directions. e.g. (2,2,2)
         Voxels in a cube with the zooming window size will be converted to one representative value reducing resolution and the total number of voxels.
         You can also indicate the method to extract representative value with numpy function. e.g. np.mean means using the average value.
 
-3) re-organize data for fitting MVPA model - the preprocessed image will be saved subject-wise.
+3. **To re-organize data for fitting MVPA model** 
+    - The preprocessed image will be saved subject-wise.
 """
 
 import logging
