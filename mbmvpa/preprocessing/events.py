@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+## author: Yedarm Seong, Cheoljun cho
+## contact: mybirth0407@gmail.com, cjfwndnsl@gmail.com
+## last modification: 2020.12.17
+
 """
-@author: Yedarm Seong, Cheoljun cho
-@contact: mybirth0407@gmail.com
-          cjfwndnsl@gmail.com
-@last modification: 2020.12.17
+It is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
+The result BOLD-like signals will be used for a target(y) in MVPA.
+Also, it will produce time masks which are binary arrays with the same size as the time dimension of the data 
+to indicate which time point of data will be included in MVPA.
+The default setting is calculating latent process (or 'modulation') 
+by using hierarchical Bayesian modeling by running "hBayesDM" package.
 
-This code is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
-
+User can optionally skip the steps in this process in the following possible scenarios
+- User can provide **precalculated behavioral data** through *df_events_custom* argument. In this case, it will skip both fitting model and extracting latent process. 
+- User can provide **precalculated individual model parameter values** through *individual_params_custom* argument.In this case, it will only skip model fitting part.
 """
 
 from pathlib import Path
@@ -55,22 +62,8 @@ def events_preprocess(# path informations
                       **kwargs,
                       ):
     """
-    This function is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
-    The BOLD-like signals will be used for a target(y) in MVPA.
-    Also, it will produce time masks which are binary arrays with the same size as the time dimension of the data
-    to indicate which time point of data will be included in MVPA.
-    
-    Note :
-        The default setting is calculating latent process (or 'modulation') 
-        by using hierarchical Bayesian modeling by running "hBayesDM" package.
-        
-        User can optionally skip the steps in this process in the following possible scenarios
-        1) User can provide precalculated behavioral data through "df_events_custom" argument. 
-           In this case, it will skip both fitting model and extracting latent process. 
-        2) User can provide precalculated individual model parameter values through "individual_params_custom" argument.
-           In this case, it will only skip model fitting part.
            
-    Arguments:
+    Args:
         root (str or Path): the root directory of BIDS layout
         layout (nibabel.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         save_path (str or Path): a path for the directory to save outputs (y, time_mask) and intermediate data (individual_params_custom, df_events). if not provided, "BIDS root/derivatives/data" will be set as default path      
@@ -106,10 +99,11 @@ def events_preprocess(# path informations
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if 'standard' normalization is selected. default is -1 to 1.
 
     Returns:
-        dm_model (hbayesdm.model): hBayesDM model.
-        df_events (pandas.DataFrame): integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
-        signals (numpy.array): BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
-        time_mask (numpy.array): a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
+        tuple[hbayesdm.model,pandasDataFrame,numpy,array,numpy.array]:
+        - **dm_model** (*hbayesdm.model*) - hBayesDM model.
+        - **df_events** (*pandas.DataFrame*) - integrated event DataFrame (preprocessed if not provided) with 'onset','duration','modulation'
+        - **signals** (*numpy.array*) - BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
+        - **time_mask** (*numpy.array*) - a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
     """
 
     progress_bar = tqdm(total=6)

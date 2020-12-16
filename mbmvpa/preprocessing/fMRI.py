@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-@author: Yedarm Seong
-@contact: mybirth0407@gmail.com
-@last modification: 2020.12.17
-"""
+## author: Yedarm Seong, Cheoljun cho
+## contact: mybirth0407@gmail.com, cjfwndnsl@gmail.com
+## last modification: 2020.12.17
 
 import numpy as np
 import pandas as pd
