@@ -24,8 +24,8 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
         time_mask_path (str or pathlib.Path): optional, time mask data path, if None, default is BIDS_root/derivates/data.
 
     Returns:
-        X (numpy.array): X, which is adjusted dimension and masked time points for training with shape: data # x voxel #
-        y (numpy.array): y, which is adjusted dimension and masked time points for training with shape: data # 
+        X (numpy.ndarray): X, which is adjusted dimension and masked time points for training with shape: data # x voxel #
+        y (numpy.ndarray): y, which is adjusted dimension and masked time points for training with shape: data # 
     """
 
     def _load_and_reshape(data_p):
@@ -36,7 +36,7 @@ def prepare_dataset(root, time_masking=True, voxel_masking=True):
             data_p (str, or pathlib.Path): path for the data
 
         Returns:
-            reshaped_data (numpy.array): loaded and reshaped data with shape (subject # x run # x time_point #) x voxel #
+            reshaped_data (numpy.ndarray): loaded and reshaped data with shape (subject # x run # x time_point #) x voxel #
         """
 
         data = np.load(data_p)

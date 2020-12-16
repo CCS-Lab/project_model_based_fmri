@@ -96,11 +96,11 @@ def events_preprocess(# path informations
         scale (tuple(float, float)) : lower bound and upper bound for minmax scaling. will be ignored if "standard" normalization is selected. default is -1 to 1.
 
     Returns:
-        tuple[hbayesdm.model,pandasDataFrame,numpy,array,numpy.array]:
+        tuple[hbayesdm.model,pandasDataFrame,numpy,array,numpy.ndarray]:
         - **dm_model** (*hbayesdm.model*) - hBayesDM model.
         - **df_events** (*pandas.DataFrame*) - integrated event DataFrame (preprocessed if not provided) with "onset","duration","modulation"
-        - **signals** (*numpy.array*) - BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
-        - **time_mask** (*numpy.array*) - a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
+        - **signals** (*numpy.ndarray*) - BOLD-like signals with shape: subject # x (session # x run #) x time length of scan x voxel #
+        - **time_mask** (*numpy.ndarray*) - a  binary mask indicating valid time point with shape: subject # x (session # x run #) x time length of scan
     """
 
     progress_bar = tqdm(total=6)

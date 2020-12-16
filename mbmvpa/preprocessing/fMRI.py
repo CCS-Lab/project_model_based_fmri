@@ -33,8 +33,8 @@ def _custom_masking(mask_path, threshold, zoom,
                                          e.g. zoom=(2,2,2) and interpolation_func=np.mean will convert 2x2x2 cube into a single value of its mean.
         standardize (boolean): if true, conduct standard normalization within each image of a single run. 
     Return:
-        voxel_mask (nibabel.Nifti1Image): a nifti image for voxel-wise binary mask (ROI mask)
-        masker (nilearn.NiftiMasker): a masker object. will be used for correcting motion confounds, and masking.
+        voxel_mask (nibabel.nifti1.Nifti1Image): a nifti image for voxel-wise binary mask (ROI mask)
+        masker (nilearn.input_data.NiftiMasker): a masker object. will be used for correcting motion confounds, and masking.
     """
     
     # list up mask image file
@@ -85,12 +85,12 @@ def _image_preprocess(params):
             image_path (str or Path): path of fMRI nii file 
             confounds_path (str or Path): path of corresponding motion confounds tsv file
             motion_confounds (list[str]): list of name indicating motion confound names in confounds tsv file
-            masker (nilearn.NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
-            voxel_mask (nibabel.Nifti1Image): nifti image for voxel-wise binary mask
+            masker (nilearn.input_data.NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
+            voxel_mask (nibabel.nifti1.Nifti1Image): nifti image for voxel-wise binary mask
             subject_id (str): subject ID. used to track the owner of the file in multiprocessing
 
     Return:
-        fmri_masked (numpy.array): preprocessed image with shape run # x time point # x voxel #
+        fmri_masked (numpy.ndarray): preprocessed image with shape run # x time point # x voxel #
         subject_id (str): subject ID. used to track the owner of the file in multiprocessing
     """
 
@@ -128,12 +128,12 @@ def _image_preprocess_multithreading(params, nthread):
             image_path (str or Path): path of fMRI nii file 
             confounds_path (str or Path): path of corresponding motion confounds tsv file
             motion_confounds (list[str]): list of name indicating motion confound names in confounds tsv file
-            masker (nilearn.NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
-            voxel_mask (nibabel.Nifti1Image): nifti image for voxel-wise binary mask
+            masker (nilearn.input_data.NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
+            voxel_mask (nibabel.nifti1.Nifti1Image): nifti image for voxel-wise binary mask
             subject_id (str): subject ID. used to track the owner of the file in multiprocessing
 
     Return:
-        fmri_masked (numpy.array): preprocessed image with shape run # x time point # x voxel #
+        fmri_masked (numpy.ndarray): preprocessed image with shape run # x time point # x voxel #
         subject_id (str): subject ID. used to track the owner of the file in multiprocessing
     """
     image_paths, confounds_paths,\
@@ -147,7 +147,7 @@ def _image_preprocess_multithreading(params, nthread):
              masker, voxel_mask, subject_id])
 
     preprocessed_images = []
-    n_worker = 4 if nthread > 4 else nthread
+    nworker = 4 if nthread > 4 else nthread
     
     # Parallel processing for images with thread pool
     # Thread pool has the advantage of saving memory compared to process pool.
@@ -155,7 +155,7 @@ def _image_preprocess_multithreading(params, nthread):
     # 2. Create parameters to use for each task in thread - image params
     # 3. Thread returns a return value after job completion - future.result()
     # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
-    with ThreadPoolExecutor(max_workers=n_worker) as executor:
+    with ThreadPoolExecutor(max_workers=nworker) as executor:
         future_result = {
             executor.submit(
                 _image_preprocess, image_param): image_param \

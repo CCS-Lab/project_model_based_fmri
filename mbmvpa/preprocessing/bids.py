@@ -95,11 +95,11 @@ def bids_preprocess(# path informations
         nthread (int): the number of thread for the parallel computing
         
     Returns:
-        tuple[numpy.array, nibabel.Nifti1Image, nilearn.NiftiMasker, nibabel.BIDSLayout]: 
-        - **X** (*numpy.array*) - input data for MVPA(:math:`X`). subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #
-        - **voxel_mask** (*nibabel.Nifti1Image*) - a nifti image for voxel-wise binary mask (ROI mask)
-        - **masker** (*nilearn.NiftiMasker*) - the masker object. fitted and used for correcting motion confounds, and masking.
-        - **layout** (*nibabel.BIDSLayout*) - the loaded layout. 
+        tuple[numpy.array, nibabel.nifti1.Nifti1Image, nilearn.NiftiMasker, nibabel.BIDSLayout]: 
+        - **X** (*numpy.ndarray*) - input data for MVPA(:math:`X`). subject-wise & run-wise BOLD time series data. shape : subject # x run # x timepoint # x voxel #
+        - **voxel_mask** (*nibabel.nifti1.Nifti1Image*) - a nifti image for voxel-wise binary mask (ROI mask)
+        - **masker** (*nilearn.input_data.NiftiMasker*) - the masker object. fitted and used for correcting motion confounds, and masking.
+        - **layout** (*bids.BIDSLayout*) - the loaded layout. 
     """
 
     progress_bar = tqdm(total=6)
