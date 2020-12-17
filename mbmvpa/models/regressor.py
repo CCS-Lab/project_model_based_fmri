@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+#author: Cheol Jun Cho, Yedarm Seong
+#contact: cjfwndnsl@gmail.com, mybirth0407@gmail.com
+#last modification: 2020.11.16
+    
 """
-@author: Cheol Jun Cho, Yedarm Seong
-@contact: cjfwndnsl@gmail.com
-          mybirth0407@gmail.com
-@last modification: 2020.11.16
-
 This part is implemented to fit regression model and extract voxel-wise weights (coefficients). 
 
 Available Model:
-    Multi-Layer Perceptron (tensorflow.keras): stacked perceptron layers intertwined with "Drop out".
-    Penalized linear regression (tensorflow.keras): penalizing objective function with mixed L1 and L2 norm.
-    ElasticNet (glmnet): penalized linear regression with automatical searching optimal amount of penalizing (shrinkage parameter).
+    - Multi-Layer Perceptron (tensorflow.keras): stacked perceptron layers intertwined with "Drop out".
+    - Penalized linear regression (tensorflow.keras): penalizing objective function with mixed L1 and L2 norm.
+    - ElasticNet (glmnet): penalized linear regression with automatical searching optimal amount of penalizing (shrinkage parameter).
     
 Understanding the part dependent on tensorflow.Keras might require the basic knowledge in deep learning frameworks.
 
@@ -64,7 +62,7 @@ def mlp_regression(X, y,
                    save=False,
                    save_path=None,
                    n_samples=30000):
-    """
+    """ 
     Fitting Multi-Layer Perceptron (MLP) as a regression model for multi-voxel
     pattern analysis and extracting fitted coefficients. 
     Mini-batch gradient descent with earlystopping.
@@ -78,13 +76,10 @@ def mlp_regression(X, y,
         - about early stopping: https://en.wikipedia.org/wiki/Early_stopping
         - about stochastic gradient descent: https://en.wikipedia.org/wiki/Stochastic_gradient_descent
         
-    Arguments:
-        -- Data --
-        X (numpy.array): preprocessed fMRI data. shape : data # x voxel #
-        y (numpy.array): parametric modulation values to regress X against. shape: data #
-
-        -- Model hyperparameters--
-        layer_dims (list(int)): specification of # of hidden neurons in each linear layer. list(# of ith layer hidden dimension)
+    Args:
+        X (numpy.ndarray): preprocessed fMRI data. shape : data # x voxel #
+        y (numpy.ndarray): parametric modulation values to regress X against. shape: data #
+        layer_dims (list[int]): specification of # of hidden neurons in each linear layer. list(# of ith layer hidden dimension)
                     MLP will be constructed by stacking layers with specified hidden dimension.
         activation (str): name of activation function applied after each layer.
                      e.g. 'linear' : f(x) = x, 'sigmoid' : f(x) = 1 / (1 + exp(-x))
@@ -102,15 +97,13 @@ def mlp_regression(X, y,
                    please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
         loss (str): name of objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
               please refer to Keras loss api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/losses)
-
-        -- Others --
         verbose (int): if > 0 then log fitting process and report a validation mse of each repetition. #TODO add more options
-        save (boolean): if True save fitted weights, else erase them.
+        save (bool): if True save fitted weights, else erase them.
         save_path (str or Path): save temporal model weights file. TODO : replace it with using invisible temp file
         n_samples (int): maximum number of instance of data (X,y) used in a single repetition. 
 
     Return:
-        coefs (numpy.array): fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #. 
+        numpy.ndarray : **coefs** (*numpy.array*) - fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #.
     """
     coefs = []
 
@@ -249,8 +242,8 @@ def penalized_linear_regression(X, y,
 
     Arguments:
         -- Data --
-        X (numpy.array): preprocessed fMRI data. shape : data # x voxel #
-        y (numpy.array): parametric modulation values to regress X against. shape: data #
+        X (numpy.ndarray): preprocessed fMRI data. shape : data # x voxel #
+        y (numpy.ndarray): parametric modulation values to regress X against. shape: data #
 
         -- Model hyperparameters --
         alpha (float): mixing parameter
@@ -268,12 +261,12 @@ def penalized_linear_regression(X, y,
 
         -- Others --
         verbose (int): if > 0 then log fitting process and report a validation mse of each repetition. #TODO: add more options
-        save (boolean): if True save the results
+        save (bool): if True save the results
         save_path (str or Path): save temporal model weights file. TODO : replace it with using invisible temp file
         n_samples (int): maximum number of instance of data (X,y) used in a single repetition.
 
     Return:
-        coefs (numpy.array): fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #.
+        numpy.ndarray : **coefs** (*numpy.array*) - fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #.
     """
     coefs = []
 
@@ -389,10 +382,10 @@ def elasticnet(X, y,
     
     Repeat several times (=N) and return N coefficients.
 
-    Arugments:
+    Args:
         -- Data --
-        X (numpy.array): preprocessed fMRI data. shape : data # x voxel #
-        y (numpy.array): parametric modulation values to regress X against. shape: data #
+        X (numpy.ndarray): preprocessed fMRI data. shape : data # x voxel #
+        y (numpy.ndarray): parametric modulation values to regress X against. shape: data #
 
         -- Model hyperparameters --
         alpha (float): mixing parameter
@@ -404,14 +397,13 @@ def elasticnet(X, y,
 
         -- Others --
         verbose (int): if > 0 then log fitting process and report a validation mse of each repetition.
-        save (boolean): if True save the results
+        save (bool): if True save the results
         save_path (str or Path): save temporal model weights file. TODO : replace it with using invisible temp file
         n_samples (int): maximum number of instance of data (X,y) used in a single repetition. 
         confidence_interval (float): confidence interval for plotting fitting results. default is .99 for 99% confidence interval.
 
     Return:
-        coefs (numpy.array): fitted models' coefficients mapped to weight of each voxel.
-                shape: N x voxel #. 
+        numpy.ndarray : **coefs** (*numpy.array*) - fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #.
     """
     coefs = []
     exponent = np.linspace(
