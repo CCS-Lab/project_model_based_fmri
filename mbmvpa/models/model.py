@@ -22,22 +22,16 @@ from ..data import loader
 from ..utils import config
 
 
-class BinaryPerturbation():
-    def __init__(self, input_shape, n_sampling=1000):
+
+    
+class DefaultExtractor():
+    def __init__(self, input_shape):
         self.input_shape = input_shape
-        self.n_sampling = n_sampling
         
-    def calculate_attribution(self,model):
-        sample = np.random.rand((self.n_sampling,self.input_shape))
-        sample = ((sample > 0) * 2.0) -1
+    def extract(self,model):
+        sample = np.eye(self.input_shape)
+        return model.predict(sample).reshape(self.n_sampling)
         
-        perturb = model.predict(sample)
-        positive_mean_perturb = (perturb.reshape(self.n_sampling) * ((sample==1.0)+0.0)).mean(0)
-        negative_mean_perturb = (perturb.reshape(self.n_sampling) * ((sample==-1.0)+0.0)).mean(0)
-        
-        attribution = (positive_mean_perturb-negative_mean_perturb)/2
-        
-        return attribution
     
     
 class Regressor_TF():
@@ -98,8 +92,8 @@ class Regressor_TF():
         self.y = y
         self.model = model
         if extractor is None:
-            self._extractor_module = BinaryPerturbation(X.shape[-1])
-            self.extractor = BinaryPerturbation.calculate_attribution
+            self._extractor_module = DefaultExtractor(X.shape[-1])
+            self.extractor = DefaultExtractor.extract
         else:
             self.extractor = extractor
         self.save_path = Path(save_path)
@@ -213,7 +207,7 @@ class Regressor_TF():
             coeff = self.extractor(model)
             self._coeffs.append(coeff)
     
-        
+
         self._coeffs = np.array(self._coeffs)
         self._errors = np.array(self._errors)
         
