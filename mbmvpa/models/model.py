@@ -32,8 +32,8 @@ class BinaryPerturbation():
         sample = ((sample > 0) * 2.0) -1
         
         perturb = model.predict(sample)
-        positive_mean_perturb = perturb[sample==1.0].mean(0)
-        negative_mean_perturb = perturb[sample==-1.0].mean(0)
+        positive_mean_perturb = (perturb.reshape(self.n_sampling) * ((sample==1.0)+0.0)).mean(0)
+        negative_mean_perturb = (perturb.reshape(self.n_sampling) * ((sample==-1.0)+0.0)).mean(0)
         
         attribution = (positive_mean_perturb-negative_mean_perturb)/2
         
