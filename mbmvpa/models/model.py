@@ -22,6 +22,24 @@ from ..data import loader
 from ..utils import config
 
 
+class BinaryPerturbation():
+    def __init__(self, input_shape, n_sampling=1000):
+        self.input_shape = input_shape
+        self.n_sampling = n_sampling
+        
+    def calculate_attribution(self,model):
+        sample = np.random.rand((self.n_sampling,self.input_shape))
+        sample = ((sample > 0) * 2.0) -1
+        
+        perturb = model.predict(sample)
+        positive_mean_perturb = perturb[sample==1.0].mean(0)
+        negative_mean_perturb = perturb[sample==-1.0].mean(0)
+        
+        attribution = (positive_mean_perturb-negative_mean_perturb)/2
+        
+        return attribution
+    
+    
 class Regressor_TF():
     ''' Model for MVPA regression
     
@@ -79,7 +97,11 @@ class Regressor_TF():
         self.X = X
         self.y = y
         self.model = model
-        self.extractor = extractor
+        if extractor is None:
+            self._extractor_module = BinaryPerturbation(X.shape[-1])
+            self.extractor = BinaryPerturbation.calculate_attribution
+        else:
+            self.extractor = extractor
         self.save_path = Path(save_path)
         self.chk_path = None
         self.log_path = None
@@ -222,7 +244,9 @@ def build_mlp(input_shape,
     model.compile(loss=loss, optimizer=optimizer)
 
     return model
-        
+
+
+
 def extractor_mlp(model):
 
     weights = []
