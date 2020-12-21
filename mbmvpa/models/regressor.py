@@ -79,6 +79,7 @@ def mlp_regression(X, y,
     Args:
         X (numpy.ndarray): preprocessed fMRI data. shape : data # x voxel #
         y (numpy.ndarray): parametric modulation values to regress X against. shape: data #
+        layout (bids.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         layer_dims (list[int]): specification of # of hidden neurons in each linear layer. list(# of ith layer hidden dimension)
                     MLP will be constructed by stacking layers with specified hidden dimension.
         activation (str): name of activation function applied after each layer.
@@ -241,11 +242,9 @@ def penalized_linear_regression(X, y,
         
 
     Arguments:
-        -- Data --
         X (numpy.ndarray): preprocessed fMRI data. shape : data # x voxel #
         y (numpy.ndarray): parametric modulation values to regress X against. shape: data #
-
-        -- Model hyperparameters --
+        layout (bids.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         alpha (float): mixing parameter
         lambda_param (float): shrinkage parameter
         epochs (int): maximum number of iterations.
@@ -258,8 +257,6 @@ def penalized_linear_regression(X, y,
                     please refer to Keras optimizer api to use another. (https://keras.io/api/optimizers/)
         loss (str): name of objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
                please refer to Keras loss api to use another. (https://keras.io/api/losses/)
-
-        -- Others --
         verbose (int): if > 0 then log fitting process and report a validation mse of each repetition. #TODO: add more options
         save (bool): if True save the results
         save_path (str or Path): save temporal model weights file. TODO : replace it with using invisible temp file
@@ -383,19 +380,15 @@ def elasticnet(X, y,
     Repeat several times (=N) and return N coefficients.
 
     Args:
-        -- Data --
         X (numpy.ndarray): preprocessed fMRI data. shape : data # x voxel #
         y (numpy.ndarray): parametric modulation values to regress X against. shape: data #
-
-        -- Model hyperparameters --
+        layout (bids.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         alpha (float): mixing parameter
         n_splits (int): the number of N-fold cross validation
         n_jobs (int): the number of cores for parallel computing
         max_lambda (float): the maximum value of lambda to search
         min_lambda_ratio (float): the ratio of minimum lambda value to maximum lambda value. 
         lambda_search_num (int): the number of searching candidate.
-
-        -- Others --
         verbose (int): if > 0 then log fitting process and report a validation mse of each repetition.
         save (bool): if True save the results
         save_path (str or Path): save temporal model weights file. TODO : replace it with using invisible temp file
