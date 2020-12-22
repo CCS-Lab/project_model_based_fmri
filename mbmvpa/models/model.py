@@ -25,12 +25,24 @@ from ..utils import config
 
     
 class DefaultExtractor():
+    # model is assumed to be linear
+    
     def __init__(self, input_shape):
         self.input_shape = input_shape
         
-    def extract(self,model):
+    def extract(self,model,batch_size=256):
         sample = np.eye(self.input_shape)
-        return model.predict(sample).reshape(self.n_sampling)
+        n_step = int(np.ceil((self.input_shape+0.0)/batch_size))
+        
+        outputs = []
+        for i in range(n_step):
+            output = model.predict(sample[i*batch_size:(i+1)*batch_size])
+            output = list(output.flatten())
+            outputs += output
+            
+        outputs = np.array(outputs)[:self.input_shape]
+        
+        return outputs
         
     
     
@@ -54,10 +66,8 @@ class Regressor_TF():
         n_sample (int): maximum number of instance of data (X,y) used in a single repetition. 
         
     Methods:
-        fit (callable): method for fitting model with data (X,y).
-        get_coeff (callable): extract voxel-wise coefficients from trained model.
+        run (callable): method for fitting model with data (X,y) and return coefficients
         
-
     '''
     
     def __init__(self,
