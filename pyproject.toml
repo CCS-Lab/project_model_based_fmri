@@ -5,7 +5,7 @@ description = "Python library for fMRI multi-voxel pattern analysis"
 license = "GPL-3.0"
 authors = [
   "Yedarm Seong <mybirth0407@gmail.com>",
-  "Cheoljun Cho <cjfwndnsl@snu.ac.kr>",
+  "Cheol Jun Cho <cjfwndnsl@gmail.com>",
   "CCS-Lab <ccsl.snu@gmail.com>"
 ]
 readme = "README.md"
