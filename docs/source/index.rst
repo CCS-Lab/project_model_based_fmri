@@ -25,6 +25,7 @@ Features
    :maxdepth: 3
    :caption: Contents:
    
+   dev-guide.rst
    modules
    
 
