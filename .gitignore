@@ -4,6 +4,7 @@ sftp-config.json
 test/
 dev/
 results/
+list/
 *.ckpt
 
 # data and model binary files
