@@ -16,18 +16,33 @@ MB-MVPA supports Python 3.6 or above and relies on NumPy, NiLearn, hBayesDM, py-
 Features
 --------
 
+Content
+-------
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+   :caption: Contents:
+   
+   dev-guide.rst
+   
+.. toctree::
+   :maxdepth: 1
+   :glob:
+   :caption: Examples
+
+   jupyter_examples/*
+   
+.. toctree::
+   :maxdepth: 3
+   :glob:
+   :caption: Modules:
+   
+   modules
 
 
 
 ===================================
-
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents:
-   
-   dev-guide.rst
-   modules
-   
 
 Indices and tables
 ==================
