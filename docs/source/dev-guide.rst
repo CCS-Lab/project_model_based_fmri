@@ -30,3 +30,4 @@ sections assume this environment activated.
 
     # Activate the virtual environment
     poetry shell
+    python setup.py install

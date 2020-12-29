@@ -5,6 +5,7 @@ test/
 dev/
 results/
 list/
+deactivate/
 *.ckpt
 
 # data and model binary files
