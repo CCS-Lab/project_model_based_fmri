@@ -4,9 +4,6 @@
 
 # MB-MVPA 
 
-Yedarm Seong: mybirth0407@gmail.com<br>
-CheolJun Cho: cjfwndnsl@gmail.com<br>
-
 **MB-MVPA** is a unified Python fMRI analysis tool to find a brain implementation of a latent behavioral state.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MB-MVPA provides simple executable functions to conduct 
 computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. 
@@ -70,6 +67,10 @@ Mixed gamble task by Tom et al. 2007 retrieved from https://openneuro.org/datase
 
 Delayed discount task by Piva et al. 2019 retrieved from https://doi.org/10.18112/openneuro.ds001882.v1.0.5<br>
 notebook: TBU
+
+## Contributors
+Yedarm Seong: mybirth0407@gmail.com<br>
+CheolJun Cho: cjfwndnsl@gmail.com<br>
 
 ## References
 [1] Ahn, W.-Y., Haines, N., & Zhang, L. (2017). Revealing Neurocomputational Mechanisms of Reinforcement Learning and Decision-Making With the hBayesDM Package. Computational Psychiatry, 1(Figure 1), 24–57. https://doi.org/10.1162/cpsy_a_00002
