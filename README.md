@@ -68,13 +68,13 @@ Mixed gamble task by Tom et al. 2007 retrieved from https://openneuro.org/datase
 Delayed discount task by Piva et al. 2019 retrieved from https://doi.org/10.18112/openneuro.ds001882.v1.0.5<br>
 notebook: TBU
 
-## Contributors
-Yedarm Seong: mybirth0407@gmail.com<br>
-CheolJun Cho: cjfwndnsl@gmail.com<br>
-
 ## References
 [1] Ahn, W.-Y., Haines, N., & Zhang, L. (2017). Revealing Neurocomputational Mechanisms of Reinforcement Learning and Decision-Making With the hBayesDM Package. Computational Psychiatry, 1(Figure 1), 24–57. https://doi.org/10.1162/cpsy_a_00002
 
 [2] O’Doherty, J. P., Hampton, A., & Kim, H. (2007). Model-based fMRI and its application to reward learning and decision making. Annals of the New York Academy of Sciences, 1104, 35–53. https://doi.org/10.1196/annals.1390.022
 
 [3] Poldrack, R. A. (2006). Can cognitive processes be inferred from neuroimaging data? Trends in Cognitive Sciences, 10(2), 59–63. https://doi.org/10.1016/j.tics.2005.12.004
+
+## Developed by
+Yedarm Seong: mybirth0407@gmail.com<br>
+CheolJun Cho: cjfwndnsl@gmail.com<br>
