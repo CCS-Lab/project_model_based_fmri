@@ -23,9 +23,9 @@ In **MB_MVPA**, GLM in prevailing  massive univariate approach is replaced with 
 
 ### Features
 
-1. MB-MVPA is based on MVPA regression model.
-2. MB-MVPA is flexible as it allows various MVPA models plugged in.
-3. MB-MVPA is free of analytic hierarhy (e.g. first-level anal. or second-level anal.).
+- MB-MVPA is based on MVPA regression model.
+- MB-MVPA is flexible as it allows various MVPA models plugged in.
+- MB-MVPA is free of analytic hierarhy (e.g. first-level anal. or second-level anal.).
 
 ## Resources
 
