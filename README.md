@@ -8,7 +8,7 @@
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MB-MVPA provides simple executable functions to conduct 
 computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. 
 
-The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists of following steps.
+The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists of the following steps.
 
 1) Computational modeling of subjects' behaviors
 2) Extraction & time series generation for state values in the model (a.k.a latent process)
