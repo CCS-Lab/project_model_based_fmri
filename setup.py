@@ -58,20 +58,7 @@ setup(
     license=LICENSE,
     classifiers=CLASSIFIERS,
     packages=find_packages(),
-    install_requires=[
-        'bids',
-        'nilearn',
-        'nibabel',
-        'numpy',
-        'sklearn',
-        'scikit-image',
-        'pandas',
-        'pystan',
-        'hbayesdm',
-        'matplotlib',
-        'tensorflow',
-        'glmnet'
-    ],
+    install_requires=[],
     zip_safe=False,
     include_package_data=True,
 )
