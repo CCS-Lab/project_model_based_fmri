@@ -4,9 +4,6 @@
 
 # MB-MVPA 
 
-Yedarm Seong: mybirth0407@gmail.com<br>
-CheolJun Cho: cjfwndnsl@gmail.com<br>
-
 **MB-MVPA** is a unified Python fMRI analysis tool to find a brain implementation of a latent behavioral state.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MB-MVPA provides simple executable functions to conduct 
 computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. 
@@ -26,6 +23,35 @@ In **MB_MVPA**, GLM in prevailing  massive univariate approach is replaced with 
 - MB-MVPA is based on MVPA regression model.
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
 - MB-MVPA is free of analytic hierarhy (e.g. first-level anal. or second-level anal.).
+
+## Notes
+
+Before using MB-MVPA, raw fMRI data should be primarily processed by conventional fMRI preprocessing pipeline (recommend to use [*fmriprep*](https://fmriprep.org/en/stable/). Then, the preprocessed fMRI data are required to be formatted as [**BIDS**](https://bids-specification.readthedocs.io/en/stable/) layout.
+
+```
+BIDS_ROOT/derivatives/fmriprep/ -sub-01
+                               |-sub-02
+                                ...
+                               |-sub-##
+```
+
+MB-MVPA also needs mask images for ROI masking. We recommend to download forward and backward probability maps from [**Neurosynth**](https://neurosynth.org/). Then the MB-MVPA will integrate them into a single mask file. If not provided, the MNI 152 mask will be used instead. Please place mask files under *BIDS_ROOT/derivatives/fmriprep/masks*.
+
+Ex.
+
+```
+BIDS_ROOT/derivatives/fmriprep/masks/ -reward_association-test_z_FDR_0.01.nii.gz
+                                     |-reward_uniformity-test_z_FDR_0.01.nii.gz
+                                       ...
+                                     |-loss_association-test_z_FDR_0.01.nii.gz
+```
+
+## Flow
+
+<p align="center">
+  <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
+</p>
+  
 
 ## Resources
 
@@ -48,3 +74,7 @@ notebook: TBU
 [2] O’Doherty, J. P., Hampton, A., & Kim, H. (2007). Model-based fMRI and its application to reward learning and decision making. Annals of the New York Academy of Sciences, 1104, 35–53. https://doi.org/10.1196/annals.1390.022
 
 [3] Poldrack, R. A. (2006). Can cognitive processes be inferred from neuroimaging data? Trends in Cognitive Sciences, 10(2), 59–63. https://doi.org/10.1016/j.tics.2005.12.004
+
+## Developed by
+Yedarm Seong: mybirth0407@gmail.com<br>
+CheolJun Cho: cjfwndnsl@gmail.com<br>
