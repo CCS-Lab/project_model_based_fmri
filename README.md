@@ -100,6 +100,10 @@ coefs = mlp_regression(X, y,
 result = get_map(coefs, voxel_mask, task_name="tom2007_mlp", map_type="z", save_path=".", sigma=1)
 ```
 
+## User guides based on use-case scenario
+
+- [**Scenario 1**](TODO) 
+
 ## Resources
 - [**Documentation**](TODO) 
 - [**Developer Guides**](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
