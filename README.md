@@ -1,5 +1,5 @@
-<p align="center">
-<img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_logo.png" align="right" width="600px">
+<p text-align="center">
+<img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_logo.png" width="600px">
 </p>
 
 # MB-MVPA 
