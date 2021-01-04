@@ -56,9 +56,8 @@ Ex.
 ## Resources
 
 - [**Developer Guides**](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
-- [**Getting started**](TODO) 
+- [**Getting started**](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/get_started.md) 
 - [**Documentation**](TODO) 
-- [**Bug reports**](TODO) 
 
 ## Example data and code
 
