@@ -1,8 +1,4 @@
-
-
-<img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_logo.png" align="left" width="600px"><br>
-
-# MB-MVPA 
+# MB-MVPA <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_logo.png" align="right" width="600px">
 
 Yedarm Seong: mybirth0407@gmail.com<br>
 CheolJun Cho: cjfwndnsl@gmail.com<br>
@@ -19,7 +15,7 @@ The basic frameworks of model-based fMRI by O'Doherty et al. (2007) is done by f
 
 In **MB_MVPA**, GLM in the traditional massive univariate approach is replaced with multi-voxel pattern analysis (MVPA) and has the following two major differences from the traditional one. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006). Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.<br>
 
-<img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/framework_comp.png" align="middle" width="600px"><br>
+<img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/framework_comp.png" align="center" width="600px"><br>
 
 
 
