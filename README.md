@@ -17,8 +17,7 @@ In **MB_MVPA**, GLM in the traditional massive univariate approach is replaced w
 
 MB-MVPA supports Python 3.6 or above and relies on NumPy, NiLearn, hBayesDM, py-glmnet, and tensorflow (version)
 
-Features
---------
+### Features
 
 1. MB-MVPA is based on MVPA regression model.
 2. MB-MVPA is flexible as it allows various MVPA models plugged in.
@@ -30,7 +29,7 @@ Features
 - [**Documentation**] TODO 
 - [**Bug reports**] TODO 
 
-## Example data and code
+### Example data and code
 
 Mixed gamble task by Tom et al. 2007 retrieved from https://openneuro.org/datasets/ds000005/versions/00001<br>
 [ipynb notebook link](https://nbviewer.jupyter.org/gist/mybirth0407/58c2f854a8b8790acfb525abedd92571#file-tom_mvpa_model_based_fmri-ipynb) (only viewer)
