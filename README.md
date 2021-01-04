@@ -27,6 +27,10 @@ In **MB_MVPA**, GLM in prevailing  massive univariate approach is replaced with 
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
 - MB-MVPA is free of analytic hierarhy (e.g. first-level anal. or second-level anal.).
 
+## Notes
+
+Raw fMRI data should be primarily processed by conventional fMRI preprocessing pipeline (recommend to use [*fmriprep*](https://fmriprep.org/en/stable/)). Then, the preprocessed fMRI data are required to be formatted as [**BIDS**](https://bids-specification.readthedocs.io/en/stable/) layout.
+
 ## Resources
 
 - [**Developer Guides**](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
