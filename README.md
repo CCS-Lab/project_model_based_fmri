@@ -62,7 +62,7 @@ pip install mb-mvpa
 
 ## Quick Start 
 
-It assumes for user to have 
+It assumes that user prepared {BIDS_ROOT} satisfying input [requirements](#Notes).
 
 ## Resources
 - [**Documentation**](TODO) 
