@@ -29,7 +29,7 @@ In **MB_MVPA**, GLM in prevailing  massive univariate approach is replaced with 
 Before using MB-MVPA, raw fMRI data should be primarily processed by conventional fMRI preprocessing pipeline (recommend to use [*fmriprep*](https://fmriprep.org/en/stable/). Then, the preprocessed fMRI data are required to be formatted as [**BIDS**](https://bids-specification.readthedocs.io/en/stable/) layout.
 
 ```
-BIDS_ROOT/derivatives/fmriprep/ -sub-01
+{BIDS_ROOT}/derivatives/fmriprep/ -sub-01
                                |-sub-02
                                 ...
                                |-sub-##
@@ -40,7 +40,7 @@ MB-MVPA also needs mask images for ROI masking. We recommend to download forward
 Ex.
 
 ```
-BIDS_ROOT/derivatives/fmriprep/masks/ -reward_association-test_z_FDR_0.01.nii.gz
+{BIDS_ROOT}/derivatives/fmriprep/masks/ -reward_association-test_z_FDR_0.01.nii.gz
                                      |-reward_uniformity-test_z_FDR_0.01.nii.gz
                                        ...
                                      |-loss_association-test_z_FDR_0.01.nii.gz
