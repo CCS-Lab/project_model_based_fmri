@@ -23,13 +23,14 @@ MB-MVPA supports Python 3.6 or above and relies on NumPy, NiLearn, hBayesDM, py-
 2. MB-MVPA is flexible as it allows various MVPA models plugged in.
 3. MB-MVPA is free of analytic hierarhy (e.g. first-level anal. or second-level anal.).
 
-### Resources
+## Resources
 
+- [**Developer Guides**] (https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
 - [**Getting started**] TODO 
 - [**Documentation**] TODO 
 - [**Bug reports**] TODO 
 
-### Example data and code
+## Example data and code
 
 Mixed gamble task by Tom et al. 2007 retrieved from https://openneuro.org/datasets/ds000005/versions/00001<br>
 [ipynb notebook link](https://nbviewer.jupyter.org/gist/mybirth0407/58c2f854a8b8790acfb525abedd92571#file-tom_mvpa_model_based_fmri-ipynb) (only viewer)
