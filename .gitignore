@@ -151,3 +151,5 @@ examples/*/*.tsv
 examples/*/*.pkl
 examples/*/*scratch*
 examples/scratch/*
+
+.DS_Store
