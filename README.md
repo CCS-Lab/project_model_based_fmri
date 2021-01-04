@@ -24,6 +24,11 @@ Features
 2. MB-MVPA is flexible as it allows various MVPA models plugged in.
 3. MB-MVPA is free of analytic hierarhy (e.g. first-level anal. or second-level anal.).
 
+### Resources
+
+- [**Getting started**] TODO #(https://adopy.org/getting-started.html)
+- [**Documentation**] TODO #(https://adopy.org)
+- [**Bug reports**] TODO #(https://github.com/adopy/adopy/issues)
 
 ## Example data and code
 
