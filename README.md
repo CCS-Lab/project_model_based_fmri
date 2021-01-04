@@ -1,10 +1,8 @@
-
-
-# MB-MVPA 
-
 <p align="center">
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_logo.png" width="1000px">
 </p>
+
+# MB-MVPA 
 
 Yedarm Seong: mybirth0407@gmail.com<br>
 CheolJun Cho: cjfwndnsl@gmail.com<br>
