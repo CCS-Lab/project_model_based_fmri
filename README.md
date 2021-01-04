@@ -25,10 +25,10 @@ MB-MVPA supports Python 3.6 or above and relies on NumPy, NiLearn, hBayesDM, py-
 
 ## Resources
 
-- [**Developer Guides**] (https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
-- [**Getting started**] TODO 
-- [**Documentation**] TODO 
-- [**Bug reports**] TODO 
+- [**Developer Guides**](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
+- [**Getting started**](TODO) 
+- [**Documentation**](TODO) 
+- [**Bug reports**](TODO) 
 
 ## Example data and code
 
