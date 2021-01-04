@@ -64,6 +64,42 @@ pip install mb-mvpa
 
 It assumes that user prepared {BIDS_ROOT} satisfying input [requirements](#Notes).
 
+```
+from mbmvpa.preprocessing.bids import bids_preprocess
+from mbmvpa.preprocessing.events import events_preprocess
+from mbmvpa.data.loader import prepare_dataset
+from mbmvpa.utils.coef2map import get_map
+from mbmvpa.models.regressor import mlp_regression
+
+root = {BIDS_ROOT}
+
+# process fMRI data for mb-mvpa [X]
+X, voxel_mask, layout, data_root = bids_preprocess(root, smoothing_fwhm=None, zoom=(2, 2, 2), ncore=2, nthread=4)
+
+# generate time series data of latent process [y]
+dm_model, df_events, signals, time_masks, _ = \
+    events_preprocess(root,
+                      modulation={USER_DEFINED_MODULATION_FUNCTION})
+
+# prepare dataset for MVPA regression
+X, y, voxel_mask = prepare_dataset(data_root)
+
+# train Multi-Layer Perceptron model with X, y
+coefs = mlp_regression(X, y,
+                       layout,
+                       layer_dims=[1024, 1024],
+                       activation="linear",
+                       dropout_rate=0.5,
+                       epochs=100,
+                       patience=10,
+                       batch_size=64,
+                       N=3,
+                       verbose=1)
+
+# extract brain activation pattern from trained model
+result = get_map(coefs, voxel_mask, task_name="tom2007_mlp", map_type="z", save_path=".", sigma=1)
+```
+
 ## Resources
 - [**Documentation**](TODO) 
 - [**Developer Guides**](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
