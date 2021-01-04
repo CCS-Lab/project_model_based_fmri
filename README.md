@@ -6,7 +6,7 @@
 
 **MB-MVPA** is a unified Python fMRI analysis tool to find a brain implementation of a latent behavioral state.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MB-MVPA provides simple executable functions to conduct 
-computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. To [install](## Installation).
+computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. To [install](#Installation).
 
 The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists of the following steps.
 
