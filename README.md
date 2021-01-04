@@ -15,8 +15,9 @@ The basic frameworks of model-based fMRI by O'Doherty et al. (2007) is done by f
 
 In **MB_MVPA**, GLM in the traditional massive univariate approach is replaced with multi-voxel pattern analysis (MVPA) and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006). Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
+<p align="center">
 <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/framework_comp.png" width="600px">
-
+</p>
 
 
 MB-MVPA supports Python 3.6 or above and relies on NumPy, NiLearn, hBayesDM, py-glmnet, and tensorflow (version)
