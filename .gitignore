@@ -152,4 +152,4 @@ examples/*/*.pkl
 examples/*/*scratch*
 examples/scratch/*
 
-.DS_store
+.DS_Store
