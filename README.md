@@ -13,9 +13,9 @@ The basic frameworks of model-based fMRI by O'Doherty et al. (2007) is done by f
 2) Extraction & time series generation for state values in the model (a.k.a latent process)
 3) Relate latent process with task-fMRI time series data
 
-In **MB_MVPA**, GLM in the traditional massive univariate approach is replaced with multi-voxel pattern analysis (MVPA) and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006). Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.<br>
+In **MB_MVPA**, GLM in the traditional massive univariate approach is replaced with multi-voxel pattern analysis (MVPA) and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006). Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
-<img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/framework_comp.png" align="center" width="600px"><br>
+<img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/framework_comp.png" align="right" width="600px">
 
 
 
