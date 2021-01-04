@@ -31,6 +31,13 @@ In **MB_MVPA**, GLM in prevailing  massive univariate approach is replaced with 
 
 Before using MB-MVPA, raw fMRI data should be primarily processed by conventional fMRI preprocessing pipeline (recommend to use [*fmriprep*](https://fmriprep.org/en/stable/). Then, the preprocessed fMRI data are required to be formatted as [**BIDS**](https://bids-specification.readthedocs.io/en/stable/) layout.
 
+```
+BIDS_ROOT/derivatives/fmriprep |- sub-01
+                               |- sub-02
+                                 ...
+                               |- sub-##
+```
+
 ## Resources
 
 - [**Developer Guides**](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/docs/source/dev-guide.rst)
