@@ -9,15 +9,15 @@ CheolJun Cho: cjfwndnsl@gmail.com<br>
 
 **MB-MVPA** is a unified Python fMRI analysis tool to find a brain implementation of a latent behavioral state.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MB-MVPA provides simple executable functions to conduct 
-computational modeling (supported by *hBayesDM* [1]), and run model-based fMRI analysis using MVPA. 
+computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. 
 
-The basic frameworks of model-based fMRI by O'Doherty et al. (2007) [2] is done by following steps.
+The basic frameworks of model-based fMRI by O'Doherty et al. (2007)[2] consists of following steps.
 
 1) Computational modeling of subjects' behaviors
 2) Extraction & time series generation for state values in the model (a.k.a latent process)
 3) Relate latent process with task-fMRI time series data
 
-In **MB_MVPA**, GLM in the traditional massive univariate approach is replaced with multi-voxel pattern analysis (MVPA) and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006). Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
+In **MB_MVPA**, GLM in prevailing  massive univariate approach is replaced with multi-voxel pattern analysis (MVPA) models and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]. Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
 MB-MVPA supports Python 3.6 or above and relies on NumPy, NiLearn, hBayesDM, py-glmnet, and tensorflow (version)
 
@@ -46,3 +46,5 @@ notebook: TBU
 [1] Ahn, W.-Y., Haines, N., & Zhang, L. (2017). Revealing Neurocomputational Mechanisms of Reinforcement Learning and Decision-Making With the hBayesDM Package. Computational Psychiatry, 1(Figure 1), 24–57. https://doi.org/10.1162/cpsy_a_00002
 
 [2] O’Doherty, J. P., Hampton, A., & Kim, H. (2007). Model-based fMRI and its application to reward learning and decision making. Annals of the New York Academy of Sciences, 1104, 35–53. https://doi.org/10.1196/annals.1390.022
+
+[3] Poldrack, R. A. (2006). Can cognitive processes be inferred from neuroimaging data? Trends in Cognitive Sciences, 10(2), 59–63. https://doi.org/10.1016/j.tics.2005.12.004
