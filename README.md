@@ -53,18 +53,10 @@ Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-
 <p align="center">
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
 </p>
-  
-## Installation
 
-TODO. It would tenatatively be the below pip command.
+### Usage example 
 
-```
-pip install mb-mvpa
-```
-
-## Quick Start 
-
-It assumes that user prepared {BIDS_ROOT} satisfying input [requirements](#Notes).
+It assumes that user prepared {BIDS_ROOT} satisfying input [requirements](#Notes). It also requires some {USER_DEFINED_...} functions, you can check the detail with example in our working notebook examples.
 
 ```
 from mbmvpa.preprocessing.bids import bids_preprocess
@@ -101,6 +93,15 @@ coefs = mlp_regression(X, y,
 # extract brain activation pattern from trained model
 result = get_map(coefs, voxel_mask, task_name="tom2007_mlp", map_type="z", save_path=".", sigma=1)
 ```
+
+## Installation
+
+TODO. It would tenatatively be the below pip command.
+
+```
+pip install mb-mvpa
+```
+
 
 ## User guides based on use-case scenario
 
