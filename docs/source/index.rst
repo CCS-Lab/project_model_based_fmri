@@ -5,6 +5,9 @@
 
 Home
 ====
+.. image:: https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_logo.png
+   :alt: mb-mvpa logo
+   :align: center
 
 **MB-MVPA** is a unified Python fMRI analysis tool to find a brain implementation of a latent behavioral state.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MB-MVPA provides simple executable functions to conduct 
