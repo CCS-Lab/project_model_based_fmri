@@ -26,9 +26,9 @@ Features
 
 ### Resources
 
-- [**Getting started**] TODO #(https://adopy.org/getting-started.html)
-- [**Documentation**] TODO #(https://adopy.org)
-- [**Bug reports**] TODO #(https://github.com/adopy/adopy/issues)
+- [**Getting started**] TODO 
+- [**Documentation**] TODO 
+- [**Bug reports**] TODO 
 
 ## Example data and code
 
