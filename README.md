@@ -52,11 +52,11 @@ Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-
 
 The followings are use case scenarios considered in the tool development.
 
-| First Header  | Second Header |
-| ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
-
+| computational modeling | model fitting by hBayesDM |            |
+| ---------------------- | ------------------------- | ---------- |
+|           O            |              O            | Scenario 1 |
+|           O            |              X            | Scenario 2 |
+|           X            |              X            | Scenario 3 |
 
 
 ## Flow
