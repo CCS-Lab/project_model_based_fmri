@@ -48,6 +48,8 @@ Ex.
 
 Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow the corresponding use case in the example code. 
 
+Another important requirement is preparing a user-defined python "function" to calculate the latent space.
+
 ## Use case scenarios
 
 From the below [flowchart](#Flow), the preprocessing of input data is done for fMRI images and event files respectively. In the fMRI preprocessing, users need to care about *bids root* and *mask* files*. (.. and some might need to consider core/thread # regarding their computing resource.) This procedure is same for all use cases, and has little freedom. However, the event preprocessing has much more freedom in procedure that users can run it considering their own data conditions or preferences. The issues of high-variability in use cases are the followings.
