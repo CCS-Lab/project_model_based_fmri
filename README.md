@@ -50,6 +50,8 @@ Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-
 
 ## Use case scenarios
 
+From the below [flowchart](#Flow), the preprocessing of input data is done for fMRI images and event files respectively. In the fMRI preprocessing, users need to care about *bids root* and *mask* files*. (.. and some might need to consider core/thread # regarding their computing resource.) This procedure is same for all use cases, and has little freedom. However, the event preprocessing has much more freedom in procedure that users can run it considering their own data conditions or preferences. The issues of high-variability in use cases are the followings: **1) models in need are not implemented in hBayesDM (or might not want to fit models with the package), 2) BIDS convention only necessitate "onset" and "duration" columns in event.file, so column names would not match with requirements of hBayesDM, 3) Due to prevailing counter-balanced task paradigms, only subsets of event data should be considered, which means it requires a function of "filtering."  
+
 The followings are use case scenarios considered in the tool development.
 
 | computational modeling | model fitting by hBayesDM |            |
@@ -58,6 +60,9 @@ The followings are use case scenarios considered in the tool development.
 |           O            |              X            | Scenario 2 |
 |           X            |              X            | Scenario 3 |
 
+### Scenario  - Conduct computational modeling with hBayesDM
+
+In this scenario, user 
 
 ## Flow
 
