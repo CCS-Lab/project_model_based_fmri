@@ -48,11 +48,23 @@ Ex.
 
 Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow *Scenario 2* in the example code. 
 
+## Use case scenarios
+
+The followings are use case scenarios considered in the tool development.
+
+| First Header  | Second Header |
+| ------------- | ------------- |
+| Content Cell  | Content Cell  |
+| Content Cell  | Content Cell  |
+
+
+
 ## Flow
 
 <p align="center">
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
 </p>
+
 
 ### Usage example 
 
