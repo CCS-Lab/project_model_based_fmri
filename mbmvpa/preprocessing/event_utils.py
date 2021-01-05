@@ -384,7 +384,8 @@ def _boldify(modulation_, hrf_model, frame_times):
 
 def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
                                       hrf_model="glover",
-                                      normalizer="minmax"):
+                                      normalizer="minmax",
+                                      scale=(-1,1)):
     
     """
     BOLDify the preprocessed behavioral (event) data 
@@ -410,6 +411,7 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
         t_r (float): time resolution (second).
         hrf_model(str): name for hemodynamic model.
         normalizer(str): method name for normalizing output BOLD-like signal. "minmax" or "standard" (equal z_score).
+        scale (tuple(float, float)): Lower bound and upper bound for minmax scaling. will be ignored if "standard" normalization is selected. default is -1 to 1.
         
     Return:
         boldified_signals (numpy.array): BOLD-like signal.
@@ -447,7 +449,7 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
             # default is using minmax
             normalized_signal = minmax_scale(
                 signal_subject.flatten(),
-                feature_range=(-1, 1), axis=0)
+                feature_range=scale, axis=0)
 
         normalized_signal = normalized_signal.reshape(reshape_target)
         signals.append(normalized_signal)

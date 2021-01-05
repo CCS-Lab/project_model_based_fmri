@@ -40,44 +40,75 @@ from ..utils import config # configuration for default names used in the package
 class LatentProcessGenerator():
     
     def __init__(self, 
-                 # path informations
-                  root=None,
-                  layout=None,
-                  save_path=None,
-                  # user-defined functions
-                  preprocess=None,
-                  condition=None,
-                  modulation=None,
-                  # computational model specification
-                  condition_for_modeling=None,
-                  dm_model=None,
-                  individual_params_custom=None,
-                  # BOLDifying parameter
-                  hrf_model="glover",
-                  normalizer="minmax",
-                  # Other specification
-                  df_events_custom=None,
-                  use_duration=False,
-                  scale=(-1, 1)):
-        
-        # setting path informations
-        from_root = True
+              root=None,
+              layout=None,
+              save_path=None,
+              preprocess=None,
+              condition=None,
+              modulation=None,
+              dm_model=None,
+              condition_for_modeling=None,
+              individual_params_custom=None,
+              hrf_model="glover",
+              normalizer="minmax",
+              df_events_custom=None,
+              use_duration=False,
+              scale=(-1, 1)):
+
+        # setting path informations and loading layout
         if root is None:
             assert layout is not None
             from_root = False
             self.root = layout.root
+            self.layout = layout
         else:
             self.root = root
+            self.layout = BIDSLayout(root, derivatives=True)
             
         assert (save_path is None
             or isinstance(save_path, str)
             or isinstance(save_path, Path))
+        
+        if save_path is None:
+            sp = Path(
+                layout.derivatives["fMRIPrep"].root) / config.DEFAULT_SAVE_DIR
+        else:
+            sp = Path(save_path)
 
-        self.save_path = save_path
+        if not sp.exists():
+            sp.mkdir()
+
+        self.save_path = sp
+
+        # setting meta-info
+        self.n_subject, self.n_session, self.n_run, self.n_scans, self.t_r = _get_metainfo(self.layout)
         
         # setting user-defined functions
         self.preprocess = preprocess
         self.condition = conditon
         self.modulation = modulation
         
-        # 
+        # setting model fitting specification
+        self.dm_model = dm_model
+        self.condtion_for_modeling = condition_for_modeling
+        self.individual_params = individual_params_custom
+        
+        # setting BOLD-like signal generating specification
+        self.hrf_model = hrf_model
+        self.normalizer = normalizer
+        self.scale = scale
+        
+        # setting attribute holding data frames for event data
+        self._df_events_ready = df_events_custom
+        
+        # setting working space
+        # this will aggregate all events file path in sorted way
+        events = layout.get(suffix="events", extension="tsv")
+        # collecting dataframe from event files spread in BIDS layout
+        self._df_events_list = [event.get_df() for event in events]
+        # event_info contains ID number for subject, session, run
+        self._event_infos_list = [event.get_entities() for event in events]
+        
+        #TODO pring basic meta info of BIDS layout
+        
+        

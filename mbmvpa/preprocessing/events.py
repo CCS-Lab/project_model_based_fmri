@@ -253,7 +253,7 @@ def events_preprocess(# path informations
 
     progress_bar.set_description("modulation signal making..".ljust(50))
     signals = _convert_event_to_boldlike_signal(
-        df_events_ready, t_r, n_scans, n_session, hrf_model, normalizer)
+        df_events_ready, t_r, n_scans, n_session, hrf_model, normalizer,scale)
     
     np.save(sp / config.DEFAULT_MODULATION_FILENAME, signals)
     progress_bar.update(1)
