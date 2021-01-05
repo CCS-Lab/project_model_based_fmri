@@ -48,7 +48,15 @@ Ex.
 
 Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow the corresponding use case in the example code. 
 
-Another important requirement is preparing a user-defined python "function" to calculate the latent space.
+Another important requirement is preparing a user-defined python "function" to calculate the latent space of the computational model. The function is assumed to work on each row of pandas.DataFrame. 
+
+```
+def user_defined_modulation(row:pandas.Series, param_dict:dict) -> pandas.Series:
+    # example from prospect theory model.
+    modulation = (row["gain"] ** param_dict["rho"]) - (param_dict["lambda"] * (row["loss"] ** param_dict["rho"]))
+    row["modulation"] = modulation
+    return row
+```
 
 ## Use case scenarios
 
@@ -60,10 +68,6 @@ From the below [flowchart](#Flow), the preprocessing of input data is done for f
 3) In the counter-balanced task paradigms, only subsets of event data should be considered, which means it requires a function of "filtering." 
 
 A simple working example notebook for each of above is provided here. Please be aware that above three issues are not exclusive, so check all of them to get a sense of how it works.
-
-### Scenario  - Conduct computational modeling with hBayesDM
-
-In this scenario, user 
 
 ## Flow
 
