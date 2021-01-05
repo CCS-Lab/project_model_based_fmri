@@ -46,7 +46,7 @@ Ex.
                                        |-loss_association-test_z_FDR_0.01.nii.gz
 ```
 
-Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow *Scenario 2* in the example code. 
+Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow the corresponding use case in the example code. 
 
 ## Use case scenarios
 
@@ -57,14 +57,7 @@ From the below [flowchart](#Flow), the preprocessing of input data is done for f
 2) BIDS convention only necessitate "onset" and "duration" columns in event.file, so column names would not match with requirements of hBayesDM.
 3) In the counter-balanced task paradigms, only subsets of event data should be considered, which means it requires a function of "filtering." 
 
-
-The followings are use case scenarios considered in the tool development.
-
-| computational modeling | model fitting by hBayesDM |            |
-| ---------------------- | ------------------------- | ---------- |
-|           O            |              O            | Scenario 1 |
-|           O            |              X            | Scenario 2 |
-|           X            |              X            | Scenario 3 |
+A simple working example notebook for each of above is provided here. Please be aware that above three issues are not exclusive, so check all of them to get a sense of how it works.
 
 ### Scenario  - Conduct computational modeling with hBayesDM
 
