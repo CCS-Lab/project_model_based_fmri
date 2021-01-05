@@ -67,7 +67,7 @@ From the below [flowchart](#Flow), the preprocessing of input data is done for f
 2) BIDS convention only necessitate "onset" and "duration" columns in event.file, so column names would not match with requirements of hBayesDM.
 3) In the counter-balanced task paradigms, only subsets of event data should be considered, which means it requires a function of "filtering." 
 
-The above issues are fully explained in the simple working example [notebooks](https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/examples/Mixed-gamble_task/mvpa/tom_mvpa_model_based_fmri.ipynb). 
+The above issues are fully explained in the simple working example [notebooks](#Working examples). 
 
 ## Flow
 
