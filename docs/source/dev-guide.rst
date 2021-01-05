@@ -31,3 +31,9 @@ sections assume this environment activated.
     # Activate the virtual environment
     poetry shell
     python setup.py install
+
+For adding virtual environment in jupyter kernel.
+
+.. code:: bash
+
+    poetry run python -m ipykernel install --user --name *myenv*
