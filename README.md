@@ -14,7 +14,7 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 2) Extraction & time series generation for state values in the model (a.k.a latent process)
 3) Relate latent process with task-fMRI time series data
 
-In **MB_MVPA**, GLM in prevailing  massive univariate approach is replaced with MVPA regression models and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]. Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
+In **MB-MVPA**, GLM in prevailing  massive univariate approach is replaced with MVPA regression models and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]. Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
 **MB-MVPA** supports Python 3.6 or above and relies on [NiLearn](https://github.com/nilearn/nilearn), [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python), [py-glmnet](https://github.com/civisanalytics/python-glmnet), and [tensorflow](https://www.tensorflow.org/api_docs/python/tf/keras?hl=ko)(>=2.0).
 
@@ -50,7 +50,7 @@ Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-
 
 Another important requirement is preparing a user-defined python "function" to calculate the latent space of the computational model. The function is assumed to work on each row of pandas.DataFrame. 
 
-```
+``` python
 def user_defined_modulation(row:pandas.Series, param_dict:dict) -> pandas.Series:
     # example from prospect theory model.
     modulation = (row["gain"] ** param_dict["rho"]) - (param_dict["lambda"] * (row["loss"] ** param_dict["rho"]))
@@ -80,7 +80,7 @@ The above issues are fully explained in the simple working example [notebooks](#
 
 It assumes that user prepared {BIDS_ROOT} satisfying input [requirements](#Notes). It also requires some {USER_DEFINED_...} functions, you can check the detail with example in our working notebook examples.
 
-```
+``` python
 from mbmvpa.preprocessing.bids import bids_preprocess
 from mbmvpa.preprocessing.events import events_preprocess
 from mbmvpa.data.loader import prepare_dataset
@@ -120,7 +120,7 @@ result = get_map(coefs, voxel_mask, task_name="tom2007_mlp", map_type="z", save_
 
 TODO. It would tenatatively be the below pip command.
 
-```
+``` bash
 pip install mb-mvpa
 ```
 
