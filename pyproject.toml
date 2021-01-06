@@ -28,7 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.6.1"
-hbayesdm = "^1.0.1"
+hbayesdm = "<=1.0.1"
 nibabel = "^3.2.0"
 nilearn = "^0.7.0"
 glmnet = "^2.2.1"
@@ -36,7 +36,7 @@ pystan = "^2.19.1"
 bids = "^0.0"
 scikit-image = "^0.17.2"
 matplotlib = "^3.3.3"
-tensorflow = "^2.3.1"
+tensorflow = "^2.4.0"
 numpy = "^1.18.5"
 pandas = "^1.1.4"
 sklearn = "^0.0"

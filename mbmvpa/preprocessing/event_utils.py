@@ -458,7 +458,8 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
     return signals
 
 
-def get_time_mask(df_events=None, condition=lambda _: True, use_duration=True):
+def get_time_mask(df_events, n_scans, t_r, is_session,
+                  condition=lambda _: True, use_duration=True):
 
     assert ("modulation" in df_events.columns
             and "subjID" in df_events.columns
@@ -466,21 +467,25 @@ def get_time_mask(df_events=None, condition=lambda _: True, use_duration=True):
             and "onset" in df_events.columns
             and "duration" in df_events.columns),\
         ("missing column in behavior data")
+    assert isinstance(n_scans, int)
+    assert isinstance(t_r, float)
+    assert (isinstance(is_session, bool) or
+           isinstance(is_session, int))
     assert callable(condition)    
     assert isinstance(use_duration, bool)
 
     time_mask = []
     for name0, group0 in df_events.groupby(["subjID"]):
         time_mask_subject = []
-        if self.n_session:
+        if is_session:
             for name1, group1 in group0.groupby(["session"]):
                 for name2, group2 in group1.groupby(["run"]):
                     time_mask_subject.append(_make_single_time_mask(
-                        condition, group2, self.n_scans, self.t_r, use_duration))
+                        condition, group2, n_scans, t_r, use_duration))
         else:
             for name1, group1 in group0.groupby(["run"]):
                 time_mask_subject.append(_make_single_time_mask(
-                    condition, group1, self.n_scans, self.t_r, use_duration))
+                    condition, group1, n_scans, t_r, use_duration))
 
         time_mask.append(time_mask_subject)
 
