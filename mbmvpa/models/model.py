@@ -21,7 +21,7 @@ from tensorflow.keras.regularizers import l1_l2
 from ..data import loader
 from ..utils import config
 
-
+import pdb
 
     
 class DefaultExtractor():
@@ -92,9 +92,10 @@ class Regressor_TF():
         if save_path is None:
             if layout is None:
                 self.save_path = Path('.')
-            self.save_path = Path(
-                layout.derivatives["fMRIPrep"].root)\
-                / config.DEFAULT_SAVE_PATH_CKPT / "MLP"
+            else:
+                self.save_path = Path(
+                    layout.derivatives["fMRIPrep"].root)\
+                    / config.DEFAULT_SAVE_PATH_CKPT / "MLP"
         else:
             self.save_path = Path(save_path)
             
@@ -106,7 +107,7 @@ class Regressor_TF():
             self.extractor = DefaultExtractor.extract
         else:
             self.extractor = extractor
-        self.save_path = Path(save_path)
+            
         self.chk_path = None
         self.log_path = None
         self.save = save
@@ -128,7 +129,7 @@ class Regressor_TF():
         self.log_path = save_root / 'log'
         
         save_root.mkdir()
-        self.plot_path.mkdir()
+        self.chk_path.mkdir()
         self.log_path.mkdir()
         
         return
@@ -168,6 +169,9 @@ class Regressor_TF():
             train_steps = len(train_ids) // self.n_batch
             val_steps = len(test_ids) // self.n_batch
 
+            assert train_steps > 0
+            assert val_steps > 0
+            
             X_train = self.X[train_ids]
             X_test = self.X[test_ids]
             y_train = self.y[train_ids]
@@ -181,8 +185,8 @@ class Regressor_TF():
                 X_test, y_test, self.n_batch, shuffle=False)
             # should be implemented in the actual model
             
-            best_model_filepath = self.chk_path / \
-            f"repeat_{i:0{len(str(self.n_repeat))}}.ckpt"
+            best_model_filepath = str(self.chk_path / \
+            f"repeat_{i:0{len(str(self.n_repeat))}}.ckpt")
         
             # temporal buffer for intermediate training results (weights) of training.
             mc = ModelCheckpoint(
@@ -196,8 +200,7 @@ class Regressor_TF():
             
             model = self._reset_model()
             
-            model.fit(train_generator,
-                  batch_size=self.n_batch, epochs=self.n_epoch,
+            model.fit(train_generator, epochs=self.n_epoch,
                   verbose=0, callbacks=[mc, es],
                   validation_data=val_generator,
                   steps_per_epoch=train_steps,
@@ -209,8 +212,7 @@ class Regressor_TF():
             y_pred = model.predict(X_test)
             error = mean_squared_error(y_pred, y_test)
             if self.verbose > 0:
-                logging.info(
-                    f"[{i}/{N}] - val_loss: {error:.04f}")
+                print(f"[{i}/{self.n_repeat}] - val_loss: {error:.04f}")
             self._errors.append(error)
             
             # extracting voxel-wise mapped weight (coefficient) map
@@ -274,15 +276,15 @@ class MLP(Regressor_TF):
                  dropout_rate=0.5,
                  optimizer="adam",
                  loss="mse",
-                 *kwargs):
+                 **kwargs):
         
-        super(MLP, self).__init__(kwargs)
-        input_shape = X.shape[-1] 
+        super(MLP, self).__init__(**kwargs)
+        input_shape = self.X.shape[-1] 
         self.model = build_mlp(input_shape=input_shape,
                              layer_dims=layer_dims,
                              activation=activation,
                              activation_output=activation_output,
-                             dropout_rate=dropout_rat,
+                             dropout_rate=dropout_rate,
                              optimizer=optimizer,
                              loss=loss)
         
