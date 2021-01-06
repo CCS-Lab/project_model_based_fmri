@@ -27,6 +27,7 @@ generator = LatentProcessGenerator(root=root,
                                    condition=test_condition,
                                    modulation=test_modulation,
                                    dm_model=dm_model)
+
 boldsignals, time_mask = generator.run(nchain=2,nwarmup=50,niter=200)
 
 df_events = generator._df_events_ready.to_csv(

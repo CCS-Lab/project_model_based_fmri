@@ -139,6 +139,8 @@ class LatentProcessGenerator():
 
     def run(self, clean=False,  **kwargs):
 
+        # TODO add progress bar
+        
         if clean:
             self.clean()
 
@@ -153,7 +155,8 @@ class LatentProcessGenerator():
 
         self.set_time_mask()
         boldsignals = self.generate_boldlike_signal()
-
+        np.save(self.save_path  / config.DEFAULT_MODULATION_FILENAME, boldsignals)
+        
         return boldsignals, self.time_mask
 
 
