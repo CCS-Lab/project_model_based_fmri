@@ -38,13 +38,12 @@ from ..utils import config # configuration for default names used in the package
 
 
 class LatentProcessGenerator():
-    
     def __init__(self, 
               root=None,
               layout=None,
               save_path=None,
-              preprocess=None,
-              condition=None,
+              preprocess=lambda x: x,
+              condition=lambda _: True,
               modulation=None,
               dm_model=None,
               condition_for_modeling=None,
@@ -91,24 +90,201 @@ class LatentProcessGenerator():
         # setting model fitting specification
         self.dm_model = dm_model
         self.condtion_for_modeling = condition_for_modeling
-        self.individual_params = individual_params_custom
-        
+        self.individual_params = _process_indiv_params(individual_params_custom)
+        self._idividual_params_provided = self.individual_params is not None
+
         # setting BOLD-like signal generating specification
         self.hrf_model = hrf_model
         self.normalizer = normalizer
         self.scale = scale
         
         # setting attribute holding data frames for event data
-        self._df_events_ready = df_events_custom
-        
-        # setting working space
-        # this will aggregate all events file path in sorted way
+        if df_events_custom is not None:
+        	sanity_check = ("modulation" in df_events_custom.columns
+				            and "subjID" in df_events_custom.columns
+				            and "run" in df_events_custom.columns
+				            and "onset" in df_events_custom.columns
+				            and "duration" in df_events_custom.columns)
+        	if sanity_check:
+        		self._df_events_ready = df_events_custom
+        	else;
+        		self._df_events_ready = None
+        self._df_events_ready_provided = self._df_events_ready is not None
+
+        # initial working space
+        self._df_events_list = None
+        self._event_infos_list = None
+	    self.time_mask = None
+	    self._trained_dm_model = None
+        #TODO pring basic meta info of BIDS layout
+
+    def clean(self):
+    	self._df_events_list = None
+        self._event_infos_list = None
+	    self.time_mask = None
+	    self._trained_dm_model = None
+	    self._df_events_ready = None
+	    self.individual_params 
+
+	    if not self._idividual_params_provided:
+	    	self.individual_params = None
+	    if not self._df_events_ready_provided:
+	    	self._df_events_ready = None
+
+    def run(self, clean=False,  **kwargs):
+
+    	if clean:
+    		self.clean()
+    		
+    	if self._df_events_ready is None:
+    		if self._df_events_list is None or self._event_infos_list:
+    			self.init_df_events_from_bids()
+
+    		if self.individual_params is None:
+    			self.set_computational_model(**kwargs)
+    		
+    		self.set_df_events_ready()
+
+		self.set_time_mask()
+		boldsignals = self.generate_boldlike_signal()
+
+    	return boldsignals, time_mask
+
+
+    def init_df_events_from_bids(self, preprocess=None):
+
+    	if preprocess is None:
+    		preprocess = self.preprocess
+
+    	# this will aggregate all events file path in sorted way
         events = layout.get(suffix="events", extension="tsv")
         # collecting dataframe from event files spread in BIDS layout
         self._df_events_list = [event.get_df() for event in events]
         # event_info contains ID number for subject, session, run
         self._event_infos_list = [event.get_entities() for event in events]
-        
-        #TODO pring basic meta info of BIDS layout
-        
+        # add event info to each dataframe row
+	    self._df_events_list = [
+	        _add_event_info(df_events, event_infos)
+	        for df_events, event_infos in zip(self._df_events_list, self._event_infos_list)
+	    ]
+
+    	if callable(preprocess):
+		    # modify trial data by user-defined function "preprocess"
+		    self._df_events_list = [
+		        _preprocess_event(
+		            preprocess, df_events
+		        ) for df_events, event_infos in zip(self._df_events_list, self._event_infos_list)
+		    ]
+
+    def set_time_mask(self, df_events=None, condition=None, use_duration=None):
+
+    	if df_events is None:
+    		if self._df_events_ready is not None:
+    			df_events = self._df_events_ready
+    		elif self._df_events_list is not None:
+    			df_events = pd.concat(self._df_events_list)
+    		else:
+    			assert False
+    	if use_duration is None:
+    		use_duration = self.use_duration
+    	if condition is None:
+    		condition = self.condition
+
+    	self.time_mask = get_time_mask(df_events, condition, use_duration)
+    	np.save(self.save_path / config.DEFAULT_TIME_MASK_FILENAME, self.time_mask) 
+
+
+    def set_computational_model(self, df_events=None, individual_params=None, dm_model=None, condition=None, **kwargs):
+
+    	if df_events is None:
+    		assert self._df_events_list is not None
+    		df_events = pd.concat(self._df_events_list)
+    	individual_params = _process_indiv_params(individual_params)
+    	if individual_params is None:
+    		individual_params = self.individual_params
+    	if dm_model is None:
+    		dm_model = self.dm_model
+    	if condition is None:
+    		if self.condition_for_modeling is None:
+    			condition = self.condition
+    		else :
+    			condition = self.condition_for_modeling
+
+    	if individual_params is None :
+	        # the case user does not provide individual model parameter values
+	        # obtain parameter values using hBayesDM package
+
+	        assert dm_model is not None, (
+	            "if df_events is None, must be assigned to dm_model.")
+
+	        df_events_list = [df_events[[condition_for_modeling(row) \
+	                            for _, row in df_events.iterrows()]] \
+	                                for df_events in df_events_list_]
+	        
+	        if type(dm_model) == str:
+	            model = getattr(
+	                hbayesdm.models, dm_model)(
+	                    data=pd.concat(df_events_list),
+	                    **kwargs)
+
+	        individual_params = pd.DataFrame(model.all_ind_pars)
+	        individual_params.index.name = "subjID"
+	        individual_params = individual_params.reset_index()
+	        individual_params["subjID"] = individual_params["subjID"].astype(int)
+	        individual_params.to_csv(
+                self.save_path / config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME,
+                sep="\t", index=False)
+	        self._trained_dm_model = model
+	    
+	    self.individual_params = individual_params
+
+    def set_df_events_ready(self, individual_params=None, modulation=None, condition=None):
+
+    	if individual_params is None:
+    		individual_params = self.individual_params
+    	if modulation is None:
+    		modulation = self.modulation
+    	if condition is None:
+    		condition = self.condition
+
+    	assert self._df_events_list is not None, (
+    			"Please run init_df_events_from_bids first")
+    	assert self._event_infos_list is not None, (
+    			"Please run init_df_events_from_bids first")
+ 		assert individual_params is not None, (
+ 				"Please run set_computational_model first")
+    	assert callable(modulation), (
+    			"Please provide a valid user-defined modulation function")
+
+    	df_events_list = [
+            _add_latent_process_single_eventdata(
+                modulation, condition, df_events,
+                _get_individual_param_dict(
+                    event_infos["subject"], individual_params)
+            ) for df_events, event_infos in \
+                 zip(self._df_events_list, self._event_infos_list)]
+    
+    	self._df_events_ready =  pd.concat(df_events_list)
+
+    def generate_boldlike_signal(self, hrf_model=None, normalizer=None, scale=None):
+
+    	if hrf_model is None:
+    		hrf_model = self.hrf_model
+    	if normalzier is None:
+    		normalizer = self.normalizer
+    	if scale is None:
+    		scale = self.scale
+
+    	assert isinstance(hrf_model, str)
+    	assert isinstance(normalizer, str)
+    	assert (isinstance(scale, list)
+	        or isinstance(scale, tuple))
+	    assert (isinstance(scale[0], int))
+
+    	return convert_event_to_boldlike_signal(self._df_events_ready, 
+    											self.t_r, self.n_scans, self.n_session,
+			                                    hrf_model=hrf_model,
+			                                    normalizer=normalizer,
+			                                    scale=scale)
+
         

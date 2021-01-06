@@ -456,3 +456,124 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
     signals = np.array(signals)
     
     return signals
+
+
+def get_time_mask(df_events=None, condition=lambda _: True, use_duration=True):
+
+    assert ("modulation" in df_events.columns
+            and "subjID" in df_events.columns
+            and "run" in df_events.columns
+            and "onset" in df_events.columns
+            and "duration" in df_events.columns),\
+        ("missing column in behavior data")
+    assert callable(condition)    
+    assert isinstance(use_duration, bool)
+
+    time_mask = []
+    for name0, group0 in df_events.groupby(["subjID"]):
+        time_mask_subject = []
+        if self.n_session:
+            for name1, group1 in group0.groupby(["session"]):
+                for name2, group2 in group1.groupby(["run"]):
+                    time_mask_subject.append(_make_single_time_mask(
+                        condition, group2, self.n_scans, self.t_r, use_duration))
+        else:
+            for name1, group1 in group0.groupby(["run"]):
+                time_mask_subject.append(_make_single_time_mask(
+                    condition, group1, self.n_scans, self.t_r, use_duration))
+
+        time_mask.append(time_mask_subject)
+
+    time_mask = np.array(time_mask)
+
+    return time_mask
+
+def convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
+                                      hrf_model="glover",
+                                      normalizer="minmax",
+                                      scale=(-1,1)):
+    
+    """
+    BOLDify the preprocessed behavioral (event) data 
+    by converting behavior data to weighted impulse seqeunces and convolve them with hemodynamic response function. 
+    """
+    """
+    This is done by utilizing nilearn.glm.first_level.hemodynamic_models.compute_regressor,
+    by providing "onset","duration", and "modulation" values.
+    the final matrix will be shaped as the number of subject * of run * of n_scan
+    "n_scan" means the number of time points in fMRI data
+    if there is multiple session, still there would be no dimension indicating sessions info, 
+    but runs will be arranged as grouped by sessions number.
+    e.g. (subj-01, sess-01, run-01,:)
+         (subj-01, sess-01, run-02,:)
+                    ...
+         (subj-01, sess-02, run-01,:)
+         (subj-01, sess-02, run-02,:)
+                    ...
+    This order should match with preprocessed fMRI image data.
+    
+    Arguments:
+        df_events (DataFrame): preprocessed dataframe which is ready to BOLDify.
+        t_r (float): time resolution (second).
+        hrf_model(str): name for hemodynamic model.
+        normalizer(str): method name for normalizing output BOLD-like signal. "minmax" or "standard" (equal z_score).
+        scale (tuple(float, float)): Lower bound and upper bound for minmax scaling. will be ignored if "standard" normalization is selected. default is -1 to 1.
+        
+    Return:
+        boldified_signals (numpy.array): BOLD-like signal.
+    """
+    # The reason for adding t_r / 2 is to provide sufficient convolution operation.
+
+    #TODO add type check
+
+    frame_times = t_r * (np.arange(n_scans) + t_r / 2)
+
+    signals = []
+    for name0, group0 in df_events.groupby(["subjID"]):
+        signal_subject = []
+        if is_session:
+            for name1, group1 in group0.groupby(["session"]):
+                for name2, group2 in group1.groupby(["run"]):
+                    modulation_ = group2[
+                        ["onset", "duration", "modulation"]].to_numpy(
+                            dtype=float).T
+                    signal, _ = _boldify(
+                        modulation_, hrf_model, frame_times)
+                    signal_subject.append(signal)
+        else:
+            for name1, group1 in group0.groupby(["run"]):
+                modulation_ = group1[
+                ["onset", "duration", "modulation"]].to_numpy(dtype=float).T
+                signal, _ = _boldify(modulation_, hrf_model, frame_times)
+                signal_subject.append(signal)
+
+        signal_subject = np.array(signal_subject)
+        reshape_target = signal_subject.shape
+
+        # method for normalizing signal
+        if normalizer == "standard":
+            # standard normalization by calculating zscore
+            normalized_signal = zscore(signal_subject.flatten(), axis=None)
+        else:
+            # default is using minmax
+            normalized_signal = minmax_scale(
+                signal_subject.flatten(),
+                feature_range=scale, axis=0)
+
+        normalized_signal = normalized_signal.reshape(reshape_target)
+        signals.append(normalized_signal)
+    signals = np.array(signals)
+    
+    return signals
+
+def _process_indiv_params(individual_params):
+    if type(individual_params) == str\
+        or type(individual_params) == type(Path()):
+        individual_params = pd.read_table(individual_params)
+        individual_params["subjID"] = \
+            individual_params["subjID"].astype(int)
+    elif type(individual_params) != pd.DataFrame:
+        individual_params = None
+
+    return individual_params
+
