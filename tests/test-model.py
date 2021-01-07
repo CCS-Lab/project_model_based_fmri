@@ -1,5 +1,5 @@
 from mbmvpa.data.loader import prepare_dataset
-from mbmvpa.models.model import *
+from mbmvpa.models.mvpa_mlp import MLP
 from pathlib import Path
 import pdb
 

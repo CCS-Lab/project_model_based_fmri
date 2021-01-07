@@ -3,7 +3,7 @@ from mbmvpa.data.loader import prepare_dataset
 from mbmvpa.utils.example_utils import load_example_data
 from mbmvpa.utils.coef2map import get_map
 
-from mbmvpa.models.model import *
+from mbmvpa.models.mvpa_mlp import MLP
 from mbmvpa.preprocessing.events import *
 
 #root = load_example_data("tom")
