@@ -48,7 +48,7 @@ def get_map(coefs, voxel_mask, task_name,
     assert isinstance(task_name, str)
     assert isinstance(map_type, str)
     assert (isinstance(save_path, str)
-        or isinstance(save_path, pathlib.Path))
+        or isinstance(save_path, Path))
     assert isinstance(sigma, int)
     ###########################################################################
     # make result map

@@ -37,6 +37,49 @@ from tqdm import tqdm
 from ..utils import config # configuration for default names used in the package
 
 
+def events_preprocess(# path informations
+                      root=None,
+                      layout=None,
+                      save_path=None,
+                      # user-defined functions
+                      preprocess=lambda x: x,
+                      condition=lambda _: True,
+                      modulation=None,
+                      # computational model specification
+                      condition_for_modeling=None,
+                      dm_model=None,
+                      individual_params_custom=None,
+                      # BOLDifying parameter
+                      hrf_model="glover",
+                      normalizer="minmax",
+                      # Other specification
+                      df_events_custom=None,
+                      use_duration=False,
+                      scale=(-1, 1),
+                      # hBayesDM fitting parameters
+                      **kwargs,
+                      ):
+    
+    generator = LatentProcessGenerator(root=root,
+                                      layout=layout,
+                                      save_path=save_path,
+                                      preprocess=preprocess,
+                                      condition=condition,
+                                      modulation=modulation,
+                                      dm_model=dm_model,
+                                      condition_for_modeling=condition_for_modeling,
+                                      individual_params_custom=individual_params_custom,
+                                      hrf_model=hrf_model,
+                                      normalizer=normalizer,
+                                      df_events_custom=df_events_custom,
+                                      use_duration=use_duration,
+                                      scale=scale)
+    
+    boldsignals, time_mask = generator.run()
+    
+    return (generator._trained_dm_model, generator._df_events_ready, 
+         boldsignals, time_mask, generator.layout)
+
 class LatentProcessGenerator():
     def __init__(self, 
               root=None,

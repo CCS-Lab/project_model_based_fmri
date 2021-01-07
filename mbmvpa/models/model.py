@@ -22,6 +22,7 @@ from tensorflow.keras.regularizers import l1_l2
 from ..data import loader
 from ..data.loader import prepare_dataset
 from ..utils import config
+from ..utils.coef2map import get_map
 
 import pdb
 
@@ -128,6 +129,7 @@ class Regressor_TF():
         self.y = y
         self.voxel_mask = voxel_mask
         self.model = model
+        self.model_name = model_name
         if extractor is None:
             self.extractor = DefaultExtractor(X.shape[-1],extract_n_sample)
         else:
@@ -135,6 +137,7 @@ class Regressor_TF():
             
         self.chk_path = None
         self.log_path = None
+        self.result_path = None
         self.save = save
         self.verbose = verbose
         self.n_repeat = n_repeat
@@ -146,16 +149,19 @@ class Regressor_TF():
         self._coeffs = []
         self._errors = []
         self._make_log_dir()
+        self._time = datetime.datetime.now()
         
     def _make_log_dir(self):
         now = datetime.datetime.now()
         save_root = self.save_path / f'report_{now.year}-{now.month}-{now.day}-{now.hour}-{now.minute}-{now.second}'
         self.chk_path = save_root / 'chekpoint'
         self.log_path = save_root / 'log'
+        self.result_path = save_root / 'result'
         
         save_root.mkdir()
         self.chk_path.mkdir()
         self.log_path.mkdir()
+        self.result_path.mkdir()
         
         return
     
@@ -247,9 +253,32 @@ class Regressor_TF():
 
         self._coeffs = np.array(self._coeffs)
         self._errors = np.array(self._errors)
+        self._time = datetime.datetime.now()
         
         return self._coeffs
     
+    def image(self, voxel_mask=None, task_name=None,
+                map_type="z", save_path=None, sigma=1):
+        
+        assert self._coeffs is not None, (
+            "Model fitting is not conducted")
+        
+        if voxel_mask is None:
+            voxel_mask = self.voxel_mask
+        if task_name is None or task_name == "":
+            try:
+                task_name = layout.get_task()[0]
+            except:
+                task_name = "unnamed_task"
+        if save_path is None:
+            save_path =self.result_path
+            
+        task_name = f"{task_name}-{self._time.day}-{self._time.hour}-{self._time.minute}-{self._time.second}"
+        
+        return get_map(self._coeffs, voxel_mask, task_name,
+                    map_type=map_type, save_path=save_path, sigma=sigma)
+        
+            
     
 def build_mlp(input_shape,
              layer_dims=[1024, 1024],
