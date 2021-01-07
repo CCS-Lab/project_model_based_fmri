@@ -9,6 +9,7 @@ import datetime
 from pathlib import Path
 import numpy as np
 
+from bids import BIDSLayout
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
@@ -19,6 +20,7 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.regularizers import l1_l2
 
 from ..data import loader
+from ..data.loader import prepare_dataset
 from ..utils import config
 
 import pdb
@@ -73,8 +75,11 @@ class Regressor_TF():
     def __init__(self,
                  X=None,
                  y=None,
+                 voxel_mask=None,
                  model=None,
+                 model_name=None,
                  extractor=None,
+                 root=None,
                  layout=None,
                  save_path=None,
                  save=True,
@@ -87,20 +92,32 @@ class Regressor_TF():
                  validation_split_ratio=0.2
                  ):
         
-        self.layout=layout
-        
+        if root is not None:
+            layout = BIDSLayout(root, derivatives=True)
+            
         if save_path is None:
             if layout is None:
                 self.save_path = Path('.')
             else:
-                self.save_path = Path(
+                sp = Path(
                     layout.derivatives["fMRIPrep"].root)\
-                    / config.DEFAULT_SAVE_PATH_CKPT / "MLP"
+                    / config.DEFAULT_SAVE_PATH_CKPT 
+                if not sp.exists():
+                    sp.mkdir()
+                sp = sp / model_name
+                if not sp.exists():
+                    sp.mkdir()
+                self.save_path = sp
         else:
             self.save_path = Path(save_path)
             
+        if ( X is None or y is None ) and layout is not None:
+            X, y, voxel_mask = prepare_dataset(layout.derivatives["fMRIPrep"].root)
+        
+        self.layout=layout
         self.X = X
         self.y = y
+        self.voxel_mask = voxel_mask
         self.model = model
         if extractor is None:
             self._extractor_module = DefaultExtractor(X.shape[-1])
@@ -278,7 +295,7 @@ class MLP(Regressor_TF):
                  loss="mse",
                  **kwargs):
         
-        super(MLP, self).__init__(**kwargs)
+        super(MLP, self).__init__(model_name="MLP",**kwargs)
         input_shape = self.X.shape[-1] 
         self.model = build_mlp(input_shape=input_shape,
                              layer_dims=layer_dims,

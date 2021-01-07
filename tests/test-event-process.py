@@ -52,3 +52,4 @@ generator = LatentProcessGenerator(root=root,
 boldsignals, time_mask = generator.run()
 
 print("TEST PASS!")
+
