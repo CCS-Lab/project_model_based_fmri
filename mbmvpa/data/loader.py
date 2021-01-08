@@ -107,13 +107,13 @@ class DataGenerator(Sequence):
     # TODO find a better reference
     """
 
-    def __init__(self, X, y, batch_size, shuffle=True):
+    def __init__(self, X, y, batch_size, shuffle=True, weights=None, max_val=None, min_val=None):
         self.X = X
         self.y = y
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.indexes = np.arange(X.shape[0])
-
+        self.weights = weights
         self.on_epoch_end()
 
     # for printing the statistics of the function
@@ -139,3 +139,7 @@ class DataGenerator(Sequence):
         targets = np.array(targets)
 
         return images, targets  # return batch
+
+    
+    
+def 

@@ -28,16 +28,16 @@ import pandas as pd
 from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
-from .event_utils import _get_metainfo, _add_event_info, _preprocess_event
-from .event_utils import _process_indiv_params,_add_latent_process_single_eventdata, _get_individual_param_dict
-from .event_utils import get_time_mask, convert_event_to_boldlike_signal
+from .events_utils import _get_metainfo, _add_event_info, _preprocess_event
+from .events_utils import _process_indiv_params,_add_latent_process_single_eventdata, _get_individual_param_dict
+from .events_utils import get_time_mask, convert_event_to_boldlike_signal
 from bids import BIDSLayout
 from tqdm import tqdm
 
 from ..utils import config # configuration for default names used in the package
 
 
-def event_preprocess(# path informations
+def events_preprocess(# path informations
                       root=None,
                       layout=None,
                       save_path=None,
@@ -51,11 +51,11 @@ def event_preprocess(# path informations
                       individual_params_custom=None,
                       # BOLDifying parameter
                       hrf_model="glover",
-                      normalizer="minmax",
+                      normalizer="minimax",
                       # Other specification
                       df_events_custom=None,
                       use_duration=False,
-                      scale=(-1, 1),
+                      scale=(-.5, .5),
                       # hBayesDM fitting parameters
                       **kwargs,
                       ):
@@ -92,10 +92,10 @@ class LatentProcessGenerator():
               condition_for_modeling=None,
               individual_params_custom=None,
               hrf_model="glover",
-              normalizer="minmax",
+              normalizer="minimax",
               df_events_custom=None,
               use_duration=False,
-              scale=(-1, 1)):
+              scale=(-.5, .5)):
 
         # setting path informations and loading layout
         
@@ -333,7 +333,7 @@ class LatentProcessGenerator():
         assert isinstance(normalizer, str)
         assert (isinstance(scale, list)
             or isinstance(scale, tuple))
-        assert (isinstance(scale[0], int))
+        assert (isinstance(scale[0], float))
 
         return convert_event_to_boldlike_signal(self._df_events_ready, 
                                                 self.t_r, self.n_scans, self.n_session,

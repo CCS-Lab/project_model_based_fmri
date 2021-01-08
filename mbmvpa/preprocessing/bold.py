@@ -43,7 +43,7 @@ import numpy as np
 import bids
 from bids import BIDSLayout
 from tqdm import tqdm
-from .fmri_utils import _custom_masking, _image_preprocess_multithreading
+from .bold_utils import _custom_masking, _image_preprocess_multithreading
 import nibabel as nib
 
 from ..utils import config # configuration for default names used in the package
@@ -52,7 +52,7 @@ from ..utils import config # configuration for default names used in the package
 bids.config.set_option("extension_initial_dot", True)
 
 
-def fmri_preprocess(# path informations
+def bold_preprocess(# path informations
                     root=None,
                     layout=None,
                     save_path=None,

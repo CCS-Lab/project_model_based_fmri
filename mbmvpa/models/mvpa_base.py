@@ -12,6 +12,7 @@ import numpy as np
 from bids import BIDSLayout
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -95,7 +96,8 @@ class MVPA_TF():
                  n_epoch=100,
                  n_patience=10,
                  n_batch=64,
-                 validation_split_ratio=0.2
+                 validation_split_ratio=0.2,
+                 save_pred=True,
                  ):
         
         if root is not None:
@@ -142,6 +144,7 @@ class MVPA_TF():
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.validation_split_ratio = validation_split_ratio
+        self.save_pred = save_pred
         self._coeffs = []
         self._errors = []
         self._make_log_dir()
@@ -149,7 +152,7 @@ class MVPA_TF():
         
     def _make_log_dir(self):
         now = datetime.datetime.now()
-        save_root = self.save_path / f'report_{now.year}-{now.month}-{now.day}-{now.hour}-{now.minute}-{now.second}'
+        save_root = self.save_path / f'report_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
         self.chk_path = save_root / 'chekpoint'
         self.log_path = save_root / 'log'
         self.result_path = save_root / 'result'
@@ -237,7 +240,16 @@ class MVPA_TF():
             model.load_weights(best_model_filepath)
             # validation 
             y_pred = model.predict(X_test)
+            len(y_pred)
             error = mean_squared_error(y_pred, y_test)
+            if self.save_pred:
+                total_pred = model.predict(self.X)
+                usedtrain_map = np.zeros((self.X.shape[0],1))
+                usedtrain_map[train_ids] = 1
+                pred_data = np.concatenate([self.y, total_pred, usedtrain_map],-1)
+                pred_path = self.result_path / f"repeat_{i:0{len(str(self.n_repeat))}}_pred.npy"
+                np.save(pred_path, pred_data)
+                
             if self.verbose > 0:
                 print(f"[{i}/{self.n_repeat}] - val_loss: {error:.04f}")
             self._errors.append(error)
@@ -245,7 +257,6 @@ class MVPA_TF():
             # extracting voxel-wise mapped weight (coefficient) map
             coeff = self.extractor(model)
             self._coeffs.append(coeff)
-    
 
         self._coeffs = np.array(self._coeffs)
         self._errors = np.array(self._errors)
@@ -269,7 +280,7 @@ class MVPA_TF():
         if save_path is None:
             save_path =self.result_path
             
-        task_name = f"{task_name}-{self._time.day}-{self._time.hour}-{self._time.minute}-{self._time.second}"
+        task_name = f"{task_name}-{self._time.day:02}-{self._time.hour:02}-{self._time.minute:02}-{self._time.second:02}"
         
         return get_map(self._coeffs, voxel_mask, task_name,
                     map_type=map_type, save_path=save_path, sigma=sigma)
