@@ -107,13 +107,17 @@ class DataGenerator(Sequence):
     # TODO find a better reference
     """
 
-    def __init__(self, X, y, batch_size, shuffle=True, weights=None, max_val=None, min_val=None):
+    def __init__(self, X, y, batch_size, shuffle=True, use_bipolar_balancing=False, **kwargs):
         self.X = X
         self.y = y
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.indexes = np.arange(X.shape[0])
-        self.weights = weights
+        self.use_bipolar_balancing=use_bipolar_balancing
+        if self.use_bipolar_balancing:
+            self.ticketer = get_bipolarized_ticketer(y.flatten(),**kwargs)
+            self.X_original = X
+            self.y_original = y
         self.on_epoch_end()
 
     # for printing the statistics of the function
@@ -122,7 +126,12 @@ class DataGenerator(Sequence):
 
         if self.shuffle:
             np.random.shuffle(self.indexes)
-
+            
+        if self.use_bipolar_balancing:
+            sample_ids = weighted_sampling(self.y_original, self.ticketer)
+            self.X = self.X_original[sample_ids]
+            self.y = self.y_original[sample_ids]
+            
     def __len__(self):
         "Denotes the number of batches per epoch"
         return len(self.indexes) // self.batch_size
@@ -140,6 +149,75 @@ class DataGenerator(Sequence):
 
         return images, targets  # return batch
 
+def gaussian(x, mean, std):
+    return ((2*np.pi*(std**2))**(-.5))*np.exp(-.5*(((x-mean)/std)**2))
     
+def get_bipolarized_ticketer(array,high_rate=.1,low_rate=.1, max_val=None, min_val=None, bins=100, max_ticket=10):
+    d = array.copy().flatten()
+    d.sort()
+    low_part = d[:int(len(d)*low_rate)]
+    low_part = np.concatenate([low_part,low_part.max()*2 -low_part],0)
+    high_part = d[-int(len(d)*high_rate):]
+    high_part = np.concatenate([high_part,high_part.min()*2 -high_part],0)
     
-def 
+    low_mean = low_part.mean()
+    low_std = low_part.std()
+    
+    high_mean = high_part.mean()
+    high_std = high_part.std()
+    
+    if max_val is None:
+        max_val = d[-1]
+    if min_val is None:
+        min_val = d[0]
+    
+    x = np.linspace(min_val, max_val, bins)
+    
+    weights = gaussian(x, low_mean, low_std) + gaussian(x, high_mean, high_std)
+    weight_max = weights.max()
+    ticketer = lambda v: int(((gaussian(v, low_mean, low_std) + \
+                              gaussian(v, high_mean, high_std)) /weight_max+1/max_ticket) * max_ticket)
+    
+    return ticketer
+
+def weighted_sampling(y, ticketer, n_sample=None):
+    
+    if n_sample is None:
+        n_sample = len(y)
+    
+    pool = []
+    
+    for i,v in enumerate(y.flatten()):
+        pool += [i]*ticketer(v)
+    
+    sample_ids  = np.random.choice(pool,n_sample)
+        
+    return sample_ids
+
+def get_binarizing_thresholds(array,high_rate=.1,low_rate=.1, max_val=None, min_val=None, bins=100, max_ticket=10):
+    d = array.copy().flatten()
+    d.sort()
+    low_part = d[:int(len(d)*low_rate)]
+    low_part = np.concatenate([low_part,low_part.max()*2 -low_part],0)
+    high_part = d[-int(len(d)*high_rate):]
+    high_part = np.concatenate([high_part,high_part.min()*2 -high_part],0)
+    
+    low_mean = low_part.mean()
+    low_std = low_part.std()
+    
+    high_mean = high_part.mean()
+    high_std = high_part.std()
+    
+    if max_val is None:
+        max_val = d[-1]
+    if min_val is None:
+        min_val = d[0]
+    
+    x = np.linspace(min_val, max_val, bins)
+    
+    weights = gaussian(x, low_mean, low_std) + gaussian(x, high_mean, high_std)
+    weight_max = weights.max()
+    ticketer = lambda v: int(((gaussian(v, low_mean, low_std) + \
+                              gaussian(v, high_mean, high_std)) /weight_max+1/max_ticket) * max_ticket)
+    
+    return ticketer

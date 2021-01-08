@@ -12,7 +12,7 @@ root = "/data2/project_modelbasedMVPA/ds000005"
 
 '''
 X, voxel_mask, layout, data_root = bids_preprocess(root, smoothing_fwhm=None, zoom=(2, 2, 2), ncore=2, nthread=4)
-'''
+
 def example_tom_preprocess_columns(row):
     ## rename data in a row to the name which can match hbayesdm.ra_prospect requirements ##
     row["gamble"] = 1 if row["respcat"] == 1 else 0
@@ -39,11 +39,11 @@ generator = LatentProcessGenerator(root=root,
                                     )
 
 y, time_mask = generator.run()
-
+'''
 #pdb.set_trace()
 
-MVPA_model = MLP(root=root)
+MVPA_model = MLP(root=root,use_bipolar_balancing=True)
 coefs = MVPA_model.run()
 #get_map(coefs, MVPA_model.voxel_mask, task_name="tom2007_mlp", map_type="z", save_path=".", sigma=1)
-img = MVPA_model.image()
+img = MVPA_model.image(save_path='.')
 

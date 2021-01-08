@@ -22,7 +22,7 @@ from ..data import loader
 from ..data.loader import prepare_dataset
 from ..utils import config
 from ..utils.coef2map import get_map
-
+import pdb
     
 class DefaultExtractor():
     # model is assumed to be linear
@@ -98,6 +98,7 @@ class MVPA_TF():
                  n_batch=64,
                  validation_split_ratio=0.2,
                  save_pred=True,
+                 use_bipolar_balancing=False
                  ):
         
         if root is not None:
@@ -145,6 +146,7 @@ class MVPA_TF():
         self.n_batch = n_batch
         self.validation_split_ratio = validation_split_ratio
         self.save_pred = save_pred
+        self.use_bipolar_balancing = use_bipolar_balancing
         self._coeffs = []
         self._errors = []
         self._make_log_dir()
@@ -210,9 +212,11 @@ class MVPA_TF():
             # create helper class for generating data
             # support mini-batch training implemented in Keras
             train_generator = loader.DataGenerator(
-                X_train, y_train, self.n_batch, shuffle=True)
+                X_train, y_train, self.n_batch, shuffle=True,
+                use_bipolar_balancing=self.use_bipolar_balancing)
             val_generator = loader.DataGenerator(
-                X_test, y_test, self.n_batch, shuffle=False)
+                X_test, y_test, self.n_batch, shuffle=False,
+                use_bipolar_balancing=self.use_bipolar_balancing)
             # should be implemented in the actual model
             
             best_model_filepath = str(self.chk_path / \
@@ -246,7 +250,7 @@ class MVPA_TF():
                 total_pred = model.predict(self.X)
                 usedtrain_map = np.zeros((self.X.shape[0],1))
                 usedtrain_map[train_ids] = 1
-                pred_data = np.concatenate([self.y, total_pred, usedtrain_map],-1)
+                pred_data = np.concatenate([total_pred, usedtrain_map],-1)
                 pred_path = self.result_path / f"repeat_{i:0{len(str(self.n_repeat))}}_pred.npy"
                 np.save(pred_path, pred_data)
                 

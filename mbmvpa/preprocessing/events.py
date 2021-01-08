@@ -51,11 +51,11 @@ def events_preprocess(# path informations
                       individual_params_custom=None,
                       # BOLDifying parameter
                       hrf_model="glover",
-                      normalizer="minimax",
+                      normalizer="standard-minimax",
                       # Other specification
                       df_events_custom=None,
                       use_duration=False,
-                      scale=(-.5, .5),
+                      scale=(-1, 1),
                       # hBayesDM fitting parameters
                       **kwargs,
                       ):
@@ -92,10 +92,10 @@ class LatentProcessGenerator():
               condition_for_modeling=None,
               individual_params_custom=None,
               hrf_model="glover",
-              normalizer="minimax",
+              normalizer="standard-minimax",
               df_events_custom=None,
               use_duration=False,
-              scale=(-.5, .5)):
+              scale=(-1, 1)):
 
         # setting path informations and loading layout
         
