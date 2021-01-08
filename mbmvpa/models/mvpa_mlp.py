@@ -6,7 +6,7 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.regularizers import l1_l2
 
-from ..models.mvpa_base import Regressor_TF
+from ..models.mvpa_base import MVPA_TF
 
 def build_mlp(input_shape,
              layer_dims=[1024, 1024],
@@ -49,7 +49,7 @@ def extractor_mlp(model):
         
     return coef
 
-class MLP(Regressor_TF):
+class MLP(MVPA_TF):
     
     def __init__(self, 
                  layer_dims=[1024, 1024],

@@ -43,7 +43,7 @@ import numpy as np
 import bids
 from bids import BIDSLayout
 from tqdm import tqdm
-from .fMRI import _custom_masking, _image_preprocess_multithreading
+from .fmri_utils import _custom_masking, _image_preprocess_multithreading
 import nibabel as nib
 
 from ..utils import config # configuration for default names used in the package
@@ -52,7 +52,7 @@ from ..utils import config # configuration for default names used in the package
 bids.config.set_option("extension_initial_dot", True)
 
 
-def bids_preprocess(# path informations
+def fmri_preprocess(# path informations
                     root=None,
                     layout=None,
                     save_path=None,
@@ -183,6 +183,11 @@ def bids_preprocess(# path informations
         # e.g. tsv file with motion confound parameters. 
         reg_layout = layout.derivatives["fMRIPrep"].get(
             subject=subject, return_type="file", suffix="regressors",
+            extension="tsv")
+        # in fMRIPrep 20.2.0 the suffix of  confounds file is "confounds_timeseries"  
+        if reg_layout is None:
+            reg_layout = layout.derivatives["fMRIPrep"].get(
+            subject=subject, return_type="file", suffix="timeseries",
             extension="tsv")
 
         param = [nii_layout, reg_layout, motion_confounds,

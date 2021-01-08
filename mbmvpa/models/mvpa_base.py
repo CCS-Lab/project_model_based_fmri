@@ -53,7 +53,7 @@ class DefaultExtractor():
         
     
     
-class Regressor_TF():
+class MVPA_TF():
     ''' Model for MVPA regression
     
     Model abstraction for  MVPA regression model. 

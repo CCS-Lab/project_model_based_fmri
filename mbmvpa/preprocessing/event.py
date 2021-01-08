@@ -37,7 +37,7 @@ from tqdm import tqdm
 from ..utils import config # configuration for default names used in the package
 
 
-def events_preprocess(# path informations
+def event_preprocess(# path informations
                       root=None,
                       layout=None,
                       save_path=None,
