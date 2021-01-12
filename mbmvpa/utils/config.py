@@ -1,7 +1,7 @@
 # Fixed name
 ANAL_NAME = "MB-MVPA - Model based MVPA"
-PIPELINE_NAME = "MB-MVPA"
-
+MBMVPA_PIPELINE_NAME = "MB-MVPA"
+FMRIPREP_PIPELINE_NAME = 'fMRIPrep'
 
 # default configuration for default names used in the package
 

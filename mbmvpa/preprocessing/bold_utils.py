@@ -96,7 +96,7 @@ def _image_preprocess(params):
 
     image_path, confounds_path,\
     motion_confounds, masker,\
-    voxel_mask, subject_id = params
+    voxel_mask, subject_id, save_path = params
 
     preprocessed_images = []
     if confounds_path is not None:
@@ -113,8 +113,8 @@ def _image_preprocess(params):
     #       https://nilearn.github.io/modules/generated/nilearn.image.resample_to_img.html
     fmri_masked = resample_to_img(image_path, voxel_mask)
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
-
-    return fmri_masked, subject_id
+    
+    np.save(save_path, fmri_masked)
 
 
 def _image_preprocess_multithreading(params, nthread):
@@ -161,11 +161,3 @@ def _image_preprocess_multithreading(params, nthread):
                 _image_preprocess, image_param): image_param \
                     for image_param in image_params
         }
-
-        for future in as_completed(future_result):
-            data, subject_id = future.result()
-            preprocessed_images.append(data)
-
-    preprocessed_images = np.array(preprocessed_images)
-
-    return preprocessed_images, subject_id

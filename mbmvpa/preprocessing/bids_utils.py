@@ -4,7 +4,6 @@ frm ..utils.descriptor import make_mbmvpa_description, version_diff
 
 from ..utils import config # configuration for default names used in the package
 
-
 class BIDSController():
     
     def __init__(self,
@@ -14,6 +13,7 @@ class BIDSController():
                 task_name=None,
                 bold_suffix="bold",
                 confound_suffix="regressors",
+                ignore_fmriprep=False
                 ):
         
         # assumption 1 : only one task is considered. 
@@ -130,16 +130,14 @@ class BIDSController():
     def get_subjects(self):
         return self.fmriprep_layout.get_subjects(task=self.task_name)
     
-    def get_boldfiles(self, sub_id, ses_id='.*', run_id='.*'):
+    def get_bold(self, sub_id='.*', ses_id='.*', run_id='.*'):
         return self.fmriprep_layout.get(
-                    subject=sub_id, session=ses_id, run=run_id,
-                    return_type="file", suffix=self.bold_suffix,
+                    subject=sub_id, session=ses_id, run=run_id, suffix=self.bold_suffix,
                     extension="nii.gz", regex_search=True)
     
-    def get_confoundfiles(self, sub_id, ses_id='.*', run_id='.*'):
+    def get_confound(self, sub_id='.*', ses_id='.*', run_id='.*'):
         return self.layout.derivatives[self.fmriprep_name].get(
-                    subject=sub_id, session=ses_id, run=run_id,
-                    return_type="file", suffix=self.confound_suffix,
+                    subject=sub_id, session=ses_id, run=run_id,suffix=self.confound_suffix,
                     extension="tsv", regex_search=True)
     
     def save_voxelmask(self, voxel_mask):

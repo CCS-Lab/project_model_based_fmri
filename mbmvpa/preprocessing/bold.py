@@ -62,24 +62,69 @@ class VoxelDataGenerator():
         if motion_confounds is None:
             motion_confounds = self.motion_confounds
         params = []
-        subjects = self.bids_controller.get_subjects()
-        for subject in subjects:
-            # get a list of nii file paths of fMRI images spread in BIDS layout
-            nii_layout = self.bids_controller.get_boldfiles(subject)
-            # get a list of tsv file paths of regressors spread in BIDS layout
-            # e.g. tsv file with motion confound parameters. 
-            reg_layout = self.bids_controller.get_confoundiles(subject)
-
-            param = [nii_layout, reg_layout, motion_confounds,
-                     self.masker, self.voxel_mask, subject]
-            params.append(param)
-
-        assert len(params) == n_subject, (
-            "The length of params list and number of subjects are not validated."
-        )
+        get_boldfiles
         
-        return params
-    
+        files_layout = []
+        
+        for file in self.bids_controller.get_bold():
+            nii_filename = file.filename
+            entities = file.get_entities()
+            if 'session' in entities.keys():
+                reg_filename=self.bids_contorller.get_confound(sub_id=entities['subject'],
+                                                 ses_id=entities['session'],
+                                                 run_id=entities['run'])[0].filename
+                save_filename = f'sub-{entities['subject']}_task-{entities['task']}'
+            else:
+                reg_filnamee=self.bids_contorller.get_confound(sub_id=entities['subject'],
+                                                 run_id=entities['run'])[0].filename
+                save_filename = 
+            
+            
+            files_layout.append([nii_filename,reg_filename,save_filename])
+            
+        
+        
+        # "chunk_size" is the number of threads.
+        # In generalm this number improves performance as it grows,
+        # but we recommend less than 4 because it consumes more memory.
+        # TODO: We can specify only the number of threads at this time,
+        #       but we must specify only the number of cores or both later.
+        chunk_size = 4 if nthread > 4 else nthread
+        params_chunks = [params[i:i + chunk_size]
+                            for i in range(0, len(params), chunk_size)]
+        task_size = len(params_chunks)
+
+        # Parallel processing for images process with process pool
+        # Process pool has the advantage of high performance compared to thread pool.
+        # 1. Crate process pool - ProcessPoolExecutor
+        # 2. Create parameters to use for each task in process - params_chunk
+        # 3. Thread returns a return value after job completion - future.result()
+        # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
+        X = []
+        for i, params_chunk in enumerate(params_chunks):
+            # parallel computing using multiple threads.
+            # please refer to "concurrent" api of Python.
+            # it might require basic knowledge in multiprocessing.
+            with ProcessPoolExecutor(max_workers=chunk_size) as executor:
+                future_result = {
+                    executor.submit(
+                        _image_preprocess_multithreading, param, n_run): \
+                            param for param in params_chunk
+                }
+
+                for future in as_completed(future_result):
+                    data, subject = future.result()
+                    np.save(
+                        sp / f"{config.DEFAULT_FEATURE_PREFIX}_{subject}.npy",
+                        data)
+                    X.append(data)
+
+                progress_bar.set_description(
+                    f"image preprocessing - fMRI data.. {i+1} / {task_size} done.."
+                    .ljust(50))
+            
+            
+        # to chunk! 
         
         
         
