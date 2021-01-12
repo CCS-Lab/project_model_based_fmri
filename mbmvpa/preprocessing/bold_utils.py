@@ -94,9 +94,9 @@ def _image_preprocess(params):
         subject_id (str): subject ID. used to track the owner of the file in multiprocessing
     """
 
-    image_path, confounds_path,\
+    image_path, confounds_path, save_path\
     motion_confounds, masker,\
-    voxel_mask, subject_id, save_path = params
+    voxel_mask = params
 
     preprocessed_images = []
     if confounds_path is not None:
@@ -115,6 +115,8 @@ def _image_preprocess(params):
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
     
     np.save(save_path, fmri_masked)
+    
+    return 
 
 
 def _image_preprocess_multithreading(params, nthread):
@@ -156,8 +158,7 @@ def _image_preprocess_multithreading(params, nthread):
     # 3. Thread returns a return value after job completion - future.result()
     # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
     with ThreadPoolExecutor(max_workers=nworker) as executor:
-        future_result = {
-            executor.submit(
-                _image_preprocess, image_param): image_param \
-                    for image_param in image_params
-        }
+        for image_param in image_params:
+            executor.submit(_image_preprocess, image_param)
+    
+    return
