@@ -1,12 +1,7 @@
-# Fixed name
-ANAL_NAME = "MB-MVPA - Model based MVPA"
-PIPELINE_NAME = "MB-MVPA"
+# configuration for default names used in the package
 
-
-# default configuration for default names used in the package
-
-DEFAULT_DERIV_ROOT_DIR = "mbmvpa"
-DEFAULT_ROI_MASK_DIR = "masks"
+DEFAULT_SAVE_DIR = "mvpa"
+DEFAULT_MASK_DIR = "masks"
 DEFAULT_VOXEL_MASK_FILENAME = "voxel_mask.nii.gz"
 DEFAULT_FEATURE_PREFIX = "X"
 DEFAULT_MODULATION_FILENAME = "y.npy"
