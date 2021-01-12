@@ -384,7 +384,7 @@ def _boldify(modulation_, hrf_model, frame_times):
 
 def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
                                       hrf_model="glover",
-                                      normalizer="standard-minmax",
+                                      normalizer="minmax",
                                       scale=(-1,1)):
     
     """
@@ -445,14 +445,13 @@ def _convert_event_to_boldlike_signal(df_events, t_r, n_scans, is_session,
         if normalizer == "standard":
             # standard normalization by calculating zscore
             normalized_signal = zscore(signal_subject.flatten(), axis=None)
-        elif normalizer == "minmax":
-            normalized_signal = minmax_scale(
-                signal_subject.flatten(),
-                feature_range=scale, axis=0)
-        else:
-            # default is using standard-minmax
+        elif normalizer == "standard-minmax":
             normalized_signal = minmax_scale(
                 zscore(signal_subject.flatten(), axis=None),
+                feature_range=scale, axis=0)
+        else:
+            normalized_signal = minmax_scale(
+                signal_subject.flatten(),
                 feature_range=scale, axis=0)
 
         normalized_signal = normalized_signal.reshape(reshape_target)

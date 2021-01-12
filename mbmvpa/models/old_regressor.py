@@ -148,7 +148,7 @@ def mlp_regression(X, y,
 
         best_model_filepath = sp / \
             f"mlp_repeat_{i:0{len(str(N))}}.cpkt"
-        
+        best_model_filepath = str(best_model_filepath)
         # temporal buffer for intermediate training results (weights) of training.
         mc = ModelCheckpoint(
             best_model_filepath,
@@ -176,8 +176,7 @@ def mlp_regression(X, y,
         model.compile(loss=loss, optimizer=optimizer)
 
         # model fitting
-        model.fit(train_generator,
-                  batch_size=batch_size, epochs=epochs,
+        model.fit(train_generator, epochs=epochs,
                   verbose=0, callbacks=[mc, es],
                   validation_data=val_generator,
                   steps_per_epoch=train_steps,

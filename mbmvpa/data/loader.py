@@ -107,17 +107,32 @@ class DataGenerator(Sequence):
     # TODO find a better reference
     """
 
-    def __init__(self, X, y, batch_size, shuffle=True, use_bipolar_balancing=False, **kwargs):
+    def __init__(self, X, y, batch_size, shuffle=True, use_bipolar_balancing=False, binarize=False,**kwargs):
         self.X = X
         self.y = y
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.indexes = np.arange(X.shape[0])
+        self.binarize= binarize
+        if self.binarize:
+            use_bipolar_balancing = True
+            if 'high_rate' in kwargs.key():
+                high_rate = kwargs['high_rate']
+            else:
+                high_rate = None
+                
+            if 'low_rate' in kwargs.key():
+                low_rate = kwargs['low_rate']
+            else:
+                low_rate = None
+                
+            self.binarizer = get_binarizer(y.flatten(),high_rate,low_rate)
         self.use_bipolar_balancing=use_bipolar_balancing
         if self.use_bipolar_balancing:
             self.ticketer = get_bipolarized_ticketer(y.flatten(),**kwargs)
             self.X_original = X
             self.y_original = y
+        
         self.on_epoch_end()
 
     # for printing the statistics of the function
@@ -143,7 +158,10 @@ class DataGenerator(Sequence):
         indexes = self.indexes[index *
                                self.batch_size:(index + 1) * self.batch_size]
         images = [self.X[i] for i in indexes]
-        targets = [self.y[i] for i in indexes]
+        if self.binarize:
+            targets = [self.binarizer(self.y[i]) for i in indexes]
+        else:
+            targets = [self.y[i] for i in indexes]
         images = np.array(images)
         targets = np.array(targets)
 
@@ -151,6 +169,8 @@ class DataGenerator(Sequence):
 
 def gaussian(x, mean, std):
     return ((2*np.pi*(std**2))**(-.5))*np.exp(-.5*(((x-mean)/std)**2))
+
+
     
 def get_bipolarized_ticketer(array,high_rate=.1,low_rate=.1, max_val=None, min_val=None, bins=100, max_ticket=10):
     d = array.copy().flatten()
@@ -180,6 +200,14 @@ def get_bipolarized_ticketer(array,high_rate=.1,low_rate=.1, max_val=None, min_v
     
     return ticketer
 
+def get_binarizer(array,high_rate=.1,low_rate=.1):
+    d = array.copy().flatten()
+    d.sort()
+    low_pole = d[int(len(d)*low_rate)]
+    high_pole = d[-int(len(d)*high_rate)]
+        
+    binarizer = lambda v: int((high_mean-v)<(v-low_mean))
+    
 def weighted_sampling(y, ticketer, n_sample=None):
     
     if n_sample is None:

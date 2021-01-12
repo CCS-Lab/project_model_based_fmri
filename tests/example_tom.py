@@ -11,7 +11,7 @@ import pdb
 root = "/data2/project_modelbasedMVPA/ds000005"
 
 '''
-X, voxel_mask, layout, data_root = bids_preprocess(root, smoothing_fwhm=None, zoom=(2, 2, 2), ncore=2, nthread=4)
+X, voxel_mask, layout, data_root = bold_preprocess(root, smoothing_fwhm=6, zoom=(2, 2, 2), ncore=2, nthread=4)
 
 def example_tom_preprocess_columns(row):
     ## rename data in a row to the name which can match hbayesdm.ra_prospect requirements ##
@@ -35,6 +35,7 @@ generator = LatentProcessGenerator(root=root,
                                    condition=example_tom_condition,
                                    modulation=example_tom_modulation,
                                    dm_model='ra_prospect',
+                                   normalizer='minmax',
                                    individual_params_custom="/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/mvpa/individual_params.tsv"
                                     )
 
@@ -42,8 +43,30 @@ y, time_mask = generator.run()
 '''
 #pdb.set_trace()
 
-MVPA_model = MLP(root=root,use_bipolar_balancing=True)
-coefs = MVPA_model.run()
-#get_map(coefs, MVPA_model.voxel_mask, task_name="tom2007_mlp", map_type="z", save_path=".", sigma=1)
-img = MVPA_model.image(save_path='.')
 
+
+MVPA_model = MLP(root=root,use_bipolar_balancing=False,n_repeat=10,n_epoch=200,n_patience=20,use_default_extractor=False)
+coefs = MVPA_model.run()
+
+'''
+np.save('coefs_original.npy',coefs)
+img = MVPA_model.image(save_path='.', task_name='original')
+
+np.random.shuffle(MVPA_model.y)
+
+coefs = MVPA_model.run()
+np.save('coefs_sham.npy', coefs)
+img = MVPA_model.image(save_path='.',task_name='sham')
+
+
+MVPA_model = MLP(root=root,use_bipolar_balancing=True,n_repeat=10,n_epoch=200,n_patience=20,use_default_extractor=False)
+coefs = MVPA_model.run()
+np.save('coefs_balanced.npy',coefs)
+img = MVPA_model.image(save_path='.',task_name='balanced')
+
+np.random.shuffle(MVPA_model.y)
+
+coefs = MVPA_model.run()
+np.save('coefs_balanced_sham.npy',coefs)
+img = MVPA_model.image(save_path='.',task_name='balanced_sham')
+'''

@@ -10,47 +10,14 @@ from pathlib import Path
 import numpy as np
 
 from bids import BIDSLayout
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
-import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-
-
-from ..data import loader
 from ..data.loader import prepare_dataset
 from ..utils import config
 from ..utils.coef2map import get_map
+from ..models.tensorflow_utils import ExperimenterTF
+from ..models.extractor import DefaultExtractor
 import pdb
-    
-class DefaultExtractor():
-    # model is assumed to be linear
-    
-    def __init__(self, input_shape, n_sample=1):
-        self.input_shape = input_shape
-        self.n_sample = 1
-        
-    def __call__(self,model,batch_size=256):
-        
-        outputs_pool = []
-        for i in range(self.n_sample):
-        
-            sample = np.eye(self.input_shape)
-            n_step = int(np.ceil((self.input_shape+0.0)/batch_size))
-
-            outputs = []
-            for i in range(n_step):
-                output = model.predict(sample[i*batch_size:(i+1)*batch_size])
-                output = list(output.flatten())
-                outputs += output
-
-            outputs = np.array(outputs)[:self.input_shape]
-            outputs_pool.append(outputs)
-        
-        mean_outputs = np.array(outputs_pool).mean(0)
-        
-        return mean_outputs
         
     
     
@@ -141,16 +108,30 @@ class MVPA_TF():
         self.verbose = verbose
         self.n_repeat = n_repeat
         self.n_sample = n_sample
+        
         self.n_epoch = n_epoch
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.validation_split_ratio = validation_split_ratio
         self.save_pred = save_pred
         self.use_bipolar_balancing = use_bipolar_balancing
+        
         self._coeffs = []
         self._errors = []
+        self._sham_errors = []
+        self._sham_errors = []
         self._make_log_dir()
         self._time = datetime.datetime.now()
+        self.experimenter = ExperimenterTF(chk_path=self.chk_path,
+                                             result_path=self.result_path,
+                                             n_sample=self.n_sample,
+                                             n_epoch=self.n_epoch,
+                                             n_patience=self.n_patience,
+                                             n_batch=self.n_batch,
+                                             validation_split_ratio=self.validation_split_ratio,
+                                             save_pred=self.save_pred,
+                                             use_bipolar_balancing=self.use_bipolar_balancing,
+                                             verbose=self.verbose)
         
     def _make_log_dir(self):
         now = datetime.datetime.now()
@@ -183,82 +164,10 @@ class MVPA_TF():
         self._coeffs = []
         self._errors = []
         
-        for i in range(1, self.n_repeat + 1):
-            # random sampling "n_samples" if the given number of X,y instances is bigger
-            # than maximum allowed number for training
-            np.random.seed(i)
-            tf.random.set_seed(i) # also need to set random seed in tensorflow
-            ids = np.arange(self.X.shape[0])
-
-            if self.X.shape[0] > self.n_sample:
-                np.random.shuffle(ids)
-                ids = ids[:self.n_sample]
-
-            # split data to training set and validation set
-            train_ids, test_ids = train_test_split(
-                ids, test_size=self.validation_split_ratio, random_state=i
-            )
-            train_steps = len(train_ids) // self.n_batch
-            val_steps = len(test_ids) // self.n_batch
-
-            assert train_steps > 0
-            assert val_steps > 0
-            
-            X_train = self.X[train_ids]
-            X_test = self.X[test_ids]
-            y_train = self.y[train_ids]
-            y_test = self.y[test_ids]
-
-            # create helper class for generating data
-            # support mini-batch training implemented in Keras
-            train_generator = loader.DataGenerator(
-                X_train, y_train, self.n_batch, shuffle=True,
-                use_bipolar_balancing=self.use_bipolar_balancing)
-            val_generator = loader.DataGenerator(
-                X_test, y_test, self.n_batch, shuffle=False,
-                use_bipolar_balancing=self.use_bipolar_balancing)
-            # should be implemented in the actual model
-            
-            best_model_filepath = str(self.chk_path / \
-            f"repeat_{i:0{len(str(self.n_repeat))}}.ckpt")
-        
-            # temporal buffer for intermediate training results (weights) of training.
-            mc = ModelCheckpoint(
-                best_model_filepath,
-                save_best_only=True, save_weights_only=True,
-                monitor="val_loss", mode="min")
-
-            # device for early stopping. if val_loss does not decrease within patience, 
-            # the training will stop
-            es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
-            
+        for i in range(1, self.n_repeat + 1): 
             model = self._reset_model()
-            
-            model.fit(train_generator, epochs=self.n_epoch,
-                  verbose=0, callbacks=[mc, es],
-                  validation_data=val_generator,
-                  steps_per_epoch=train_steps,
-                  validation_steps=val_steps)
-            
-            # load best model
-            model.load_weights(best_model_filepath)
-            # validation 
-            y_pred = model.predict(X_test)
-            len(y_pred)
-            error = mean_squared_error(y_pred, y_test)
-            if self.save_pred:
-                total_pred = model.predict(self.X)
-                usedtrain_map = np.zeros((self.X.shape[0],1))
-                usedtrain_map[train_ids] = 1
-                pred_data = np.concatenate([total_pred, usedtrain_map],-1)
-                pred_path = self.result_path / f"repeat_{i:0{len(str(self.n_repeat))}}_pred.npy"
-                np.save(pred_path, pred_data)
-                
-            if self.verbose > 0:
-                print(f"[{i}/{self.n_repeat}] - val_loss: {error:.04f}")
+            model,error = self.experimenter(model, i, self.X, self.y)
             self._errors.append(error)
-            
-            # extracting voxel-wise mapped weight (coefficient) map
             coeff = self.extractor(model)
             self._coeffs.append(coeff)
 
@@ -267,6 +176,20 @@ class MVPA_TF():
         self._time = datetime.datetime.now()
         
         return self._coeffs
+    
+    def sham(self):
+        
+        self._sham_errors = []
+        ids = np.arange(len(self.y))
+        for i in range(1, self.n_repeat + 1):
+            model = self._reset_model()
+            np.random.shuffle(ids)
+            model,error = self.experimenter(model, i, self.X, self.y[ids])
+            self._sham_errors.append(error)
+            
+        self._sham_errors = np.array(self._sham_errors)
+        
+        return self._sham_errors
     
     def image(self, voxel_mask=None, task_name=None,
                 map_type="z", save_path=None, sigma=1):
@@ -289,4 +212,4 @@ class MVPA_TF():
         return get_map(self._coeffs, voxel_mask, task_name,
                     map_type=map_type, save_path=save_path, sigma=sigma)
         
-      
+        

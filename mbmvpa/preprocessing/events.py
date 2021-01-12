@@ -51,7 +51,7 @@ def events_preprocess(# path informations
                       individual_params_custom=None,
                       # BOLDifying parameter
                       hrf_model="glover",
-                      normalizer="standard-minimax",
+                      normalizer="minmax",
                       # Other specification
                       df_events_custom=None,
                       use_duration=False,
@@ -333,7 +333,6 @@ class LatentProcessGenerator():
         assert isinstance(normalizer, str)
         assert (isinstance(scale, list)
             or isinstance(scale, tuple))
-        assert (isinstance(scale[0], float))
 
         return convert_event_to_boldlike_signal(self._df_events_ready, 
                                                 self.t_r, self.n_scans, self.n_session,
