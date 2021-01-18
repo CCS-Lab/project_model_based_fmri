@@ -1,6 +1,12 @@
-from mbmvpa.preprocessing.bids import bids_preprocess
+from mbmvpa.preprocessing.bold import VoxelFeatureGenerator
 from pathlib import Path
 import pdb
+
+
+## Test fmri processing from root path
+
 root = Path('tests/test_example')
-X, voxel_mask, layout, data_root = bids_preprocess(root, smoothing_fwhm=None, zoom=(2, 2, 2), ncore=2, nthread=4)
+X_generator = VoxelFeatureGenerator(bids_layout=root)
+X_generator.summary()
+X_generator.preprocess(overwrite=True)
 print("TEST PASS!")

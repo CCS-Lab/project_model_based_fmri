@@ -15,6 +15,7 @@ from nilearn.image import resample_to_img
 from nilearn.datasets import load_mni152_brain_mask
 import nibabel as nib
 
+import pdb
 
 def _custom_masking(mask_path, threshold, zoom,
                    smoothing_fwhm, interpolation_func, standardize):
@@ -94,7 +95,7 @@ def _image_preprocess(params):
         subject_id (str): subject ID. used to track the owner of the file in multiprocessing
     """
 
-    image_path, confounds_path, save_path\
+    image_path, confounds_path, save_path,\
     motion_confounds, masker,\
     voxel_mask = params
 
@@ -111,54 +112,8 @@ def _image_preprocess(params):
     # resample_to_img: need to target image including affine.
     # ref.: https://nilearn.github.io/modules/generated/nilearn.image.resample_img.html
     #       https://nilearn.github.io/modules/generated/nilearn.image.resample_to_img.html
-    fmri_masked = resample_to_img(image_path, voxel_mask)
+    fmri_masked = resample_to_img(str(image_path), voxel_mask)
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
-    
     np.save(save_path, fmri_masked)
     
-    return 
-
-
-def _image_preprocess_multithreading(params, nthread):
-    """
-    Call image_preprocess function using multithreading.
-    """
-
-    """
-    Arguments:
-        params: params must have below contents
-            image_path (str or Path): path of fMRI nii file 
-            confounds_path (str or Path): path of corresponding motion confounds tsv file
-            motion_confounds (list[str]): list of name indicating motion confound names in confounds tsv file
-            masker (nilearn.input_data.NiftiMasker): masker object. will be used for correcting motion confounds, and masking.
-            voxel_mask (nibabel.nifti1.Nifti1Image): nifti image for voxel-wise binary mask
-            subject_id (str): subject ID. used to track the owner of the file in multiprocessing
-
-    Return:
-        fmri_masked (numpy.ndarray): preprocessed image with shape run # x time point # x voxel #
-        subject_id (str): subject ID. used to track the owner of the file in multiprocessing
-    """
-    image_paths, confounds_paths,\
-    motion_confounds, masker,\
-    voxel_mask, subject_id = params
-
-    image_params = []
-    for i in range(len(params[0])):
-        image_params.append(
-            [image_paths[i], confounds_paths[i], motion_confounds,
-             masker, voxel_mask, subject_id])
-
-    preprocessed_images = []
-    nworker = 4 if nthread > 4 else nthread
-    
-    # Parallel processing for images with thread pool
-    # Thread pool has the advantage of saving memory compared to process pool.
-    # 1. Crate thread pool - ThreadPoolExecutor
-    # 2. Create parameters to use for each task in thread - image params
-    # 3. Thread returns a return value after job completion - future.result()
-    # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
-    with ThreadPoolExecutor(max_workers=nworker) as executor:
-        for image_param in image_params:
-            executor.submit(_image_preprocess, image_param)
-    
-    return
+    return save_path
