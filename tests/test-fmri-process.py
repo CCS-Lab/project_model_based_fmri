@@ -8,5 +8,5 @@ import pdb
 root = Path('tests/test_example')
 X_generator = VoxelFeatureGenerator(bids_layout=root)
 X_generator.summary()
-X_generator.preprocess(overwrite=True)
+X_generator.run(overwrite=True)
 print("TEST PASS!")

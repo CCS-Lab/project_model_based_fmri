@@ -28,9 +28,9 @@ from ..utils import config # configuration for default names used in the package
 class LatentProcessGenerator():
     def __init__(self, 
               bids_layout,
-              process_name="unnamed",
               save_path=None,
               task_name=None,
+              process_name="unnamed",
               adjust_function=lambda x: x,
               filter_function=lambda _: True,
               latent_function=None,
@@ -98,12 +98,12 @@ class LatentProcessGenerator():
         return df_events_list
     
     def set_computational_model(self, 
-                                adjust_function=None, 
-                                df_events=None, 
-                                individual_params=None, 
-                                dm_model=None, 
-                                filter_function=None, 
                                 overwrite=True,
+                                dm_model=None, 
+                                individual_params=None, 
+                                df_events=None, 
+                                adjust_function=None, 
+                                filter_function=None, 
                                 **kwargs):
 
         if df_events is None:

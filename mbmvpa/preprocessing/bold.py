@@ -19,8 +19,8 @@ class VoxelFeatureGenerator():
     def  __init__(self,
                   bids_layout,
                   save_path=None,
-                  fmriprep_name='fMRIPrep',
                   task_name=None,
+                  fmriprep_name='fMRIPrep',
                   mask_path=None,
                   bold_suffix='bold',
                   confound_suffix='regressors',
@@ -58,10 +58,13 @@ class VoxelFeatureGenerator():
         self.bids_controller.summary()
         
     
-    def run(self,suffix=None, overwrite=False, motion_confounds=None,n_thread=None):
+    def run(self,feature_name=None, overwrite=False, motion_confounds=None,n_thread=None):
         
-        if suffix is None:
+        if feature_name is None:
             suffix = self.mbmvpa_X_suffix
+        else:
+            suffix = feature_name
+            
         assert isinstance(suffix, str)
         
         if n_thread is None:

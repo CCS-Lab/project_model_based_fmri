@@ -30,7 +30,7 @@ class BIDSController():
             self.layout = bids_layout
         elif isinstance(bids_layout, BIDSController):
             # assumed that BIDSController is already well initiated and just handed over.
-            return bids_layout
+            self.layout = BIDSLayout(root=bids_layout.root, derivatives=True)
         else:
             # not valid input
             assert False, ("please input BIDS root or BIDSLayout")
@@ -96,7 +96,7 @@ class BIDSController():
         summary_report = [f'[{pipeline_name:^12}] '+summary\
                             for pipeline_name, summary in summaries.items() ]
         
-        summary_reprot = '\n'.join(summary_report)
+        summary_report = '\n'.join(summary_report)
         
         print(summary_report)
         

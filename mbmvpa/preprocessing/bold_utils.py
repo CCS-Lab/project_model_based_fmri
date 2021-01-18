@@ -15,7 +15,6 @@ from nilearn.image import resample_to_img
 from nilearn.datasets import load_mni152_brain_mask
 import nibabel as nib
 
-import pdb
 
 def _custom_masking(mask_path, threshold, zoom,
                    smoothing_fwhm, interpolation_func, standardize):
