@@ -76,7 +76,8 @@ class DataPreprocessor():
                    individual_params=None, 
                    df_events=None, 
                    adjust_function=None, 
-                   filter_function=None, 
+                   filter_function=None,
+                   skip_modeling=False,
                    **kwargs):
         
         self.X_generator.run(overwrite=overwrite,
@@ -84,13 +85,14 @@ class DataPreprocessor():
                            motion_confounds=motion_confounds,
                            n_thread=n_thread)
         
-        self.y_generator.set_computational_model(overwrite=overwrite,
-                                                dm_model=dm_model, 
-                                                individual_params=individual_params, 
-                                                df_events=df_events, 
-                                                adjust_function=adjust_function, 
-                                                filter_function=filter_function, 
-                                                **kwargs)
+        if not skip_modeling:
+            self.y_generator.set_computational_model(overwrite=overwrite,
+                                                    dm_model=dm_model, 
+                                                    individual_params=individual_params, 
+                                                    df_events=df_events, 
+                                                    adjust_function=adjust_function, 
+                                                    filter_function=filter_function, 
+                                                    **kwargs)
         
         self.y_generator.run(overwrite=overwrite,
                             process_name=process_name)

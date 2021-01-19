@@ -190,6 +190,13 @@ class BIDSController():
     def get_confound_all(self):
         return self.fmriprep_layout.get(suffix=self.confound_suffix,extension="tsv")
     
+    def get_process_name(self, filename):
+        filename = str(filename).split('/')[-1]
+        for entity in filename.split('_'):
+            entity_key, entity_value =  entity.split('-') 
+            if entity_key == config.PROCESS_KEY_NAME:
+            file_entities = {entity[0]:entity[1] for entity in entity}
+        
     def save_voxelmask(self, voxel_mask):
         nib.save(voxel_mask, self.voxelmask_path)
         

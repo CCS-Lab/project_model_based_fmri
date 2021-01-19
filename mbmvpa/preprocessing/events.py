@@ -173,10 +173,10 @@ class LatentProcessGenerator():
             ses_id = event_infos['session'] if 'session' in event_infos.keys() else None
             run_id = event_infos['run']
             if ses_id is not None:
-                prefix = f"sub-{sub_id}_task-{task_name}_ses-{ses_id}_run-{run_id}_process-{process_name}"
+                prefix = f"sub-{sub_id}_task-{task_name}_ses-{ses_id}_run-{run_id}_{config.PROCESS_KEY_NAME}-{process_name}"
                 save_path = self.bids_controller.set_path(sub_id=sub_id, ses_id=ses_id)
             else:
-                prefix = f"sub-{sub_id}_task-{task_name}_run-{run_id}_process-{process_name}"
+                prefix = f"sub-{sub_id}_task-{task_name}_run-{run_id}_{config.PROCESS_KEY_NAME}-{process_name}"
                 save_path = self.bids_controller.set_path(sub_id=sub_id)
             
             timemask_path = save_path/(prefix+f'_{config.DEFAULT_TIMEMASK_SUFFIX}.npy')
