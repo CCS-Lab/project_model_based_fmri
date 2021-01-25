@@ -1,10 +1,12 @@
 from pathlib import Path
+import numpy as np
 import nibabel as nib
 from bids import BIDSLayout
 from ..utils.descriptor import make_mbmvpa_description, version_diff
 
 from ..utils import config # configuration for default names used in the package
 
+import pdb
 
 class BIDSController():
     
@@ -59,14 +61,19 @@ class BIDSController():
         
         if task_name is None:
             try:
-                self.task_name = self.layout.get_task()[0]
+                task_names = self.layout.get_task()
+                task_name_lens = [len(self.layout.get(task=task_name,suffix=self.bold_suffix)) for task_name in task_names]
+                self.task_name = task_names[np.array(task_name_lens).argmax()]
             except:
-                self.task_name = self.fmriprep_layout.get_task()[0]
+                task_names = self.fmriprep_layout.get_task()
+                task_name_lens = [len(self.fmriprep_layout.get(task=task_name,suffix=self.bold_suffix)) for task_name in task_names]
+                self.task_name = task_names[np.array(task_name_lens).argmax()]
+            
         else:
             self.task_name = task_name
         
         if save_path is None:
-            save_path = Path(self.root)/'derivatives'/'mbmvpa'
+            save_path = Path(self.root)/'derivatives'/config.DEFAULT_DERIV_ROOT_DIR
             
         try:
             self.mbmvpa_layout = BIDSLayout(root=save_path, derivatives=True)
@@ -74,7 +81,6 @@ class BIDSController():
             self.make_mbmvpa(save_path)
             self.mbmvpa_layout = BIDSLayout(root=save_path, derivatives=True)
             
-        self.make_mbmvpa()
         self.n_subject, self.n_session, self.n_run, self.n_scans, self.t_r = self.get_metainfo()
         self.voxelmask_path = Path(self.mbmvpa_layout.root)/config.DEFAULT_VOXEL_MASK_FILENAME
     
@@ -100,11 +106,10 @@ class BIDSController():
         
         print(summary_report)
         
-    def make_mbmvpa(self):
+    def make_mbmvpa(self,mbmvpa_root):
         
         if self.mbmvpa_name not in self.layout.derivatives.keys():
             # mbmvpa directory in BIDS are not set
-            mbmvpa_root = Path(self.root) /'derivatives'/ config.DEFAULT_DERIV_ROOT_DIR
             if not mbmvpa_root.exists():
                 mbmvpa_root.mkdir()
             if self.fmriprep_layout is not None:
@@ -189,13 +194,6 @@ class BIDSController():
     
     def get_confound_all(self):
         return self.fmriprep_layout.get(suffix=self.confound_suffix,extension="tsv")
-    
-    def get_process_name(self, filename):
-        filename = str(filename).split('/')[-1]
-        for entity in filename.split('_'):
-            entity_key, entity_value =  entity.split('-') 
-            if entity_key == config.PROCESS_KEY_NAME:
-            file_entities = {entity[0]:entity[1] for entity in entity}
         
     def save_voxelmask(self, voxel_mask):
         nib.save(voxel_mask, self.voxelmask_path)

@@ -21,21 +21,6 @@ from sklearn.preprocessing import minmax_scale
 from ..utils import config # configuration for default names used in the package
 
 
-
-class Normalizer():
-    def __init__(self, normalizer_name="minmax",scale=(-1,1)):
-        self.name = normalizer_name
-        self.scale = scale
-        
-    def __call__(self,x):
-        if self.name == "standard":
-            normalized = zscore(x, axis=None)
-        else:
-            # default is using minmax
-            normalized = minmax_scale(
-                x.flatten(),
-                feature_range=self.scale, axis=0)
-        return normalized
     
 def _process_indiv_params(individual_params):
     if type(individual_params) == str\

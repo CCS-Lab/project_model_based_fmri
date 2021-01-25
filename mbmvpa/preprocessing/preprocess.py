@@ -1,6 +1,5 @@
 from .events import LatentProcessGenerator
 from .bold import VoxelFeatureGenerator
-from .events_utils import Normalizer
 import numpy as np
 
 class DataPreprocessor():

@@ -14,12 +14,12 @@ def make_mbmvpa_description(mbmvpa_root,
                         "Name": config.ANAL_NAME,
                         "BIDSVersion": bids_version,
                         "PipelineDescription": {
-                            "Name": config.PIPLINE_NAME,
+                            "Name": config.MBMVPA_PIPELINE_NAME,
                             "Version": mbmvpa.__version__
                         }
                     }
     
-    with open(Path(root)/'dataset_description.json', 'w') as f:
+    with open(Path(mbmvpa_root)/'dataset_description.json', 'w') as f:
         json.dump(dataset_description, f)
         
     return dataset_description
