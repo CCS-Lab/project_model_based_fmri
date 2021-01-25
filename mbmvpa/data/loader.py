@@ -12,6 +12,7 @@ import numpy as np
 from tensorflow.keras.utils import Sequence
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
+from bids import BIDSLayout
 from ..utils import config
 
 
@@ -42,9 +43,10 @@ def get_process_name(filename):
     return ""
 
 
-def BIDSDataLoader():
+class BIDSDataLoader():
     
-    def __init__(self, layout, 
+    def __init__(self,
+                 layout,
                  normalizer="minmax",
                  scale=(-1,1),
                  task_name=None, 
@@ -53,13 +55,14 @@ def BIDSDataLoader():
                  subjects=None
                 ):
          
-        if isinstance(layout,str):
-            self.layout = BIDSLayout(root=Path(bids_layout),validate=False)
-        elif isinstance(layout,Path):
-            self.layout = BIDSLayout(root=bids_layout,validate=False)
+        if isinstance(layout,str) or isinstance(layout,Path):
+            try:
+                self.layout = BIDSLayout(root=layout,derivatives=True)
+            except:
+                self.layout = BIDSLayout(root=layout,validate=False)
         elif isinstance(layout,BIDSLayout):
             self.layout = layout
-        
+            
         if config.MBMVPA_PIPELINE_NAME in self.layout.derivatives.keys():
             self.layout = self.layout.derivatives[config.MBMVPA_PIPELINE_NAME]
         
@@ -68,7 +71,7 @@ def BIDSDataLoader():
         self.dynamic_load = dynamic_load
         
         if isinstance(normalizer,str):
-            self.normalizer = Normalizer(normalizer_name=normalizer_name,
+            self.normalizer = Normalizer(normalizer_name=normalizer,
                                          scale=scale)
         else:
             self.normalizer = normalizer
@@ -108,7 +111,7 @@ def BIDSDataLoader():
         subject_y_numpy = []
 
         for subject_X in subject_Xs:
-            entities = X_file.get_entities()
+            entities = subject_X.get_entities()
             if self.has_session:
                 subject_y = self.layout.get(subject=subject,
                                 run=entities['run'],
@@ -154,15 +157,15 @@ def BIDSDataLoader():
         X = {}
         y = {}
         for subject in subjects:
-            subject_X_numpy, subject_y_numpy = _get_single_subject_data(subject)
+            subject_X_numpy, subject_y_numpy = self._get_single_subject_data(subject)
             X[subject]=np.array(subject_X_numpy)
             y[subject]=self.normalizer(np.array(subject_y_numpy))
             
         return X, y
     
     def get_total_data(self):
-        X = np.array([self.X[subejct] for subject in self.subjects])
-        y = np.array([self.y[subejct] for subject in self.subjects])
+        X = np.array([self.X[subject] for subject in self.subjects])
+        y = np.array([self.y[subject] for subject in self.subjects])
         return X,y
             
             
