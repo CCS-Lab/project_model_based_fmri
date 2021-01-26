@@ -21,6 +21,7 @@ import datetime
 
 # TODO: replace this relative import with an absolute import.
 # e.g., from {package_name}.data import loader
+from ..utils.coef2map import get_map
 from ..data import loader
 from ..utils import config
 
@@ -28,6 +29,7 @@ from ..utils import config
 logging.basicConfig(level=logging.INFO)
 
 def elasticnet(X, y,
+               voxel_mask,
                save_path=".",
                save=True,
                alpha=0.001,
@@ -39,7 +41,11 @@ def elasticnet(X, y,
                n_repeat=1,
                verbose=1,
                n_samples=30000,
-               confidence_interval=.99):
+               confidence_interval=.99,
+               task_name="unnamed",
+               map_type="z",
+               sigma=1
+               ):
     """
     This package is wrapping ElasticNet from "glmnet" python package. please refer to (https://github.com/civisanalytics/python-glmnet)
     Fitting ElasticNet as a regression model for Multi-Voxel Pattern Analysis and extracting fitted coefficients.
@@ -118,7 +124,9 @@ def elasticnet(X, y,
         if save:
             np.save(save_root/'cv_mean_score.npy', -model.cv_mean_score_)
             np.save(save_root/'coef.npy',model.coef_path_)
-                
+            get_map(coefs, voxel_mask, task_name,
+                    map_type=map_type, save_path=save_root, sigma=sigma)
+        
         if verbose > 0:
             
             # visualization of ElasticNet procedure

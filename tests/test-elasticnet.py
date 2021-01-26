@@ -10,6 +10,7 @@ voxel_mask = loader.get_voxel_mask()
 
 coef = elasticnet(X=X,
                   y=y,
+                  voxel_mask=voxel_mask,
                   save_path='tests')
             
 
