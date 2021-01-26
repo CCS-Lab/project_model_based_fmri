@@ -75,7 +75,7 @@ class MVPA_TF():
                 self.save_path = Path('.')
             else:
                 sp = Path(
-                    layout.derivatives["fMRIPrep"].root)\
+                    layout.derivatives[config.MBMVPA_PIPELINE_NAME].root)\
                     / config.DEFAULT_SAVE_PATH_CKPT 
                 if not sp.exists():
                     sp.mkdir()

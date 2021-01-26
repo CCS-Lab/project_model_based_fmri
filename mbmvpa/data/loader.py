@@ -169,9 +169,12 @@ class BIDSDataLoader():
             
         return X, y
     
-    def get_total_data(self):
+    def get_total_data(self, flatten=True):
         X = np.array([self.X[subject] for subject in self.subjects])
         y = np.array([self.y[subject] for subject in self.subjects])
+        if flatten:
+            X=X.reshape(-1,X.shape[-1])
+            y=y.flatten()
         return X,y
     
     def get_voxel_mask(self):

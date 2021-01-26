@@ -17,6 +17,7 @@ from scipy.stats import norm
 from glmnet import ElasticNet
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+import datetime
 
 # TODO: replace this relative import with an absolute import.
 # e.g., from {package_name}.data import loader
@@ -27,15 +28,16 @@ from ..utils import config
 logging.basicConfig(level=logging.INFO)
 
 def elasticnet(X, y,
-               layout,
+               save_path=".",
+               save=True,
                alpha=0.001,
                n_splits=5,
                n_jobs=16,
                max_lambda=10,
                min_lambda_ratio=1e-4,
                lambda_search_num=100,
-               N=1,
-               verbose=0,
+               n_repeat=1,
+               verbose=1,
                n_samples=30000,
                confidence_interval=.99):
     """
@@ -51,7 +53,6 @@ def elasticnet(X, y,
     Args:
         X (numpy.ndarray): preprocessed fMRI data. shape : data # x voxel #
         y (numpy.ndarray): parametric modulation values to regress X against. shape: data #
-        layout (bids.BIDSLayout): BIDSLayout by bids package. if not provided, it will be obtained from root path.
         alpha (float): mixing parameter
         n_splits (int): the number of N-fold cross validation
         n_jobs (int): the number of cores for parallel computing
@@ -67,6 +68,12 @@ def elasticnet(X, y,
     Return:
         numpy.ndarray : **coefs** (*numpy.array*) - fitted models' coefficients mapped to weight of each voxel.  shape: N x voxel #.
     """
+    
+    if save:
+        now = datetime.datetime.now()
+        save_root = Path(save_path) / f'report_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+        save_root.mkdir()
+    
     coefs = []
     exponent = np.linspace(
         np.log(max_lambda),
@@ -76,7 +83,8 @@ def elasticnet(X, y,
     # making lambda candidate list for searching best lambda
     lambda_path = np.exp(exponent)
 
-    for i in range(1, N + 1):
+    for i in range(1, n_repeat + 1):
+        
         # random sampling "n_samples" if the given number of X,y instances is bigger
         np.random.seed(i)
         ids = np.arange(X.shape[0])
@@ -107,11 +115,14 @@ def elasticnet(X, y,
         lambda_vals = np.log(np.array([lambda_best]))
         coefs.append(coef)
         coefs = np.array(coefs)
-
+        if save:
+            np.save(save_root/'cv_mean_score.npy', -model.cv_mean_score_)
+            np.save(save_root/'coef.npy',model.coef_path_)
+                
         if verbose > 0:
+            
             # visualization of ElasticNet procedure
-            logging.info(
-                f'[{i}/{N}] - lambda_best: {lambda_best:.03f}/ mse: {error:.04f}')
+            print(f'[{i}/{n_repeat}] - lambda_best: {lambda_best:.03f}/ mse: {error:.04f}')
             plt.figure(figsize=(10, 8))
             plt.errorbar(np.log(lambda_path), -model.cv_mean_score_,
                          yerr=model.cv_standard_error_* norm.ppf(1-(1-confidence_interval)/2), 
@@ -123,6 +134,7 @@ def elasticnet(X, y,
                         color='skyblue', alpha=0.2, lw=1)
             plt.xlabel('log(lambda)', fontsize=20)
             plt.ylabel('cv average MSE', fontsize=20)
+            plt.savefig(save_root/'plot1.png',bbox_inches='tight')
             plt.show()
             plt.figure(figsize=(10, 8))
             plt.plot(np.log(lambda_path), model.coef_path_[
@@ -131,6 +143,7 @@ def elasticnet(X, y,
                         color='skyblue', alpha=.75, lw=1)
             plt.xlabel('log(lambda)', fontsize=20)
             plt.ylabel('coefficients', fontsize=20)
+            plt.savefig(save_root/'plot2.png',bbox_inches='tight')
             plt.show()
 
     # coefs : N x voxel #
