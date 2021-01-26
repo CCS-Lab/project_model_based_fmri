@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import nibabel as nib
+import json
 from bids import BIDSLayout
 from ..utils.descriptor import make_mbmvpa_description, version_diff
 
@@ -38,7 +39,10 @@ class BIDSController():
             assert False, ("please input BIDS root or BIDSLayout")
         
         self.root = self.layout.root
-        if not ignore_fmriprep:
+        
+        self.ignore_fmriprep = ignore_fmriprep
+        
+        if not self.ignore_fmriprep:
             assert fmriprep_name in self.layout.derivatives.keys(), ("fmri prep. is not found")
 
             self.fmriprep_name = fmriprep_name
@@ -73,13 +77,16 @@ class BIDSController():
             self.task_name = task_name
         
         if save_path is None:
-            save_path = Path(self.root)/'derivatives'/config.DEFAULT_DERIV_ROOT_DIR
+            self.save_path = Path(self.root)/'derivatives'/config.DEFAULT_DERIV_ROOT_DIR
+        else:
+            self.save_path = save_path
             
-        try:
-            self.mbmvpa_layout = BIDSLayout(root=save_path, derivatives=True)
-        except:
-            self.make_mbmvpa(save_path)
-            self.mbmvpa_layout = BIDSLayout(root=save_path, derivatives=True)
+        self.make_mbmvpa(self.save_path)
+        
+        if not self.mbmvpa_name in self.layout.derivatives.keys():
+            self.layout.add_derivatives(path=self.save_path)
+            
+        self.mbmvpa_layout = self.layout.derivatives[self.mbmvpa_name]
             
         self.n_subject, self.n_session, self.n_run, self.n_scans, self.t_r = self.get_metainfo()
         self.voxelmask_path = Path(self.mbmvpa_layout.root)/config.DEFAULT_VOXEL_MASK_FILENAME
@@ -105,22 +112,37 @@ class BIDSController():
         summary_report = '\n'.join(summary_report)
         
         print(summary_report)
+    
+    def reload(self):
+        self.layout = BIDSLayout(root=self.root,derivatives=True)
+        if not self.ignore_fmriprep:
+            self.fmriprep_layout = self.layout.derivatives[self.fmriprep_name]
+            
+        if not self.mbmvpa_name in self.layout.derivatives.keys():
+            self.layout.add_derivatives(path=self.save_path)
+        self.mbmvpa_layout = self.layout.derivatives[self.mbmvpa_name]
         
     def make_mbmvpa(self,mbmvpa_root):
+
+        mbmvpa_root = Path(mbmvpa_root)
         
-        if self.mbmvpa_name not in self.layout.derivatives.keys():
-            # mbmvpa directory in BIDS are not set
-            if not mbmvpa_root.exists():
-                mbmvpa_root.mkdir()
+        if not mbmvpa_root.exists():
+            mbmvpa_root.mkdir()
+        
+        try:
+            dataset_description = json.load(mbmvpa_root/'dataset_description.json')
+            bids_version = dataset_description["BIDSVersion"]
+            assert dataset_description["PipelineDescription"]["Name"] == config.MBMVPA_PIPELINE_NAME
+            
+        except:
             if self.fmriprep_layout is not None:
                 bids_version = self.fmriprep_layout.get_dataset_description()['BIDSVersion']
             else:
                 bids_version = '1.1.1' # assumed
-                
+
             make_mbmvpa_description(mbmvpa_root=mbmvpa_root,
                                 bids_version=bids_version)
-        else:
-            return
+        
             
     def set_path(self, sub_id, ses_id=None):
         sub_path = Path(self.mbmvpa_layout.root) / f'sub-{sub_id}'

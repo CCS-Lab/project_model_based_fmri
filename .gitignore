@@ -157,4 +157,5 @@ examples/scratch/*
 tests/test_example
 tests/test_example.zip
 tests/Untitled*
+tutorials/report*
 .DS_Store

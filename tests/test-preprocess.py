@@ -30,6 +30,6 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                dm_model=dm_model)
 preprocessor.summary()
 preprocessor.preprocess(overwrite=True,nchain=2,nwarmup=50,niter=200)
-
+preprocessor.summary()
 print("TEST PASS!")
 

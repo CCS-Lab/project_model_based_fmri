@@ -96,6 +96,8 @@ class DataPreprocessor():
         self.y_generator.run(overwrite=overwrite,
                             process_name=process_name)
         
+        self.bids_controller.reload()
+        
         
     
         

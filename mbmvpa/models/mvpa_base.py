@@ -12,7 +12,6 @@ import numpy as np
 from bids import BIDSLayout
 import matplotlib.pyplot as plt
 
-from ..data.loader import prepare_dataset
 from ..utils import config
 from ..utils.coef2map import get_map
 from ..models.tensorflow_utils import ExperimenterTF
@@ -88,7 +87,9 @@ class MVPA_TF():
             self.save_path = Path(save_path)
             
         if ( X is None or y is None ) and layout is not None:
-            X, y, voxel_mask = prepare_dataset(layout.derivatives["fMRIPrep"].root)
+            loader = BIDSDataLoader(layout=layout)
+            X,y = loader.get_total_data()
+            voxel_mask = loader.get_voxel_mask()
         
         self.layout=layout
         self.X = X

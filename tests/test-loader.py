@@ -7,6 +7,7 @@ import pdb
 root = Path('tests/test_example')
 loader = BIDSDataLoader(layout=root)
 X,y = loader.get_total_data()
+voxel_mask = loader.get_voxel_mask()
 print("X", X.shape)
 print("y", y.shape)
 print("TEST PASS!")
