@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 
 from ..utils import config
 from ..utils.coef2map import get_map
+from ..utils.plot import plot_sham_result
 from ..models.tensorflow_utils import ExperimenterTF
 from ..models.extractor import DefaultExtractor
 import pdb
@@ -178,7 +179,7 @@ class MVPA_TF():
         
         return self._coeffs
     
-    def sham(self):
+    def sham(self, plot=True):
         
         self._sham_errors = []
         ids = np.arange(len(self.y))
@@ -189,6 +190,9 @@ class MVPA_TF():
             self._sham_errors.append(error)
             
         self._sham_errors = np.array(self._sham_errors)
+        
+        if plot:
+            plot_sham_result(self._errors,self._sham_errors,self.result_path)
         
         return self._sham_errors
     
