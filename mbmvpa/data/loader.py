@@ -14,6 +14,7 @@ from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
 from bids import BIDSLayout
 from ..utils import config
+from ..utils.coef2map import reconstruct
 
 
 class Normalizer():
@@ -48,6 +49,7 @@ class BIDSDataLoader():
     def __init__(self,
                  layout,
                  voxel_mask_path=None,
+                 reconstruct=False,
                  normalizer="minmax",
                  scale=(-1,1),
                  task_name=None, 
@@ -70,6 +72,7 @@ class BIDSDataLoader():
         self.task_name=task_name
         self.process_name=process_name
         self.dynamic_load = dynamic_load
+        self.reconstruct = reconstruct
         
         if voxel_mask_path is None:
             voxel_mask_path = Path(self.layout.root)/ config.DEFAULT_VOXEL_MASK_FILENAME
@@ -106,6 +109,8 @@ class BIDSDataLoader():
         
         if not self.dynamic_load:
             self.X, self.y = self._set_data(self.subjects)
+            
+        
         
     def _get_single_subject_data(self,subject):
         if subject in self.X.keys():
@@ -149,6 +154,9 @@ class BIDSDataLoader():
             subject_X = np.load(subject_X.path)
             subject_y = np.load(subject_y[0].path)
             timemask = np.load(timemask[0].path)==1
+            subject_X = subject_X[timemask]
+            if self.reconstruct:
+                subject_X = np.array([reconstruct(array, self.voxel_mask.get_fdata()) for array in subject_X])
             subject_X_numpy.append(subject_X[timemask])
             subject_y_numpy.append(subject_y[timemask])
             

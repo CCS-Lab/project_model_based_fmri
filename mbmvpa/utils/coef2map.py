@@ -13,6 +13,17 @@ from scipy.ndimage import gaussian_filter
 from scipy.stats import ttest_1samp, zscore
 
 
+def reconstruct(array, mask):
+    assert (mask==1).sum() == len(array)
+    
+    if array.shape[-1] == 1:
+        array = array.squeeze(-1)
+    blackboard = np.zeros(list(mask.shape))
+    blackboard[mask.nonzero()] = array.squeeze()
+    
+    return blackboard
+    
+    
 def get_map(coefs, voxel_mask, task_name,
             map_type="z", save_path=None, sigma=1):
     """
@@ -54,15 +65,11 @@ def get_map(coefs, voxel_mask, task_name,
     # make result map
 
     activation_maps = []
-    mapping_id = np.nonzero(voxel_mask.get_fdata().flatten())[0]
-
+    mask = voxel_mask.get_fdata()
     for coef in coefs:
         # converting flattened coefs to brain image.
-        activation_map = np.zeros(voxel_mask.get_fdata().flatten().shape[0])
-        for i, v in zip(mapping_id, coef):
-            activation_map[i] = v
-
-        activation_map = activation_map.reshape(voxel_mask.shape)
+        activation_map = reconstruct(coef, mask)
+        
         if sigma > 0:
             activation_map = gaussian_filter(activation_map, sigma)
         activation_maps.append(activation_map)
@@ -78,7 +85,7 @@ def get_map(coefs, voxel_mask, task_name,
         m = zscore(activation_maps, axis=None).mean(0)
 
     m[np.isnan(m)] = 0
-    m *= voxel_mask.get_fdata()
+    m *= mask
     result_map = nib.Nifti1Image(m, affine=voxel_mask.affine)
     ###########################################################################
     # saving
