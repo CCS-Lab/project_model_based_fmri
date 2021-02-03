@@ -4,46 +4,9 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Activation, Conv2D, MaxPooling2D
-from keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
 
 from ..models.mvpa_base import MVPA_TF
-
-def make_custom_model_cnn_2D(fmri_shape):
-    
-    model = Sequential()
-    model.add(Conv2D(8, (3,3), kernel_initializer='he_normal', padding='same', input_shape=fmri_shape))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-
-
-    model.add(Conv2D(16, (3,3), kernel_initializer='he_normal', padding='same'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-
-    model.add(Conv2D(32, (3,3), kernel_initializer='he_normal', padding='same'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-
-    model.add(Conv2D(64, (3,3), kernel_initializer='he_normal', padding='same'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-
-
-    model.add(Flatten()) 
-    model.add(Dense(128, kernel_initializer='he_normal'))
-    model.add(Activation('relu'))
-    
-    model.add(Dense(2, kernel_initializer='he_normal'))
-    model.add(Activation('linear'))
-    
-    model.add(Activation('softmax'))
-    
-    adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
-
-    model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
-
-    return model
 
 def build_cnn(input_shape,
              layer_dims=[8,16,32,64],
@@ -101,12 +64,33 @@ class CNN(MVPA_TF):
         
         super(CNN, self).__init__(model_name="MLP",**kwargs)
         input_shape = self.X.shape[1:] 
-        self.model = build_cnn(input_shape=input_shape,
-                             layer_dims=layer_dims,
-                             kernel_size=kernel_size,
-                             logit_layer_dim=logit_layer_dim,
-                             activation=activation,
-                             activation_output=activation_output,
-                             dropout_rate=dropout_rate,
-                             optimizer=optimizer,
-                             loss=loss)
+        
+        self.input_shape = input_shape
+        self.layer_dims = layer_dims
+        self.kernel_size = kernel_size
+        self.logit_layer_dim = logit_layer_dim
+        self.activation = activation
+        self.activation_output = activation_output
+        self.dropout_rate = dropout_rate
+        self.optimizer = optimizer
+        self.loss = loss
+        self.model = build_cnn(input_shape=self.input_shape,
+                             layer_dims=self.layer_dims,
+                             kernel_size=self.kernel_size,
+                             logit_layer_dim=self.logit_layer_dim,
+                             activation=self.activation,
+                             activation_output=self.activation_output,
+                             dropout_rate=self.dropout_rate,
+                             optimizer=self.optimizer,
+                             loss=self.loss)
+        
+    def _reset_model(self):
+        self.model = build_cnn(input_shape=self.input_shape,
+                             layer_dims=self.layer_dims,
+                             kernel_size=self.kernel_size,
+                             logit_layer_dim=self.logit_layer_dim,
+                             activation=self.activation,
+                             activation_output=self.activation_output,
+                             dropout_rate=self.dropout_rate,
+                             optimizer=self.optimizer,
+                             loss=self.loss)

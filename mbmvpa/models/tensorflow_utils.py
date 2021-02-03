@@ -79,7 +79,7 @@ class ExperimenterTF():
         # device for early stopping. if val_loss does not decrease within patience, 
         # the training will stop
         es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
-
+        
         model.fit(train_generator, epochs=self.n_epoch,
               verbose=0, callbacks=[mc, es],
               validation_data=val_generator,

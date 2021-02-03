@@ -190,8 +190,9 @@ class BIDSDataLoader():
             reconstruct = self.reconstruct
             
         if reconstruct:
-            blackboard = np.zeros(list(voxel_mask.get_fdata().shape)+[X.shape[0]])
-            blackboard[voxel_mask.get_fdata().nonzero()] = X.T
+            mask = self.voxel_mask.get_fdata()
+            blackboard = np.zeros(list(mask.shape)+[X.shape[0]])
+            blackboard[mask.nonzero()] = X.T
             X = blackboard.T
             
         return X,y

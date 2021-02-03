@@ -71,5 +71,22 @@ class MLP(MVPA_TF):
                              optimizer=optimizer,
                              loss=loss)
         
+        self.layer_dims = layer_dims
+        self.input_shape = input_shape
+        self.activation = activation
+        self.activation_output = activation_output
+        self.dropout_rate = dropout_rate
+        self.optimizer = optimizer
+        self.loss = loss
+        
         if not use_default_extractor:
             self.extractor = extractor_mlp
+    
+    def _reset_model(self):
+        self.model = build_mlp(input_shape=self.input_shape,
+                             layer_dims=self.layer_dims,
+                             activation=self.activation,
+                             activation_output=self.activation_output,
+                             dropout_rate=self.dropout_rate,
+                             optimizer=self.optimizer,
+                             loss=self.loss)

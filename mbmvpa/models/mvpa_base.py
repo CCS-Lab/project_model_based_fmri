@@ -158,8 +158,7 @@ class MVPA_TF():
                 bias = shared_zeros(layer.get_weights()[1].shape).get_value()
                 layer.set_weights([new_weights, bias])
         model.reset_states()
-        
-        return model
+        self.model = model
     
     def run(self):
         
@@ -167,8 +166,8 @@ class MVPA_TF():
         self._errors = []
         
         for i in range(1, self.n_repeat + 1): 
-            model = self._reset_model()
-            model,error = self.experimenter(model, i, self.X, self.y)
+            self._reset_model()
+            model,error = self.experimenter(self.model, i, self.X, self.y)
             self._errors.append(error)
             coeff = self.extractor(model)
             self._coeffs.append(coeff)
@@ -184,9 +183,9 @@ class MVPA_TF():
         self._sham_errors = []
         ids = np.arange(len(self.y))
         for i in range(1, self.n_repeat + 1):
-            model = self._reset_model()
+            self._reset_model()
             np.random.shuffle(ids)
-            model,error = self.experimenter(model, i, self.X, self.y[ids])
+            model,error = self.experimenter(self.model, i, self.X, self.y[ids])
             self._sham_errors.append(error)
             
         self._sham_errors = np.array(self._sham_errors)
