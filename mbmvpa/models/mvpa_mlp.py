@@ -19,7 +19,7 @@ def build_mlp(input_shape,
     model = Sequential()
     model.add(Dense(layer_dims[0],
                     activation=activation,
-                    input_shape=(input_shape,),
+                    input_shape=input_shape,
                     use_bias=False))
     model.add(Dropout(dropout_rate))
 
@@ -62,7 +62,7 @@ class MLP(MVPA_TF):
                  **kwargs):
         
         super(MLP, self).__init__(model_name="MLP",**kwargs)
-        input_shape = self.X.shape[-1] 
+        input_shape = self.X.shape[1:] 
         self.model = build_mlp(input_shape=input_shape,
                              layer_dims=layer_dims,
                              activation=activation,

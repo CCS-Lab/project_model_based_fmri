@@ -39,7 +39,8 @@ class LatentProcessGenerator():
               filter_for_modeling=None,
               individual_params=None,
               hrf_model="glover",
-              use_duration=False):
+              use_duration=False,
+              n_core=4):
 
         # setting path informations and loading layout
         self.bids_controller = BIDSController(bids_layout,
@@ -66,6 +67,7 @@ class LatentProcessGenerator():
         # setting BOLD-like signal generating specification
         self.hrf_model = hrf_model
         self.use_duration = use_duration
+        self.n_core=n_core
         
     def summary(self):
         self.bids_controller.summary()
@@ -133,10 +135,17 @@ class LatentProcessGenerator():
                                 for _, row in df_events.iterrows()]]])
 
             if type(dm_model) == str:
-                model = getattr(
-                    hbayesdm.models, dm_model)(
-                        data=df_events,
-                        **kwargs)
+                if 'core' in kwargs.keys():
+                    model = getattr(
+                        hbayesdm.models, dm_model)(
+                            data=df_events,
+                            **kwargs)
+                else:
+                    model = getattr(
+                        hbayesdm.models, dm_model)(
+                            data=df_events,
+                            core=self.n_core
+                            **kwargs)
 
             individual_params = pd.DataFrame(model.all_ind_pars)
             individual_params.index.name = "subjID"
