@@ -155,8 +155,8 @@ class BIDSDataLoader():
             subject_y = np.load(subject_y[0].path)
             timemask = np.load(timemask[0].path)==1
             subject_X = subject_X[timemask]
-            if self.reconstruct:
-                subject_X = np.array([reconstruct(array, self.voxel_mask.get_fdata()) for array in subject_X])
+            #if self.reconstruct:
+                #subject_X = np.array([reconstruct(array, self.voxel_mask.get_fdata()) for array in subject_X])
             subject_X_numpy.append(subject_X[timemask])
             subject_y_numpy.append(subject_y[timemask])
             
@@ -168,6 +168,8 @@ class BIDSDataLoader():
     
     
     def _set_data(self,subjects):
+        
+            
         X = {}
         y = {}
         for subject in subjects:
@@ -177,12 +179,21 @@ class BIDSDataLoader():
             
         return X, y
     
-    def get_total_data(self, flatten=True):
+    def get_total_data(self, flatten=True,reconstruct=None):
         X = np.array([self.X[subject] for subject in self.subjects])
         y = np.array([self.y[subject] for subject in self.subjects])
         if flatten:
             X=X.reshape(-1,X.shape[-1])
             y=y.flatten()
+            
+        if reconstruct is None:
+            reconstruct = self.reconstruct
+            
+        if reconstruct:
+            blackboard = np.zeros(list(voxel_mask.get_fdata().shape)+[X.shape[0]])
+            blackboard[voxel_mask.get_fdata().nonzero()] = X.T
+            X = blackboard.T
+            
         return X,y
     
     def get_voxel_mask(self):

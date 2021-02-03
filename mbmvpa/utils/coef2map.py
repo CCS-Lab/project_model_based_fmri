@@ -65,7 +65,12 @@ def get_map(coefs, voxel_mask, task_name,
     # make result map
 
     activation_maps = []
-    mask = voxel_mask.get_fdata()
+    
+    if not isinstance(voxel_mask,np.ndarray):
+        mask = voxel_mask.get_fdata()
+    else:
+        mask = voxel_mask
+        
     for coef in coefs:
         # converting flattened coefs to brain image.
         activation_map = reconstruct(coef, mask)
