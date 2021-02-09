@@ -135,7 +135,7 @@ class LatentProcessGenerator():
                                 for _, row in df_events.iterrows()]]])
 
             if type(dm_model) == str:
-                if 'core' in kwargs.keys():
+                if 'ncore' in kwargs.keys():
                     model = getattr(
                         hbayesdm.models, dm_model)(
                             data=df_events,
@@ -144,7 +144,7 @@ class LatentProcessGenerator():
                     model = getattr(
                         hbayesdm.models, dm_model)(
                             data=df_events,
-                            core=self.n_core
+                            ncore=self.n_core,
                             **kwargs)
 
             individual_params = pd.DataFrame(model.all_ind_pars)

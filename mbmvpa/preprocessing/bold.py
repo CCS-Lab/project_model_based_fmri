@@ -26,7 +26,7 @@ class VoxelFeatureGenerator():
                   confound_suffix='regressors',
                   mask_threshold=2.58,
                   zoom=(2, 2, 2),
-                  smoothing_fwhm=6,
+                  smoothing_fwhm=None,
                   interpolation_func=np.mean,
                   standardize=True,
                   motion_confounds=["trans_x", "trans_y",

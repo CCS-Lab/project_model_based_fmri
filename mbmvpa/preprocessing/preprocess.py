@@ -19,7 +19,7 @@ class DataPreprocessor():
                   standardize=True,
                   motion_confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
-                  core=4,
+                  n_core=4,
                   process_name="unnamed",
                   adjust_function=lambda x: x,
                   filter_function=lambda _: True,
@@ -44,7 +44,7 @@ class DataPreprocessor():
                                           interpolation_func=interpolation_func,
                                           standardize=standardize,
                                           motion_confounds=motion_confounds,
-                                          n_thread=core)
+                                          n_thread=n_core)
         
         self.bids_controller = self.X_generator.bids_controller
         
@@ -61,7 +61,7 @@ class DataPreprocessor():
                                           individual_params=individual_params,
                                           hrf_model=hrf_model,
                                           use_duration=use_duration,
-                                          n_core=core)
+                                          n_core=n_core)
     
     def summary(self):
         self.bids_controller.summary()
