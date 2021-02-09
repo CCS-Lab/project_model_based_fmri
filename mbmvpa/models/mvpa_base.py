@@ -99,7 +99,7 @@ class MVPA_TF():
         self.model = model
         self.model_name = model_name
         if extractor is None:
-            self.extractor = DefaultExtractor(X.shape[-1],extract_n_sample)
+            self.extractor = DefaultExtractor(X.shape[1:],extract_n_sample)
         else:
             self.extractor = extractor
             

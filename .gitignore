@@ -159,4 +159,5 @@ tests/test_example.zip
 tests/Untitled*
 tests/report*
 tutorials/report*
+report*
 .DS_Store

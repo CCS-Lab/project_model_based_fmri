@@ -207,7 +207,7 @@ class LatentProcessGenerator():
                 else:
                     modulation_df = _add_latent_process_single_eventdata(self.latent_function, self.filter_function,
                                                  df_events, param_dict, preprocess=self.adjust_function)
-                
+                modulation_df = modulation_df.astype({'modulation': 'float'})
                 modulation_df.to_csv(modulation_df_path,
                                      sep="\t", index=False)
                 

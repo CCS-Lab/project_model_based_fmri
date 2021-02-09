@@ -29,7 +29,7 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                latent_function=test_latent,
                                dm_model=dm_model)
 preprocessor.summary()
-preprocessor.preprocess(overwrite=True,nchain=2,nwarmup=50,niter=200)
+preprocessor.preprocess(overwrite=True,nchain=2,nwarmup=50,niter=200,core=16)
 preprocessor.summary()
 print("TEST PASS!")
 
