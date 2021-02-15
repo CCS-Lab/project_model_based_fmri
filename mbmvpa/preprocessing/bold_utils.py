@@ -64,8 +64,13 @@ def _custom_masking(mask_path, threshold, zoom,
     if zoom != (1, 1, 1):
         m = block_reduce(m, zoom, interpolation_func)
     m = 1 * (m > 0)
-
-    voxel_mask = nib.Nifti1Image(m, affine=mni_mask.affine)
+    
+    affine = load_mni152_brain_mask().affine.copy()
+    affine[0,:3] *= zoom[0]
+    affine[1,:3] *= zoom[1]
+    affine[2,:3] *= zoom[2]
+    
+    voxel_mask = nib.Nifti1Image(m, affine=affine)
     
     # masking is done by NiftiMasker provided by nilearn package
     masker = NiftiMasker(mask_img=voxel_mask,

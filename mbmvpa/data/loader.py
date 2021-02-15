@@ -55,7 +55,8 @@ class BIDSDataLoader():
                  task_name=None, 
                  process_name=None,
                  dynamic_load=False,
-                 subjects=None
+                 subjects=None,
+                 feature_name=None
                 ):
          
         if isinstance(layout,str) or isinstance(layout,Path):
@@ -74,6 +75,11 @@ class BIDSDataLoader():
         self.dynamic_load = dynamic_load
         self.reconstruct = reconstruct
         
+        if feature_name is None:
+            self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
+        else:
+            self.mbmvpa_X_suffix = feature_name
+            
         if voxel_mask_path is None:
             voxel_mask_path = Path(self.layout.root)/ config.DEFAULT_VOXEL_MASK_FILENAME
         
@@ -85,7 +91,7 @@ class BIDSDataLoader():
         else:
             self.normalizer = normalizer
             
-        self.X_kwargs = {'suffix':config.DEFAULT_FEATURE_SUFFIX,
+        self.X_kwargs = {'suffix':self.mbmvpa_X_suffix,
                      'extension':'npy'}
         self.y_kwargs = {'suffix':config.DEFAULT_SIGNAL_SUFFIX,
                     'extension':'npy'}

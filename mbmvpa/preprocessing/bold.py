@@ -42,6 +42,8 @@ class VoxelFeatureGenerator():
         
         if mask_path is None:
             self.mask_path = Path(self.bids_controller.fmriprep_layout.root)/ config.DEFAULT_ROI_MASK_DIR
+        elif mask_path is False:
+            self.mask_path = None
         else:
             self.mask_path = Path(mask_path)
         
@@ -124,7 +126,7 @@ class VoxelFeatureGenerator():
         # 3. Thread returns a return value after job completion - future.result()
         # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
         
-        for i, params_chunk in enumerate(params_chunks):
+        for i, params_chunk in tqdm(enumerate(params_chunks)):
             # parallel computing using multiple threads.
             # please refer to "concurrent" api of Python.
             # it might require basic knowledge in multiprocessing.
