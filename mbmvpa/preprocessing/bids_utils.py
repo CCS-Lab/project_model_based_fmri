@@ -203,6 +203,7 @@ class BIDSController():
     def get_bold(self, sub_id, run_id, ses_id=None):
         return self.fmriprep_layout.get(
                         subject=sub_id, session=ses_id, run=run_id, suffix=self.bold_suffix,
+                        space=config.TEMPLATE_SPACE,
                         extension="nii.gz")
         
         
@@ -212,7 +213,7 @@ class BIDSController():
                     extension="tsv")
            
     def get_bold_all(self):
-        return self.fmriprep_layout.get(suffix=self.bold_suffix,extension="nii.gz")
+        return self.fmriprep_layout.get(suffix=self.bold_suffix,space=config.TEMPLATE_SPACE,extension="nii.gz")
     
     def get_confound_all(self):
         return self.fmriprep_layout.get(suffix=self.confound_suffix,extension="tsv")

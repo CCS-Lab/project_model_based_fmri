@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+from scipy import stats
 from ..data import loader
 from pathlib import Path
 import numpy as np
@@ -90,8 +91,8 @@ class ExperimenterTF():
         model.load_weights(best_model_filepath)
         # validation 
         y_pred = model.predict(X_test)
-        len(y_pred)
-        error = mean_squared_error(y_pred, y_test)
+        score,p_value = stats.pearsonr(y_pred.flatten(), y_test.flatten())
+        
         if self.save_pred:
             total_pred = model.predict(X)
             usedtrain_map = np.zeros((X.shape[0],1))
@@ -101,6 +102,6 @@ class ExperimenterTF():
             np.save(pred_path, pred_data)
 
         if self.verbose > 0:
-            print(f"[{i:03}] - val_loss: {error:.04f}")
+            print(f"[{i:03}] - score: {score:.04f} p: {p_value:.04f}")
        
-        return model, error
+        return model, score

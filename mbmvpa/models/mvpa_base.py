@@ -119,9 +119,8 @@ class MVPA_TF():
         self.use_bipolar_balancing = use_bipolar_balancing
         
         self._coeffs = []
-        self._errors = []
-        self._sham_errors = []
-        self._sham_errors = []
+        self._scores = []
+        self._sham_scores = []
         self._make_log_dir()
         self._time = datetime.datetime.now()
         self.experimenter = ExperimenterTF(chk_path=self.chk_path,
@@ -163,37 +162,37 @@ class MVPA_TF():
     def run(self):
         
         self._coeffs = []
-        self._errors = []
+        self._scores = []
         
         for i in range(1, self.n_repeat + 1): 
             self._reset_model()
             model,error = self.experimenter(self.model, i, self.X, self.y)
-            self._errors.append(error)
+            self._scores.append(error)
             coeff = self.extractor(model)
             self._coeffs.append(coeff)
 
         self._coeffs = np.array(self._coeffs)
-        self._errors = np.array(self._errors)
+        self._scores = np.array(self._scores)
         self._time = datetime.datetime.now()
         
         return self._coeffs
     
     def sham(self, plot=True):
         
-        self._sham_errors = []
+        self._sham_scores = []
         ids = np.arange(len(self.y))
         for i in range(1, self.n_repeat + 1):
             self._reset_model()
             np.random.shuffle(ids)
             model,error = self.experimenter(self.model, i, self.X, self.y[ids])
-            self._sham_errors.append(error)
+            self._sham_scores.append(error)
             
-        self._sham_errors = np.array(self._sham_errors)
+        self._sham_scores = np.array(self._sham_scores)
         
         if plot:
-            plot_sham_result(self._errors,self._sham_errors,self.result_path)
+            plot_sham_result(self._scores,self._sham_scores,self.result_path)
         
-        return self._sham_errors
+        return self._sham_scores
     
     def image(self, voxel_mask=None, task_name=None,
                 map_type="z", save_path=None, sigma=1):

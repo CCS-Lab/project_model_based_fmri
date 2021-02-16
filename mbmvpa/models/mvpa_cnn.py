@@ -3,18 +3,19 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Activation, Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Activation, Conv2D, MaxPooling2D, BatchNormalization
 from tensorflow.keras.regularizers import l1_l2
 
 from ..models.mvpa_base import MVPA_TF
 
 def build_cnn(input_shape,
-             layer_dims=[8,16,32,64],
-             kernel_size=[3,3,3,3],
-             logit_layer_dim=128,
+             layer_dims=[8,16,32],
+             kernel_size=[3,3,3],
+             logit_layer_dim=256,
              activation="relu",
              activation_output="linear",
              dropout_rate=0.2,
+             batch_norm=False,
              optimizer="adam",
              loss="mse"):
     
@@ -35,6 +36,8 @@ def build_cnn(input_shape,
                     padding='same',
                     input_shape=input_shape,))
         model.add(MaxPooling2D(pool_size=(2,2)))
+        if batch_norm:
+            model.add(BatchNormalization())
                   
     model.add(Flatten()) 
     model.add(Dense(logit_layer_dim, activation=activation))

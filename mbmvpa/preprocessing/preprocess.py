@@ -17,7 +17,7 @@ class DataPreprocessor():
                   smoothing_fwhm=6,
                   interpolation_func=np.mean,
                   standardize=True,
-                  motion_confounds=["trans_x", "trans_y",
+                  confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
                   n_core=4,
                   process_name="unnamed",
@@ -43,7 +43,7 @@ class DataPreprocessor():
                                           smoothing_fwhm=smoothing_fwhm,
                                           interpolation_func=interpolation_func,
                                           standardize=standardize,
-                                          motion_confounds=motion_confounds,
+                                          confounds=confounds,
                                           n_thread=n_core)
         
         self.bids_controller = self.X_generator.bids_controller
@@ -70,7 +70,7 @@ class DataPreprocessor():
                    overwrite=False, 
                    process_name=None,
                    feature_name=None, 
-                   motion_confounds=None,
+                   confounds=None,
                    n_thread=None,
                    dm_model=None, 
                    individual_params=None, 
@@ -82,7 +82,7 @@ class DataPreprocessor():
         
         self.X_generator.run(overwrite=overwrite,
                            feature_name=feature_name,
-                           motion_confounds=motion_confounds,
+                           confounds=confounds,
                            n_thread=n_thread)
         
         if not skip_modeling:

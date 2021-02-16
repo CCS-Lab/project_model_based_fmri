@@ -29,7 +29,7 @@ class VoxelFeatureGenerator():
                   smoothing_fwhm=None,
                   interpolation_func=np.mean,
                   standardize=True,
-                  motion_confounds=["trans_x", "trans_y",
+                  confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
                   n_thread=4):
         
@@ -47,7 +47,7 @@ class VoxelFeatureGenerator():
         else:
             self.mask_path = Path(mask_path)
         
-        self.motion_confounds = motion_confounds
+        self.confounds = confounds
         self.n_thread = n_thread
         self.voxel_mask, self.masker = _custom_masking(
                                             self.mask_path, mask_threshold, zoom,
@@ -60,7 +60,7 @@ class VoxelFeatureGenerator():
         self.bids_controller.summary()
         
     
-    def run(self,feature_name=None, overwrite=False, motion_confounds=None,n_thread=None):
+    def run(self,feature_name=None, overwrite=False, confounds=None,n_thread=None):
         
         if feature_name is None:
             suffix = self.mbmvpa_X_suffix
@@ -73,8 +73,8 @@ class VoxelFeatureGenerator():
             n_thread = self.n_thread
         assert isinstance(n_thread, int)
         
-        if motion_confounds is None:
-            motion_confounds = self.motion_confounds
+        if confounds is None:
+            confounds = self.confounds
             
         files_layout = []
         for file in self.bids_controller.get_bold_all():
@@ -107,7 +107,7 @@ class VoxelFeatureGenerator():
                 if not overwrite and save_filename.exists():
                     continue
             
-            files_layout.append([nii_filename,reg_filename,save_filename, self.motion_confounds, self.masker,self.voxel_mask])
+            files_layout.append([nii_filename,reg_filename,save_filename, self.confounds, self.masker,self.voxel_mask])
             
         # "chunk_size" is the number of threads.
         # In generalm this number improves performance as it grows,

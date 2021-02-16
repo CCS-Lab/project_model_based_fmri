@@ -20,7 +20,7 @@ def plot_sham_result(errors, sham_errors, save_path=None):
         significance_mark = "***"
 
     plt.figure(figsize=(5, 8))
-    plt.title('Error compared with sham training', fontsize=20)
+    plt.title('Validation', fontsize=20)
     plt.boxplot([errors, sham_errors], labels=['original','sham'], widths=0.6)
     yticks = plt.yticks()[0]
     x1, x2 = plt.xticks()[0]
@@ -29,8 +29,8 @@ def plot_sham_result(errors, sham_errors, save_path=None):
     y = ytick_max+ytick_gap
     h = ytick_gap/2
     plt.plot([x1, x1, x2, x2], [y, y+h, y+h, y], lw=1.5, color='black')
-    plt.text((x1+x2)/2,y+h,significance_mark,fontsize=20)
-    plt.ylabel('error (a.u.)', fontsize=20)
+    plt.text((x1+x2)/2,y+h,significance_mark,fontsize=20,horizontalalignment='center')
+    plt.ylabel('score (a.u.)', fontsize=20)
     plt.text(2.6,yticks[0]+2*h,text,fontsize=12)
     plt.xticks(fontsize=20)
     

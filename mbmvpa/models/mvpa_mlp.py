@@ -25,7 +25,7 @@ def build_mlp(input_shape,
 
     # add layers
     for dim in layer_dims[1:]:
-        model.add(Dense(dim, activation=activation, use_bias=False))
+        model.add(Dense(dim, activation=activation, use_bias=True))
         model.add(Dropout(dropout_rate))
 
     model.add(Dense(1, activation=activation_output, use_bias=True))

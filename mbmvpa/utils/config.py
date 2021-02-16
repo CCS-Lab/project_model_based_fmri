@@ -1,7 +1,8 @@
 # Fixed name
 ANAL_NAME = "MB-MVPA - Model based MVPA"
 MBMVPA_PIPELINE_NAME = "MB-MVPA"
-FMRIPREP_PIPELINE_NAME = 'fMRIPrep'
+FMRIPREP_PIPELINE_NAME = "fMRIPrep"
+TEMPLATE_SPACE = "MNI152NLin2009cAsym"
 MAX_FMRIPREP_CHUNK_SIZE = 16
 PROCESS_KEY_NAME = "process"
 # default configuration for default names used in the package
