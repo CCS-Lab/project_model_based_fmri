@@ -18,6 +18,53 @@ from ..utils import config
 from ..utils.coef2map import reconstruct
 
 
+confound_names = ['csf',
+                 'csf_derivative1',
+                 'csf_power2',
+                 'csf_derivative1_power2',
+                 'white_matter',
+                 'white_matter_derivative1',
+                 'white_matter_power2',
+                 'white_matter_derivative1_power2',
+                 'global_signal',
+                 'global_signal_derivative1',
+                 'global_signal_derivative1_power2',
+                 'global_signal_power2',
+                 'std_dvars',
+                 'dvars',
+                 'framewise_displacement',
+                 'rmsd',
+                 'cosine00',
+                 'cosine01',
+                 'cosine02',
+                 'cosine03',
+                 'cosine04',
+                 'cosine05',
+                 'trans_x',
+                 'trans_x_derivative1',
+                 'trans_x_power2',
+                 'trans_x_derivative1_power2',
+                 'trans_y',
+                 'trans_y_derivative1',
+                 'trans_y_derivative1_power2',
+                 'trans_y_power2',
+                 'trans_z',
+                 'trans_z_derivative1',
+                 'trans_z_derivative1_power2',
+                 'trans_z_power2',
+                 'rot_x',
+                 'rot_x_derivative1',
+                 'rot_x_power2',
+                 'rot_x_derivative1_power2',
+                 'rot_y',
+                 'rot_y_derivative1',
+                 'rot_y_derivative1_power2',
+                 'rot_y_power2',
+                 'rot_z',
+                 'rot_z_derivative1',
+                 'rot_z_derivative1_power2',
+                 'rot_z_power2']
+
 class Normalizer():
     def __init__(self, normalizer_name="minmax",scale=(-1,1)):
         self.name = normalizer_name
@@ -57,7 +104,9 @@ class BIDSDataLoader():
                  process_name=None,
                  dynamic_load=False,
                  subjects=None,
-                 feature_name=None
+                 feature_name=None,
+                 concat_regressor_input=False,
+                 fmriprep_layout=None,
                 ):
          
         if isinstance(layout,str) or isinstance(layout,Path):
@@ -116,6 +165,11 @@ class BIDSDataLoader():
         
         self.X = {}
         self.y = {}
+        
+        self.concat_regressor_input = concat_regressor_input
+        self.fmriprep_layout = fmriprep_layout
+        if self.concat_regressor_input:
+            assert self.fmriprep_layout is not None
             
         if not self.dynamic_load:
             self.X, self.y = self._set_data(self.subjects)
@@ -144,6 +198,12 @@ class BIDSDataLoader():
                                 session=entities['session'],
                                 **self.timemask_kwargs
                                )
+                if self.concat_regressor_input:
+                    regressor = self.fmriprep_layout.get(subject=subject,
+                                    run=entities['run'],
+                                    session=entities['session'],
+                                    **self.regressor_kwargs
+                                   )
 
             else:
                 subject_y = self.layout.get(subject=subject,
@@ -154,6 +214,11 @@ class BIDSDataLoader():
                                 run=entities['run'],
                                 **self.timemask_kwargs
                                )
+                if self.concat_regressor_input:
+                    regressor = self.fmriprep_layout.get(subject=subject,
+                                    run=entities['run'],
+                                    **self.regressor_kwargs
+                                   )
                     
             if self.process_name:
                 subject_y = [f for f in subject_y if self.process_name==get_process_name(f.filename)]
@@ -164,7 +229,16 @@ class BIDSDataLoader():
             if len(subject_y) != 1 or len(timemask) != 1:
                 # invalid data layout
                 continue
-            subject_X = np.load(subject_X.path)    
+            subject_X = np.load(subject_X.path)
+            
+            if self.concat_regressor_input:
+                regressor = pd.read_table(regressor[0].path, sep="\t")
+                #confound_names = [name for name in list(regressor.columns) if '_comp_cor' not in name]
+                regressor = regressor[confound_names].to_numpy()
+                regressor[np.isnan(regressor)] = 0
+                #regressor = np.expand_dims(regressor, axis=-1)
+                subject_X = np.concatenate([subject_X,regressor],-1)
+                
             subject_y = np.load(subject_y[0].path)
             timemask = np.load(timemask[0].path)==1
             #if self.reconstruct:

@@ -19,6 +19,8 @@ class DataPreprocessor():
                   standardize=True,
                   confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
+                  high_pass=128,
+                  detrend=True,
                   n_core=4,
                   process_name="unnamed",
                   adjust_function=lambda x: x,
@@ -44,6 +46,8 @@ class DataPreprocessor():
                                           interpolation_func=interpolation_func,
                                           standardize=standardize,
                                           confounds=confounds,
+                                          high_pass=high_pass,
+                                          detrend=detrend,
                                           n_thread=n_core)
         
         self.bids_controller = self.X_generator.bids_controller

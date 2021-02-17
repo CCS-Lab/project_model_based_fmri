@@ -19,7 +19,8 @@ import nibabel as nib
 
 
 def _custom_masking(mask_path, threshold, zoom,
-                   smoothing_fwhm, interpolation_func, standardize):
+                   smoothing_fwhm, interpolation_func, standardize,
+                   high_pass, detrend):
     """
     Make custom ROI mask to reduce the number of features.
     """
@@ -70,12 +71,15 @@ def _custom_masking(mask_path, threshold, zoom,
     affine[1,:3] *= zoom[1]
     affine[2,:3] *= zoom[2]
     
-    voxel_mask = nib.Nifti1Image(m, affine=affine)
+    voxel_mask = nib.Nifti1Image(m, 
+                                 affine=affine)
     
     # masking is done by NiftiMasker provided by nilearn package
     masker = NiftiMasker(mask_img=voxel_mask,
                          standardize=standardize,
-                         smoothing_fwhm=smoothing_fwhm)
+                         smoothing_fwhm=smoothing_fwhm,
+                         high_pass=high_pass,
+                         detrend=detrend)
 
     return voxel_mask, masker
 
@@ -102,14 +106,16 @@ def _image_preprocess(params):
     """
 
     image_path, confounds_path, save_path,\
-    motion_confounds, masker,\
+    confound_names, masker,\
     voxel_mask = params
 
     preprocessed_images = []
     if confounds_path is not None:
         confounds = pd.read_table(confounds_path, sep="\t")
-        confounds = confounds[motion_confounds]
+        confounds = confounds[confound_names]
         confounds = confounds.to_numpy()
+        if confounds.shape[-1] == 0:
+            confounds = None
     else:
         confounds = None
 

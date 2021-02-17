@@ -136,7 +136,7 @@ class MVPA_TF():
         
     def _make_log_dir(self):
         now = datetime.datetime.now()
-        save_root = self.save_path / f'report_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+        save_root = self.save_path / f'{self.model_name}_report_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
         self.chk_path = save_root / 'chekpoint'
         self.log_path = save_root / 'log'
         self.result_path = save_root / 'result'

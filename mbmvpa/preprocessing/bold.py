@@ -31,6 +31,8 @@ class VoxelFeatureGenerator():
                   standardize=True,
                   confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
+                  high_pass=128,
+                  detrend=True,
                   n_thread=4):
         
         self.bids_controller = BIDSController(bids_layout,
@@ -51,7 +53,8 @@ class VoxelFeatureGenerator():
         self.n_thread = n_thread
         self.voxel_mask, self.masker = _custom_masking(
                                             self.mask_path, mask_threshold, zoom,
-                                            smoothing_fwhm, interpolation_func, standardize
+                                            smoothing_fwhm, interpolation_func, standardize,
+                                            high_pass, detrend
                                         )
         self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
         self.bids_controller.save_voxelmask(self.voxel_mask)

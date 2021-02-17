@@ -158,6 +158,8 @@ tests/test_example
 tests/test_example.zip
 tests/Untitled*
 tests/report*
+tests/*.ipynb
 tutorials/report*
+tutorials/scratch*
 report*
 .DS_Store

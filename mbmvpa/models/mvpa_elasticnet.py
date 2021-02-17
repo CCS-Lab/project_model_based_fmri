@@ -38,7 +38,6 @@ def elasticnet(X, y,
                max_lambda=10,
                min_lambda_ratio=1e-4,
                lambda_search_num=100,
-               n_repeat=1,
                verbose=1,
                n_samples=30000,
                confidence_interval=.99,
@@ -77,10 +76,9 @@ def elasticnet(X, y,
     
     if save:
         now = datetime.datetime.now()
-        save_root = Path(save_path) / f'report_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+        save_root = Path(save_path) / f'elasticnet_report_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
         save_root.mkdir()
     
-    coefs = []
     exponent = np.linspace(
         np.log(max_lambda),
         np.log(max_lambda * min_lambda_ratio),
@@ -89,70 +87,73 @@ def elasticnet(X, y,
     # making lambda candidate list for searching best lambda
     lambda_path = np.exp(exponent)
 
-    for i in range(1, n_repeat + 1):
         
-        # random sampling "n_samples" if the given number of X,y instances is bigger
-        np.random.seed(i)
-        ids = np.arange(X.shape[0])
+    # random sampling "n_samples" if the given number of X,y instances is bigger
+    np.random.seed(42)
+    ids = np.arange(X.shape[0])
 
-        if X.shape[0] > n_samples:
-            np.random.shuffle(ids)
-            ids = ids[:n_samples]
+    if X.shape[0] > n_samples:
+        np.random.shuffle(ids)
+        ids = ids[:n_samples]
 
-        X_data = X[ids]
-        y_data = y[ids]
+    X_data = X[ids]
+    y_data = y[ids]
 
-        # ElasticNet by glmnet package
-        model = ElasticNet(alpha=alpha,
-                           n_jobs=n_jobs,
-                           scoring='mean_squared_error',
-                           lambda_path=lambda_path,
-                           n_splits=n_splits)
+    # ElasticNet by glmnet package
+    model = ElasticNet(alpha=alpha,
+                       n_jobs=n_jobs,
+                       scoring='mean_squared_error',
+                       lambda_path=lambda_path,
+                       n_splits=n_splits)
 
-        model = model.fit(X_data, y_data)
-        y_pred = model.predict(X_data).flatten()
-        error = mean_squared_error(y_pred, y_data)
+    model = model.fit(X_data, y_data)
+    y_pred = model.predict(X_data).flatten()
+    error = mean_squared_error(y_pred, y_data)
 
-        lambda_best_idx = model.cv_mean_score_.argmax()
-        lambda_best = lambda_path[lambda_best_idx]
+    lambda_best_idx = model.cv_mean_score_.argmax()
+    lambda_best = lambda_path[lambda_best_idx]
 
-        # extracting coefficients
-        coef = model.coef_path_[:, lambda_best_idx]
-        lambda_vals = np.log(np.array([lambda_best]))
-        coefs.append(coef)
-        coefs = np.array(coefs)
+    # extracting coefficients
+    coef = model.coef_path_[:, lambda_best_idx]
+    intercept = model.intercept_path_[lambda_best_idx]
+    lambda_vals = np.log(np.array([lambda_best]))
+    coefs = np.array([coef])
+    intercepts = np.array([intercept])
+    if save:
+        np.save(save_root/'cv_mean_score.npy', -model.cv_mean_score_)
+        np.save(save_root/'coef.npy',model.coef_path_)
+        np.save(save_root/'intercept.npy',model.intercept_path_)
+        get_map(coefs, voxel_mask, task_name,
+                map_type=map_type, save_path=save_root, sigma=sigma)
+
+    if verbose > 0:
+
+        # visualization of ElasticNet procedure
+        print(f'- lambda_best: {lambda_best:.03f}, mse: {error:.04f}, survival rate (non-zero): {(abs(coefs)>0).sum()}/{coefs.flatten().shape[0]}')
+        plt.figure(figsize=(10, 8))
+        plt.errorbar(np.log(lambda_path), -model.cv_mean_score_,
+                     yerr=model.cv_standard_error_* norm.ppf(1-(1-confidence_interval)/2), 
+                     color='k', alpha=.5, elinewidth=1, capsize=2)
+        # plot confidence interval
+        plt.plot(np.log(lambda_path), -
+                 model.cv_mean_score_, color='k', alpha=0.9)
+        plt.axvspan(lambda_vals.min(), lambda_vals.max(),
+                    color='skyblue', alpha=0.2, lw=1)
+        plt.xlabel('log(lambda)', fontsize=20)
+        plt.ylabel('cv average MSE', fontsize=20)
         if save:
-            np.save(save_root/'cv_mean_score.npy', -model.cv_mean_score_)
-            np.save(save_root/'coef.npy',model.coef_path_)
-            get_map(coefs, voxel_mask, task_name,
-                    map_type=map_type, save_path=save_root, sigma=sigma)
-        
-        if verbose > 0:
-            
-            # visualization of ElasticNet procedure
-            print(f'[{i}/{n_repeat}] - lambda_best: {lambda_best:.03f}/ mse: {error:.04f}')
-            plt.figure(figsize=(10, 8))
-            plt.errorbar(np.log(lambda_path), -model.cv_mean_score_,
-                         yerr=model.cv_standard_error_* norm.ppf(1-(1-confidence_interval)/2), 
-                         color='k', alpha=.5, elinewidth=1, capsize=2)
-            # plot confidence interval
-            plt.plot(np.log(lambda_path), -
-                     model.cv_mean_score_, color='k', alpha=0.9)
-            plt.axvspan(lambda_vals.min(), lambda_vals.max(),
-                        color='skyblue', alpha=0.2, lw=1)
-            plt.xlabel('log(lambda)', fontsize=20)
-            plt.ylabel('cv average MSE', fontsize=20)
             plt.savefig(save_root/'plot1.png',bbox_inches='tight')
-            plt.show()
-            plt.figure(figsize=(10, 8))
-            plt.plot(np.log(lambda_path), model.coef_path_[
-                     np.random.choice(np.arange(model.coef_path_.shape[0]), 150), :].T)
-            plt.axvspan(lambda_vals.min(), lambda_vals.max(),
-                        color='skyblue', alpha=.75, lw=1)
-            plt.xlabel('log(lambda)', fontsize=20)
-            plt.ylabel('coefficients', fontsize=20)
+        plt.show()
+        plt.figure(figsize=(10, 8))
+        plt.plot(np.log(lambda_path), model.coef_path_[
+                 np.random.choice(np.arange(model.coef_path_.shape[0]), 150), :].T)
+        plt.axvspan(lambda_vals.min(), lambda_vals.max(),
+                    color='skyblue', alpha=.75, lw=1)
+        plt.xlabel('log(lambda)', fontsize=20)
+        plt.ylabel('coefficients', fontsize=20)
+        if save:
             plt.savefig(save_root/'plot2.png',bbox_inches='tight')
-            plt.show()
+        plt.show()
 
     # coefs : N x voxel #
-    return coefs
+    return coefs, intercepts
