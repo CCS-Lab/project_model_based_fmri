@@ -138,7 +138,7 @@ def elasticnet(X, y,
         plt.plot(np.log(lambda_path), -
                  model.cv_mean_score_, color='k', alpha=0.9)
         plt.axvspan(lambda_vals.min(), lambda_vals.max(),
-                    color='skyblue', alpha=0.2, lw=1)
+                    color='skyblue', alpha=.75, lw=1)
         plt.xlabel('log(lambda)', fontsize=20)
         plt.ylabel('cv average MSE', fontsize=20)
         if save:

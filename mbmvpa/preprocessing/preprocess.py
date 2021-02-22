@@ -19,7 +19,7 @@ class DataPreprocessor():
                   standardize=True,
                   confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
-                  high_pass=128,
+                  high_pass=None,
                   detrend=True,
                   n_core=4,
                   process_name="unnamed",

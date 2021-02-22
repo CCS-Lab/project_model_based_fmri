@@ -31,7 +31,7 @@ class VoxelFeatureGenerator():
                   standardize=True,
                   confounds=["trans_x", "trans_y",
                                       "trans_z", "rot_x", "rot_y", "rot_z"],
-                  high_pass=128,
+                  high_pass=None,
                   detrend=True,
                   n_thread=4):
         
@@ -52,7 +52,8 @@ class VoxelFeatureGenerator():
         self.confounds = confounds
         self.n_thread = n_thread
         self.voxel_mask, self.masker = _custom_masking(
-                                            self.mask_path, mask_threshold, zoom,
+                                            self.mask_path, self.bids_controller.t_r,
+                                            mask_threshold, zoom,
                                             smoothing_fwhm, interpolation_func, standardize,
                                             high_pass, detrend
                                         )

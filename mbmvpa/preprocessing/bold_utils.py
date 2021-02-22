@@ -14,11 +14,30 @@ from skimage.measure import block_reduce
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
+from nilearn.image.resampling import resample_img
 from nilearn.datasets import load_mni152_brain_mask
 import nibabel as nib
 
 
-def _custom_masking(mask_path, threshold, zoom,
+def _zoom_affine(affine, zoom):
+    affine = affine.copy()
+    affine[0,:3] *= zoom[0]
+    affine[1,:3] *= zoom[1]
+    affine[2,:3] *= zoom[2]
+    return affine
+
+def _zoom_img(img_array, original_affine, zoom, binarize=False, threshold=.5):
+    
+    new_img_array = block_reduce(img_array, zoom, np.mean)
+    if binarize:
+        new_img_array = (new_img_array>threshold) * 1.0
+    precise_zoom = np.array(img_array.shape[:3])/np.array(new_img_array.shape[:3])
+    
+    return nib.Nifti1Image(new_img_array, 
+                           affine=_zoom_affine(original_affine, precise_zoom))
+    
+
+def _custom_masking(mask_path, t_r, threshold, zoom,
                    smoothing_fwhm, interpolation_func, standardize,
                    high_pass, detrend):
     """
@@ -62,20 +81,17 @@ def _custom_masking(mask_path, threshold, zoom,
         m = mni_mask.get_fdata()
     
     # reduce dimension by averaging zoom window
+    
+    affine = mni_mask.affine.copy()
+    
     if zoom != (1, 1, 1):
-        m = block_reduce(m, zoom, interpolation_func)
-    m = 1 * (m > 0)
-    
-    affine = load_mni152_brain_mask().affine.copy()
-    affine[0,:3] *= zoom[0]
-    affine[1,:3] *= zoom[1]
-    affine[2,:3] *= zoom[2]
-    
-    voxel_mask = nib.Nifti1Image(m, 
-                                 affine=affine)
-    
+        voxel_mask = _zoom_img(m, affine, zoom, binarize=True)
+    else:
+        voxel_mask = nib.Nifti1Image(m, affine=affine)
+        
     # masking is done by NiftiMasker provided by nilearn package
     masker = NiftiMasker(mask_img=voxel_mask,
+                         t_r=t_r,
                          standardize=standardize,
                          smoothing_fwhm=smoothing_fwhm,
                          high_pass=high_pass,
