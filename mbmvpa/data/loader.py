@@ -10,7 +10,6 @@ from pathlib import Path
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from tensorflow.keras.utils import Sequence
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
 from bids import BIDSLayout
@@ -57,7 +56,8 @@ class BIDSDataLoader():
                  process_name=None,
                  dynamic_load=False,
                  subjects=None,
-                 feature_name=None
+                 feature_name=None,
+                 loso=False, # leave-one-subject-out
                 ):
          
         if isinstance(layout,str) or isinstance(layout,Path):
@@ -73,8 +73,10 @@ class BIDSDataLoader():
         
         self.task_name=task_name
         self.process_name=process_name
-        self.dynamic_load = dynamic_load
+        self.dynamic_load = dynamic_load # Not implemented
         self.reconstruct = reconstruct
+        self.loso=loso
+        
         
         if feature_name is None:
             self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
@@ -116,21 +118,19 @@ class BIDSDataLoader():
         
         self.X = {}
         self.y = {}
-            
-        if not self.dynamic_load:
-            self.X, self.y = self._set_data(self.subjects)
+        self.timemask = {}
+        self._set_data(self.subjects,self.dynamic_load)
+        
             
         
         
-    def _get_single_subject_data(self,subject):
-        if subject in self.X.keys():
-            return X[subject],y[subject]
+    def _get_single_subject_datapath(self,subject):
 
         subject_Xs =self.layout.get(subject=subject,**self.X_kwargs)
 
-        subject_X_numpy = []
-        subject_y_numpy = []
-
+        subject_X_paths = []
+        subject_y_paths = []
+        timemask_paths = []
         for subject_X in subject_Xs:
             entities = subject_X.get_entities()
             if self.has_session:
@@ -164,211 +164,59 @@ class BIDSDataLoader():
             if len(subject_y) != 1 or len(timemask) != 1:
                 # invalid data layout
                 continue
-            subject_X = np.load(subject_X.path)    
-            subject_y = np.load(subject_y[0].path)
-            timemask = np.load(timemask[0].path)==1
-            #if self.reconstruct:
-                #subject_X = np.array([reconstruct(array, self.voxel_mask.get_fdata()) for array in subject_X])
-            subject_X_numpy.append(subject_X[timemask])
-            subject_y_numpy.append(subject_y[timemask])
-            
-        subject_X_numpy = np.array(subject_X_numpy)
-        subject_y_numpy = np.array(subject_y_numpy)
-        subject_y_numpy = self.normalizer(subject_y_numpy)    
+            subject_X_paths.append(subject_X.path)    
+            subject_y_paths.append(subject_y[0].path)
+            timemask_paths.append(timemask[0].path)
+               
         
-        return subject_X_numpy, subject_y_numpy
+        return (subject_X_paths,
+                subject_y_paths,
+                timemask_paths)
     
     
-    def _set_data(self,subjects):
+    def _set_data(self,subjects=None,dynamic_load=None,reconstruct=None):
         
             
-        X = {}
-        y = {}
-        for subject in subjects:
-            subject_X_numpy, subject_y_numpy = self._get_single_subject_data(subject)
-            X[subject]=np.array(subject_X_numpy)
-            y[subject]=self.normalizer(np.array(subject_y_numpy))
-            
-        return X, y
-    
-    def get_total_data(self, flatten=True,reconstruct=None):
-        X = np.array([self.X[subject] for subject in self.subjects])
-        y = np.array([self.y[subject] for subject in self.subjects])
-        if flatten:
-            X=X.reshape(-1,X.shape[-1])
-            y=y.flatten()
-            
+        self.X = {}
+        self.y = {}
+        self.timemask = {}
+        
+        if subjects is None:
+            subjects = self.subjects
+        if dynamic_load is None:
+            dynamic_load = self.dynamic_load
         if reconstruct is None:
             reconstruct = self.reconstruct
             
-        if reconstruct:
-            mask = self.voxel_mask.get_fdata()
-            blackboard = np.zeros(list(mask.shape)+[X.shape[0]])
-            blackboard[mask.nonzero()] = X.T
-            X = blackboard.T
-            
-        return X,y
+        for subject in subjects:
+            self.X[subject], self.y[subject], self.timemask[subject] = self._get_single_subject_datapath(subject)
+        
+        
+        
+        if not dynamic_load:
+            for subject in subjects:
+                masks = [np.load(f)==1 for f in self.timemask[subject]]
+                self.X[subject] = np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.X[subject])],0)
+                if reconstruct:
+                    mask = self.voxel_mask.get_fdata()
+                    blackboard = np.zeros(list(mask.shape)+[self.X[subject].shape[0]])
+                    blackboard[mask.nonzero()] = self.X[subject].T
+                    self.X[subject] = blackboard.T
+                self.y[subject] = self.normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
+
+                self.timemask[subject] = masks
+        
     
+    def get_data(self, subject_wise=True):
+        
+            
+        if subject_wise:
+            return self.X, self.y
+        else:
+            X = np.concatenate([data for key,data in self.X.items()],0)
+            y = np.concatenate([data for key,data in self.y.items()],0)
+            return X, y
+                
+        
     def get_voxel_mask(self):
         return self.voxel_mask
-            
-
-class DataGenerator(Sequence):
-    """
-    Data generator required for fitting Keras model. This is just a
-    simple wrapper of generating preprocessed fMRI data (:math:`X`) and BOLD-like
-    target data (:math:`y`).
-    
-    Please refer to the below links for examples of using DataGenerator for Keras deep learning framework.
-        - https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly
-        
-    Also, this class is used to generate a chunk of data called 'batch', 
-    which means a fragment aggregatin the specified number ('batch_size') of data (X,y).
-    This partitioning data to small size is intended for utilizing the mini-batch gradient descent (or stochastic gradient descent).
-    Please refer to the below link for the framework.
-        - https://www.stat.cmu.edu/~ryantibs/convexopt/lectures/stochastic-gd.pdf
-    # TODO find a better reference
-    """
-
-    def __init__(self, X, y, batch_size, shuffle=True, use_bipolar_balancing=False, binarize=False,**kwargs):
-        self.X = X
-        self.y = y
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.indexes = np.arange(X.shape[0])
-        self.binarize= binarize
-        if self.binarize:
-            use_bipolar_balancing = True
-            if 'high_rate' in kwargs.key():
-                high_rate = kwargs['high_rate']
-            else:
-                high_rate = None
-                
-            if 'low_rate' in kwargs.key():
-                low_rate = kwargs['low_rate']
-            else:
-                low_rate = None
-                
-            self.binarizer = get_binarizer(y.flatten(),high_rate,low_rate)
-        self.use_bipolar_balancing=use_bipolar_balancing
-        if self.use_bipolar_balancing:
-            self.ticketer = get_bipolarized_ticketer(y.flatten(),**kwargs)
-            self.X_original = X
-            self.y_original = y
-        
-        self.on_epoch_end()
-
-    # for printing the statistics of the function
-    def on_epoch_end(self):
-        "Updates indexes after each epoch"
-
-        if self.shuffle:
-            np.random.shuffle(self.indexes)
-            
-        if self.use_bipolar_balancing:
-            sample_ids = weighted_sampling(self.y_original, self.ticketer)
-            self.X = self.X_original[sample_ids]
-            self.y = self.y_original[sample_ids]
-            
-    def __len__(self):
-        "Denotes the number of batches per epoch"
-        return len(self.indexes) // self.batch_size
-
-    def __getitem__(self, index):
-        "Get a batch of data X, y"
-        # index : batch no.
-        # Generate indexes of the batch
-        indexes = self.indexes[index *
-                               self.batch_size:(index + 1) * self.batch_size]
-        images = [self.X[i] for i in indexes]
-        if self.binarize:
-            targets = [self.binarizer(self.y[i]) for i in indexes]
-        else:
-            targets = [self.y[i] for i in indexes]
-        images = np.array(images)
-        targets = np.array(targets)
-
-        return images, targets  # return batch
-
-def gaussian(x, mean, std):
-    return ((2*np.pi*(std**2))**(-.5))*np.exp(-.5*(((x-mean)/std)**2))
-
-
-    
-def get_bipolarized_ticketer(array,high_rate=.1,low_rate=.1, max_val=None, min_val=None, bins=100, max_ticket=10):
-    d = array.copy().flatten()
-    d.sort()
-    low_part = d[:int(len(d)*low_rate)]
-    low_part = np.concatenate([low_part,low_part.max()*2 -low_part],0)
-    high_part = d[-int(len(d)*high_rate):]
-    high_part = np.concatenate([high_part,high_part.min()*2 -high_part],0)
-    
-    low_mean = low_part.mean()
-    low_std = low_part.std()
-    
-    high_mean = high_part.mean()
-    high_std = high_part.std()
-    
-    if max_val is None:
-        max_val = d[-1]
-    if min_val is None:
-        min_val = d[0]
-    
-    x = np.linspace(min_val, max_val, bins)
-    
-    weights = gaussian(x, low_mean, low_std) + gaussian(x, high_mean, high_std)
-    weight_max = weights.max()
-    ticketer = lambda v: int(((gaussian(v, low_mean, low_std) + \
-                              gaussian(v, high_mean, high_std)) /weight_max+1/max_ticket) * max_ticket)
-    
-    return ticketer
-
-def get_binarizer(array,high_rate=.1,low_rate=.1):
-    d = array.copy().flatten()
-    d.sort()
-    low_pole = d[int(len(d)*low_rate)]
-    high_pole = d[-int(len(d)*high_rate)]
-        
-    binarizer = lambda v: int((high_mean-v)<(v-low_mean))
-    
-def weighted_sampling(y, ticketer, n_sample=None):
-    
-    if n_sample is None:
-        n_sample = len(y)
-    
-    pool = []
-    
-    for i,v in enumerate(y.flatten()):
-        pool += [i]*ticketer(v)
-    
-    sample_ids  = np.random.choice(pool,n_sample)
-        
-    return sample_ids
-
-def get_binarizing_thresholds(array,high_rate=.1,low_rate=.1, max_val=None, min_val=None, bins=100, max_ticket=10):
-    d = array.copy().flatten()
-    d.sort()
-    low_part = d[:int(len(d)*low_rate)]
-    low_part = np.concatenate([low_part,low_part.max()*2 -low_part],0)
-    high_part = d[-int(len(d)*high_rate):]
-    high_part = np.concatenate([high_part,high_part.min()*2 -high_part],0)
-    
-    low_mean = low_part.mean()
-    low_std = low_part.std()
-    
-    high_mean = high_part.mean()
-    high_std = high_part.std()
-    
-    if max_val is None:
-        max_val = d[-1]
-    if min_val is None:
-        min_val = d[0]
-    
-    x = np.linspace(min_val, max_val, bins)
-    
-    weights = gaussian(x, low_mean, low_std) + gaussian(x, high_mean, high_std)
-    weight_max = weights.max()
-    ticketer = lambda v: int(((gaussian(v, low_mean, low_std) + \
-                              gaussian(v, high_mean, high_std)) /weight_max+1/max_ticket) * max_ticket)
-    
-    return ticketer

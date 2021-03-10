@@ -37,8 +37,72 @@ def _zoom_img(img_array, original_affine, zoom, binarize=False, threshold=.5):
                            affine=_zoom_affine(original_affine, precise_zoom))
     
 
-def _custom_masking(mask_path, t_r, threshold, zoom,
-                   smoothing_fwhm, interpolation_func, standardize,
+def _build_mask(mask_path, threshold, zoom, verbose=0):
+    # list up mask image file
+    if mask_path is None:
+        mask_files = []
+    else:
+        if type(mask_path) is not type(Path()):
+            mask_path = Path(mask_path)
+        mask_files = [file for file in mask_path.glob("*.nii.gz")]
+
+    mni_mask = load_mni152_brain_mask()
+    
+    # integrate binary mask data
+    report_dict = {}
+    if len(mask_files) > 0 :
+        # binarize
+        mask_loaded = resample_to_img(str(mask_files[0]), mni_mask)
+        assert (mask_loaded.affine==mni_mask.affine).all()
+        binarized_mask = abs(mask_loaded.get_fdata()) >= threshold
+        m = binarized_mask
+        
+        if verbose > 0:
+            survived = int(binarized_mask.sum())
+            total = np.prod(binarized_mask.shape)
+            print(str(mask_files[0].stem)+f': {survived}/{total}')
+        for i in range(len(mask_files)-1):
+            # binarize and stack
+            mask_loaded = resample_to_img(str(mask_files[i]), mni_mask)
+            assert (mask_loaded.affine==mni_mask.affine).all()
+            binarized_mask = abs(mask_loaded.get_fdata()) >= threshold
+            m |= binarized_mask
+            if verbose > 0:
+                survived = int(binarized_mask.sum())
+                total = np.prod(binarized_mask.shape)
+                print(str(mask_files[0].stem)+f': {survived}/{total}')
+        if verbose > 0:
+            survived = int(m.sum())
+            total = np.prod(m.shape)
+            print('integrated mask'+f': {survived}/{total}')
+    else:
+        # if not provided, use mni152 mask instead.
+        
+        m = mni_mask.get_fdata() 
+        survived = int(m.sum())
+        total = np.prod(m.shape)
+        if verbose > 0:
+            print('default mni152 mask'+f': {survived}/{total}')
+        
+    # reduce dimension by averaging zoom window
+    
+    affine = mni_mask.affine.copy()
+    
+    if zoom != (1, 1, 1):
+        voxel_mask = _zoom_img(m, affine, zoom, binarize=True)
+        if verbose > 0:
+            m = voxel_mask.get_fdata()
+            survived = int(m.sum())
+            total = np.prod(m.shape)
+            print('zommed '+f': {survived}/{total}')
+    else:
+        voxel_mask = nib.Nifti1Image(m.astype(float), affine=affine)
+    
+    
+    return voxel_mask
+
+def _custom_masking(voxel_mask, t_r,
+                   smoothing_fwhm, standardize,
                    high_pass, detrend):
     """
     Make custom ROI mask to reduce the number of features.
@@ -59,35 +123,6 @@ def _custom_masking(mask_path, t_r, threshold, zoom,
         masker (nilearn.input_data.NiftiMasker): a masker object. will be used for correcting motion confounds, and masking.
     """
     
-    # list up mask image file
-    if mask_path is None:
-        mask_files = []
-    else:
-        if type(mask_path) is not type(Path()):
-            mask_path = Path(mask_path)
-        mask_files = [file for file in mask_path.glob("*.nii.gz")]
-
-    mni_mask = load_mni152_brain_mask()
-    
-    # integrate binary mask data
-    if len(mask_files) > 0 :
-        # binarize
-        m = abs(nib.load(mask_files[0]).get_fdata()) >= threshold
-        for i in range(len(mask_files)-1):
-            # binarize and stack
-            m |= abs(nib.load(mask_files[0]).get_fdata()) >= threshold
-    else:
-        # if not provided, use min_152 mask instead.
-        m = mni_mask.get_fdata()
-    
-    # reduce dimension by averaging zoom window
-    
-    affine = mni_mask.affine.copy()
-    
-    if zoom != (1, 1, 1):
-        voxel_mask = _zoom_img(m, affine, zoom, binarize=True)
-    else:
-        voxel_mask = nib.Nifti1Image(m, affine=affine)
         
     # masking is done by NiftiMasker provided by nilearn package
     masker = NiftiMasker(mask_img=voxel_mask,
@@ -97,7 +132,7 @@ def _custom_masking(mask_path, t_r, threshold, zoom,
                          high_pass=high_pass,
                          detrend=detrend)
 
-    return voxel_mask, masker
+    return masker
 
 
 def _image_preprocess(params):
@@ -128,9 +163,21 @@ def _image_preprocess(params):
     preprocessed_images = []
     if confounds_path is not None:
         confounds = pd.read_table(confounds_path, sep="\t")
-        confounds = confounds[confound_names]
-        confounds = confounds.to_numpy()
-        if confounds.shape[-1] == 0:
+        if isinstance(confound_names,list):
+            confounds = confounds[confound_names]
+            confounds = confounds.to_numpy()
+            std = confounds.std(0)
+            mean = confounds.mean(0)
+            confounds = (confounds-mean)/std
+            confounds[np.isnan(confounds)] = 0
+        elif confound_names == 'all':
+            confounds = confounds
+            confounds = confounds.to_numpy()
+            std = confounds.std(0)
+            mean = confounds.mean(0)
+            confounds = (confounds-mean)/std
+            confounds[np.isnan(confounds)] = 0
+        else:
             confounds = None
     else:
         confounds = None
@@ -144,4 +191,4 @@ def _image_preprocess(params):
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
     np.save(save_path, fmri_masked)
     
-    return save_path
+    return 1

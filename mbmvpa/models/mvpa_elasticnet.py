@@ -10,10 +10,9 @@
 import logging
 import random
 from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm, pearsonr
 from glmnet import ElasticNet
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -29,7 +28,7 @@ from ..utils import config
 logging.basicConfig(level=logging.INFO)
 
 def elasticnet(X, y,
-               voxel_mask,
+               voxel_mask=None,
                save_path=".",
                save=True,
                alpha=0.001,
@@ -95,7 +94,8 @@ def elasticnet(X, y,
     if X.shape[0] > n_samples:
         np.random.shuffle(ids)
         ids = ids[:n_samples]
-
+        
+    y = y.ravel()
     X_data = X[ids]
     y_data = y[ids]
 
@@ -157,3 +157,83 @@ def elasticnet(X, y,
 
     # coefs : N x voxel #
     return coefs, intercepts
+
+def elasticnet_crossvalidation(X_dict,
+                               y_dict,
+                               metric_function=pearsonr,
+                               metric_names=None,
+                               plot_function=None,
+                               method='5-fold',
+                               **kwargs):
+    
+    metrics_train = []
+    metrics_test = []
+    coefs_train = []
+    if method=='loso':#leave-one-subject-out
+        subject_list = list(X_dict.keys())
+        for subject_id in subject_list:
+            X_test = X_dict[subject_id]
+            y_test = y_dict[subject_id]
+            X_train = np.concatenate([X_dict[v] for v in subject_list if v != subject_id],0)
+            y_train = np.concatenate([y_dict[v] for v in subject_list if v != subject_id],0)
+            coefs, intercepts = elasticnet(X_train,y_train, save=False,verbose=False,**kwargs)
+            pred_test = (np.matmul(coefs,X_test.T) + intercepts).flatten()
+            pred_train = (np.matmul(coefs,X_train.T) + intercepts).flatten()
+            metric_train = metric_function(pred_train,y_train.flatten())
+            metric_test = metric_function(pred_test,y_test.flatten())
+            metrics_train.append(metric_train)
+            metrics_test.append(metric_test)
+            coefs_train.append(coefs)
+            
+    elif 'fold' in method:
+        n_fold = int(method.split('-')[0])
+        X = np.concatenate([d for _,d in X_dict.items()],0)
+        y = np.concatenate([d for _,d in y_dict.items()],0)
+        np.random.seed(42)
+        ids = np.arange(X.shape[0])
+        fold_size = X.shape[0]//n_fold
+        for i in range(n_fold):
+            test_ids = ids[fold_size*i:fold_size*(i+1)]
+            train_ids = np.concatenate([ids[:fold_size*i],ids[fold_size*(i+1):]],0)
+            X_test = X[test_ids]
+            y_test = y[test_ids]
+            X_train = X[train_ids]
+            y_train = y[train_ids]
+            coefs, intercepts = elasticnet(X_train,y_train, save=False,verbose=False,**kwargs)
+            pred_test = (np.matmul(coefs,X_test.T) + intercepts).flatten()
+            pred_train = (np.matmul(coefs,X_train.T) + intercepts).flatten()
+            metric_train = metric_function(pred_train,y_train.flatten())
+            metric_test = metric_function(pred_test,y_test.flatten())
+            metrics_train.append(metric_train)
+            metrics_test.append(metric_test)
+            coefs_train.append(coefs)
+    
+    metrics_train = np.array(metrics_train)
+    metrics_test = np.array(metrics_test)
+    coefs_train = np.array(coefs_train)
+    if len(metrics_train.shape) ==0:
+        if metric_names is None:
+            metric_name = ""
+        else:
+            metric_name = metric_names[0]
+        if callable(plot_function):
+            plot_function(metrics_train,metrics_test,metric_name)
+        else:
+            plt.boxplot([metrics_train, metrics_test], labels=['train','test'], widths=0.6)
+            plt.show()
+    else:
+        for i in range(metrics_train.shape[1]):
+            if metric_names is None:
+                metric_name = ""
+            else:
+                metric_name = metric_names[i]
+            if callable(plot_function):
+                plot_function(metrics_train,metrics_test,metric_name)
+            else:
+                plt.boxplot([metrics_train[:,i], metrics_test[:,i]], labels=['train','test'], widths=0.6)
+                plt.show()
+    
+    return metrics_train, metrics_test, coefs_train
+            
+    
+    

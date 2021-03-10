@@ -4,7 +4,7 @@ import numpy as np
 import bids
 from bids import BIDSLayout
 from tqdm import tqdm
-from .bold_utils import _custom_masking, _image_preprocess
+from .bold_utils import _build_mask, _custom_masking, _image_preprocess
 from .bids_utils import BIDSController
 import nibabel as nib
 
@@ -27,12 +27,10 @@ class VoxelFeatureGenerator():
                   mask_threshold=2.58,
                   zoom=(2, 2, 2),
                   smoothing_fwhm=None,
-                  interpolation_func=np.mean,
                   standardize=True,
-                  confounds=["trans_x", "trans_y",
-                                      "trans_z", "rot_x", "rot_y", "rot_z"],
-                  high_pass=None,
-                  detrend=True,
+                  confounds=[],
+                  high_pass=1/128,
+                  detrend=False,
                   n_thread=4):
         
         self.bids_controller = BIDSController(bids_layout,
@@ -48,24 +46,40 @@ class VoxelFeatureGenerator():
             self.mask_path = None
         else:
             self.mask_path = Path(mask_path)
-        
         self.confounds = confounds
         self.n_thread = n_thread
-        self.voxel_mask, self.masker = _custom_masking(
-                                            self.mask_path, self.bids_controller.t_r,
-                                            mask_threshold, zoom,
-                                            smoothing_fwhm, interpolation_func, standardize,
-                                            high_pass, detrend
-                                        )
+        self.mask_threshold = mask_threshold
+        self.zoom = zoom
+        self.smoothing_fwhm = smoothing_fwhm
+        self.standardize = standardize
+        self.high_pass = high_pass
+        self.detrend = detrend
+        
         self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
-        self.bids_controller.save_voxelmask(self.voxel_mask)
+        
+        self.voxel_mask = None
+        self.masker = None
         
     def summary(self):
         self.bids_controller.summary()
         
-    
+    def _load_voxel_mask(self,overwrite=False):
+        if self.bids_controller.voxelmask_path.exists() and not overwrite:
+            self.voxel_mask = nib.load(elf.bids_controller.voxelmask_path)
+        else:
+            self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
+        self.bids_controller.save_voxelmask(self.voxel_mask)    
+        
     def run(self,feature_name=None, overwrite=False, confounds=None,n_thread=None):
         
+        
+        self._load_voxel_mask(overwrite=overwrite)
+        
+        self.masker = _custom_masking(
+                                    self.voxel_mask, self.bids_controller.t_r,
+                                    self.smoothing_fwhm, self.standardize,
+                                    self.high_pass, self.detrend
+                                    )
         if feature_name is None:
             suffix = self.mbmvpa_X_suffix
         else:
@@ -81,6 +95,7 @@ class VoxelFeatureGenerator():
             confounds = self.confounds
             
         files_layout = []
+        
         for file in self.bids_controller.get_bold_all():
             nii_filename = Path(file.dirname)/file.filename
             entities = file.get_entities()
@@ -118,6 +133,7 @@ class VoxelFeatureGenerator():
         # but we recommend less than 4 because it consumes more memory.
         # TODO: We can specify only the number of threads at this time,
         #       but we must specify only the number of cores or both later.
+        
         chunk_size = config.MAX_FMRIPREP_CHUNK_SIZE if n_thread > config.MAX_FMRIPREP_CHUNK_SIZE else n_thread
         params_chunks = [files_layout[i:i + chunk_size]
                             for i in range(0, len(files_layout), chunk_size)]
@@ -130,6 +146,8 @@ class VoxelFeatureGenerator():
         # 3. Thread returns a return value after job completion - future.result()
         # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
         
+        future_result = {}
+        
         for i, params_chunk in tqdm(enumerate(params_chunks)):
             # parallel computing using multiple threads.
             # please refer to "concurrent" api of Python.
@@ -140,7 +158,10 @@ class VoxelFeatureGenerator():
                                                 params for params in params_chunk
                                 }            
                 #for future in as_completed(future_result):
-        
+        for result in future_result.keys():
+            if isinstance(result.exception(),Exception):
+                raise result.exception()
+                
         return
         
         

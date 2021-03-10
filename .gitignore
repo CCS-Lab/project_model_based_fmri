@@ -163,3 +163,6 @@ tutorials/report*
 tutorials/scratch*
 report*
 .DS_Store
+*.mat
+tests/*report*
+tutorials/*report*

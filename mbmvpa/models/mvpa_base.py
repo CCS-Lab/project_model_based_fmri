@@ -15,11 +15,12 @@ import matplotlib.pyplot as plt
 from ..utils import config
 from ..utils.coef2map import get_map
 from ..utils.plot import plot_sham_result
+from scipy.stats import pearsonr
 from ..models.tensorflow_utils import ExperimenterTF
 from ..models.extractor import DefaultExtractor
-import pdb
-        
-    
+
+
+
     
 class MVPA_TF():
     ''' Model for MVPA regression
@@ -48,6 +49,7 @@ class MVPA_TF():
     def __init__(self,
                  X=None,
                  y=None,
+                 loader=None,
                  voxel_mask=None,
                  model=None,
                  model_name=None,
@@ -64,7 +66,6 @@ class MVPA_TF():
                  n_patience=15,
                  n_batch=64,
                  validation_split_ratio=0.2,
-                 save_pred=True,
                  use_bipolar_balancing=False
                  ):
         
@@ -88,10 +89,12 @@ class MVPA_TF():
             self.save_path = Path(save_path)
             
         if ( X is None or y is None ) and layout is not None:
-            loader = BIDSDataLoader(layout=layout)
-            X,y = loader.get_total_data()
+            if loader is None:
+                loader = BIDSDataLoader(layout=layout)
+            X,y = loader._set_data()
             voxel_mask = loader.get_voxel_mask()
-        
+            
+        self.loader = loader
         self.layout=layout
         self.X = X
         self.y = y
@@ -103,7 +106,6 @@ class MVPA_TF():
         else:
             self.extractor = extractor
             
-        self.chk_path = None
         self.log_path = None
         self.result_path = None
         self.save = save
@@ -115,7 +117,6 @@ class MVPA_TF():
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.validation_split_ratio = validation_split_ratio
-        self.save_pred = save_pred
         self.use_bipolar_balancing = use_bipolar_balancing
         
         self._coeffs = []
@@ -123,26 +124,24 @@ class MVPA_TF():
         self._sham_scores = []
         self._make_log_dir()
         self._time = datetime.datetime.now()
-        self.experimenter = ExperimenterTF(chk_path=self.chk_path,
-                                             result_path=self.result_path,
+        self.experimenter = ExperimenterTF(result_path=self.result_path,
                                              n_sample=self.n_sample,
                                              n_epoch=self.n_epoch,
                                              n_patience=self.n_patience,
                                              n_batch=self.n_batch,
                                              validation_split_ratio=self.validation_split_ratio,
-                                             save_pred=self.save_pred,
+                                             save=self.save,
                                              use_bipolar_balancing=self.use_bipolar_balancing,
                                              verbose=self.verbose)
         
     def _make_log_dir(self):
         now = datetime.datetime.now()
         save_root = self.save_path / f'{self.model_name}_report_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
-        self.chk_path = save_root / 'chekpoint'
+        
         self.log_path = save_root / 'log'
         self.result_path = save_root / 'result'
         
         save_root.mkdir()
-        self.chk_path.mkdir()
         self.log_path.mkdir()
         self.result_path.mkdir()
         
@@ -176,6 +175,83 @@ class MVPA_TF():
         self._time = datetime.datetime.now()
         
         return self._coeffs
+    
+    def run_crossvalidation(self,
+                            X_dict,
+                            y_dict,
+                               metric_function=pearsonr,
+                               metric_names=None,
+                               plot_function=None,
+                               method='5-fold',
+                               **kwargs):
+    
+        metrics_train = []
+        metrics_test = []
+        coefs_train = []
+        if method=='loso':#leave-one-subject-out
+            subject_list = list(X_dict.keys())
+            for i, subject_id in enumerate(subject_list):
+                X_test = X_dict[subject_id]
+                y_test = y_dict[subject_id]
+                X_train = np.concatenate([X_dict[v] for v in subject_list if v != subject_id],0)
+                y_train = np.concatenate([y_dict[v] for v in subject_list if v != subject_id],0)
+                self._reset_model()
+                model,error = self.experimenter(self.model, i, X_train, y_train,save=False)
+                pred_test = self.model.predict(X_test).flatten()
+                pred_train = self.model.predict(X_train).flatten()
+                metric_train = metric_function(pred_train,y_train.flatten())
+                metric_test = metric_function(pred_test,y_test.flatten())
+                metrics_train.append(metric_train)
+                metrics_test.append(metric_test)
+
+        elif 'fold' in method:
+            n_fold = int(method.split('-')[0])
+            X = np.concatenate([d for _,d in X_dict.items()],0)
+            y = np.concatenate([d for _,d in y_dict.items()],0)
+            np.random.seed(42)
+            ids = np.arange(X.shape[0])
+            fold_size = X.shape[0]//n_fold
+            for i in range(n_fold):
+                test_ids = ids[fold_size*i:fold_size*(i+1)]
+                train_ids = np.concatenate([ids[:fold_size*i],ids[fold_size*(i+1):]],0)
+                X_test = X[test_ids]
+                y_test = y[test_ids]
+                X_train = X[train_ids]
+                y_train = y[train_ids]
+                self._reset_model()
+                model,error = self.experimenter(self.model, i,  X_train, y_train,save=False)
+                pred_test = self.model.predict(X_test).flatten()
+                pred_train = self.model.predict(X_train).flatten()
+                metric_train = metric_function(pred_train,y_train.flatten())
+                metric_test = metric_function(pred_test,y_test.flatten())
+                metrics_train.append(metric_train)
+                metrics_test.append(metric_test)
+
+        metrics_train = np.array(metrics_train)
+        metrics_test = np.array(metrics_test)
+        if len(metrics_train.shape) ==0:
+            if metric_names is None:
+                metric_name = ""
+            else:
+                metric_name = metric_names[0]
+            if callable(plot_function):
+                plot_function(metrics_train,metrics_test,metric_name)
+            else:
+                plt.boxplot([metrics_train, metrics_test], labels=['train','test'], widths=0.6)
+                plt.show()
+        else:
+            for i in range(metrics_train.shape[1]):
+                if metric_names is None:
+                    metric_name = ""
+                else:
+                    metric_name = metric_names[i]
+                if callable(plot_function):
+                    plot_function(metrics_train,metrics_test,metric_name)
+                else:
+                    plt.boxplot([metrics_train[:,i], metrics_test[:,i]], labels=['train','test'], widths=0.6)
+                    plt.show()
+
+        return metrics_train, metrics_test
     
     def sham(self, plot=True):
         

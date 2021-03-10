@@ -17,6 +17,7 @@ def build_cnn(input_shape,
              dropout_rate=0.2,
              batch_norm=False,
              optimizer="adam",
+             learning_rate=0.01,
              loss="mse"):
     
 
@@ -27,7 +28,7 @@ def build_cnn(input_shape,
                     padding='same',
                     input_shape=input_shape,))
     model.add(MaxPooling2D(pool_size=(2,2)))
-
+    
     # add layers
     for dim,kernel in zip(layer_dims[1:],kernel_size[1:]):
         model.add(Conv2D(dim,
@@ -46,6 +47,12 @@ def build_cnn(input_shape,
     model.add(Activation('linear'))
 
     model.add(Dense(1, activation=activation_output))
+    
+    if optimizer == "adam":
+        optlayer = Adam(learning_rate=learning_rate,name=optimizer)
+    else:
+        optlayer = Adam(learning_rate=learning_rate,name=optimizer)
+        
     model.compile(loss=loss, optimizer=optimizer)
 
     return model
@@ -62,6 +69,7 @@ class CNN(MVPA_TF):
                  activation_output="linear",
                  dropout_rate=0.15,
                  optimizer="adam",
+                 learning_rate=0.001,
                  loss="mse",
                  **kwargs):
         
@@ -77,6 +85,7 @@ class CNN(MVPA_TF):
         self.dropout_rate = dropout_rate
         self.optimizer = optimizer
         self.loss = loss
+        self.learning_rate = learning_rate
         self.model = build_cnn(input_shape=self.input_shape,
                              layer_dims=self.layer_dims,
                              kernel_size=self.kernel_size,
@@ -85,6 +94,7 @@ class CNN(MVPA_TF):
                              activation_output=self.activation_output,
                              dropout_rate=self.dropout_rate,
                              optimizer=self.optimizer,
+                             learning_rate=self.learning_rate,
                              loss=self.loss)
         
     def _reset_model(self):

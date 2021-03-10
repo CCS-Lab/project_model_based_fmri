@@ -211,10 +211,12 @@ class LatentProcessGenerator():
                 modulation_df.to_csv(modulation_df_path,
                                      sep="\t", index=False)
                 
+                
             if overwrite or not signal_path.exists():
+                # assume slice time correction mid point.
                 frame_times = self.bids_controller.t_r * \
-                        (np.arange(self.bids_controller.n_scans) + \
-                         self.bids_controller.t_r / 2.)
+                        np.arange(self.bids_controller.n_scans) + \
+                         self.bids_controller.t_r / 2.
             
                 signal, _ = _boldify(
                     modulation_df.to_numpy(dtype=float).T, self.hrf_model, frame_times)

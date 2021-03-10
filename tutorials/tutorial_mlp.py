@@ -32,9 +32,13 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                filter_function=example_filter,
                                latent_function=example_latent,
                                dm_model=dm_model,
+                               confounds='all', 
                                zoom=(1,1,1))
 
-preprocessor.preprocess(overwrite=False,n_core=16)
+#preprocessor.preprocess(overwrite=False,n_core=16)
+
+preprocessor.X_generator.run(overwrite=True)
+
 
 loader = BIDSDataLoader(layout=root)
 X,y = loader.get_total_data()

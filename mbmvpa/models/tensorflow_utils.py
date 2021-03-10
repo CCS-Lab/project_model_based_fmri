@@ -3,21 +3,23 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from scipy import stats
-from ..data import loader
+from ..data.tf_generator import DataGenerator
 from pathlib import Path
 import numpy as np
+import tempfile
+import os
+import random
 
 class ExperimenterTF():
     def __init__(self, 
-                 chk_path='.',
-                 result_path=',',
+                 result_path='.',
                  extractor=None,
                  n_sample=10000,
                  n_epoch=100,
                  n_patience=10,
                  n_batch=64,
                  validation_split_ratio=0.2,
-                 save_pred=True,
+                 save=True,
                  use_bipolar_balancing=False,
                  verbose=1):
         
@@ -26,13 +28,14 @@ class ExperimenterTF():
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.validation_split_ratio = validation_split_ratio
-        self.save_pred = save_pred
+        self.save= save
         self.use_bipolar_balancing = use_bipolar_balancing
-        self.chk_path = Path(chk_path)
         self.result_path = Path(result_path)
         self.verbose = verbose
         
-    def __call__(self, model, i, X, y):
+    def __call__(self, model, i, X, y,save=None):
+        if save==None:
+            save = self.save
         # random sampling "n_samples" if the given number of X,y instances is bigger
         # than maximum allowed number for training
         np.random.seed(i)
@@ -60,17 +63,20 @@ class ExperimenterTF():
 
         # create helper class for generating data
         # support mini-batch training implemented in Keras
-        train_generator = loader.DataGenerator(
+        train_generator = DataGenerator(
             X_train, y_train, self.n_batch, shuffle=True,
             use_bipolar_balancing=self.use_bipolar_balancing)
-        val_generator = loader.DataGenerator(
+        val_generator = DataGenerator(
             X_test, y_test, self.n_batch, shuffle=False,
             use_bipolar_balancing=self.use_bipolar_balancing)
         # should be implemented in the actual model
-
-        best_model_filepath = str(self.chk_path / \
-        f"repeat_{i:03}.ckpt")
-
+        
+        if save:
+            best_model_filepath = str(self.result_path / \
+            f"repeat_{i:03}.ckpt")
+        else:
+            best_model_filepath = tempfile.gettempdir() + f"/repeat_{int(random.random()*100000)}_{i:03}.ckpt"
+            
         # temporal buffer for intermediate training results (weights) of training.
         mc = ModelCheckpoint(
             best_model_filepath,
@@ -89,18 +95,22 @@ class ExperimenterTF():
 
         # load best model
         model.load_weights(best_model_filepath)
+        if not save:
+            os.remove(best_model_filepath+'.index')
+            os.remove(best_model_filepath+'.data-00000-of-00001')
         # validation 
         y_pred = model.predict(X_test)
         score,p_value = stats.pearsonr(y_pred.flatten(), y_test.flatten())
+        # how about spearmanr ?
         
-        if self.save_pred:
+        if save:
             total_pred = model.predict(X)
             usedtrain_map = np.zeros((X.shape[0],1))
             usedtrain_map[train_ids] = 1
             pred_data = np.concatenate([total_pred, usedtrain_map],-1)
             pred_path = self.result_path / f"repeat_{i:03}_pred.npy"
             np.save(pred_path, pred_data)
-
+        
         if self.verbose > 0:
             print(f"[{i:03}] - score: {score:.04f} p: {p_value:.04f}")
        

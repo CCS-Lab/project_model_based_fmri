@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
 
 from ..models.mvpa_base import MVPA_TF
@@ -14,6 +15,7 @@ def build_mlp(input_shape,
              activation_output="linear",
              dropout_rate=0.5,
              optimizer="adam",
+             learning_rate=0.001,
              loss="mse"):
 
     model = Sequential()
@@ -22,7 +24,12 @@ def build_mlp(input_shape,
                     input_shape=input_shape,
                     use_bias=False))
     model.add(Dropout(dropout_rate))
-
+    
+    if optimizer == "adam":
+        optlayer = Adam(learning_rate=learning_rate,name=optimizer)
+    else:
+        optlayer = Adam(learning_rate=learning_rate,name=optimizer)
+        
     # add layers
     for dim in layer_dims[1:]:
         model.add(Dense(dim, activation=activation, use_bias=True))
@@ -58,6 +65,7 @@ class MLP(MVPA_TF):
                  dropout_rate=0.5,
                  optimizer="adam",
                  loss="mse",
+                 learning_rate=0.001,
                  use_default_extractor=False,
                  **kwargs):
         
@@ -69,6 +77,7 @@ class MLP(MVPA_TF):
                              activation_output=activation_output,
                              dropout_rate=dropout_rate,
                              optimizer=optimizer,
+                             learning_rate=learning_rate,
                              loss=loss)
         
         self.layer_dims = layer_dims
@@ -78,6 +87,7 @@ class MLP(MVPA_TF):
         self.dropout_rate = dropout_rate
         self.optimizer = optimizer
         self.loss = loss
+        self.learning_rate = learning_rate
         
         if not use_default_extractor:
             self.extractor = extractor_mlp
