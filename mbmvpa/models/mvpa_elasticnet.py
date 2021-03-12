@@ -269,25 +269,6 @@ def elasticnet_crossvalidation(X_dict,
             
     elif 'fold' in method:
         n_fold = int(method.split('-')[0])
-        X = np.concatenate([d for _,d in X_dict.items()],0)
-        y = np.concatenate([d for _,d in y_dict.items()],0)
-        np.random.seed(42)
-        ids = np.arange(X.shape[0])
-        fold_size = X.shape[0]//n_fold
-        for i in tqdm(range(n_fold)):
-            test_ids = ids[fold_size*i:fold_size*(i+1)]
-            train_ids = np.concatenate([ids[:fold_size*i],ids[fold_size*(i+1):]],0)
-            X_test = X[test_ids]
-            y_test = y[test_ids]
-            X_train = X[train_ids]
-            y_train = y[train_ids]
-            report, metric_train, metric_test = run_add_reports(X_train,y_train,X_test,y_test,metric_function,**kwargs)
-            metrics_train.append(metric_train)
-            metrics_test.append(metric_test)
-            reports.append(report)
-            
-    elif n_cv_repeat > 1 and 'fold' in method:
-        n_fold = int(method.split('-')[0])
         for j in tqdm(range(n_cv_repeat)):
             np.random.seed(42+j)
             ids = np.arange(X.shape[0])
