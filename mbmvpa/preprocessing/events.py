@@ -21,6 +21,7 @@ from .events_utils import _process_indiv_params, _add_event_info, _preprocess_ev
 from .bids_utils import BIDSController
 from bids import BIDSLayout
 from tqdm import tqdm
+from scipy.io import loadmat
 
 from ..utils import config # configuration for default names used in the package
 
@@ -28,6 +29,7 @@ from ..utils import config # configuration for default names used in the package
 class LatentProcessGenerator():
     def __init__(self, 
               bids_layout,
+              bids_controller=None,
               save_path=None,
               task_name=None,
               process_name="unnamed",
@@ -43,10 +45,13 @@ class LatentProcessGenerator():
               n_core=4):
 
         # setting path informations and loading layout
-        self.bids_controller = BIDSController(bids_layout,
+        if bids_controller is None:
+            self.bids_controller = BIDSController(bids_layout,
                                             save_path=save_path,
                                             task_name=task_name,
                                             ignore_fmriprep=True)
+        else:
+            self.bids_controller = bids_controller
         
         self.task_name = self.bids_controller.task_name
         # setting user-defined functions
@@ -99,19 +104,66 @@ class LatentProcessGenerator():
             ]
         return df_events_list
     
+    def _init_df_events_from_files(self, files, suffix="events",column_names=None, adjust_function=None):
+        if adjust_function is None:
+            adjust_function = self.adjust_function
+        
+        event_infos_list = []
+        df_events_list = []
+        for file in files:
+            if suffix not in file:
+                continue
+            file = Path(file)
+            event_info = {}
+            for chunk in file.stem.split('_'):
+                splits = chunk.split('-')
+                if len(splits) == 2:
+                    event_info[splits[0]] = splits[1]
+            
+            suffix = file.suffix
+            if suffix == '.mat':
+                df_events = loadmat(file)
+                if column_names == None:
+                    df_events = {key:data for key,data in df_events.items() if '__' not in key}
+                else:
+                    df_events = {key:df_events[key] for key in column_names}
+                df_events = pd.Dataframe(df_events)
+            elif suffix == '.tsv' or suffix =='.csv':
+                df_events = df.read_table(file, sep='\t')
+                if column_names is not None:
+                    df_events = df_events[column_names]
+    
+            else:
+                continue
+                
+            event_infos_list.append(info)
+            df_events_list.append(df_events_list)
+            
+        if callable(adjust_function):
+            # modify trial data by user-defined function "adjust_function"
+            df_events_list = [
+                _preprocess_event(
+                    adjust_function, df_events
+                ) for df_events, event_infos in zip(df_events_list, event_infos_list)
+            ]
+        return df_events_list
+        
+            
+            
+        
     def set_computational_model(self, 
                                 overwrite=True,
                                 dm_model=None, 
                                 individual_params=None, 
                                 df_events=None, 
                                 adjust_function=None, 
-                                filter_function=None, 
+                                filter_function=None,
                                 **kwargs):
 
         if df_events is None:
-            df_events= pd.concat(
-                        self._init_df_events_from_bids(adjust_function=adjust_function)
-                        )
+            df_events = self._init_df_events_from_bids(adjust_function=adjust_function)
+            df_events= pd.concat(df_events)
+            
         individual_params = _process_indiv_params(individual_params)
         if individual_params is None:
             individual_params = self.individual_params

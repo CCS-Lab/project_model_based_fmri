@@ -51,6 +51,7 @@ class DataPreprocessor():
         self.bids_controller = self.X_generator.bids_controller
         
         self.y_generator = LatentProcessGenerator(bids_layout=bids_layout,
+                                          bids_controller=self.bids_controller,
                                           save_path=save_path,
                                           task_name=task_name,
                                           process_name=process_name,

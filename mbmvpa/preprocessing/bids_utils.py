@@ -14,6 +14,7 @@ class BIDSController():
     def __init__(self,
                 bids_layout,
                 save_path=None,
+                mask_path=None,
                 fmriprep_name="fMRIPrep",
                 task_name=None,
                 bold_suffix="bold",
@@ -25,6 +26,7 @@ class BIDSController():
         # assumption 2 : all the settings of bold image are same.
         # assumption 3 : all the data are valid.
         
+        print('INFO: start loading BIDSLayout')
         if isinstance(bids_layout,str):
             self.layout = BIDSLayout(root=Path(bids_layout),derivatives=True)
         elif isinstance(bids_layout,Path):
@@ -53,17 +55,19 @@ class BIDSController():
             else:
                 self.confound_suffix = confound_suffix
             self.bold_suffix = bold_suffix
-            
+            print('INFO: fMRIPrep is loaded')
         else:
             self.fmriprep_name = fmriprep_name
             self.fmriprep_layout = None
             self.fmriprep_version = None
             self.confound_suffix = confound_suffix
             self.bold_suffix = bold_suffix
+            print('INFO: fMRIPrep is skipped')
             
         self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
         
         if task_name is None:
+            print('INFO: task name is not designated. find most common task name')
             try:
                 task_names = self.layout.get_task()
                 task_name_lens = [len(self.layout.get(task=task_name,suffix=self.bold_suffix)) for task_name in task_names]
@@ -75,22 +79,28 @@ class BIDSController():
             
         else:
             self.task_name = task_name
+        print('INFO: task_name is '+self.task_name)
         
         if save_path is None:
             self.save_path = Path(self.root)/'derivatives'/config.DEFAULT_DERIV_ROOT_DIR
         else:
             self.save_path = save_path
-            
-        self.make_mbmvpa(self.save_path)
+        
+        if self.make_mbmvpa(self.save_path):
+            print('INFO: MB-MVPA is newly set up.')
         
         if not self.mbmvpa_name in self.layout.derivatives.keys():
             self.layout.add_derivatives(path=self.save_path)
+            print('INFO: MB-MVPA is added as a new derivative')
             
         self.mbmvpa_layout = self.layout.derivatives[self.mbmvpa_name]
-            
+        print('INFO: MB-MVPA is loaded')
         self.n_subject, self.n_session, self.n_run, self.n_scans, self.t_r = self.get_metainfo()
-        self.voxelmask_path = Path(self.mbmvpa_layout.root)/config.DEFAULT_VOXEL_MASK_FILENAME
-    
+        if mask_path is None:
+            self.mask_path = Path(self.mbmvpa_layout.root)/config.DEFAULT_VOXEL_MASK_FILENAME
+        else:
+            self.mask_path = Path(mask_path)
+            
     def summary(self):
         
         summaries = {}
@@ -130,10 +140,10 @@ class BIDSController():
             mbmvpa_root.mkdir()
         
         try:
-            dataset_description = json.load(mbmvpa_root/'dataset_description.json')
+            dataset_description = json.load(open(mbmvpa_root/'dataset_description.json'))
             bids_version = dataset_description["BIDSVersion"]
             assert dataset_description["PipelineDescription"]["Name"] == config.MBMVPA_PIPELINE_NAME
-            
+            return False
         except:
             if self.fmriprep_layout is not None:
                 bids_version = self.fmriprep_layout.get_dataset_description()['BIDSVersion']
@@ -142,7 +152,7 @@ class BIDSController():
 
             make_mbmvpa_description(mbmvpa_root=mbmvpa_root,
                                 bids_version=bids_version)
-        
+        return True
             
     def set_path(self, sub_id, ses_id=None):
         sub_path = Path(self.mbmvpa_layout.root) / f'sub-{sub_id}'
@@ -187,13 +197,20 @@ class BIDSController():
         try: 
             t_r = self.layout.get_tr()
         except:
-            t_r = json.load(
-                layout.get(
-                return_type="file",
-                suffix=self.bold_suffix,
-                task=self.task_name,
-                extension="json")[0])["root"]["RepetitionTime"]
-            t_r = float(t_r)
+            try:
+                ex_json = json.load(open(
+                    layout.get(
+                    return_type="file",
+                    suffix=self.bold_suffix,
+                    task=self.task_name,
+                    extension="json")[0]))
+                if "root" in ex_json.keys():
+                    t_r = ex_json["root"]["RepetitionTime"]
+                else:
+                    t_r = ex_json["RepetitionTime"]
+                t_r = float(t_r)
+            except:
+                t_r = None
         
         return (n_subject, n_session, n_run, n_scans, t_r)
     
@@ -219,6 +236,6 @@ class BIDSController():
         return self.fmriprep_layout.get(suffix=self.confound_suffix,extension="tsv")
         
     def save_voxelmask(self, voxel_mask):
-        nib.save(voxel_mask, self.voxelmask_path)
+        nib.save(voxel_mask, self.mask_path)
         
         

@@ -50,7 +50,6 @@ def _add_event_info(df_events, event_infos):
     """
 
     new_df = []
-    df_events = df_events.sort_values(by="onset")
 
     def _add(row, info):
         row["subjID"] = info["subject"]
@@ -85,7 +84,6 @@ def _preprocess_event(preprocess, df_events):
     """
 
     new_df = []
-    df_events = df_events.sort_values(by="onset")
 
     for _, row in df_events.iterrows():
         new_df.append(preprocess(row))
@@ -94,7 +92,7 @@ def _preprocess_event(preprocess, df_events):
         new_df, axis=1,
         keys=[s.name for s in new_df]
     ).transpose()
-
+    new_df = new_df.sort_values(by="onset")
     return new_df
 
 def _make_single_time_mask(condition, df_events, time_length, t_r, 

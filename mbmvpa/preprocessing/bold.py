@@ -18,6 +18,7 @@ import pdb
 class VoxelFeatureGenerator():
     def  __init__(self,
                   bids_layout,
+                  bids_controller=None,
                   save_path=None,
                   task_name=None,
                   fmriprep_name='fMRIPrep',
@@ -33,12 +34,17 @@ class VoxelFeatureGenerator():
                   detrend=False,
                   n_thread=4):
         
-        self.bids_controller = BIDSController(bids_layout,
+        if bids_controller is None:
+            self.bids_controller = BIDSController(bids_layout,
                                             save_path=save_path,
                                             fmriprep_name=fmriprep_name,
                                             task_name=task_name,
                                             bold_suffix=bold_suffix,
-                                            confound_suffix=confound_suffix)
+                                            confound_suffix=confound_suffix,
+                                            mask_path=mask_path)
+        else:
+            self.bids_controller = bids_controller
+            
         
         if mask_path is None:
             self.mask_path = Path(self.bids_controller.fmriprep_layout.root)/ config.DEFAULT_ROI_MASK_DIR
@@ -64,8 +70,8 @@ class VoxelFeatureGenerator():
         self.bids_controller.summary()
         
     def _load_voxel_mask(self,overwrite=False):
-        if self.bids_controller.voxelmask_path.exists() and not overwrite:
-            self.voxel_mask = nib.load(elf.bids_controller.voxelmask_path)
+        if self.bids_controller.mask_path.exists() and not overwrite:
+            self.voxel_mask = nib.load(self.bids_controller.mask_path)
         else:
             self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
         self.bids_controller.save_voxelmask(self.voxel_mask)    
@@ -101,7 +107,7 @@ class VoxelFeatureGenerator():
             entities = file.get_entities()
             nii_filedir = file.dirname
             if 'session' in entities.keys():
-                reg_file =self.bids_contorller.get_confound(sub_id=entities['subject'],
+                reg_file =self.bids_controller.get_confound(sub_id=entities['subject'],
                                                  ses_id=entities['session'],
                                                  run_id=entities['run'])
                 

@@ -94,7 +94,7 @@ def _build_mask(mask_path, threshold, zoom, verbose=0):
             m = voxel_mask.get_fdata()
             survived = int(m.sum())
             total = np.prod(m.shape)
-            print('zommed '+f': {survived}/{total}')
+            print('zoomed '+f': {survived}/{total}')
     else:
         voxel_mask = nib.Nifti1Image(m.astype(float), affine=affine)
     

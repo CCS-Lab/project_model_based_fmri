@@ -61,15 +61,15 @@ class BIDSDataLoader():
                 ):
          
         if isinstance(layout,str) or isinstance(layout,Path):
-            try:
-                self.layout = BIDSLayout(root=layout,derivatives=True)
-            except:
+            if len(list(Path(layout).glob('derivatives'))) != 0:
+                root_layout = BIDSLayout(root=layout,derivatives=True)
+                self.layout = root_layout.derivatives[config.MBMVPA_PIPELINE_NAME]
+            else:
                 self.layout = BIDSLayout(root=layout,validate=False)
         elif isinstance(layout,BIDSLayout):
             self.layout = layout
             
-        if config.MBMVPA_PIPELINE_NAME in self.layout.derivatives.keys():
-            self.layout = self.layout.derivatives[config.MBMVPA_PIPELINE_NAME]
+        assert self.layout.description['PipelineDescription']['Name'] == config.MBMVPA_PIPELINE_NAME
         
         self.task_name=task_name
         self.process_name=process_name
