@@ -30,7 +30,8 @@ class DataPreprocessor():
                   filter_for_modeling=None,
                   individual_params=None,
                   hrf_model="glover",
-                  use_duration=False):
+                  use_duration=False,
+                  ignore_original=False):
         
         self.X_generator = VoxelFeatureGenerator(bids_layout=bids_layout,
                                           save_path=save_path,
@@ -46,7 +47,8 @@ class DataPreprocessor():
                                           confounds=confounds,
                                           high_pass=high_pass,
                                           detrend=detrend,
-                                          n_thread=n_core)
+                                          n_thread=n_core,
+                                          ignore_original=ignore_original)
         
         self.bids_controller = self.X_generator.bids_controller
         

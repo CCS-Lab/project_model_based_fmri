@@ -15,6 +15,7 @@ from sklearn.preprocessing import minmax_scale
 from bids import BIDSLayout
 from ..utils import config
 from ..utils.coef2map import reconstruct
+import pdb
 
 
 class Normalizer():
@@ -106,8 +107,7 @@ class BIDSDataLoader():
                     
         if self.task_name:
             self.X_kwargs['task']=self.task_name
-            self.y_kwargs['task']=self.task_name
-            self.timemask_kwargs['task']=self.task_name
+            
         
         
         if subjects is None:
@@ -137,20 +137,24 @@ class BIDSDataLoader():
                 subject_y = self.layout.get(subject=subject,
                                 run=entities['run'],
                                 session=entities['session'],
+                                task=entities['task'],
                                 **self.y_kwargs
                                )
                 timemask = self.layout.get(subject=subject,
                                 run=entities['run'],
                                 session=entities['session'],
+                                task=entities['task'],
                                 **self.timemask_kwargs
                                )
 
             else:
                 subject_y = self.layout.get(subject=subject,
                                 run=entities['run'],
+                                 task=entities['task'],
                                 **self.y_kwargs
                                )
                 timemask = self.layout.get(subject=subject,
+                                task=entities['task'],
                                 run=entities['run'],
                                 **self.timemask_kwargs
                                )
@@ -188,15 +192,27 @@ class BIDSDataLoader():
         if reconstruct is None:
             reconstruct = self.reconstruct
             
+        valid_subjects = []
         for subject in subjects:
+            subj_X,subj_y,subj_timemask  = self._get_single_subject_datapath(subject)
+            if len(subj_X) ==0 or len(subj_y) ==0 or len(subj_timemask) ==0:
+                continue
+            if len(subj_X) != len(subj_y) or len(subj_y) != len(subj_timemask) or \
+                len(subj_timemask) != len(subj_X):
+                continue
+            
+            
             self.X[subject], self.y[subject], self.timemask[subject] = self._get_single_subject_datapath(subject)
-        
+            valid_subjects.append(subject)
         
         
         if not dynamic_load:
-            for subject in subjects:
-                masks = [np.load(f)==1 for f in self.timemask[subject]]
-                self.X[subject] = np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.X[subject])],0)
+            for subject in valid_subjects:
+                try:
+                    masks = [np.load(f)==1 for f in self.timemask[subject]]
+                    self.X[subject] = np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.X[subject])],0)
+                except:
+                    pdb.set_trace()
                 if reconstruct:
                     mask = self.voxel_mask.get_fdata()
                     blackboard = np.zeros(list(mask.shape)+[self.X[subject].shape[0]])
@@ -205,7 +221,7 @@ class BIDSDataLoader():
                 self.y[subject] = self.normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
 
                 self.timemask[subject] = masks
-        
+        self.subjects = valid_subjects
     
     def get_data(self, subject_wise=True):
         

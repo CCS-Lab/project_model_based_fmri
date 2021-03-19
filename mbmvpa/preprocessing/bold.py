@@ -32,7 +32,8 @@ class VoxelFeatureGenerator():
                   confounds=[],
                   high_pass=1/128,
                   detrend=False,
-                  n_thread=4):
+                  n_thread=4,
+                  ignore_original=True):
         
         if bids_controller is None:
             self.bids_controller = BIDSController(bids_layout,
@@ -41,7 +42,7 @@ class VoxelFeatureGenerator():
                                             task_name=task_name,
                                             bold_suffix=bold_suffix,
                                             confound_suffix=confound_suffix,
-                                            mask_path=mask_path)
+                                            ignore_original=ignore_original)
         else:
             self.bids_controller = bids_controller
             
@@ -70,7 +71,7 @@ class VoxelFeatureGenerator():
         self.bids_controller.summary()
         
     def _load_voxel_mask(self,overwrite=False):
-        if self.bids_controller.mask_path.exists() and not overwrite:
+        if self.bids_controller.voxelmask_path.exists() and not overwrite:
             self.voxel_mask = nib.load(self.bids_controller.mask_path)
         else:
             self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
@@ -80,9 +81,12 @@ class VoxelFeatureGenerator():
         
         
         self._load_voxel_mask(overwrite=overwrite)
-        
+        t_r = self.bids_controller.meta_infos['t_r'].unique()
+        if len(t_r) != 1:
+            assert False, "not consistent time resolution"
+        t_r = float(t_r[0])
         self.masker = _custom_masking(
-                                    self.voxel_mask, self.bids_controller.t_r,
+                                    self.voxel_mask, t_r,
                                     self.smoothing_fwhm, self.standardize,
                                     self.high_pass, self.detrend
                                     )
@@ -102,36 +106,22 @@ class VoxelFeatureGenerator():
             
         files_layout = []
         
-        for file in self.bids_controller.get_bold_all():
-            nii_filename = Path(file.dirname)/file.filename
-            entities = file.get_entities()
-            nii_filedir = file.dirname
-            if 'session' in entities.keys():
-                reg_file =self.bids_controller.get_confound(sub_id=entities['subject'],
-                                                 ses_id=entities['session'],
-                                                 run_id=entities['run'])
-                
-                reg_file = reg_file[0] # if more than one searched raise warning
-                reg_filename = Path(reg_file.dirname)/reg_file.filename
-                sub_id, task_id,\
-                    ses_id, run_id = entities['subject'], entities['task'],\
-                                        entities['session'], entities['run']
-                save_filename = f'sub-{sub_id}_task-{task_id}_ses-{ses_id}_run-{run_id}_{suffix}.npy'
-                save_filename = self.bids_controller.set_path(sub_id=entities['subject'],ses_id=entities['session'])/save_filename
-                if not overwrite and save_filename.exists():
-                    continue
-            else:
-                reg_file=self.bids_controller.get_confound(sub_id=entities['subject'],
-                                                 run_id=entities['run'])
-                
-                reg_file = reg_file[0] # if more than one searched raise warning
-                reg_filename = Path(reg_file.dirname)/reg_file.filename
-                sub_id, task_id, run_id = entities['subject'], entities['task'], entities['run']
-                save_filename = f'sub-{sub_id}_task-{task_id}_run-{run_id}_{suffix}.npy'
-                save_filename = self.bids_controller.set_path(sub_id=entities['subject'])/save_filename
-                if not overwrite and save_filename.exists():
-                    continue
+        for _, row in self.bids_controller.meta_infos.iterrows():
             
+            reg_filename = row['confound_path']
+            nii_filename = row['bold_path']
+            sub_id = row['subject']
+            task_id = row['task']
+            ses_id = row['session']
+            run_id = row['run']
+            
+            if ses_id is not None: 
+                save_filename = f'sub-{sub_id}_task-{task_id}_ses-{ses_id}_run-{run_id}_{suffix}.npy'
+                save_filename = self.bids_controller.set_path(sub_id=sub_id,ses_id=ses_id)/save_filename
+            else :
+                save_filename = f'sub-{sub_id}_task-{task_id}_run-{run_id}_{suffix}.npy'
+                save_filename = self.bids_controller.set_path(sub_id=sub_id)/save_filename
+                
             files_layout.append([nii_filename,reg_filename,save_filename, self.confounds, self.masker,self.voxel_mask])
             
         # "chunk_size" is the number of threads.
@@ -153,7 +143,7 @@ class VoxelFeatureGenerator():
         # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
         
         future_result = {}
-        
+        print(f'INFO: start processing fMRI. [parallel] {chunk_size} * {task_size}')
         for i, params_chunk in tqdm(enumerate(params_chunks)):
             # parallel computing using multiple threads.
             # please refer to "concurrent" api of Python.
@@ -166,8 +156,9 @@ class VoxelFeatureGenerator():
                 #for future in as_completed(future_result):
         for result in future_result.keys():
             if isinstance(result.exception(),Exception):
+                print(future_result[result])
                 raise result.exception()
-                
+        print(f'INFO: fMRI processing is done.')
         return
         
         

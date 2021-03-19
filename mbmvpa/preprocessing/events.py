@@ -22,6 +22,7 @@ from .bids_utils import BIDSController
 from bids import BIDSLayout
 from tqdm import tqdm
 from scipy.io import loadmat
+import pdb
 
 from ..utils import config # configuration for default names used in the package
 
@@ -42,14 +43,15 @@ class LatentProcessGenerator():
               individual_params=None,
               hrf_model="glover",
               use_duration=False,
-              n_core=4):
+              n_core=4,
+              ignore_original=False):
 
         # setting path informations and loading layout
         if bids_controller is None:
             self.bids_controller = BIDSController(bids_layout,
                                             save_path=save_path,
                                             task_name=task_name,
-                                            ignore_fmriprep=True)
+                                            ignore_original=ignore_original)
         else:
             self.bids_controller = bids_controller
         
@@ -81,20 +83,25 @@ class LatentProcessGenerator():
 
         if adjust_function is None:
             adjust_function = self.adjust_function
-
+            
         # this will aggregate all events file path in sorted way
-        layout = self.bids_controller.layout
-        events = layout.get(suffix="events", task=self.task_name, extension="tsv")
+        #layout = self.bids_controller.layout
+        #events = layout.get(suffix="events", task=self.task_name, extension="tsv")
         # collecting dataframe from event files spread in BIDS layout
-        df_events_list = [event.get_df() for event in events]
+        #df_events_list = [event.get_df() for event in events]
         # event_info contains ID number for subject, session, run
-        event_infos_list = [event.get_entities() for event in events]
-        # add event info to each dataframe row
+        #event_infos_list = [event.get_entities() for event in events]
+        
+        df_events_list =[]
+        event_infos_list = []
+        for _, row in self.bids_controller.meta_infos.iterrows():
+            df_events_list.append(pd.read_table(row['event_path']) )
+            event_infos_list.append(dict(row))
+        
         df_events_list = [
             _add_event_info(df_events, event_infos)
             for df_events, event_infos in zip(df_events_list, event_infos_list)
         ]
-
         if callable(adjust_function):
             # modify trial data by user-defined function "adjust_function"
             df_events_list = [
@@ -102,7 +109,7 @@ class LatentProcessGenerator():
                     adjust_function, df_events
                 ) for df_events, event_infos in zip(df_events_list, event_infos_list)
             ]
-        return df_events_list
+        return df_events_list, event_infos_list
     
     def _init_df_events_from_files(self, files, suffix="events",column_names=None, adjust_function=None):
         if adjust_function is None:
@@ -138,7 +145,11 @@ class LatentProcessGenerator():
                 
             event_infos_list.append(info)
             df_events_list.append(df_events_list)
-            
+        df_events_list = [
+            _add_event_info(df_events, event_infos)
+            for df_events, event_infos in zip(df_events_list, event_infos_list)
+        ]
+        
         if callable(adjust_function):
             # modify trial data by user-defined function "adjust_function"
             df_events_list = [
@@ -146,7 +157,7 @@ class LatentProcessGenerator():
                     adjust_function, df_events
                 ) for df_events, event_infos in zip(df_events_list, event_infos_list)
             ]
-        return df_events_list
+        return df_events_list, event_infos_list
         
             
             
@@ -161,7 +172,7 @@ class LatentProcessGenerator():
                                 **kwargs):
 
         if df_events is None:
-            df_events = self._init_df_events_from_bids(adjust_function=adjust_function)
+            df_events,_ = self._init_df_events_from_bids(adjust_function=adjust_function)
             df_events= pd.concat(df_events)
             
         individual_params = _process_indiv_params(individual_params)
@@ -223,11 +234,13 @@ class LatentProcessGenerator():
         
         # this will aggregate all events file path in sorted way
         layout = self.bids_controller.layout
-        events = layout.get(suffix="events", task=self.task_name, extension="tsv")
+        
+        df_events_list, event_infos_list = self._init_df_events_from_bids()
+        #events = layout.get(suffix="events", task=self.task_name, extension="tsv")
         # collecting dataframe from event files spread in BIDS layout
-        df_events_list = [event.get_df() for event in events]
+        #df_events_list = [event.get_df() for event in events]
         # event_info contains ID number for subject, session, run
-        event_infos_list = [event.get_entities() for event in events]
+        #event_infos_list = [event.get_entities() for event in events]
         
         for df_events, event_infos in zip(df_events_list, event_infos_list):
             sub_id = event_infos['subject']
@@ -246,16 +259,21 @@ class LatentProcessGenerator():
             
             if overwrite or not timemask_path.exists():
                 timemask = _make_single_time_mask(self.filter_function, df_events, 
-                                              self.bids_controller.n_scans, 
-                                              self.bids_controller.t_r, 
+                                              event_infos['n_scans'], 
+                                              event_infos['t_r'], 
                                               preprocess=self.adjust_function,
                                               use_duration=self.use_duration)
                 np.save(timemask_path, timemask)
             
             if overwrite or not modulation_df_path.exists():
                 param_dict = _get_individual_param_dict(sub_id, self.individual_params)
+                if param_dict is None:
+                    continue
                 if self.modulation_dfwise is not None:
+                    df_events = pd.concat([df_events[[self.filter_function(row) \
+                                    for _, row in df_events.iterrows()]]])
                     modulation_df = self.modulation_dfwise(df_events, param_dict)
+                    modulation_df = modulation_df[['onset','duration','modulation']]
                 else:
                     modulation_df = _add_latent_process_single_eventdata(self.latent_function, self.filter_function,
                                                  df_events, param_dict, preprocess=self.adjust_function)
@@ -266,9 +284,9 @@ class LatentProcessGenerator():
                 
             if overwrite or not signal_path.exists():
                 # assume slice time correction mid point.
-                frame_times = self.bids_controller.t_r * \
-                        np.arange(self.bids_controller.n_scans) + \
-                         self.bids_controller.t_r / 2.
+                frame_times =  event_infos['t_r'] * \
+                        np.arange(event_infos['n_scans']) + \
+                          event_infos['t_r'] / 2.
             
                 signal, _ = _boldify(
                     modulation_df.to_numpy(dtype=float).T, self.hrf_model, frame_times)

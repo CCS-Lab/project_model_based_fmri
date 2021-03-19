@@ -163,7 +163,7 @@ def _image_preprocess(params):
     preprocessed_images = []
     if confounds_path is not None:
         confounds = pd.read_table(confounds_path, sep="\t")
-        if isinstance(confound_names,list):
+        if isinstance(confound_names,list) and len(confound_names) > 0:
             confounds = confounds[confound_names]
             confounds = confounds.to_numpy()
             std = confounds.std(0)
@@ -188,6 +188,7 @@ def _image_preprocess(params):
     # ref.: https://nilearn.github.io/modules/generated/nilearn.image.resample_img.html
     #       https://nilearn.github.io/modules/generated/nilearn.image.resample_to_img.html
     fmri_masked = resample_to_img(str(image_path), voxel_mask)
+    
     fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
     np.save(save_path, fmri_masked)
     
