@@ -1,12 +1,14 @@
 from time import perf_counter
 from mbmvpa.preprocessing.preprocess import DataPreprocessor
 from mbmvpa.models.mvpa_elasticnet import elasticnet_crossvalidation
+from mbmvpa.data.loader import BIDSDataLoader
 from pathlib import Path
 
 #root = load_example_data("tom")
 root = "/data2/project_modelbasedMVPA/PRL"
 mask_path = "/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/masks"
 report_path = "ccsl_prl"
+process_name = "qvalue"
 
 Path(report_path).mkdir(exist_ok=True)
 
@@ -78,7 +80,7 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                modulation_dfwise=example_modulation_dfwise,
                                dm_model=dm_model,
                                mask_threshold=2.58,
-                               process_name="q_value",
+                               process_name=process_name,
                                standardize=True,
                                confounds=[],
                                high_pass=1/128,
@@ -92,19 +94,18 @@ print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
 
 s = perf_counter()
 
-preprocessor.preprocess(overwrite=True,n_core=24)
+preprocessor.preprocess(overwrite=False,n_core=24)
 #preprocessor.preprocess(overwrite=False,n_core=16)
 #preprocessor.X_generator.run(overwrite=True)
 print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
 
 preprocessor.summary()
 
-from mbmvpa.data.loader import BIDSDataLoader
 
 s = perf_counter()
 
-loader = BIDSDataLoader(layout=save_path,
-                       process_name="q_value")
+loader = BIDSDataLoader(layout=root,
+                       process_name=process_name)
 voxel_mask = loader.get_voxel_mask()
 
 print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")

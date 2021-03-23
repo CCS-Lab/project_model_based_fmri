@@ -61,7 +61,7 @@ def _build_mask(mask_path, threshold, zoom, verbose=0):
         if verbose > 0:
             survived = int(binarized_mask.sum())
             total = np.prod(binarized_mask.shape)
-            print('    '+str(mask_files[0].stem)+f': {survived}/{total}')
+            print('      '+str(mask_files[0].stem)+f': {survived}/{total}')
         for i in range(len(mask_files)-1):
             # binarize and stack
             mask_loaded = resample_to_img(str(mask_files[i]), mni_mask)
@@ -71,11 +71,11 @@ def _build_mask(mask_path, threshold, zoom, verbose=0):
             if verbose > 0:
                 survived = int(binarized_mask.sum())
                 total = np.prod(binarized_mask.shape)
-                print('    '+str(mask_files[0].stem)+f': {survived}/{total}')
+                print('      '+str(mask_files[i].stem)+f': {survived}/{total}')
         if verbose > 0:
             survived = int(m.sum())
             total = np.prod(m.shape)
-            print('    integrated mask'+f': {survived}/{total}')
+            print('      integrated mask'+f': {survived}/{total}')
     else:
         # if not provided, use mni152 mask instead.
         
@@ -83,8 +83,8 @@ def _build_mask(mask_path, threshold, zoom, verbose=0):
         survived = int(m.sum())
         total = np.prod(m.shape)
         if verbose > 0:
-            print('    masks are not specified.')
-            print('    default mni152 mask'+f': {survived}/{total}')
+            print('      masks are not specified.')
+            print('      default mni152 mask'+f': {survived}/{total}')
         
     # reduce dimension by averaging zoom window
     
@@ -96,7 +96,7 @@ def _build_mask(mask_path, threshold, zoom, verbose=0):
             m = voxel_mask.get_fdata()
             survived = int(m.sum())
             total = np.prod(m.shape)
-            print('    zoomed '+f': {survived}/{total}')
+            print(f'      zoomed {str(zoom)}'+f': {survived}/{total}')
     else:
         voxel_mask = nib.Nifti1Image(m.astype(float), affine=affine)
     

@@ -71,7 +71,7 @@ print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
 
 s = perf_counter()
 
-preprocessor.preprocess(overwrite=False,n_core=24)
+preprocessor.preprocess(overwrite=True,n_core=24)
 #preprocessor.preprocess(overwrite=False,n_core=16)
 #preprocessor.X_generator.run(overwrite=True)
 print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")

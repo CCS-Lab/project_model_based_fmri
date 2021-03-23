@@ -35,7 +35,7 @@ class Normalizer():
                 feature_range=self.scale, axis=0)
             normalized = normalized.reshape(original_shape)
         return normalized
-    
+
 def get_process_name(filename):
     filename = str(filename).split('/')[-1]
     for entity in filename.split('_'):
@@ -46,6 +46,14 @@ def get_process_name(filename):
     return ""
 
 
+def get_process_name(filename):
+    filename = str(filename).split('/')[-1]
+    for entity in filename.split('_'):
+        entity_key, entity_value =  entity.split('-') 
+        if entity_key == config.PROCESS_KEY_NAME:
+            return entity_value
+
+    return ""
 class BIDSDataLoader():
     
     def __init__(self,
@@ -59,7 +67,7 @@ class BIDSDataLoader():
                  dynamic_load=False,
                  subjects=None,
                  feature_name=None,
-                 loso=False, # leave-one-subject-out
+                 verbose=1
                 ):
          
         if isinstance(layout,str) or isinstance(layout,Path):
@@ -73,12 +81,13 @@ class BIDSDataLoader():
             
         assert self.layout.description['PipelineDescription']['Name'] == config.MBMVPA_PIPELINE_NAME
         
+        if verbose > 0:
+            print('INFO: target BIDS Layout '+str(self.layout))
         self.task_name=task_name
         self.process_name=process_name
         self.dynamic_load = dynamic_load # Not implemented
         self.reconstruct = reconstruct
-        self.loso=loso
-        
+        self.verbose = verbose
         
         if feature_name is None:
             self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
@@ -126,7 +135,6 @@ class BIDSDataLoader():
     def _get_single_subject_datapath(self,subject):
 
         subject_Xs =self.layout.get(subject=subject,**self.X_kwargs)
-
         subject_X_paths = []
         subject_y_paths = []
         timemask_paths = []
@@ -209,13 +217,10 @@ class BIDSDataLoader():
         
         if not dynamic_load:
             for subject in valid_subjects:
-                try:
-                    masks = [np.load(f)==1 for f in self.timemask[subject]]
-                    #
-                    X_subject = [np.load(f) for f in self.X[subject]]
-                    self.X[subject] = np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0)
-                except:
-                    pdb.set_trace()
+                masks = [np.load(f)==1 for f in self.timemask[subject]]
+                X_subject = [np.load(f) for f in self.X[subject]]
+                self.X[subject] = np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0)
+               
                 if reconstruct:
                     mask = self.voxel_mask.get_fdata()
                     blackboard = np.zeros(list(mask.shape)+[self.X[subject].shape[0]])
@@ -225,6 +230,15 @@ class BIDSDataLoader():
 
                 self.timemask[subject] = masks
         self.subjects = valid_subjects
+        
+        if self.verbose > 0:
+            total_size = sum([len(d) for d in self.X])
+            print(f'INFO : loaded data info. total-{total_size}')
+            for subject in self.subjects:
+                X_shape = str(self.X[subject].shape)
+                y_shape = str(self.y[subject].shape)
+                print(f'       subject_{subject}: X{X_shape}, y{y_shape}')
+                
         print('INFO: loading data done')
         
     def get_data(self, subject_wise=True):

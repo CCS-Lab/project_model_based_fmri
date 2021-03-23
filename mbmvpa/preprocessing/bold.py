@@ -105,7 +105,7 @@ class VoxelFeatureGenerator():
             confounds = self.confounds
             
         files_layout = []
-        
+        skipped_count = 0
         for _, row in self.bids_controller.meta_infos.iterrows():
             
             reg_filename = row['confound_path']
@@ -123,6 +123,7 @@ class VoxelFeatureGenerator():
                 save_filename = self.bids_controller.set_path(sub_id=sub_id)/save_filename
                 
             if not overwrite and save_filename.exists():
+                skipped_count += 1
                 continue
                 
             files_layout.append([nii_filename,reg_filename,save_filename, self.confounds, self.masker,self.voxel_mask])
@@ -146,7 +147,7 @@ class VoxelFeatureGenerator():
         # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
         
         future_result = {}
-        print(f'INFO: start processing fMRI. [parallel] {chunk_size} * {task_size}')
+        print(f'INFO: start processing fMRI. (nii_img/thread)*(thread)={chunk_size}*{task_size}. {skipped_count} image(s) is(are) skipped.')
         for i, params_chunk in tqdm(enumerate(params_chunks)):
             # parallel computing using multiple threads.
             # please refer to "concurrent" api of Python.

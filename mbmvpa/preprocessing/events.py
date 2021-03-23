@@ -62,6 +62,7 @@ class LatentProcessGenerator():
         self.latent_function = latent_function
         self.modulation_dfwise = modulation_dfwise
         self.process_name = process_name
+        assert "_" not in self.process_name
         
         # setting model fitting specification
         self.dm_model = dm_model
