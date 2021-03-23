@@ -15,6 +15,7 @@ from sklearn.preprocessing import minmax_scale
 from bids import BIDSLayout
 from ..utils import config
 from ..utils.coef2map import reconstruct
+from tqdm import tqdm
 import pdb
 
 
@@ -108,8 +109,6 @@ class BIDSDataLoader():
         if self.task_name:
             self.X_kwargs['task']=self.task_name
             
-        
-        
         if subjects is None:
             self.subjects = self.layout.get_subjects()
         else:
@@ -193,7 +192,9 @@ class BIDSDataLoader():
             reconstruct = self.reconstruct
             
         valid_subjects = []
-        for subject in subjects:
+        
+        print('INFO: start loading data')
+        for subject in tqdm(subjects):
             subj_X,subj_y,subj_timemask  = self._get_single_subject_datapath(subject)
             if len(subj_X) ==0 or len(subj_y) ==0 or len(subj_timemask) ==0:
                 continue
@@ -210,7 +211,9 @@ class BIDSDataLoader():
             for subject in valid_subjects:
                 try:
                     masks = [np.load(f)==1 for f in self.timemask[subject]]
-                    self.X[subject] = np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.X[subject])],0)
+                    #
+                    X_subject = [np.load(f) for f in self.X[subject]]
+                    self.X[subject] = np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0)
                 except:
                     pdb.set_trace()
                 if reconstruct:
@@ -222,7 +225,8 @@ class BIDSDataLoader():
 
                 self.timemask[subject] = masks
         self.subjects = valid_subjects
-    
+        print('INFO: loading data done')
+        
     def get_data(self, subject_wise=True):
         
             

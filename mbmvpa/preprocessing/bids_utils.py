@@ -47,7 +47,6 @@ class BIDSController():
         self._set_metainfo()
         self._set_voxelmask_path()
         
-    
     def get_base_layout(self,bids_layout):
         print('INFO: start loading BIDSLayout')
         
@@ -128,6 +127,10 @@ class BIDSController():
             meta_infos['n_scans'].append(n_scans)
         
         self.meta_infos = pd.DataFrame(meta_infos)
+        if not self.ignore_original:
+            print(f'INFO: {len(self.meta_infos)} file(s) in Original & fMRIPrep.')
+        else:
+            print(f'INFO: {len(self.meta_infos)} file(s) in fMRIPrep.')
         
     def _set_mbmvpa_layout(self):
         if self.make_mbmvpa(self.save_path):

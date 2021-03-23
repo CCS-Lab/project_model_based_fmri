@@ -226,7 +226,6 @@ def elasticnet_crossvalidation(X_dict,
                                cv_save=True,
                                cv_save_path=".",
                                confidence_interval=.99,
-                               n_coef_plot=150,
                                task_name="unnamed",
                                map_type="z",
                                sigma=1,
@@ -336,7 +335,10 @@ def elasticnet_crossvalidation(X_dict,
             for key,data in report.items():
                 np.save(save_root/f'{key}_{i}.npy', data)
                 
-        get_map(concat_dict(reports,'coefs'), voxel_mask, task_name,
+        np.save(save_root/f'metric_train.npy',metric_train)
+        np.save(save_root/f'metric_test.npy',metric_test)
+        if voxel_mask is not None:
+            get_map(concat_dict(reports,'coefs'), voxel_mask, task_name,
                 map_type=map_type, save_path=save_root, sigma=sigma)
     
     

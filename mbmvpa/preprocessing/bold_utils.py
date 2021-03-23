@@ -61,7 +61,7 @@ def _build_mask(mask_path, threshold, zoom, verbose=0):
         if verbose > 0:
             survived = int(binarized_mask.sum())
             total = np.prod(binarized_mask.shape)
-            print(str(mask_files[0].stem)+f': {survived}/{total}')
+            print('    '+str(mask_files[0].stem)+f': {survived}/{total}')
         for i in range(len(mask_files)-1):
             # binarize and stack
             mask_loaded = resample_to_img(str(mask_files[i]), mni_mask)

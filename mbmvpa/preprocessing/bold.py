@@ -72,7 +72,7 @@ class VoxelFeatureGenerator():
         
     def _load_voxel_mask(self,overwrite=False):
         if self.bids_controller.voxelmask_path.exists() and not overwrite:
-            self.voxel_mask = nib.load(self.bids_controller.mask_path)
+            self.voxel_mask = nib.load(self.bids_controller.voxelmask_path)
         else:
             self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
         self.bids_controller.save_voxelmask(self.voxel_mask)    
@@ -121,6 +121,9 @@ class VoxelFeatureGenerator():
             else :
                 save_filename = f'sub-{sub_id}_task-{task_id}_run-{run_id}_{suffix}.npy'
                 save_filename = self.bids_controller.set_path(sub_id=sub_id)/save_filename
+                
+            if not overwrite and save_filename.exists():
+                continue
                 
             files_layout.append([nii_filename,reg_filename,save_filename, self.confounds, self.masker,self.voxel_mask])
             
