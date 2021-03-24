@@ -69,8 +69,6 @@ def example_modulation_dfwise(df_events, param_dict):
 
 print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
 
-s = perf_counter()
-
 preprocessor = DataPreprocessor(bids_layout=root,
                                #save_path=save_path,
                                mask_path=mask_path,
@@ -89,7 +87,6 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                zoom=(1,1,1),
                                n_core= 24)
 
-print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
 
 
 s = perf_counter()
@@ -97,7 +94,7 @@ s = perf_counter()
 preprocessor.preprocess(overwrite=False,n_core=24)
 #preprocessor.preprocess(overwrite=False,n_core=16)
 #preprocessor.X_generator.run(overwrite=True)
-print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
+print(f"INFO: elapsed time for data preprocessing: {(perf_counter()-s) / 60:.2f} minutes")
 
 preprocessor.summary()
 

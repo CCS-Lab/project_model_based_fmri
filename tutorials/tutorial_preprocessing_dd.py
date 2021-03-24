@@ -63,7 +63,8 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                zoom=(2,2,2),
                                n_core=16)
 
-print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
+print(f"INFO: elapsed time for setting preprocessor: {(perf_counter()-s) / 60:.2f} minutes")
+
 
 
 s = perf_counter()
@@ -71,7 +72,7 @@ s = perf_counter()
 preprocessor.preprocess(overwrite=True,n_thread=8,n_core=16)
 #preprocessor.preprocess(overwrite=False,n_core=16)
 #preprocessor.X_generator.run(overwrite=True)
-print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
+print(f"INFO: elapsed time for data preprocessing: {(perf_counter()-s) / 60:.2f} minutes")
 
 preprocessor.summary()
 
@@ -82,7 +83,7 @@ s = perf_counter()
 loader = BIDSDataLoader(layout=save_path)
 voxel_mask = loader.get_voxel_mask()
 print(voxel_mask.shape)
-print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
+print(f"INFO: elapsed time for preparing training data: {(perf_counter()-s) / 60:.2f} minutes")
 
 #loader = BIDSDataLoader(layout=root)
 X_dict,y_dict = loader.get_data(subject_wise=True)
