@@ -114,7 +114,8 @@ class BIDSDataLoader():
                           'extension':"tsv"}
         self.timemask_kwargs = {'suffix':config.DEFAULT_TIMEMASK_SUFFIX,
                             'extension':'npy'}
-                    
+        
+        
         if self.task_name:
             self.X_kwargs['task']=self.task_name
             
@@ -129,7 +130,6 @@ class BIDSDataLoader():
         self.timemask = {}
         self._set_data(self.subjects,self.dynamic_load)
         
-            
         
         
     def _get_single_subject_datapath(self,subject):
@@ -202,7 +202,9 @@ class BIDSDataLoader():
         valid_subjects = []
         
         print('INFO: start loading data')
-        for subject in tqdm(subjects):
+        iterater = tqdm(subjects, desc='subject')
+        for subject in iterater:
+            iterater.set_description(f"subject_{subject}")
             subj_X,subj_y,subj_timemask  = self._get_single_subject_datapath(subject)
             if len(subj_X) ==0 or len(subj_y) ==0 or len(subj_timemask) ==0:
                 continue
@@ -238,7 +240,7 @@ class BIDSDataLoader():
                 X_shape = str(self.X[subject].shape)
                 y_shape = str(self.y[subject].shape)
                 print(f'       subject_{subject}: X{X_shape}, y{y_shape}')
-                
+        
         print('INFO: loading data done')
         
     def get_data(self, subject_wise=True):

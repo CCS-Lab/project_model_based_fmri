@@ -23,9 +23,11 @@ class MVPA_ElasticNet():
                  n_jobs=16,
                  n_splits=5):
         
+        
         self.shuffle = shuffle
         self.n_jobs = n_jobs
         self.n_splits = n_splits
+        self.n_samples = n_samples
         self.alpha = alpha
         self.model = None
         self.lambda_path = np.exp(
@@ -33,6 +35,8 @@ class MVPA_ElasticNet():
                                 np.log(max_lambda),
                                 np.log(max_lambda * min_lambda_ratio),
                                 lambda_search_num))
+        
+        self.name = f'ElasticNet(alpha:{self.alpha})'
         
     def reset(self):
         self.model = ElasticNet(alpha=self.alpha,
@@ -68,8 +72,8 @@ class MVPA_ElasticNet():
     def report(self):
         reports = {}
         reports['cv_mean_score'] = -self.model.cv_mean_score_
-        reports['coef_path'] = self.model.coef_path
-        reports['cv_standard_error'] = self.model.cv_standard_error
+        reports['coef_path'] = self.model.coef_path_
+        reports['cv_standard_error'] = self.model.cv_standard_error_
         lambda_best_idx = self.model.cv_mean_score_.argmax()
         reports['lambda_best'] = self.lambda_path[lambda_best_idx]
         reports['lambda_path'] = self.lambda_path

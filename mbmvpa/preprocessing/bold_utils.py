@@ -17,7 +17,7 @@ from nilearn.image import resample_to_img
 from nilearn.image.resampling import resample_img
 from nilearn.datasets import load_mni152_brain_mask
 import nibabel as nib
-
+import pdb
 
 def _zoom_affine(affine, zoom):
     affine = affine.copy()
@@ -133,7 +133,7 @@ def _custom_masking(voxel_mask, t_r,
                          smoothing_fwhm=smoothing_fwhm,
                          high_pass=high_pass,
                          detrend=detrend)
-
+    masker = masker.fit()
     return masker
 
 
@@ -159,8 +159,7 @@ def _image_preprocess(params):
     """
 
     image_path, confounds_path, save_path,\
-    confound_names, masker,\
-    voxel_mask = params
+    confound_names, masker = params
 
     preprocessed_images = []
     if confounds_path is not None:
@@ -189,9 +188,9 @@ def _image_preprocess(params):
     # resample_to_img: need to target image including affine.
     # ref.: https://nilearn.github.io/modules/generated/nilearn.image.resample_img.html
     #       https://nilearn.github.io/modules/generated/nilearn.image.resample_to_img.html
-    fmri_masked = resample_to_img(str(image_path), voxel_mask)
-    
-    fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
+    #fmri_masked = resample_to_img(str(image_path), voxel_mask)
+    #fmri_masked = masker.fit_transform(fmri_masked, confounds=confounds)
+    fmri_masked = masker.transform_single_imgs(nib.load(str(image_path)), confounds=confounds)
     np.save(save_path, fmri_masked)
     
     return 1

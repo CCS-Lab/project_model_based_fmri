@@ -14,7 +14,25 @@ import matplotlib.pyplot as plt
 
 from ..utils import config
 
+import pdb
 
+class MVPA_Base():
+    def __init__(self):
+        self.name = "unnamed"
+    def reset(self):
+        return
+    def fit(self,X,y):
+        return
+            
+    def predict(self,X):
+        return 
+        
+    #def get_weights(self):
+        #return 
+    
+    #def report(self):
+        return 
+    
 class MVPA_CV():
     
     def __init__(self, 
@@ -47,15 +65,16 @@ class MVPA_CV():
             self.save_root.mkdir()
             
     
-    def _run_singletime(X_train,
+    def _run_singletime(self,
+                        X_train,
                         y_train,
                         X_test,
                         y_test):
         
         self.model.reset()
         self.model.fit(X_train,y_train, **self.model_param_dict)
-        pred_train = self.model.predict(y_train)
-        pred_test = self.model.predict(y_test)
+        pred_train = self.model.predict(X_train)
+        pred_test = self.model.predict(X_test)
         if 'get_weights' in dir(self.model):
             weights = self.model.get_weights() # {weight_name: weight_tensor_value}
         else:
@@ -74,56 +93,70 @@ class MVPA_CV():
         
         return output
     
-    def run():
+    def run(self):
         
+        print(f"INFO: start running the experiment. {self.model.name}")
         outputs = {}
         if self.method=='loso':#leave-one-subject-out
             subject_list = list(self.X_dict.keys())
-            for j in tqdm(range(n_cv_repeat)):
-                for subject_id in tqdm(subject_list):
-                    X_test = X_dict[subject_id]
-                    y_test = y_dict[subject_id]
-                    X_train = np.concatenate([X_dict[v] for v in subject_list if v != subject_id],0)
-                    y_train = np.concatenate([y_dict[v] for v in subject_list if v != subject_id],0)
-                    outputs[f'{j}-{subject_id}'] = _run_singletime(X_train, y_train, X_test, y_test)
+            assert len(subject_list)>1, "The number of subject must be bigger than one."
+            for j in tqdm(range(self.n_cv_repeat),leave=True, desc='cv_repeat'):
+                inner_iterater = tqdm(subject_list,desc='subject',leave=False)
+                for subject_id in inner_iterater:
+                    inner_iterater.set_description(f"subject_{subject_id}")
+                    X_test = self.X_dict[subject_id]
+                    y_test = self.y_dict[subject_id]
+                    X_train = np.concatenate([self.X_dict[v] for v in subject_list if v != subject_id],0)
+                    y_train = np.concatenate([self.y_dict[v] for v in subject_list if v != subject_id],0)
+                    outputs[f'{j}-{subject_id}'] = self._run_singletime(X_train, y_train, X_test, y_test)
                 
         elif 'fold' in self.method:
-            n_fold = int(method.split('-')[0])
-            X = np.concatenate([v for _,v in X_dict.items()],0)
-            y = np.concatenate([v for _,v in y_dict.items()],0)
-            for j in tqdm(range(n_cv_repeat)):
+            n_fold = int(self.method.split('-')[0])
+            X = np.concatenate([v for _,v in self.X_dict.items()],0)
+            y = np.concatenate([v for _,v in self.y_dict.items()],0)
+            for j in tqdm(range(self.n_cv_repeat),leave=True,desc='cv_repeat'):
                 np.random.seed(42+j)
                 ids = np.arange(X.shape[0])
                 fold_size = X.shape[0]//n_fold
-                for i in range(n_fold):
+                inner_iterater = tqdm(range(n_fold),desc='fold',leave=False)
+                for i in inner_iterater:
+                    inner_iterater.set_description(f"fold_{i+1}")
                     test_ids = ids[fold_size*i:fold_size*(i+1)]
                     train_ids = np.concatenate([ids[:fold_size*i],ids[fold_size*(i+1):]],0)
                     X_test = X[test_ids]
                     y_test = y[test_ids]
                     X_train = X[train_ids]
                     y_train = y[train_ids]
-                    outputs[f'{j}-{i}'] = _run_singletime(X_train, y_train, X_test, y_test)
-                    
+                    outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test)
+                
         if self.cv_save:
             report_path = self.save_root/ 'raw_result'
             report_path.mkdir()
             for report_id, output in outputs.items():
                 for key, data in output.items():
                     np.save(str(report_path / f'{report_id}_{key}.npy'), data)
+                    
+            print(f"INFO: results are saved at {str(report_path)}.")
         
         def reshape_dict(_dict, inner_keys):
             return {inner_key: {key:data[inner_key] for key,data in _dict.items()} for inner_key in inner_keys}
             
         def check_report_key(keys):
             for key in keys:
-                assert key in self.output_names
+                assert key in self.output_names, f'{key} is not in {str(self.output_names)}'
                 
-        for report_key, function in self.report_function_dict:
-            if not isinstance(report_key,list):
+        for report_key, function in self.report_function_dict.items():
+            if isinstance(report_key, str):
                 report_key = [report_key]
-            check_report_key(keys)
+            elif isinstance(report_key, tuple):
+                report_key = list(report_key)
+            check_report_key(report_key)
             function(save=self.cv_save,
-                     save_path=self.cv_save_path,
+                     save_path=self.save_root,
                      **reshape_dict(outputs,report_key))
+            
+        print(f"INFO: {len(self.report_function_dict)} report(s) is(are) done.")
+            
+        print(f"INFO: running done.")
             
         return outputs
