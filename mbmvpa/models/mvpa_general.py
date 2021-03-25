@@ -11,8 +11,7 @@ import numpy as np
 from tqdm import tqdm
 from bids import BIDSLayout
 import matplotlib.pyplot as plt
-
-from ..utils import config
+from mbmvpa.utils import config
 
 import pdb
 
@@ -23,13 +22,10 @@ class MVPA_Base():
         return
     def fit(self,X,y):
         return
-            
     def predict(self,X):
         return 
-        
     #def get_weights(self):
         #return 
-    
     #def report(self):
         return 
     
@@ -45,7 +41,7 @@ class MVPA_CV():
                 cv_save=True,
                 cv_save_path=".",
                 task_name="unnamed",
-                report_function_dict=None):
+                report_function_dict={}):
         
         self.X_dict = X_dict
         self.y_dict = y_dict
@@ -57,11 +53,11 @@ class MVPA_CV():
         self.cv_save_path = cv_save_path
         self.task_name = task_name
         self.report_function_dict = report_function_dict
-        self.output_names = ['weights','pred_train','pred_test']
+        self.output_stats = {}
         
         if self.cv_save:
             now = datetime.datetime.now()
-            self.save_root = Path(cv_save_path) / f'{self.task_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+            self.save_root = Path(cv_save_path) / f'report_{self.task_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir()
             
     
@@ -82,15 +78,16 @@ class MVPA_CV():
             
         output = {'weights':weights,
                  'pred_train':pred_train,
+                  'y_train':y_train,
+                  'y_test':y_test,
                  'pred_test':pred_test}
         
         if 'report' in dir(self.model):
             additional_reports = self.model.report()
             for name, data in additional_reports.items():
                 output[name] = data
-                if name not in self.output_names:
-                    self.output_names.append(name)
-        
+        if 'save' in dir(self.model):
+            self.model.save(self.cv_save_path)
         return output
     
     def run(self):
@@ -128,7 +125,17 @@ class MVPA_CV():
                     X_train = X[train_ids]
                     y_train = y[train_ids]
                     outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test)
-                
+                 
+        for _,output in outputs.items():
+            for key in output.keys():
+                if key not in self.output_stats.keys():
+                    self.output_stats[key] = 0
+                self.output_stats[key] += 1
+            
+        print("INFO: output statistics")
+        for key, count in self.output_stats.items():
+                print(f"      {key:<30}{count}")
+            
         if self.cv_save:
             report_path = self.save_root/ 'raw_result'
             report_path.mkdir()
@@ -143,20 +150,19 @@ class MVPA_CV():
             
         def check_report_key(keys):
             for key in keys:
-                assert key in self.output_names, f'{key} is not in {str(self.output_names)}'
+                assert key in self.output_stats.keys(), f'{key} is not in {str(list(self.output_stats.keys()))}'
                 
         for report_key, function in self.report_function_dict.items():
-            if isinstance(report_key, str):
-                report_key = [report_key]
-            elif isinstance(report_key, tuple):
-                report_key = list(report_key)
+            
+            report_name, report_key = report_key[0], report_key[1:]
             check_report_key(report_key)
+            save_path = Path(self.save_root)/report_name 
+            save_path.mkdir(exist_ok=True)
             function(save=self.cv_save,
-                     save_path=self.save_root,
+                     save_path=save_path,
                      **reshape_dict(outputs,report_key))
             
         print(f"INFO: {len(self.report_function_dict)} report(s) is(are) done.")
-            
         print(f"INFO: running done.")
             
         return outputs

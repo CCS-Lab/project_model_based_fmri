@@ -1,7 +1,7 @@
 from time import perf_counter
 from mbmvpa.models.mvpa_general import MVPA_CV
-from mbmvpa.models.elasticnet import MVPA_ElasticNet
-from mbmvpa.models.report import build_elasticnet_report_functions
+from mbmvpa.models.tf_mlp import MVPA_MLP
+from mbmvpa.utils.report import build_base_report_functions
 from mbmvpa.data.loader import BIDSDataLoader
 from pathlib import Path
 
@@ -9,32 +9,36 @@ from pathlib import Path
 root = "/data2/project_model_based_fmri/piva_dd"
 save_path = "/data2/project_modelbasedMVPA/piva_dd_mbmvpa_zoomed_2"
 mask_path = "/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/masks"
-report_path = "piva_dd"
+report_path = "piva_dd/mlp"
 
 Path(report_path).mkdir(exist_ok=True)
 
 loader = BIDSDataLoader(layout=save_path)
 X_dict,y_dict = loader.get_data(subject_wise=True)
 voxel_mask = loader.get_voxel_mask()
-#loader = BIDSDataLoader(layout=root)
 X_dict,y_dict = loader.get_data(subject_wise=True)
 
-model = MVPA_ElasticNet(alpha=0.00,
-                         n_samples=50000,
-                         shuffle=True,
-                         max_lambda=50,
-                         min_lambda_ratio=1e-4,
-                         lambda_search_num=100,
-                         n_jobs=16,
-                         n_splits=5)
+model = MVPA_MLP(input_shape,
+                 layer_dims=[1024, 1024],
+                 activation="linear",
+                 activation_output="linear",
+                 dropout_rate=0.5,
+                 val_ratio=0.2,
+                 optimizer="adam",
+                 loss="mse",
+                 learning_rate=0.001,
+                 n_epoch = 50,
+                 n_patience = 15,
+                 n_batch = 32,
+                 n_sample = 100000,
+                 use_bias = True,
+                 use_bipolar_balancing = False)
 
-report_function_dict = build_elasticnet_report_functions(voxel_mask,
-                                                         confidence_interval=.99,
-                                                         n_coef_plot=150,
-                                                         task_name='unnamed',
-                                                         map_type='z',
-                                                         sigma=1
-                                                         )
+report_function_dict = build_base_report_functions(voxel_mask,
+                                                     task_name='unnamed',
+                                                     map_type='z',
+                                                     sigma=1
+                                                     )
 
 model_cv = MVPA_CV(X_dict,
                     y_dict,
@@ -51,6 +55,7 @@ model_cv = MVPA_CV(X_dict,
 s = perf_counter()
 model_cv.run()
 print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
+
 
 '''
 model_cv = MVPA_CV(X_dict,

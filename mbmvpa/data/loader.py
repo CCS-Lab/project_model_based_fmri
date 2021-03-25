@@ -46,14 +46,6 @@ def get_process_name(filename):
     return ""
 
 
-def get_process_name(filename):
-    filename = str(filename).split('/')[-1]
-    for entity in filename.split('_'):
-        entity_key, entity_value =  entity.split('-') 
-        if entity_key == config.PROCESS_KEY_NAME:
-            return entity_value
-
-    return ""
 class BIDSDataLoader():
     
     def __init__(self,
@@ -235,12 +227,13 @@ class BIDSDataLoader():
         
         if self.verbose > 0:
             total_size = sum([len(d) for d in self.X])
-            print(f'INFO : loaded data info. total-{total_size}')
+            print(f'INFO: loaded data info. total-{total_size}')
             for subject in self.subjects:
                 X_shape = str(self.X[subject].shape)
                 y_shape = str(self.y[subject].shape)
-                print(f'       subject_{subject}: X{X_shape}, y{y_shape}')
+                print(f'      subject_{subject:<4}: X{X_shape}, y{y_shape}')
         
+        print(f'INFO: loaded voxel mask{str(self.voxel_mask.get_fdata().shape)}')
         print('INFO: loading data done')
         
     def get_data(self, subject_wise=True):

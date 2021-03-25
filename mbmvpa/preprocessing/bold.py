@@ -8,7 +8,7 @@ from .bold_utils import _build_mask, _custom_masking, _image_preprocess
 from .bids_utils import BIDSController
 import nibabel as nib
 
-from ..utils import config # configuration for default names used in the package
+from mbmvpa.utils import config # configuration for default names used in the package
 
 
 bids.config.set_option("extension_initial_dot", True)

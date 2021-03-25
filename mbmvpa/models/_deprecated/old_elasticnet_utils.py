@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 from scipy.stats import norm
-import pdb
 
 def plot_elasticnet_result(save_root, 
                            save,
@@ -14,8 +13,9 @@ def plot_elasticnet_result(save_root,
                            confidence_interval=.99,
                            n_coef_plot=150):
     
-    save_root = Path(save_root) /'plot'
-    save_root.mkdir(exist_ok = True)
+    if save:
+        save_root = Path(save_root) /'plot'
+        save_root.mkdir(exist_ok = True)
     # plot survival rate...
     if isinstance(lambda_path,dict):
         lambda_path = lambda_path[list(lambda_path.keys())[0]]
