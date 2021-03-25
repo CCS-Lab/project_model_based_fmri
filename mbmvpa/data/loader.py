@@ -52,7 +52,7 @@ class BIDSDataLoader():
                  layout,
                  voxel_mask_path=None,
                  reconstruct=False,
-                 normalizer="minmax",
+                 normalizer="standard",
                  scale=(-1,1),
                  task_name=None, 
                  process_name=None,
@@ -194,7 +194,7 @@ class BIDSDataLoader():
         valid_subjects = []
         
         print('INFO: start loading data')
-        iterater = tqdm(subjects, desc='subject')
+        iterater = tqdm(subjects, desc='subject', leave=False)
         for subject in iterater:
             iterater.set_description(f"subject_{subject}")
             subj_X,subj_y,subj_timemask  = self._get_single_subject_datapath(subject)
@@ -231,7 +231,7 @@ class BIDSDataLoader():
             for subject in self.subjects:
                 X_shape = str(self.X[subject].shape)
                 y_shape = str(self.y[subject].shape)
-                print(f'      subject_{subject:<4}: X{X_shape}, y{y_shape}')
+                print(f'      subject_{subject}: X{X_shape}, y{y_shape}')
         
         print(f'INFO: loaded voxel mask{str(self.voxel_mask.get_fdata().shape)}')
         print('INFO: loading data done')

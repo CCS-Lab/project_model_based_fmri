@@ -199,6 +199,7 @@ class LatentProcessGenerator():
                                 for _, row in df_events.iterrows()]]])
 
             if type(dm_model) == str:
+                print("INFO: running hBayesDM")
                 if 'ncore' in kwargs.keys():
                     model = getattr(
                         hbayesdm.models, dm_model)(
@@ -243,7 +244,11 @@ class LatentProcessGenerator():
         # event_info contains ID number for subject, session, run
         #event_infos_list = [event.get_entities() for event in events]
         
-        for df_events, event_infos in zip(df_events_list, event_infos_list):
+        print("INFO: indivudal parameters table")
+        print(individual_params)
+        print(f'INFO: start processing {len(df_events_list)} events.')
+        
+        for df_events, event_infos in tqdm(zip(df_events_list, event_infos_list)):
             sub_id = event_infos['subject']
             ses_id = event_infos['session'] if 'session' in event_infos.keys() else None
             run_id = event_infos['run']
@@ -293,6 +298,8 @@ class LatentProcessGenerator():
                     modulation_df.to_numpy(dtype=float).T, self.hrf_model, frame_times)
             
                 np.save(signal_path, signal)
+                
+        print(f'INFO: events processing is done.')
         return 
     
     

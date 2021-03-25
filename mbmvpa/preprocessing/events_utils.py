@@ -27,6 +27,7 @@ def _process_indiv_params(individual_params):
         or type(individual_params) == type(Path()):
         try:
             individual_params = pd.read_table(individual_params)
+            print("INFO: individual parameters are loaded")
         except:
             individual_params = None
         

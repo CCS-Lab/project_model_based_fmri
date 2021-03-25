@@ -135,12 +135,16 @@ class BIDSController():
     def _set_mbmvpa_layout(self):
         if self.make_mbmvpa(self.save_path):
             print('INFO: MB-MVPA is newly set up.')
-            
-        if not self.mbmvpa_name in self.layout.derivatives.keys():
+        
+        if self.save_path is not None:
+            self.mbmvpa_layout = BIDSLayout(root=self.save_path,validate=False)
+        
+        elif not self.mbmvpa_name in self.layout.derivatives.keys():
             self.layout.add_derivatives(path=self.save_path)
+            self.mbmvpa_layout = self.layout.derivatives[self.mbmvpa_name]
             print('INFO: MB-MVPA is added as a new derivative')
             
-        self.mbmvpa_layout = self.layout.derivatives[self.mbmvpa_name]
+        
         print('INFO: MB-MVPA is loaded')
         
     def _set_save_path(self):

@@ -57,7 +57,7 @@ class MVPA_CV():
         
         if self.cv_save:
             now = datetime.datetime.now()
-            self.save_root = Path(cv_save_path) / f'report_{self.task_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+            self.save_root = Path(cv_save_path) / f'report_{self.model.name}_{self.task_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir()
             
     

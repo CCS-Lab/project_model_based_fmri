@@ -18,17 +18,19 @@ X_dict,y_dict = loader.get_data(subject_wise=True)
 voxel_mask = loader.get_voxel_mask()
 X_dict,y_dict = loader.get_data(subject_wise=True)
 
+input_shape = X_dict[list(X_dict.keys())[0]].shape[1]
+
 model = MVPA_MLP(input_shape,
                  layer_dims=[1024, 1024],
-                 activation="linear",
+                 activation="sigmoid",
                  activation_output="linear",
                  dropout_rate=0.5,
-                 val_ratio=0.2,
+                 val_ratio=0.05,
                  optimizer="adam",
                  loss="mse",
                  learning_rate=0.001,
                  n_epoch = 50,
-                 n_patience = 15,
+                 n_patience = 5,
                  n_batch = 32,
                  n_sample = 100000,
                  use_bias = True,

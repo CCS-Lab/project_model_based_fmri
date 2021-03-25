@@ -125,7 +125,7 @@ class VoxelFeatureGenerator():
             else :
                 save_filename = f'sub-{sub_id}_task-{task_id}_run-{run_id}_{suffix}.npy'
                 save_filename = self.bids_controller.set_path(sub_id=sub_id)/save_filename
-            
+                
             if not overwrite and save_filename.exists():
                 skipped_count += 1
                 continue
