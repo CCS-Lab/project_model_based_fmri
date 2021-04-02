@@ -32,7 +32,7 @@ model = MVPA_ElasticNet(alpha=0.01,
 report_function_dict = build_elasticnet_report_functions(voxel_mask,
                                                          confidence_interval=.99,
                                                          n_coef_plot=150,
-                                                         task_name=task_name,
+                                                         task_name=task_name+"-"+process_name,
                                                          map_type='z',
                                                          sigma=1
                                                          )

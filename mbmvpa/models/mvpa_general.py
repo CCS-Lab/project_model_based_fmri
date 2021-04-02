@@ -24,10 +24,6 @@ class MVPA_Base():
         return
     def predict(self,X):
         return 
-    #def get_weights(self):
-        #return 
-    #def report(self):
-        return 
     
 class MVPA_CV():
     

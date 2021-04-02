@@ -9,18 +9,26 @@ from pathlib import Path
 root = "/data2/project_modelbasedMVPA/PRL"
 report_path = "ccsl_prl"
 task_name = "prl"
-process_name = "rpe"
+process_name = "absrpe"
 
 Path(report_path).mkdir(exist_ok=True)
+'''
 subjects = ['01','02','03','04','05','06',
             '07','08','09','10', '11', '12',
             ]
+'''
+subjects = None
 
-loader = BIDSDataLoader(layout=root, process_name=process_name, subjects=subjects)
+loader = BIDSDataLoader(layout=root, 
+                        process_name=process_name, 
+                        subjects=subjects,
+                        normalizer="minmax")
+
 X_dict,y_dict = loader.get_data(subject_wise=True)
 voxel_mask = loader.get_voxel_mask()
 
-model = MVPA_ElasticNet(alpha=0.01,
+
+model = MVPA_ElasticNet(alpha=0.0001,
                          n_samples=100000,
                          shuffle=True,
                          max_lambda=50,
@@ -29,10 +37,11 @@ model = MVPA_ElasticNet(alpha=0.01,
                          n_jobs=16,
                          n_splits=5)
 
+
 report_function_dict = build_elasticnet_report_functions(voxel_mask,
                                                          confidence_interval=.99,
                                                          n_coef_plot=150,
-                                                         task_name=task_name,
+                                                         task_name=task_name+"-"+process_name,
                                                          map_type='z',
                                                          sigma=1
                                                          )
@@ -42,7 +51,7 @@ model_cv = MVPA_CV(X_dict,
                     model,
                     model_param_dict={},
                     method='5-fold',
-                    n_cv_repeat=1,
+                    n_cv_repeat=5,
                     cv_save=True,
                     cv_save_path=report_path,
                     task_name=task_name,

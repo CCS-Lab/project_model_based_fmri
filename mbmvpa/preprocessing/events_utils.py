@@ -52,15 +52,16 @@ def _add_event_info(df_events, event_infos):
 
     new_df = []
 
-    def _add(row, info):
+    def _add(i, row, info):
+        row["trial"] = i 
         row["subjID"] = info["subject"]
         row["run"] = info["run"]
         if "session" in info.keys():
             row["session"] = info["session"]  # if applicable
         return row
 
-    for _, row in df_events.iterrows():
-        new_df.append(_add(row, event_infos))
+    for i, row in df_events.iterrows():
+        new_df.append(_add(i, row, event_infos))
 
     new_df = pd.concat(
         new_df, axis=1,

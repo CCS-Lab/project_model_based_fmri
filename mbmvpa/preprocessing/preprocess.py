@@ -16,8 +16,7 @@ class DataPreprocessor():
                   zoom=(2, 2, 2),
                   smoothing_fwhm=6,
                   standardize=True,
-                  confounds=["trans_x", "trans_y",
-                                      "trans_z", "rot_x", "rot_y", "rot_z"],
+                  confounds=[],
                   high_pass=None,
                   detrend=True,
                   n_core=4,
@@ -84,6 +83,7 @@ class DataPreprocessor():
                    filter_function=None,
                    skip_modeling=False,
                    **kwargs):
+            
         
         self.X_generator.run(overwrite=overwrite,
                            feature_name=feature_name,

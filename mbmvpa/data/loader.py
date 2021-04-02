@@ -50,15 +50,15 @@ class BIDSDataLoader():
     
     def __init__(self,
                  layout,
+                 subjects=None,
                  voxel_mask_path=None,
                  reconstruct=False,
                  normalizer="standard",
                  scale=(-1,1),
                  task_name=None, 
                  process_name=None,
-                 dynamic_load=False,
-                 subjects=None,
                  feature_name=None,
+                 dynamic_load=False,
                  verbose=1
                 ):
          
@@ -74,7 +74,8 @@ class BIDSDataLoader():
         assert self.layout.description['PipelineDescription']['Name'] == config.MBMVPA_PIPELINE_NAME
         
         if verbose > 0:
-            print('INFO: target BIDS Layout '+str(self.layout))
+            print('INFO: retrieving from '+str(self.layout))
+            print(f'      task-{task_name}, process-{process_name}')
         self.task_name=task_name
         self.process_name=process_name
         self.dynamic_load = dynamic_load # Not implemented

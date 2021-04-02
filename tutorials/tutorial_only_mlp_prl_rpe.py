@@ -1,7 +1,7 @@
 from time import perf_counter
 from mbmvpa.models.mvpa_general import MVPA_CV
-from mbmvpa.models.elasticnet import MVPA_ElasticNet
-from mbmvpa.utils.report import build_elasticnet_report_functions
+from mbmvpa.models.tf_mlp import MVPA_MLP
+from mbmvpa.utils.report import build_base_report_functions
 from mbmvpa.data.loader import BIDSDataLoader
 from pathlib import Path
 
@@ -9,7 +9,7 @@ from pathlib import Path
 root = "/data2/project_modelbasedMVPA/PRL"
 report_path = "ccsl_prl"
 task_name = "prl"
-process_name = "rpe"
+process_name = "qvalue"
 
 Path(report_path).mkdir(exist_ok=True)
 subjects = ['01','02','03','04','05','06',
@@ -20,22 +20,32 @@ loader = BIDSDataLoader(layout=root, process_name=process_name, subjects=subject
 X_dict,y_dict = loader.get_data(subject_wise=True)
 voxel_mask = loader.get_voxel_mask()
 
-model = MVPA_ElasticNet(alpha=0.01,
-                         n_samples=100000,
-                         shuffle=True,
-                         max_lambda=50,
-                         min_lambda_ratio=1e-4,
-                         lambda_search_num=100,
-                         n_jobs=16,
-                         n_splits=5)
+input_shape = X_dict[list(X_dict.keys())[0]].shape[1]
 
-report_function_dict = build_elasticnet_report_functions(voxel_mask,
-                                                         confidence_interval=.99,
-                                                         n_coef_plot=150,
-                                                         task_name=task_name,
-                                                         map_type='z',
-                                                         sigma=1
-                                                         )
+model = MVPA_MLP(input_shape,
+                 layer_dims=[1024, 1024],
+                 activation="sigmoid",
+                 activation_output="linear",
+                 dropout_rate=0.5,
+                 val_ratio=0.05,
+                 optimizer="adam",
+                 loss="mse",
+                 learning_rate=0.001,
+                 n_epoch = 80,
+                 n_patience = 15,
+                 n_batch = 64,
+                 n_sample = 100000,
+                 use_bias = True,
+                 use_bipolar_balancing = False)
+
+
+
+report_function_dict = build_base_report_functions(voxel_mask,
+                                                     task_name='unnamed',
+                                                     map_type='z',
+                                                     sigma=1
+                                                     )
+
 
 model_cv = MVPA_CV(X_dict,
                     y_dict,

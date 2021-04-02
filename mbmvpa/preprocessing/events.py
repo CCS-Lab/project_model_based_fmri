@@ -29,22 +29,22 @@ from ..utils import config # configuration for default names used in the package
 
 class LatentProcessGenerator():
     def __init__(self, 
-              bids_layout,
-              bids_controller=None,
-              save_path=None,
-              task_name=None,
-              process_name="unnamed",
-              adjust_function=lambda x: x,
-              filter_function=lambda _: True,
-              latent_function=None,
-              modulation_dfwise=None,
-              dm_model="unnamed",
-              filter_for_modeling=None,
-              individual_params=None,
-              hrf_model="glover",
-              use_duration=False,
-              n_core=4,
-              ignore_original=False):
+                  bids_layout,
+                  bids_controller=None,
+                  save_path=None,
+                  task_name=None,
+                  process_name="unnamed",
+                  adjust_function=lambda x: x,
+                  filter_function=lambda _: True,
+                  latent_function=None,
+                  modulation_dfwise=None,
+                  dm_model="unnamed",
+                  filter_for_modeling=None,
+                  individual_params=None,
+                  hrf_model="glover",
+                  use_duration=False,
+                  n_core=4,
+                  ignore_original=False):
 
         # setting path informations and loading layout
         if bids_controller is None:
@@ -84,17 +84,10 @@ class LatentProcessGenerator():
 
         if adjust_function is None:
             adjust_function = self.adjust_function
-            
-        # this will aggregate all events file path in sorted way
-        #layout = self.bids_controller.layout
-        #events = layout.get(suffix="events", task=self.task_name, extension="tsv")
-        # collecting dataframe from event files spread in BIDS layout
-        #df_events_list = [event.get_df() for event in events]
-        # event_info contains ID number for subject, session, run
-        #event_infos_list = [event.get_entities() for event in events]
         
         df_events_list =[]
         event_infos_list = []
+        
         for _, row in self.bids_controller.meta_infos.iterrows():
             df_events_list.append(pd.read_table(row['event_path']) )
             event_infos_list.append(dict(row))
@@ -103,6 +96,7 @@ class LatentProcessGenerator():
             _add_event_info(df_events, event_infos)
             for df_events, event_infos in zip(df_events_list, event_infos_list)
         ]
+        
         if callable(adjust_function):
             # modify trial data by user-defined function "adjust_function"
             df_events_list = [
@@ -113,6 +107,7 @@ class LatentProcessGenerator():
         return df_events_list, event_infos_list
     
     def _init_df_events_from_files(self, files, suffix="events",column_names=None, adjust_function=None):
+        
         if adjust_function is None:
             adjust_function = self.adjust_function
         
@@ -140,12 +135,12 @@ class LatentProcessGenerator():
                 df_events = df.read_table(file, sep='\t')
                 if column_names is not None:
                     df_events = df_events[column_names]
-    
             else:
                 continue
                 
             event_infos_list.append(info)
             df_events_list.append(df_events_list)
+            
         df_events_list = [
             _add_event_info(df_events, event_infos)
             for df_events, event_infos in zip(df_events_list, event_infos_list)
@@ -159,9 +154,6 @@ class LatentProcessGenerator():
                 ) for df_events, event_infos in zip(df_events_list, event_infos_list)
             ]
         return df_events_list, event_infos_list
-        
-            
-            
         
     def set_computational_model(self, 
                                 overwrite=True,
@@ -238,17 +230,13 @@ class LatentProcessGenerator():
         layout = self.bids_controller.layout
         
         df_events_list, event_infos_list = self._init_df_events_from_bids()
-        #events = layout.get(suffix="events", task=self.task_name, extension="tsv")
-        # collecting dataframe from event files spread in BIDS layout
-        #df_events_list = [event.get_df() for event in events]
-        # event_info contains ID number for subject, session, run
-        #event_infos_list = [event.get_entities() for event in events]
         
         print("INFO: indivudal parameters table")
-        print(individual_params)
-        print(f'INFO: start processing {len(df_events_list)} events.')
+        print(self.individual_params)
+        print(f'INFO: start processing {len(df_events_list)} events.[task-{task_name}, process-{process_name}]')
         
-        for df_events, event_infos in tqdm(zip(df_events_list, event_infos_list)):
+        iterator = tqdm(zip(df_events_list, event_infos_list))
+        for df_events, event_infos in iterator:
             sub_id = event_infos['subject']
             ses_id = event_infos['session'] if 'session' in event_infos.keys() else None
             run_id = event_infos['run']
