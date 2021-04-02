@@ -151,7 +151,7 @@ class VoxelFeatureGenerator():
         # ref.: https://docs.python.org/ko/3/library/concurrent.futures.html
         
         future_result = {}
-        print(f'INFO: start processing {item_count} fMRI. (nii_img/thread)*(n thread)={chunk_size}*{task_size}. {skipped_count} image(s) is(are) skipped.')
+        print(f'INFO: start processing {item_count} fMRI. (nii_img/thread)*(n_thread)={task_size}*{chunk_size}. {skipped_count} image(s) is(are) skipped.')
         iterater = tqdm(range(task_size))
         for i in iterater:
             iterater.set_description(f"[{i+1}/{task_size}]")

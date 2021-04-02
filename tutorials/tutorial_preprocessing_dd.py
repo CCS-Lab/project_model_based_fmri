@@ -72,7 +72,7 @@ s = perf_counter()
 #preprocessor.preprocess(overwrite=True,n_thread=4,n_core=16)
 #preprocessor.preprocess(overwrite=False,n_core=16)
 #preprocessor.X_generator.run(overwrite=True,n_thread=4)
-preprocessor.y_generator.run(overwrite=False,n_thread=4)
+preprocessor.y_generator.run(overwrite=True)
 print(f"INFO: elapsed time for data preprocessing: {(perf_counter()-s) / 60:.2f} minutes")
 
 preprocessor.summary()

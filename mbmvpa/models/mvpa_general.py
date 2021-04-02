@@ -54,7 +54,7 @@ class MVPA_CV():
         if self.cv_save:
             now = datetime.datetime.now()
             self.save_root = Path(cv_save_path) / f'report_{self.model.name}_{self.task_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
-            self.save_root.mkdir()
+            self.save_root.mkdir(exist_ok=True)
             
     
     def _run_singletime(self,
@@ -134,7 +134,7 @@ class MVPA_CV():
             
         if self.cv_save:
             report_path = self.save_root/ 'raw_result'
-            report_path.mkdir()
+            report_path.mkdir(exist_ok=True)
             for report_id, output in outputs.items():
                 for key, data in output.items():
                     np.save(str(report_path / f'{report_id}_{key}.npy'), data)
