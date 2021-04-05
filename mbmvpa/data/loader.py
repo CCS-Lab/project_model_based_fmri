@@ -27,6 +27,8 @@ class Normalizer():
     def __call__(self,x):
         if self.name == "standard":
             normalized = zscore(x, axis=None)
+        elif self.name == "none":
+            normalized = x
         else:
             # default is using minmax
             original_shape = x.shape

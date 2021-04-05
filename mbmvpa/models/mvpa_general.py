@@ -18,11 +18,11 @@ import pdb
 class MVPA_Base():
     def __init__(self):
         self.name = "unnamed"
-    def reset(self):
+    def reset(self,**kwargs):
         return
-    def fit(self,X,y):
+    def fit(self,X,y,**kwargs):
         return
-    def predict(self,X):
+    def predict(self,X,**kwargs):
         return 
     
 class MVPA_CV():
@@ -37,7 +37,8 @@ class MVPA_CV():
                 cv_save=True,
                 cv_save_path=".",
                 task_name="unnamed",
-                report_function_dict={}):
+                report_function_dict={}
+                ):
         
         self.X_dict = X_dict
         self.y_dict = y_dict
@@ -61,10 +62,13 @@ class MVPA_CV():
                         X_train,
                         y_train,
                         X_test,
-                        y_test):
+                        y_test,
+                       **kwargs):
         
         self.model.reset()
-        self.model.fit(X_train,y_train, **self.model_param_dict)
+        for k,d in self.model_param_dict.items():
+            kwargs[k] = d
+        self.model.fit(X_train,y_train, **kwargs)
         pred_train = self.model.predict(X_train)
         pred_test = self.model.predict(X_test)
         if 'get_weights' in dir(self.model):
@@ -79,14 +83,14 @@ class MVPA_CV():
                  'pred_test':pred_test}
         
         if 'report' in dir(self.model):
-            additional_reports = self.model.report()
+            additional_reports = self.model.report(**kwargs)
             for name, data in additional_reports.items():
                 output[name] = data
         if 'save' in dir(self.model):
             self.model.save(self.cv_save_path)
         return output
     
-    def run(self):
+    def run(self,**kwargs):
         
         print(f"INFO: start running the experiment. {self.model.name}")
         outputs = {}
@@ -101,7 +105,9 @@ class MVPA_CV():
                     y_test = self.y_dict[subject_id]
                     X_train = np.concatenate([self.X_dict[v] for v in subject_list if v != subject_id],0)
                     y_train = np.concatenate([self.y_dict[v] for v in subject_list if v != subject_id],0)
-                    outputs[f'{j}-{subject_id}'] = self._run_singletime(X_train, y_train, X_test, y_test)
+                    kwargs['fold']=subject_id
+                    kwargs['repeat']=j
+                    outputs[f'{j}-{subject_id}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
                 
         elif 'fold' in self.method:
             n_fold = int(self.method.split('-')[0])
@@ -120,7 +126,9 @@ class MVPA_CV():
                     y_test = y[test_ids]
                     X_train = X[train_ids]
                     y_train = y[train_ids]
-                    outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test)
+                    kwargs['fold']=i
+                    kwargs['repeat']=j
+                    outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
                  
         for _,output in outputs.items():
             for key in output.keys():

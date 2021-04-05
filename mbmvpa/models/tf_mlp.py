@@ -11,6 +11,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import tempfile
 import random
+import os
+from pathlib import Path
 
 class MVPA_MLP(MVPA_Base):
     
@@ -52,7 +54,7 @@ class MVPA_MLP(MVPA_Base):
         self.model = None
     
     
-    def reset(self):
+    def reset(self,**kwargs):
         
         self.model = Sequential()
         self.model.add(Dense(self.layer_dims[0],
@@ -76,7 +78,8 @@ class MVPA_MLP(MVPA_Base):
 
         return 
 
-    def fit(self,X,y):
+    def fit(self,X,y,**kwargs):
+        # add saving total weights. get input from user
         if self.model is None:
             self.reset()
             
@@ -108,7 +111,8 @@ class MVPA_MLP(MVPA_Base):
         
         
         #best_model_filepath = tempdir + f"/{self.name}_best_{int(random.random()*100000)}.ckpt"
-        temp = tempfile.NamedTemporaryFile(delete=True)
+        
+        temp = tempfile.NamedTemporaryFile()
         best_model_filepath = temp.name
         
         mc = ModelCheckpoint(
@@ -128,13 +132,16 @@ class MVPA_MLP(MVPA_Base):
 
         # load best model
         self.model.load_weights(best_model_filepath)
-
+        
+        os.remove(best_model_filepath+'.data-00000-of-00001')
+        os.remove(best_model_filepath+'.index')
+        
         return
     
-    def predict(self,X):
+    def predict(self,X,**kwargs):
         return self.model.predict(X)
     
-    def get_weights(self):
+    def get_weights(self,**kwargs):
         weights = []
         for layer in self.model.layers:
             if "dense" not in layer.name:

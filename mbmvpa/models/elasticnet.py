@@ -44,7 +44,7 @@ class MVPA_ElasticNet(MVPA_Base):
         
         self.name = f'ElasticNet(alpha:{self.alpha})'
         
-    def reset(self):
+    def reset(self,**kwargs):
         self.model = ElasticNet(alpha=self.alpha,
                            n_jobs=self.n_jobs,
                            scoring='mean_squared_error',
@@ -52,7 +52,7 @@ class MVPA_ElasticNet(MVPA_Base):
                            n_splits=self.n_splits)
         return
     
-    def fit(self,X,y):
+    def fit(self,X,y,**kwargs):
         if self.shuffle:
             ids = np.arange(X.shape[0])
             if X.shape[0] > self.n_samples:
@@ -65,7 +65,7 @@ class MVPA_ElasticNet(MVPA_Base):
             
         return
             
-    def predict(self,X):
+    def predict(self,X,**kwargs):
         return self.model.predict(X)
         
     def get_weights(self):
@@ -75,7 +75,7 @@ class MVPA_ElasticNet(MVPA_Base):
         
         return coef
     
-    def report(self):
+    def report(self,**kwargs):
         reports = {}
         reports['cv_mean_score'] = -self.model.cv_mean_score_
         reports['coef_path'] = self.model.coef_path_

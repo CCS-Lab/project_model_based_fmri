@@ -12,15 +12,17 @@ task_name = "prl"
 process_name = "rpe"
 
 Path(report_path).mkdir(exist_ok=True)
+'''
 subjects = ['01','02','03','04','05','06',
             '07','08','09','10', '11', '12',
             ]
-
-loader = BIDSDataLoader(layout=root, process_name=process_name, subjects=subjects)
+'''
+subjects = None
+loader = BIDSDataLoader(layout=root, process_name=process_name, subjects=subjects,normalizer="minmax")
 X_dict,y_dict = loader.get_data(subject_wise=True)
 voxel_mask = loader.get_voxel_mask()
 
-model = MVPA_ElasticNet(alpha=0.01,
+model = MVPA_ElasticNet(alpha=0.0001,
                          n_samples=100000,
                          shuffle=True,
                          max_lambda=50,
@@ -42,7 +44,7 @@ model_cv = MVPA_CV(X_dict,
                     model,
                     model_param_dict={},
                     method='5-fold',
-                    n_cv_repeat=1,
+                    n_cv_repeat=5,
                     cv_save=True,
                     cv_save_path=report_path,
                     task_name=task_name,

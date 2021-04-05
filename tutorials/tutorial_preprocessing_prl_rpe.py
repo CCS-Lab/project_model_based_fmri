@@ -61,9 +61,6 @@ def example_modulation_dfwise(df_events, param_dict):
     df_events["modulation"] = modulations
     return df_events[['onset','duration','modulation']]
 
-
-
-
 print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
 
 preprocessor = DataPreprocessor(bids_layout=root,
