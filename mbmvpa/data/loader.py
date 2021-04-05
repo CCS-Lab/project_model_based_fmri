@@ -226,6 +226,10 @@ class BIDSDataLoader():
                 self.y[subject] = self.normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
 
                 self.timemask[subject] = masks
+                
+        else:
+            assert False, "Not implemented error: dynamic load is not supported."
+            
         self.subjects = valid_subjects
         
         if self.verbose > 0:

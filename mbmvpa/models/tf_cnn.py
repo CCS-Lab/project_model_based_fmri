@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Dense, Dropout, Conv2D, BatchNormalization, Flatten, AveragePooling2D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
 from mbmvpa.models.mvpa_general import MVPA_Base
@@ -14,14 +14,18 @@ import random
 import os
 from pathlib import Path
 
-class MVPA_MLP(MVPA_Base):
+import pdb
+
+class MVPA_CNN(MVPA_Base):
     
     def __init__(self, 
                  input_shape,
-                 layer_dims=[1024, 1024],
-                 activation="linear",
+                 layer_dims=[8,16,32],
+                 kernel_size=[3,3,3],
+                 logit_layer_dim=256,
+                 activation="relu",
                  activation_output="linear",
-                 dropout_rate=0.5,
+                 dropout_rate=0.2,
                  val_ratio=0.2,
                  optimizer="adam",
                  loss="mse",
@@ -30,47 +34,58 @@ class MVPA_MLP(MVPA_Base):
                  n_patience = 10,
                  n_batch = 64,
                  n_sample = 30000,
-                 use_bias = True,
-                 use_bipolar_balancing = False):
+                 batch_norm=True,
+                 use_bipolar_balancing = False,
+                 voxel_mask=None):
         
-        self.name = "MLP_TF"
-        if isinstance(input_shape, int):
-            input_shape = [input_shape,]
+        self.name = "CNN_TF"
         self.input_shape = input_shape
         self.layer_dims = layer_dims
+        self.kernel_size = kernel_size
+        self.logit_layer_dim = logit_layer_dim
         self.activation = activation
         self.activation_output = activation_output
         self.dropout_rate = dropout_rate
+        self.batch_norm = batch_norm
         self.optimizer = optimizer
         self.loss = loss
         self.learning_rate = learning_rate
-        self.use_bias = use_bias
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.n_sample = n_sample
         self.n_epoch = n_epoch
         self.val_ratio = val_ratio
         self.use_bipolar_balancing = use_bipolar_balancing
+        self.voxel_mask = voxel_mask
         self.model = None
     
     
     def reset(self,**kwargs):
-        
         self.model = Sequential()
-        self.model.add(Dense(self.layer_dims[0],
-                        activation=self.activation,
-                        input_shape=self.input_shape,
-                        use_bias=self.use_bias))
-        self.model.add(Dropout(self.dropout_rate))
-
-        # add layers
-        for dim in self.layer_dims[1:]:
-            self.model.add(Dense(dim, activation=self.activation, use_bias=self.use_bias))
-            self.model.add(Dropout(self.dropout_rate))
-
-        self.model.add(Dense(1, activation=self.activation_output, use_bias=self.use_bias))
+        self.model.add(Conv2D(self.layer_dims[0],
+                    (self.kernel_size[0],self.kernel_size[0]),
+                    activation=self.activation,
+                    padding='same',
+                    input_shape=self.input_shape,))
         
-        # set optimizer
+        self.model.add(AveragePooling2D(pool_size=(2,2)))
+    
+        # add layers
+        for dim,kernel in zip(self.layer_dims[1:],self.kernel_size[1:]):
+            self.model.add(Conv2D(dim,
+                        (kernel,kernel),
+                        activation=self.activation,
+                        padding='same'))
+            self.model.add(AveragePooling2D(pool_size=(2,2)))
+            
+            if self.batch_norm:
+                self.model.add(BatchNormalization())
+                  
+        self.model.add(Flatten()) 
+        self.model.add(Dense(self.logit_layer_dim, activation=self.activation))
+        self.model.add(Dense(1, activation=self.activation_output))
+    
+
         if self.optimizer == "adam":
             optlayer = Adam(learning_rate=self.learning_rate,name=self.optimizer)
         else: # not implemented
@@ -143,16 +158,31 @@ class MVPA_MLP(MVPA_Base):
     def predict(self,X,**kwargs):
         return self.model.predict(X)
     
-    def get_weights(self,**kwargs):
-        weights = []
-        for layer in self.model.layers:
-            if "dense" not in layer.name:
-                continue
-            weights.append(layer.get_weights()[0])
+    def get_weights(self,voxel_mask=None,**kwargs):
+        
+        outputs_pool = []
+        
+        if voxel_mask is None:
+            voxel_mask = self.voxel_mask
+        
+        assert voxel_mask is not None, "voxel mask should be given."
+        
+        sample = []
+        for x,y,z in zip(*np.nonzero(self.voxel_mask)):
+            temp = np.zeros(self.input_shape) 
+            temp[x,y,z] = 1
+            sample.append(temp)
+        sample = np.array(sample)
+        sample_size = (self.voxel_mask == 1).sum()
+            
+        n_step = int(np.ceil((sample_size+0.0)/self.n_batch))
 
-        coef = weights[0]
-        for weight in weights[1:]:
-            coef = np.matmul(coef, weight)
+        outputs = []
+        for i in range(n_step):
+            output = self.model.predict(sample[i*self.n_batch:(i+1)*self.n_batch])
+            output = list(output.flatten())
+            outputs += output
 
-        return coef
-    
+        weights = np.array(outputs).ravel()
+        
+        return weights
