@@ -4,7 +4,8 @@ import pdb
 
 root = Path('tests/test_example')
 dm_model = 'ra_prospect'
-
+process_name = "testprocess"
+feature_name = "testfeature"
 def test_adjust(row):
     ## rename data in a row to the name which can match hbayesdm.ra_prospect requirements ##
     row["gamble"] = 1 if row["respcat"] == 1 else 0
@@ -27,7 +28,10 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                adjust_function=test_adjust,
                                filter_function=test_filter,
                                latent_function=test_latent,
-                               dm_model=dm_model)
+                               dm_model=dm_model,
+                               process_name=process_name,
+                               feature_name=feature_name,
+                               )
 preprocessor.summary()
 preprocessor.preprocess(overwrite=True,nchain=2,nwarmup=50,niter=200,core=16)
 preprocessor.summary()

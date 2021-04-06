@@ -52,7 +52,6 @@ class BIDSDataLoader():
                  task_name=None, 
                  process_name=None,
                  feature_name=None,
-                 feature_name=None,
                  verbose=1
                 ):
          
@@ -70,16 +69,12 @@ class BIDSDataLoader():
         if verbose > 0:
             print('INFO: retrieving from '+str(self.layout))
             print(f'      task-{task_name}, process-{process_name}')
+            
         self.task_name=task_name
         self.process_name=process_name
         self.feature_name=feature_name
         self.reconstruct = reconstruct
         self.verbose = verbose
-        
-        if feature_name is None:
-            self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
-        else:
-            self.mbmvpa_X_suffix = feature_name
             
         if voxel_mask_path is None:
             voxel_mask_path = Path(self.layout.root)/ config.DEFAULT_VOXEL_MASK_FILENAME
@@ -92,7 +87,7 @@ class BIDSDataLoader():
         else:
             self.normalizer = normalizer
             
-        self.X_kwargs = {'suffix':self.mbmvpa_X_suffix,
+        self.X_kwargs = {'suffix':config.DEFAULT_FEATURE_SUFFIX,
                      'extension':'npy'}
         self.y_kwargs = {'suffix':config.DEFAULT_SIGNAL_SUFFIX,
                     'extension':'npy'}
@@ -108,6 +103,8 @@ class BIDSDataLoader():
             
         if self.task_name:
             self.X_kwargs['task']=self.task_name
+            self.y_kwargs['task']=self.task_name
+            self.timemask_kwargs['task']=self.task_name
             
         if subjects is None:
             self.subjects = self.layout.get_subjects()
@@ -128,8 +125,11 @@ class BIDSDataLoader():
         subject_X_paths = []
         subject_y_paths = []
         timemask_paths = []
+        
         for subject_X in subject_Xs:
             entities = subject_X.get_entities()
+            
+            
             if self.has_session:
                 subject_y = self.layout.get(subject=subject,
                                 run=entities['run'],
@@ -155,10 +155,10 @@ class BIDSDataLoader():
                                 run=entities['run'],
                                 **self.timemask_kwargs
                                )
-            
-            if len(subject_y) != 1 or len(timemask) != 1:
-                # invalid data layout
+                
+            if len(subject_y) < 1 or len(timemask) < 1:
                 continue
+                
             subject_X_paths.append(subject_X.path)    
             subject_y_paths.append(subject_y[0].path)
             timemask_paths.append(timemask[0].path)
@@ -187,21 +187,14 @@ class BIDSDataLoader():
         for subject in iterater:
             iterater.set_description(f"subject_{subject}")
             subj_X,subj_y,subj_timemask  = self._get_single_subject_datapath(subject)
-            if len(subj_X) ==0 or len(subj_y) ==0 or len(subj_timemask) ==0:
-                continue
-            if len(subj_X) != len(subj_y) or len(subj_y) != len(subj_timemask) or \
-                len(subj_timemask) != len(subj_X):
-                continue
-            
             self.X[subject], self.y[subject], self.timemask[subject] = self._get_single_subject_datapath(subject)
             valid_subjects.append(subject)
         
-        for subject in valid_subjects:
-            tmemask = 
+        for subject in valid_subjects: 
             masks = [np.load(f)==1 for f in self.timemask[subject]]
             X_subject = [np.load(f) for f in self.X[subject]]
             self.X[subject] = np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0)
-
+            
             if reconstruct:
                 mask = self.voxel_mask.get_fdata()
                 blackboard = np.zeros(list(mask.shape)+[self.X[subject].shape[0]])

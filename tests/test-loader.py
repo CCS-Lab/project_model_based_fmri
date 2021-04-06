@@ -4,9 +4,12 @@ import pdb
 
 ## Test fmri processing from root path
 
-#root = Path('tests/test_example')
-root = Path('/data2/project_modelbasedMVPA/PRL')
-loader = BIDSDataLoader(layout=root)
+root = Path('tests/test_example')
+process_name = "testprocess"
+feature_name = "testfeature"
+loader = BIDSDataLoader(layout=root,
+                        process_name=process_name,
+                        feature_name=feature_name,)
 X,y = loader.get_data(subject_wise=False)
 voxel_mask = loader.get_voxel_mask()
 print("X", X.shape)
