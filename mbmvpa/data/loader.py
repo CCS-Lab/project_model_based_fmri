@@ -38,14 +38,6 @@ class Normalizer():
             normalized = normalized.reshape(original_shape)
         return normalized
 
-def get_process_name(filename):
-    filename = str(filename).split('/')[-1]
-    for entity in filename.split('_'):
-        entity_key, entity_value =  entity.split('-') 
-        if entity_key == config.PROCESS_KEY_NAME:
-            return entity_value
-
-    return ""
 
 
 class BIDSDataLoader():
@@ -60,7 +52,7 @@ class BIDSDataLoader():
                  task_name=None, 
                  process_name=None,
                  feature_name=None,
-                 dynamic_load=False,
+                 feature_name=None,
                  verbose=1
                 ):
          
@@ -80,7 +72,7 @@ class BIDSDataLoader():
             print(f'      task-{task_name}, process-{process_name}')
         self.task_name=task_name
         self.process_name=process_name
-        self.dynamic_load = dynamic_load # Not implemented
+        self.feature_name=feature_name
         self.reconstruct = reconstruct
         self.verbose = verbose
         
@@ -104,13 +96,16 @@ class BIDSDataLoader():
                      'extension':'npy'}
         self.y_kwargs = {'suffix':config.DEFAULT_SIGNAL_SUFFIX,
                     'extension':'npy'}
-        
-        self.regressor_kwargs = {'suffix':"regressors",
-                          'extension':"tsv"}
         self.timemask_kwargs = {'suffix':config.DEFAULT_TIMEMASK_SUFFIX,
                             'extension':'npy'}
         
+        if self.process_name is not None:
+            self.y_kwargs['desc'] = self.process_name
+            self.timemask_kwargs['desc'] = self.process_name
         
+        if self.feature_name is not None:
+            self.X_kwargs['desc'] = self.feature_name
+            
         if self.task_name:
             self.X_kwargs['task']=self.task_name
             
@@ -123,7 +118,7 @@ class BIDSDataLoader():
         self.X = {}
         self.y = {}
         self.timemask = {}
-        self._set_data(self.subjects,self.dynamic_load)
+        self._set_data(self.subjects)
         
         
         
@@ -160,12 +155,6 @@ class BIDSDataLoader():
                                 run=entities['run'],
                                 **self.timemask_kwargs
                                )
-                    
-            if self.process_name:
-                subject_y = [f for f in subject_y if self.process_name==get_process_name(f.filename)]
-                timemask = [f for f in timemask if self.process_name==get_process_name(f.filename)]
-            
-            
             
             if len(subject_y) != 1 or len(timemask) != 1:
                 # invalid data layout
@@ -179,8 +168,7 @@ class BIDSDataLoader():
                 subject_y_paths,
                 timemask_paths)
     
-    
-    def _set_data(self,subjects=None,dynamic_load=None,reconstruct=None):
+    def _set_data(self,subjects=None,reconstruct=None):
         
             
         self.X = {}
@@ -189,8 +177,6 @@ class BIDSDataLoader():
         
         if subjects is None:
             subjects = self.subjects
-        if dynamic_load is None:
-            dynamic_load = self.dynamic_load
         if reconstruct is None:
             reconstruct = self.reconstruct
             
@@ -207,29 +193,24 @@ class BIDSDataLoader():
                 len(subj_timemask) != len(subj_X):
                 continue
             
-            
             self.X[subject], self.y[subject], self.timemask[subject] = self._get_single_subject_datapath(subject)
             valid_subjects.append(subject)
         
-        
-        if not dynamic_load:
-            for subject in valid_subjects:
-                masks = [np.load(f)==1 for f in self.timemask[subject]]
-                X_subject = [np.load(f) for f in self.X[subject]]
-                self.X[subject] = np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0)
-               
-                if reconstruct:
-                    mask = self.voxel_mask.get_fdata()
-                    blackboard = np.zeros(list(mask.shape)+[self.X[subject].shape[0]])
-                    blackboard[mask.nonzero()] = self.X[subject].T
-                    self.X[subject] = blackboard.T
-                self.y[subject] = self.normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
+        for subject in valid_subjects:
+            tmemask = 
+            masks = [np.load(f)==1 for f in self.timemask[subject]]
+            X_subject = [np.load(f) for f in self.X[subject]]
+            self.X[subject] = np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0)
 
-                self.timemask[subject] = masks
-                
-        else:
-            assert False, "Not implemented error: dynamic load is not supported."
-            
+            if reconstruct:
+                mask = self.voxel_mask.get_fdata()
+                blackboard = np.zeros(list(mask.shape)+[self.X[subject].shape[0]])
+                blackboard[mask.nonzero()] = self.X[subject].T
+                self.X[subject] = blackboard.T
+            self.y[subject] = self.normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
+
+            self.timemask[subject] = masks
+        
         self.subjects = valid_subjects
         
         if self.verbose > 0:

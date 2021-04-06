@@ -21,6 +21,7 @@ class VoxelFeatureGenerator():
                   bids_controller=None,
                   save_path=None,
                   task_name=None,
+                  feature_name="unnamed",
                   fmriprep_name='fMRIPrep',
                   mask_path=None,
                   bold_suffix='bold',
@@ -61,6 +62,7 @@ class VoxelFeatureGenerator():
         self.standardize = standardize
         self.high_pass = high_pass
         self.detrend = detrend
+        self.feature_name = feature_name
         
         self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
         
@@ -120,10 +122,10 @@ class VoxelFeatureGenerator():
             run_id = row['run']
             
             if ses_id is not None: 
-                save_filename = f'sub-{sub_id}_task-{task_id}_ses-{ses_id}_run-{run_id}_{suffix}.npy'
+                save_filename = f'sub-{sub_id}_task-{task_id}_ses-{ses_id}_run-{run_id}_desc-{self.feature_name}_{suffix}.npy'
                 save_filename = self.bids_controller.set_path(sub_id=sub_id,ses_id=ses_id)/save_filename
             else :
-                save_filename = f'sub-{sub_id}_task-{task_id}_run-{run_id}_{suffix}.npy'
+                save_filename = f'sub-{sub_id}_task-{task_id}_run-{run_id}_desc-{self.feature_name}_{suffix}.npy'
                 save_filename = self.bids_controller.set_path(sub_id=sub_id)/save_filename
                 
             if not overwrite and save_filename.exists():

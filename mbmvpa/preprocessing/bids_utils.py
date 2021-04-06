@@ -13,6 +13,49 @@ import pdb
 
 class BIDSController():
     
+    r"""
+        
+    Attributes
+    ----------
+    
+    layout : bids.layout.layout.BIDSLayout
+        (Original) BIDSLayout of input data. It should follow `BIDS convention`_.
+        The main data used from this layout is behaviroal data,``events.tsv``.
+    fmriprep_layout : bids.layout.layout.BIDSLayout
+        The derivative layout for fMRI preprocessed data. ``fmriprep_layout`` is holding primarily preprocessed fMRI images (e.g. motion corrrected, registrated,...) 
+        This package is built upon `fMRIPrep`_ by `Poldrack lab at Stanford University`_ 
+    root : str
+        The root path of layout.
+    save_path : pathlib.PosixPath
+        The path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
+        If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
+    ignore_original : boolean
+        A flag for indicating whether it would cover behaviroal data in the original BIDSLayout ``layout``.
+        If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
+    bold_suffix : str, default="bold"
+        The suffix of filename indicating bold image data. Please refer to file naming convention in `BIDS convention`_.
+        ``sub-{}_task-{}_ses-{}_run-{}_space-{}_desc-preproc_bold.nii.gz`` is a typical bold image file.
+    event_suuffix : str, default="events"
+        The suffix of filename indicating behavioral data. Please refer to file naming convention in `BIDS convention`_.
+        ``sub-{}_task-{}_ses-{}_run-{}_events.tsv`` is a typical event file.
+    confound_suffix : str, default="regressors"
+        The suffix of filename indicating confounds or regressors data. Please refer to file naming convention in `BIDS convention`_.
+        Also refer to `fMRIPrep`_.
+        ``sub-{}_task-{}_ses-{}_run-{}_desc-confounds_regressors.tsv`` is a typical confounds file.
+    fmriprep_name : str, default="fMRIPrep"
+        The name of the derivative layout of fMRI preprocessed data. 
+    mbmvpa_name : str, default="MB-MVPA"
+        The name of the derivative layout of MB-MVPA data.
+    voxelmask_path : pathlib.PosixPath
+        The path for ROI masks. 
+    
+    .. _`BIDS convention`: https://bids.neuroimaging.io/
+    .. _`fMRIPrep`: https://fmriprep.org/en/stable/
+    .. _`Poldrack lab at Stanford University`: https://poldracklab.stanford.edu/
+        
+    """
+    
+    
     def __init__(self,
                 bids_layout,
                 save_path=None,
@@ -24,10 +67,6 @@ class BIDSController():
                 confound_suffix="regressors",
                 ignore_original=False,
                 ):
-        
-        # assumption 1 : only one task is considered. 
-        # assumption 2 : all the settings of bold image are same.
-        # assumption 3 : all the data are valid.
         
         self.layout = self.get_base_layout(bids_layout)
         self.root = self.layout.root
