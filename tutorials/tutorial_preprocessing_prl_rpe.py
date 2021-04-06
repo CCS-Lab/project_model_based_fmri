@@ -1,7 +1,5 @@
 from time import perf_counter
 from mbmvpa.preprocessing.preprocess import DataPreprocessor
-from mbmvpa.models.mvpa_elasticnet import elasticnet_crossvalidation
-from mbmvpa.data.loader import BIDSDataLoader
 from pathlib import Path
 
 import pdb
@@ -11,6 +9,7 @@ root = "/data2/project_modelbasedMVPA/PRL"
 mask_path = "/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/masks"
 report_path = "ccsl_prl"
 process_name = "rpe"
+feature_name = "zoom2"
 
 Path(report_path).mkdir(exist_ok=True)
 
@@ -73,20 +72,21 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                dm_model=dm_model,
                                mask_threshold=2.58,
                                process_name=process_name,
+                               feature_name=feature_name,
                                standardize=True,
                                confounds=[],
                                high_pass=1/128,
                                detrend=False,
                                smoothing_fwhm=6, 
                                zoom=(2,2,2),
-                               n_core= 24)
+                               n_core=4)
 
 
 
 s = perf_counter()
 
-#preprocessor.preprocess(overwrite=False,n_core=24)
-preprocessor.y_generator.run(overwrite=True,process_name=process_name)
+preprocessor.preprocess(overwrite=False,n_core=24)
+#preprocessor.y_generator.run(overwrite=True,process_name=process_name)
 #preprocessor.preprocess(overwrite=False,n_core=16)
 #preprocessor.X_generator.run(overwrite=True)
 print(f"INFO: elapsed time for data preprocessing: {(perf_counter()-s) / 60:.2f} minutes")
@@ -95,9 +95,3 @@ preprocessor.summary()
 
 
 s = perf_counter()
-
-loader = BIDSDataLoader(layout=root,
-                       process_name=process_name)
-
-
-print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")

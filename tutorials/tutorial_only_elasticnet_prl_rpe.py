@@ -10,6 +10,7 @@ root = "/data2/project_modelbasedMVPA/PRL"
 report_path = "ccsl_prl"
 task_name = "prl"
 process_name = "rpe"
+feature_name = "zoom2"
 
 Path(report_path).mkdir(exist_ok=True)
 
@@ -21,7 +22,13 @@ subjects = ['01','02','03','04','05','06',
 subjects = None
 
 
-loader = BIDSDataLoader(layout=root, process_name=process_name, subjects=subjects, normalizer='minmax')
+loader = BIDSDataLoader(layout=root, 
+                        task_name=task_name,
+                        process_name=process_name,
+                        feature_name=feature_name,
+                        subjects=subjects,
+                        normalizer='minmax')
+
 X_dict,y_dict = loader.get_data(subject_wise=True)
 voxel_mask = loader.get_voxel_mask()
 

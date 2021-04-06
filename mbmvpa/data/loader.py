@@ -47,11 +47,11 @@ class BIDSDataLoader():
                  subjects=None,
                  voxel_mask_path=None,
                  reconstruct=False,
-                 normalizer="standard",
+                 normalizer="none",
                  scale=(-1,1),
                  task_name=None, 
-                 process_name=None,
-                 feature_name=None,
+                 process_name="unnamed",
+                 feature_name="unnamed",
                  verbose=1
                 ):
          
@@ -68,7 +68,7 @@ class BIDSDataLoader():
         
         if verbose > 0:
             print('INFO: retrieving from '+str(self.layout))
-            print(f'      task-{task_name}, process-{process_name}')
+            print(f'      task-{task_name}, process-{process_name}, featurre-{feature_name}')
             
         self.task_name=task_name
         self.process_name=process_name
@@ -103,8 +103,6 @@ class BIDSDataLoader():
             
         if self.task_name:
             self.X_kwargs['task']=self.task_name
-            self.y_kwargs['task']=self.task_name
-            self.timemask_kwargs['task']=self.task_name
             
         if subjects is None:
             self.subjects = self.layout.get_subjects()
@@ -187,8 +185,15 @@ class BIDSDataLoader():
         for subject in iterater:
             iterater.set_description(f"subject_{subject}")
             subj_X,subj_y,subj_timemask  = self._get_single_subject_datapath(subject)
-            self.X[subject], self.y[subject], self.timemask[subject] = self._get_single_subject_datapath(subject)
-            valid_subjects.append(subject)
+            subject_X_paths,subject_y_paths,\
+                timemask_paths = self._get_single_subject_datapath(subject)
+            if len(subject_X_paths) ==0:
+                continue
+            else:
+                self.X[subject], self.y[subject],\
+                    self.timemask[subject] = subject_X_paths, subject_y_paths,\
+                                                timemask_paths
+                valid_subjects.append(subject)
         
         for subject in valid_subjects: 
             masks = [np.load(f)==1 for f in self.timemask[subject]]
