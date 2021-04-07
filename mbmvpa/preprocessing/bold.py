@@ -47,6 +47,7 @@ class VoxelFeatureGenerator():
         else:
             self.bids_controller = bids_controller
             
+        self.bids_controller._set_voxelmask_path(feature_name=feature_name)
         
         if mask_path is None:
             self.mask_path = Path(self.bids_controller.fmriprep_layout.root)/ config.DEFAULT_ROI_MASK_DIR
@@ -75,6 +76,10 @@ class VoxelFeatureGenerator():
     def _load_voxel_mask(self,overwrite=False):
         if self.bids_controller.voxelmask_path.exists() and not overwrite:
             self.voxel_mask = nib.load(self.bids_controller.voxelmask_path)
+            m = voxel_mask.get_fdata()
+            survived = int(m.sum())
+            total = np.prod(m.shape)
+            print('INFO: existing voxel mask is loaded.'+f': {survived}/{total}')
         else:
             self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
         self.bids_controller.save_voxelmask(self.voxel_mask)    

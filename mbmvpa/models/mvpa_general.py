@@ -102,13 +102,13 @@ class MVPA_CV():
             n_val_subj = int(self.method.split('-')[0])
             
             assert len(subject_list)>n_val_subj, "The number of subject must be bigger than n_val_subj."
-            subject_ids_list = [subject_list[i:i + n_val_subj]
-                            for i in range(0, len(subject_list), n_val_subj)]
-            random.shuffle(subject_ids_list)
+            
             
             for j in tqdm(range(self.n_cv_repeat),leave=True, desc='cv_repeat'):
-                
-                #inner_iterater = tqdm(subject_list,desc='subject',leave=False)
+                random.shuffle(subject_list)
+                subject_ids_list = [subject_list[i:i + n_val_subj]
+                                for i in range(0, len(subject_list), n_val_subj)]
+            
                 inner_iterater = tqdm(subject_ids_list,desc='subject',leave=False)
                 for i, subject_ids in enumerate(inner_iterater):
                     inner_iterater.set_description(f"subject_{subject_id}")

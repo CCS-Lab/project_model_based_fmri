@@ -6,10 +6,12 @@ import pdb
 
 #root = load_example_data("tom")
 root = "/data2/project_modelbasedMVPA/PRL"
-mask_path = "/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/masks"
+#mask_path = "/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/masks"
+mask_path = False
 report_path = "ccsl_prl"
 process_name = "rpe"
-feature_name = "zoom2rgrout"
+#feature_name = "zoom2rgrout"
+feature_name = "zoom2woroi"
 
 Path(report_path).mkdir(exist_ok=True)
 

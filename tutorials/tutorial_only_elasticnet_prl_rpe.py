@@ -11,7 +11,8 @@ report_path = "ccsl_prl"
 task_name = "prl"
 process_name = "rpe"
 #feature_name = "zoom2"
-feature_name = "zoom2rgrout"
+#feature_name = "zoom2rgrout"
+feature_name = "zoom2woroi"
 
 Path(report_path).mkdir(exist_ok=True)
 

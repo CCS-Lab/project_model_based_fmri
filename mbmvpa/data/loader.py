@@ -77,7 +77,7 @@ class BIDSDataLoader():
         self.verbose = verbose
             
         if voxel_mask_path is None:
-            voxel_mask_path = Path(self.layout.root)/ config.DEFAULT_VOXEL_MASK_FILENAME
+            voxel_mask_path = Path(self.layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.nii.gz"
         
         self.voxel_mask = nib.load(voxel_mask_path)
         

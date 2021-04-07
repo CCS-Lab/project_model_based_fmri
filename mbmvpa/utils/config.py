@@ -7,7 +7,7 @@ MAX_FMRIPREP_CHUNK_SIZE = 32
 # default configuration for default names used in the package
 DEFAULT_DERIV_ROOT_DIR = "mbmvpa"
 DEFAULT_ROI_MASK_DIR = "masks"
-DEFAULT_VOXEL_MASK_FILENAME = "voxel_mask.nii.gz"
+DEFAULT_VOXEL_MASK_FILENAME = "voxel_mask"
 DEFAULT_FEATURE_SUFFIX = "voxelfeature"
 DEFAULT_MODULATION_SUFFIX = "modulation"
 DEFAULT_SIGNAL_SUFFIX = "signal"

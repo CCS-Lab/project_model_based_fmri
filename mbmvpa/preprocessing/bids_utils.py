@@ -47,7 +47,7 @@ class BIDSController():
     mbmvpa_name : str, default="MB-MVPA"
         The name of the derivative layout of MB-MVPA data.
     voxelmask_path : pathlib.PosixPath
-        The path for ROI masks. 
+        The path for saving integrated ROI mask. 
     
     .. _`BIDS convention`: https://bids.neuroimaging.io/
     .. _`fMRIPrep`: https://fmriprep.org/en/stable/
@@ -59,7 +59,6 @@ class BIDSController():
     def __init__(self,
                 bids_layout,
                 save_path=None,
-                voxelmask_path=None,
                 fmriprep_name="fMRIPrep",
                 task_name=None,
                 bold_suffix="bold",
@@ -78,7 +77,6 @@ class BIDSController():
         self.task_name = task_name
         self.save_path = save_path
         self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
-        self.voxelmask_path = voxelmask_path
         self._set_fmriprep_layout()
         self._set_task_name()
         self._set_save_path()
@@ -103,11 +101,8 @@ class BIDSController():
             assert False, ("please input BIDS root or BIDSLayout")
         return layout
     
-    def _set_voxelmask_path(self):
-        if self.voxelmask_path is None:
-            self.voxelmask_path = Path(self.mbmvpa_layout.root)/config.DEFAULT_VOXEL_MASK_FILENAME
-        else:
-            self.voxelmask_path = Path(self.voxelmask_path)
+    def _set_voxelmask_path(self,feature_name="unnamed"):
+        self.voxelmask_path = Path(self.mbmvpa_layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.nii.gz"
             
     def _set_metainfo(self):
         
