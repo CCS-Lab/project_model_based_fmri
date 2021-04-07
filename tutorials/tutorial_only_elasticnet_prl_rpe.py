@@ -40,7 +40,7 @@ model = MVPA_ElasticNet(alpha=0.001,
                          max_lambda=50,
                          min_lambda_ratio=1e-4,
                          lambda_search_num=100,
-                         n_jobs=16,
+                         n_jobs=8,
                          n_splits=5)
 
 report_function_dict = build_elasticnet_report_functions(voxel_mask,
