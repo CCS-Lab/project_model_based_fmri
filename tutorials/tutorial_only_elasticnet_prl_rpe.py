@@ -10,7 +10,8 @@ root = "/data2/project_modelbasedMVPA/PRL"
 report_path = "ccsl_prl"
 task_name = "prl"
 process_name = "rpe"
-feature_name = "zoom2"
+#feature_name = "zoom2"
+feature_name = "zoom2rgrout"
 
 Path(report_path).mkdir(exist_ok=True)
 
@@ -44,7 +45,7 @@ model = MVPA_ElasticNet(alpha=0.001,
 report_function_dict = build_elasticnet_report_functions(voxel_mask,
                                                          confidence_interval=.99,
                                                          n_coef_plot=150,
-                                                         task_name=task_name+"-"+process_name,
+                                                         task_name=task_name+"-"+process_name+"-"+feature_name,
                                                          map_type='z',
                                                          sigma=1
                                                          )

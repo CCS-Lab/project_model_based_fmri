@@ -12,6 +12,7 @@ from tqdm import tqdm
 from bids import BIDSLayout
 import matplotlib.pyplot as plt
 from mbmvpa.utils import config
+import random
 
 import pdb
 
@@ -94,20 +95,31 @@ class MVPA_CV():
         
         print(f"INFO: start running the experiment. {self.model.name}")
         outputs = {}
-        if self.method=='loso':#leave-one-subject-out
+        
+        if 'lnso' in self.method: #leave-n-subject-out
+            
             subject_list = list(self.X_dict.keys())
-            assert len(subject_list)>1, "The number of subject must be bigger than one."
+            n_val_subj = int(self.method.split('-')[0])
+            
+            assert len(subject_list)>n_val_subj, "The number of subject must be bigger than n_val_subj."
+            subject_ids_list = [subject_list[i:i + n_val_subj]
+                            for i in range(0, len(subject_list), n_val_subj)]
+            random.shuffle(subject_ids_list)
+            
             for j in tqdm(range(self.n_cv_repeat),leave=True, desc='cv_repeat'):
-                inner_iterater = tqdm(subject_list,desc='subject',leave=False)
-                for subject_id in inner_iterater:
+                
+                #inner_iterater = tqdm(subject_list,desc='subject',leave=False)
+                inner_iterater = tqdm(subject_ids_list,desc='subject',leave=False)
+                for i, subject_ids in enumerate(inner_iterater):
                     inner_iterater.set_description(f"subject_{subject_id}")
-                    X_test = self.X_dict[subject_id]
-                    y_test = self.y_dict[subject_id]
-                    X_train = np.concatenate([self.X_dict[v] for v in subject_list if v != subject_id],0)
-                    y_train = np.concatenate([self.y_dict[v] for v in subject_list if v != subject_id],0)
-                    kwargs['fold']=subject_id
+                    X_test = np.concatengate([self.X_dict[subject_id] for subject_id in subject_ids],0)
+                    y_test = np.concatengate([self.y_dict[subject_id] for subject_id in subject_ids],0)
+                    
+                    X_train = np.concatenate([self.X_dict[v] for v in subject_list if v not in subject_ids],0)
+                    y_train = np.concatenate([self.y_dict[v] for v in subject_list if v not in subject_ids],0)
+                    kwargs['fold']=i
                     kwargs['repeat']=j
-                    outputs[f'{j}-{subject_id}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
+                    outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
                 
         elif 'fold' in self.method:
             n_fold = int(self.method.split('-')[0])

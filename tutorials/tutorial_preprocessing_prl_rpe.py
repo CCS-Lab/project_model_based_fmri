@@ -9,7 +9,7 @@ root = "/data2/project_modelbasedMVPA/PRL"
 mask_path = "/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/masks"
 report_path = "ccsl_prl"
 process_name = "rpe"
-feature_name = "zoom2"
+feature_name = "zoom2rgrout"
 
 Path(report_path).mkdir(exist_ok=True)
 
@@ -37,10 +37,10 @@ def example_modulation_dfwise(df_events, param_dict):
     choices = df_events['choice'].to_numpy()
     outcome = df_events['outcome'].to_numpy()
     modulations = []
-    #print(param_dict['eta_pos'], param_dict['eta_neg'])
+    
     eta_pos = float(param_dict['eta_pos'])
     eta_neg = float(param_dict['eta_neg'])
-    #print(eta_pos, eta_neg)
+    
     for choice, outcome in zip(choices,outcome):
         choice = int(choice)
         outcome = int(outcome)
@@ -74,7 +74,8 @@ preprocessor = DataPreprocessor(bids_layout=root,
                                process_name=process_name,
                                feature_name=feature_name,
                                standardize=True,
-                               confounds=[],
+                               confounds=["trans_x", "trans_y",
+                                          "trans_z", "rot_x", "rot_y", "rot_z"],
                                high_pass=1/128,
                                detrend=False,
                                smoothing_fwhm=6, 
