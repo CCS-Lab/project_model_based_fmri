@@ -266,9 +266,11 @@ class LatentProcessGenerator():
                 if self.modulation_dfwise is not None:
                     df_events = pd.concat([df_events[[self.filter_function(row) \
                                     for _, row in df_events.iterrows()]]])
+                    df_events = df_events.sort_values(by="onset")
                     modulation_df = self.modulation_dfwise(df_events, param_dict)
                     modulation_df = modulation_df[['onset','duration','modulation']]
                 else:
+                    df_events = df_events.sort_values(by="onset")
                     modulation_df = _add_latent_process_single_eventdata(self.latent_function, self.filter_function,
                                                  df_events, param_dict, preprocess=self.adjust_function)
                 modulation_df = modulation_df.astype({'modulation': 'float'})

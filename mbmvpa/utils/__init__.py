@@ -1,1 +1,1 @@
-__all__ = ["report","plot","functions", "coef2map"]
+__all__ = ["report","plot","functions", "coef2map","dataframe_utils"]
