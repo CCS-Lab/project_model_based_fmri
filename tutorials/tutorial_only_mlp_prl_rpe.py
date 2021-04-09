@@ -7,10 +7,11 @@ from pathlib import Path
 
 #root = load_example_data("tom")
 root = "/data2/project_modelbasedMVPA/PRL"
+voxel_mask_path = "/data2/project_modelbasedMVPA/PRL/derivatives/mbmvpa/voxel_mask.nii.gz"
 report_path = "ccsl_prl"
 task_name = "prl"
 process_name = "rpe"
-
+feature_name = "zoom2rgrout"
 Path(report_path).mkdir(exist_ok=True)
 '''
 subjects = ['01','02','03','04','05','06',
@@ -18,7 +19,14 @@ subjects = ['01','02','03','04','05','06',
             ]
 '''
 subjects = None
-loader = BIDSDataLoader(layout=root, process_name=process_name, subjects=subjects, normalizer="minmax")
+loader = BIDSDataLoader(layout=root, 
+                        voxel_mask_path=voxel_mask_path,
+                        task_name=task_name,
+                        process_name=process_name,
+                        feature_name=feature_name,
+                        subjects=subjects,
+                        normalizer='none')
+
 X_dict,y_dict = loader.get_data(subject_wise=True)
 voxel_mask = loader.get_voxel_mask()
 
@@ -43,7 +51,7 @@ model = MVPA_MLP(input_shape,
 
 
 report_function_dict = build_base_report_functions(voxel_mask,
-                                                     task_name=task_name,
+                                                     task_name=task_name+"-"+process_name+"-"+feature_name,
                                                      map_type='z',
                                                      sigma=1
                                                      )
