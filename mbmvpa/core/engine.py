@@ -14,9 +14,6 @@ MVPA_REPORT_DICT = {'elasticnet':build_elasticnet_report_functions,
                    'mlp':build_base_report_functions,
                    'cnn':build_base_report_functions}
 
-NEED_INPUT_SHAPE_MODEL = ['mlp','cnn']
-NEED_RECONSTRUCT_MODEL = ['cnn']
-NEED_VOXELMASK_MODEL = ['cnn']
 
 def run_mbmvpa(config=None,
               mvpa_model='elasticnet',
@@ -95,7 +92,7 @@ class MBMVPA():
         
     def _add_kwargs_to_config(self,kwargs):
         
-        def recursive(kwargs,config):
+        def recursive_add(kwargs,config):
             if not isinstance(config,dict):
                 return 
             else:
@@ -103,9 +100,9 @@ class MBMVPA():
                     if k in kwargs.keys():
                         config[k] = kwargs[k]
                     else:
-                        recursive(kwargs,d)
+                        recursive_add(kwargs,d)
         
-        recursive(kwargs, self.config)
+        recursive_add(kwargs, self.config)
         
             
     def _add_latent_info_kwargs(self, dm_model,process, kwargs):
@@ -119,7 +116,30 @@ class MBMVPA():
         
         if process in modelling_module.latent_process_onset.keys():
             kwargs['onset_name'] = modelling_module.latent_process_onset[process]
+    
+    def _copy_config(self):
+    
+        def writable(d):
+            if isinstance(d,str) or \
+                isinstance(d, list) or \
+                isinstance(d, tuple) or \
+                isinstance(d, int) or \
+                isinstance(d, float): 
+                return True
+            else:
+                return False
+                
+        def recursive_copy(config):
+            copied = {}
+            for k,d in config.items():
+                if isinstance(d,dict):
+                    copied[k] = recursive_copy(d)
+                elif writable(d):
+                    copied[k] = d
+            return(copied)
         
+        return recursive_copy(self.config)
+    
     def run(self,**kwargs):
         self.X_generator.run(**kwargs)
         self.y_generator.run(modelling_kwargs=self.config['HBAYESDM'],**kwargs)
@@ -129,14 +149,14 @@ class MBMVPA():
         X_dict, y_dict = self.loader.get_data(subject_wise=True)
         voxel_mask = self.loader.get_voxel_mask()
         
-        if self.mvpa_model_name in NEED_INPUT_SHAPE_MODEL:
-            input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
-            self.config['MVPA'][self.mvpa_model_name]['input_shape'] = input_shape
-        if self.mvpa_model_name in NEED_VOXELMASK_MODEL:
-            self.model = self._mvpa_model_class(voxel_mask=voxel_mask,
-                                                **self.config['MVPA'][self.mvpa_model_name])
-        else:
-            self.model = self._mvpa_model_class(**self.config['MVPA'][self.mvpa_model_name])
+        #if self.mvpa_model_name in NEED_INPUT_SHAPE_MODEL:
+        input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
+        self.config['MVPA'][self.mvpa_model_name]['input_shape'] = input_shape
+        #if self.mvpa_model_name in NEED_VOXELMASK_MODEL:
+        self.model = self._mvpa_model_class(voxel_mask=voxel_mask,
+                                            **self.config['MVPA'][self.mvpa_model_name])
+        #else:
+            #self.model = self._mvpa_model_class(**self.config['MVPA'][self.mvpa_model_name])
         self.report_function_dict = self._mvpa_report_func(voxel_mask=voxel_mask, 
                                                           **self.config['MVPAREPORT'][self.mvpa_model_name])
         
@@ -148,10 +168,6 @@ class MBMVPA():
         
         reports = self.model_cv.run()
         save_config_path = str(self.model_cv.save_root / 'config.yaml')
-        config = copy.deepcopy(self.config)
-        config['LATENTPROCESS']['adjust_function'] = None
-        config['LATENTPROCESS']['filter_function'] = None
-        config['LATENTPROCESS']['modulation_dfwise'] = None
-        yaml.dump(config,open(save_config_path,'w'),indent=4, sort_keys=False)
+        yaml.dump(self._copy_config(),open(save_config_path,'w'),indent=4, sort_keys=False)
         
         return reports
