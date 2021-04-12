@@ -161,9 +161,9 @@ tests/report*
 tests/*.ipynb
 tutorials/report*
 tutorials/scratch*
-report*
 .DS_Store
 *.mat
 tests/*report*
 tutorials/*report*
 tutorials/*data*
+tutorials/result
