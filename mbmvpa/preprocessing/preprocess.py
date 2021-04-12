@@ -31,7 +31,11 @@ class DataPreprocessor():
                   individual_params=None,
                   hrf_model="glover",
                   use_duration=False,
-                  ignore_original=False):
+                  ignore_original=False,
+                  onset_name="onset",
+                  duration_name="duration",
+                  end_name=None,
+                  use_1sec_duration=True):
         
         self.X_generator = VoxelFeatureGenerator(bids_layout=bids_layout,
                                           save_path=save_path,
@@ -67,7 +71,11 @@ class DataPreprocessor():
                                           individual_params=individual_params,
                                           hrf_model=hrf_model,
                                           use_duration=use_duration,
-                                          n_core=n_core)
+                                          n_core=n_core,
+                                          onset_name=onset_name,
+                                          duration_name=duration_name,
+                                          end_name=end_name,
+                                          use_1sec_duration=use_1sec_duration)
     
     def summary(self):
         self.bids_controller.summary()
@@ -90,7 +98,8 @@ class DataPreprocessor():
         self.X_generator.run(overwrite=overwrite,
                            feature_name=feature_name,
                            confounds=confounds,
-                           n_thread=n_thread)
+                           n_thread=n_thread,
+                            **kwrags)
         
         if not skip_modeling:
             self.y_generator.set_computational_model(overwrite=overwrite,

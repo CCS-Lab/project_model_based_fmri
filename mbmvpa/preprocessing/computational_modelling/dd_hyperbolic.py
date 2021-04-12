@@ -1,4 +1,4 @@
-from utils.dataframe_utils import get_named_iterater, inv_logit
+from mbmvpa.utils.dataframe_utils import get_named_iterater, inv_logit, TIME_FEEDBACK
 
 
 def function_subjectiveutility(df_events, param_dict):
@@ -99,6 +99,8 @@ def function_pLater(df_events, param_dict):
 
 
 latent_process_functions = {'subjectiveutility':function_subjectiveutility,
-                           'evSooner' : function_evsooner.
+                           'evSooner' : function_evsooner,
                            'evLater' : function_evlater,
                            'pLater' : function_plater}
+
+latent_process_onset = {}

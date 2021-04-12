@@ -26,7 +26,8 @@ class MVPA_ElasticNet(MVPA_Base):
                  min_lambda_ratio=1e-4,
                  lambda_search_num=100,
                  n_jobs=16,
-                 n_splits=5):
+                 n_splits=5,
+                 **kwargs):
         
         # [alpha * L1 + (1-alpha)/2 * L2] * lambda
         

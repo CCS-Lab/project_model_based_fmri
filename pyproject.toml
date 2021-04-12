@@ -43,6 +43,7 @@ sklearn = "^0.0"
 scipy = "^1.5.4"
 tqdm = ">=4.0.0"
 statsmodels = "^0.12.2"
+PyYaml
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.4"

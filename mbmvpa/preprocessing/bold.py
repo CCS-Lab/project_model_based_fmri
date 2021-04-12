@@ -4,8 +4,8 @@ import numpy as np
 import bids
 from bids import BIDSLayout
 from tqdm import tqdm
-from .bold_utils import _build_mask, _custom_masking, _image_preprocess
-from .bids_utils import BIDSController
+from ..utils.bold_utils import _build_mask, _custom_masking, _image_preprocess
+from ..utils.bids_utils import BIDSController
 import nibabel as nib
 
 from mbmvpa.utils import config # configuration for default names used in the package
@@ -34,7 +34,8 @@ class VoxelFeatureGenerator():
                   high_pass=1/128,
                   detrend=False,
                   n_thread=4,
-                  ignore_original=True):
+                  ignore_original=True,
+                  **kwargs):
         
         if bids_controller is None:
             self.bids_controller = BIDSController(bids_layout,
@@ -76,7 +77,7 @@ class VoxelFeatureGenerator():
     def _load_voxel_mask(self,overwrite=False):
         if self.bids_controller.voxelmask_path.exists() and not overwrite:
             self.voxel_mask = nib.load(self.bids_controller.voxelmask_path)
-            m = voxel_mask.get_fdata()
+            m = self.voxel_mask.get_fdata()
             survived = int(m.sum())
             total = np.prod(m.shape)
             print('INFO: existing voxel mask is loaded.'+f': {survived}/{total}')
@@ -84,7 +85,7 @@ class VoxelFeatureGenerator():
             self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
         self.bids_controller.save_voxelmask(self.voxel_mask)    
         
-    def run(self,feature_name=None, overwrite=False, confounds=None,n_thread=None):
+    def run(self,feature_name=None, overwrite=False, confounds=None,n_thread=None,**kwargs):
         
         if n_thread is None:
             n_thread = self.n_thread

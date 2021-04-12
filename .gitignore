@@ -166,3 +166,4 @@ report*
 *.mat
 tests/*report*
 tutorials/*report*
+tutorials/*data*

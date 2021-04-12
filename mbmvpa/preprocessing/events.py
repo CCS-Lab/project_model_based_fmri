@@ -15,10 +15,10 @@ import hbayesdm.models
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from .events_utils import _process_indiv_params, _add_event_info, _preprocess_event, \
+from ..utils.events_utils import _process_indiv_params, _add_event_info, _preprocess_event, \
                         _make_single_time_mask, _get_individual_param_dict, \
                         _add_latent_process_single_eventdata, _boldify
-from .bids_utils import BIDSController
+from ..utils.bids_utils import BIDSController
 from bids import BIDSLayout
 from tqdm import tqdm
 from scipy.io import loadmat
@@ -44,7 +44,12 @@ class LatentProcessGenerator():
                   hrf_model="glover",
                   use_duration=False,
                   n_core=4,
-                  ignore_original=False):
+                  ignore_original=False,
+                  onset_name="onset",
+                  duration_name="duration",
+                  end_name=None,
+                  use_1sec_duration=True,
+                  **kwargs):
 
         # setting path informations and loading layout
         if bids_controller is None:
@@ -76,7 +81,10 @@ class LatentProcessGenerator():
         self.hrf_model = hrf_model
         self.use_duration = use_duration
         self.n_core=n_core
-        
+        self.onset_name=onset_name
+        self.duration_name=duration_name
+        self.end_name=end_name
+        self.use_1sec_duration = True
     def summary(self):
         self.bids_controller.summary()
         
@@ -91,7 +99,7 @@ class LatentProcessGenerator():
         for _, row in self.bids_controller.meta_infos.iterrows():
             df_events_list.append(pd.read_table(row['event_path']) )
             event_infos_list.append(dict(row))
-        
+            
         df_events_list = [
             _add_event_info(df_events, event_infos)
             for df_events, event_infos in zip(df_events_list, event_infos_list)
@@ -162,12 +170,14 @@ class LatentProcessGenerator():
                                 df_events=None, 
                                 adjust_function=None, 
                                 filter_function=None,
+                                n_core=None,
                                 **kwargs):
 
         if df_events is None:
             df_events,_ = self._init_df_events_from_bids(adjust_function=adjust_function)
             df_events= pd.concat(df_events)
-            
+        if n_core is None:
+            n_core = self.n_core
         individual_params = _process_indiv_params(individual_params)
         if individual_params is None:
             individual_params = self.individual_params
@@ -192,17 +202,11 @@ class LatentProcessGenerator():
 
             if type(dm_model) == str:
                 print("INFO: running hBayesDM")
-                if 'ncore' in kwargs.keys():
-                    model = getattr(
-                        hbayesdm.models, dm_model)(
-                            data=df_events,
-                            **kwargs)
-                else:
-                    model = getattr(
-                        hbayesdm.models, dm_model)(
-                            data=df_events,
-                            ncore=self.n_core,
-                            **kwargs)
+                model = getattr(
+                    hbayesdm.models, dm_model)(
+                        data=df_events,
+                        ncore=self.n_core,
+                        **kwargs)
 
             individual_params = pd.DataFrame(model.all_ind_pars)
             individual_params.index.name = "subjID"
@@ -216,13 +220,13 @@ class LatentProcessGenerator():
         self.individual_params = individual_params
         
         
-    def run(self, overwrite=False, process_name=None):
+    def run(self, overwrite=False, process_name=None,modelling_kwargs={},**kwargs):
         if process_name is None:
             process_name = self.process_name
             
         if self.individual_params is None:
             # computational model is not set yet.
-            self.set_computational_model()
+            self.set_computational_model(**modelling_kwargs)
             
         task_name = self.task_name
         
@@ -260,6 +264,16 @@ class LatentProcessGenerator():
                 np.save(timemask_path, timemask)
             
             if overwrite or not modulation_df_path.exists():
+                
+                if self.onset_name != "onset":
+                    df_events["onset"] = df_events[self.onset_name]
+                if self.use_1sec_duration:
+                    df_events["duration"] = 1
+                elif self.end_name is not None:
+                    df_events["duration"] = df_events[self.end_name]-df_events["onset"]
+                elif self.duration_name != "duration":
+                    df_events["duration"] = df_events[self.duration_name]
+                    
                 param_dict = _get_individual_param_dict(sub_id, self.individual_params)
                 if param_dict is None:
                     continue

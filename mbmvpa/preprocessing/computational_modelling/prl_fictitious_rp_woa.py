@@ -1,4 +1,4 @@
-from utils.dataframe_utils import get_named_iterater
+from mbmvpa.utils.dataframe_utils import get_named_iterater, TIME_FEEDBACK
 
 
 def function_PEchosen(df_events, param_dict):
@@ -138,3 +138,6 @@ latent_process_functions = {'PEchosen': function_PEchosen,
                             'PEnotchosen': function_PEnotchosen,
                            'EVchosen' : function_EVchosen,
                            'EVnotchosen' : function_EVnotchosen}
+
+latent_process_onset = {'PEchosen': TIME_FEEDBACK,
+                        'PEnotchosen': TIME_FEEDBACK}
