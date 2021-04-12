@@ -39,11 +39,11 @@ matplotlib = "^3.3.3"
 tensorflow = "^2.4.0"
 numpy = "^1.18.5"
 pandas = "^1.1.4"
-sklearn = "^0.0"
+scikit-learn = "^0.24"
 scipy = "^1.5.4"
 tqdm = ">=4.0.0"
 statsmodels = "^0.12.2"
-PyYaml
+PyYaml = "^5.4.1"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.4"

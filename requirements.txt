@@ -9,7 +9,7 @@ matplotlib==3.3.3
 tensorflow==2.4.0
 numpy 
 pandas
-sklearn
+scikit-learn
 scipy==1.5.4
 tqdm
 statsmodels==0.12.2

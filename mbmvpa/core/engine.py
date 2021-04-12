@@ -14,6 +14,7 @@ MVPA_REPORT_DICT = {'elasticnet':build_elasticnet_report_functions,
                    'mlp':build_base_report_functions,
                    'cnn':build_base_report_functions}
 
+NEED_RECONSTRUCT_MODEL = ['cnn']
 
 def run_mbmvpa(config=None,
               mvpa_model='elasticnet',
@@ -110,7 +111,7 @@ class MBMVPA():
         modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
         modelling_module = importlib.import_module(modelling_module)
         latent_process_functions = modelling_module.latent_process_functions
-        assert process in latent_process_functions.keys(), f"{process} func. is not defined."
+        assert process in latent_process_functions.keys(), f"{process} is not in {latent_process_functions.keys()}"
         
         kwargs['modulation_dfwise'] = latent_process_functions[process]
         

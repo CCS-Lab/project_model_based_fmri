@@ -45,6 +45,25 @@ CLASSIFIERS = [
     'Topic :: Scientific/Engineering',
 ]
 
+install_requires=[
+            "hbayesdm<=1.0.1",
+            "nibabel>=3.2.0",
+            "nilearn==0.7.0",
+            "glmnet==2.2.1",
+            "pystan>=2.19.1",
+            "bids==0.0",
+            "scikit-image==0.17.2",
+            "matplotlib>=3.3.3",
+            "tensorflow>=2.4.0",
+            "numpy>=1.18.5",
+            "pandas>=1.1.4",
+            "scikit-learn==0.24",
+            "scipy>=1.5.4",
+            "tqdm>=4.0.0",
+            "statsmodels==0.12.2",
+            "PyYaml==5.4.1",
+          ]
+
 setup(
     name='mb-mvpa',
     version=VERSION,
@@ -54,11 +73,11 @@ setup(
     # long_description=LONG_DESC,
     # long_description_content_type=LONG_DESC_TYPE,
     python_requires='>=3.6',
+    install_requires=[],
     url=URL,
     license=LICENSE,
     classifiers=CLASSIFIERS,
     packages=find_packages(),
-    install_requires=[],
     zip_safe=False,
     include_package_data=True,
 )

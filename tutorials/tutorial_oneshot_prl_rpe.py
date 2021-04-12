@@ -7,10 +7,10 @@ import pdb
 #root = load_example_data("tom")
 root = "/data2/project_modelbasedMVPA/PRL"
 mask_path = "/data2/project_modelbasedMVPA/ds000005/derivatives/fmriprep/masks"
-report_path = "ccsl_prl"
-task = 'prl'
-feature = "zoom2"
-process = 'PEchosen'
+report_path = "result/ccsl_prl"
+task_name = 'prl'
+feature_name = "zoom2"
+process_name = 'PEchosen'
 
 Path(report_path).mkdir(exist_ok=True)
 
@@ -33,13 +33,13 @@ def example_filter(row):
 
 print(f"elapsed time: {(perf_counter()-s) / 60:.2f} minutes")
 
-_ = run_mbmvpa(root=root,
+_ = run_mbmvpa(bids_layout=root,
                dm_model=dm_model,
                mask_path=mask_path,
                report_path=report_path,
-               task=task,
-               feature=feature,
-               process=process,
+               task_name=task_name,
+               feature_name=feature_name,
+               process_name=process_name,
                adjust_function=example_adjust,
                filter_function=example_filter,)
 
