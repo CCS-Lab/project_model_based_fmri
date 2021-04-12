@@ -37,6 +37,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'duration_name': 'duration',
         'end_name': None,
         'use_1sec_duration': True,
+        'adjust_function': lambda v: v,
+        'filter_function': lambda _: True,
     },
     'HBAYESDM': {
         },

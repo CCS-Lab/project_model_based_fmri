@@ -41,8 +41,7 @@ _ = run_mbmvpa(root=root,
                feature=feature,
                process=process,
                adjust_function=example_adjust,
-               filter_function=example_filter,
-               overwrite=True)
+               filter_function=example_filter,)
 
 print(f"INFO: elapsed time for data preprocessing: {(perf_counter()-s) / 60:.2f} minutes")
 

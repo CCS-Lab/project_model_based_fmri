@@ -85,6 +85,7 @@ class LatentProcessGenerator():
         self.duration_name=duration_name
         self.end_name=end_name
         self.use_1sec_duration = True
+        
     def summary(self):
         self.bids_controller.summary()
         
