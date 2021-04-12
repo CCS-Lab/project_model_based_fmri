@@ -44,6 +44,7 @@ def run_mbmvpa(root,
                  mask_path,
                  report_path,
                  **kwargs)
+    
     return mbmvpa.run(overwrite=overwrite)
     
 
@@ -129,7 +130,7 @@ class MBMVPA():
             
     def _add_latent_info_kwargs(self, dm_model,process, kwargs):
         
-        modelling_module = f'mbmvpa.preprocessing.computational_modelling.{dm_model}'
+        modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
         modelling_module = importlib.import_module(modelling_module)
         latent_process_functions = modelling_module.latent_process_functions
         assert process in latent_process_functions.keys(), f"{proces} func. is not defined."
@@ -166,5 +167,7 @@ class MBMVPA():
                                 **self.config['MVPACV'])
         
         reports = self.model_cv.run()
+        save_config_path = str(self.model_cv.save_root / 'config.yaml')
+        yaml.dump(self.config,open(save_config_path,'w'),indent=4, sort_keys=False)
         
         return reports

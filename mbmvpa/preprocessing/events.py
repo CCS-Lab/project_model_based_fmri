@@ -255,6 +255,15 @@ class LatentProcessGenerator():
             modulation_df_path = save_path/(prefix+f'_{config.DEFAULT_MODULATION_SUFFIX}.tsv')
             signal_path = save_path/(prefix+f'_{config.DEFAULT_SIGNAL_SUFFIX}.npy')
             
+            if self.onset_name != "onset":
+                df_events["onset"] = df_events[self.onset_name]
+            if self.use_1sec_duration:
+                df_events["duration"] = 1
+            elif self.end_name is not None:
+                df_events["duration"] = df_events[self.end_name]-df_events["onset"]
+            elif self.duration_name != "duration":
+                df_events["duration"] = df_events[self.duration_name]
+                    
             if overwrite or not timemask_path.exists():
                 timemask = _make_single_time_mask(self.filter_function, df_events, 
                                               event_infos['n_scans'], 
@@ -265,15 +274,6 @@ class LatentProcessGenerator():
             
             if overwrite or not modulation_df_path.exists():
                 
-                if self.onset_name != "onset":
-                    df_events["onset"] = df_events[self.onset_name]
-                if self.use_1sec_duration:
-                    df_events["duration"] = 1
-                elif self.end_name is not None:
-                    df_events["duration"] = df_events[self.end_name]-df_events["onset"]
-                elif self.duration_name != "duration":
-                    df_events["duration"] = df_events[self.duration_name]
-                    
                 param_dict = _get_individual_param_dict(sub_id, self.individual_params)
                 if param_dict is None:
                     continue
