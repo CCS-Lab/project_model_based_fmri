@@ -45,7 +45,5 @@ _ = run_mbmvpa(root=root,
 
 print(f"INFO: elapsed time for data preprocessing: {(perf_counter()-s) / 60:.2f} minutes")
 
-preprocessor.summary()
-
 
 s = perf_counter()

@@ -17,6 +17,8 @@ DEFAULT_SAVE_PATH_CKPT = "mvpa/fitting_result"
 # configuration
 DEFAULT_ANALYSIS_CONFIGS = {
     'VOXELFEATURE': {
+        'bids_layout':'.',
+        'task_name':None,
         'fmriprep_name': 'fMRIPrep',
         'bold_suffix': 'bold',
         'confound_suffix': 'regressors',
@@ -28,8 +30,13 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'high_pass': 0.0078, # ~= 1/128
         'detrend': False,
         'n_thread': 4,
+        'feature_name':'unnamed',
     },
     'LATENTPROCESS': {
+        'bids_layout':'.',
+        'task_name':None,
+        'process_name':'unnamed',
+        'dm_model':None,
         'hrf_model': 'glover',
         'use_duration': False,
         'n_core': 4,
@@ -43,10 +50,14 @@ DEFAULT_ANALYSIS_CONFIGS = {
     'HBAYESDM': {
         },
     'LOADER':{
+        'layout':'.',
         'reconstruct': False,
         'normalizer': 'none',
         'scale': [-1, 1],
         'verbose': 1,
+        'task_name':None,
+        'process_name':'unnamed',
+        'feature_name':'unnamed',
     },
     'MVPA':{
         'elasticnet':{

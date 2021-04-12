@@ -18,82 +18,44 @@ NEED_INPUT_SHAPE_MODEL = ['mlp','cnn']
 NEED_RECONSTRUCT_MODEL = ['cnn']
 NEED_VOXELMASK_MODEL = ['cnn']
 
-def run_mbmvpa(root,
-                 dm_model,
-                 process,
-                 task=None,
-                 feature="unnamed",
-                 config=None,
-                 mvpa_model='elasticnet',
-                 subjects=None,
-                 save_path=None,
-                 mask_path=None,
-                 report_path='.',
-                 overwrite=False,
-                 **kwargs):
+def run_mbmvpa(config=None,
+              mvpa_model='elasticnet',
+              report_path='.',
+              overwrite=False,
+              **kwargs):
     
-    mbmvpa = MBMVPA(root,
-                 dm_model,
-                 process,
-                 task,
-                 feature,
-                 config,
-                 mvpa_model,
-                 subjects,
-                 save_path,
-                 mask_path,
-                 report_path,
-                 **kwargs)
-    
+    mbmvpa = MBMVPA(config=config,
+                     mvpa_model=mvpa_model,
+                     report_path=report_path,
+                     **kwargs)
+
     return mbmvpa.run(overwrite=overwrite)
     
 
 class MBMVPA():
     def __init__(self,
-                 root,
-                 dm_model,
-                 process,
-                 task=None,
-                 feature="unnamed",
                  config=None,
                  mvpa_model='elasticnet',
-                 subjects=None,
-                 save_path=None,
-                 mask_path=None,
                  report_path='.',
                  **kwargs):
         
-        if isinstance(config, str):
-            self.config = yaml.load(open(config))
-        elif config is None:
-            self.config = DEFAULT_ANALYSIS_CONFIGS
-            
-        if 'latent_function' not in self.config['LATENTPROCESS'].keys():
-            self._add_latent_info_kwargs(dm_model, process, self.config['LATENTPROCESS'])
-            
-        self.config['LATENTPROCESS']['bids_layout'] = root
-        self.config['LATENTPROCESS']['task_name'] = task
-        self.config['LATENTPROCESS']['process_name'] = process
-        self.config['LATENTPROCESS']['dm_model'] = dm_model
-        self.config['VOXELFEATURE']['bids_layout'] = root
-        self.config['VOXELFEATURE']['task_name'] = task
-        self.config['VOXELFEATURE']['feature_name'] = feature
-        if save_path is not None:
-            self.config['VOXELFEATURE']['save_path'] = save_path
-            self.config['LATENTPROCESS']['save_path'] = save_path
-        if mask_path is not None:
-            self.config['VOXELFEATURE']['mask_path'] = mask_path
-        self.config['LOADER']['task_name'] = task
-        self.config['LOADER']['process_name'] = process
-        self.config['LOADER']['feature_name'] = feature
-        self.config['MVPACV']['cv_save_path'] = report_path
+        self.config = DEFAULT_ANALYSIS_CONFIGS
+        self._override_config(config)
+        self._add_kwargs_to_config(kwargs)
         
+        if 'latent_function' not in self.config['LATENTPROCESS'].keys():
+            self._add_latent_info_kwargs(self.config['LATENTPROCESS']['dm_model'],
+                                         self.config['LATENTPROCESS']['process_name'], 
+                                         self.config['LATENTPROCESS'])
+            
         self.mvpa_model_name = mvpa_model
-        result_name = ''.join(dm_model.split('_'))+"-"+ task+"-"+process+"-"+feature
+        result_name = '-'.join([''.join(self.config['LATENTPROCESS']['dm_model'].split('_')),
+                                self.config['LOADER']['task_name'],
+                                self.config['LOADER']['process_name'],
+                                self.config['LOADER']['feature_name']])
         self.config['MVPAREPORT'][self.mvpa_model_name]['task_name'] = result_name
         self.config['MVPACV']['task_name'] = result_name
         
-        self._add_kwargs_to_config(kwargs)
         
         self.X_generator = VoxelFeatureGenerator(**self.config['VOXELFEATURE'])
         self.bids_controller = self.X_generator.bids_controller
@@ -105,14 +67,32 @@ class MBMVPA():
                                     MVPA_MODEL_DICT[mvpa_model][1])
         self._mvpa_report_func = MVPA_REPORT_DICT[mvpa_model]
         
-        
         if self.mvpa_model_name in NEED_RECONSTRUCT_MODEL:
             self.config['LOADER']['reconstruct'] = True
         self.model = None
         self.report_function_dict = None
         self.model_cv = None
         
-    
+    def _override_config(self,config):
+
+        if config is None:
+            return
+        if isinstance(config, str):
+            config = yaml.load(open(config))
+            
+        def override(a, b):
+            for k,d in b.items():
+                
+                if isinstance(d,dict):
+                    if k in a.keys():
+                        override(a[k],d)
+                    else:
+                        a[k] = d
+                else:
+                    a[k] = d
+        
+        override(self.config,config)
+        
     def _add_kwargs_to_config(self,kwargs):
         
         def recursive(kwargs,config):
@@ -133,7 +113,7 @@ class MBMVPA():
         modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
         modelling_module = importlib.import_module(modelling_module)
         latent_process_functions = modelling_module.latent_process_functions
-        assert process in latent_process_functions.keys(), f"{proces} func. is not defined."
+        assert process in latent_process_functions.keys(), f"{process} func. is not defined."
         
         kwargs['modulation_dfwise'] = latent_process_functions[process]
         
@@ -144,8 +124,8 @@ class MBMVPA():
         self.X_generator.run(**kwargs)
         self.y_generator.run(modelling_kwargs=self.config['HBAYESDM'],**kwargs)
         self.bids_controller.reload()
-        self.loader = BIDSDataLoader(layout=self.bids_controller.mbmvpa_layout, 
-                                    **self.config['LOADER'])
+        self.config['LOADER']['layout']=self.bids_controller.mbmvpa_layout
+        self.loader = BIDSDataLoader(**self.config['LOADER'])
         X_dict, y_dict = self.loader.get_data(subject_wise=True)
         voxel_mask = self.loader.get_voxel_mask()
         
