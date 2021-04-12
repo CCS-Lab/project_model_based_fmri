@@ -4,7 +4,7 @@ from ..data.loader import BIDSDataLoader
 from ..models.mvpa_general import MVPA_CV
 from ..utils.config import DEFAULT_ANALYSIS_CONFIGS
 from ..utils.report import build_elasticnet_report_functions, build_base_report_functions
-import yaml, importlib
+import yaml, importlib, copy
 
 MVPA_MODEL_DICT = {'elasticnet':['mbmvpa.models.elasticnet','MVPA_ElasticNet'],
                    'mlp':['mbmvpa.models.tf_mlp','MVPA_MLP'],
@@ -168,6 +168,10 @@ class MBMVPA():
         
         reports = self.model_cv.run()
         save_config_path = str(self.model_cv.save_root / 'config.yaml')
-        yaml.dump(self.config,open(save_config_path,'w'),indent=4, sort_keys=False)
+        config = copy.deepcopy(self.config)
+        config['LATENTPROCESS']['adjust_function'] = None
+        config['LATENTPROCESS']['filter_function'] = None
+        config['LATENTPROCESS']['modulation_dfwise'] = None
+        yaml.dump(config,open(save_config_path,'w'),indent=4, sort_keys=False)
         
         return reports
