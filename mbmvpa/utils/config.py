@@ -29,7 +29,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'standardize': True,
         'high_pass': 0.0078, # ~= 1/128
         'detrend': False,
-        'n_thread': 4,
+        'n_thread': 1,
         'feature_name':'unnamed',
     },
     'LATENTPROCESS': {
@@ -39,7 +39,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'dm_model':None,
         'hrf_model': 'glover',
         'use_duration': False,
-        'n_core': 4,
+        'n_core': 1,
         'onset_name': 'onset',
         'duration_name': 'duration',
         'end_name': None,
