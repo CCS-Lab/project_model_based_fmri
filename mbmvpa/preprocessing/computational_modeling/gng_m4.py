@@ -7,10 +7,11 @@ class ComputationalModel(Base):
         # get individual parameter values.
         xi = param_dict["xi"]
         ep = param_dict["ep"]
-        rho = param_dict["rho"]
+        rhoPun = param_dict["rhoPun"]
+        rhoRew = param_dict["rhoRew"]
         b = param_dict["b"]
         pi = param_dict["pi"]
-        
+  
         wv_g  = [0, 0, 0, 0]
         wv_ng = [0, 0, 0, 0]
         qv_g  = [0, 0, 0, 0]
@@ -38,15 +39,13 @@ class ComputationalModel(Base):
             pGo[cue-1] *= (1 - xi)
             pGo[cue-1] += (xi/2)
             
-            self._add('Pgo',Pgo)
-            
-            sv[cue-1] += (ep * (rho * outcome - sv[cue-1]))
+            self._add('Pgo',pGo[cue-1])
             
             if outcome >= 0 :
                 sv[cue-1] += (ep * (rhoRew * outcome - sv[cue-1]))
                 if keyPressed == 1:
                     PEgo = rhoRew * outcome - qv_g[cue-1]
-                    pEnogo = 0
+                    PEnogo = 0
                     qv_g[cue-1] += (ep * PEgo)
                 else:
                     PEgo = 0
@@ -56,7 +55,7 @@ class ComputationalModel(Base):
                 sv[cue-1] += (ep * (rhoPun * outcome - sv[cue-1]))
                 if keyPressed == 1:
                     PEgo = rhoPun * outcome - qv_g[cue-1]
-                    pEnogo = 0
+                    PEnogo = 0
                     qv_g[cue-1] += (ep * PEgo)
                 else:
                     PEgo = 0

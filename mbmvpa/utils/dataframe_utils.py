@@ -13,3 +13,12 @@ def inv_logit(p):
 
 def exp(x):
     return np.exp(x)
+
+def log1m(x):
+    return np.log(1-x)
+
+def sign_out(gain,loss):
+    return np.sign(gain-np.abs(loss))
+
+def log(x):
+    return np.log(x)

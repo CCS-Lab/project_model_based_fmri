@@ -38,7 +38,7 @@ class ComputationalModel(Base):
             pGo[cue-1] *= (1 - xi)
             pGo[cue-1] += (xi/2)
             
-            self._add('Pgo',Pgo)
+            self._add('Pgo',pGo[cue-1])
             
             sv[cue-1] += (ep * (rho * outcome - sv[cue-1]))
             

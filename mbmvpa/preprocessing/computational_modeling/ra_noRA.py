@@ -1,5 +1,4 @@
 from mbmvpa.utils.dataframe_utils import *
-from mbmvpa.utils.dataframe_utils import *
 from .base_model import Base
 
 class ComputationalModel(Base):
@@ -13,7 +12,7 @@ class ComputationalModel(Base):
 
             # calculation here
             evSafe   = cert
-            evGamble = 0.5 * (gain**rho - lambda_ *loss)
+            evGamble = 0.5 * (gain - lambda_ *loss)
             subjectiveutility = evGamble - evSafe
             pGamble = inv_logit(tau*(evGamble - evSafe))
 

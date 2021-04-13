@@ -35,7 +35,7 @@ class ComputationalModel(Base):
             pGo[cue-1] *= (1 - xi)
             pGo[cue-1] += (xi/2)
             
-            self._add('Pgo',Pgo)
+            self._add('Pgo',pGo[cue-1])
             
             if keyPressed == 1:
                 PEgo = rho * outcome - qv_g[cue-1]
