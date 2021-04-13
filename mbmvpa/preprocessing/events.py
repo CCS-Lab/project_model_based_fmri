@@ -213,8 +213,9 @@ class LatentProcessGenerator():
             individual_params = pd.DataFrame(model.all_ind_pars)
             individual_params.index.name = "subjID"
             individual_params = individual_params.reset_index()
+            model_name = ''.join(dm_model.split('_'))
             individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
-                f"task-{self.bids_controller.task_name}_model-{self.dm_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
+                f"task-{self.bids_controller.task_name}_model-{model_name}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
             individual_params.to_csv(individual_params_path,
                                      sep="\t", index=False)
             self._trained_dm_model = model
