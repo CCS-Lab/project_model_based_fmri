@@ -66,7 +66,7 @@ def function_pGamble(df_events, param_dict):
     for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
         
         # calculation here
-        evSafe   = cert**rho
+        evSafe   = cert
         evGamble = 0.5 * (gain- lambda_ *loss)
         modulation = inv_logit(tau*(evGamble - evSafe))
         modulations.append(modulation)
@@ -74,8 +74,6 @@ def function_pGamble(df_events, param_dict):
     df_events["modulation"] = modulations
     
     return df_events[['onset','duration','modulation']]
-
-
 
 
 latent_process_functions = {'subjectiveutility':function_subjectiveutility,

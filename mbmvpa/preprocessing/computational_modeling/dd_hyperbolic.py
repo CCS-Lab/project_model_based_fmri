@@ -99,8 +99,8 @@ def function_pLater(df_events, param_dict):
 
 
 latent_process_functions = {'subjectiveutility':function_subjectiveutility,
-                           'evSooner' : function_evsooner,
-                           'evLater' : function_evlater,
-                           'pLater' : function_plater}
+                           'evSooner' : function_evSooner,
+                           'evLater' : function_evLater,
+                           'pLater' : function_pLater}
 
 latent_process_onset = {}

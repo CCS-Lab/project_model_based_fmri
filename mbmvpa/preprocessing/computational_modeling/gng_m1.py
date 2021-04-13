@@ -29,7 +29,10 @@ def function_PEgo(df_events, param_dict):
         pGo[cue-1] *= (1 - xi)
         pGo[cue-1] += (xi/2)
         
-        if pressed == 1:
+        PEnogo = 0
+        PEgo = 0
+        
+        if keyPressed == 1:
             PEgo = rho * outcome - qv_g[cue-1]
             qv_g[cue-1] += (ep * PEgo)
         else:
@@ -73,7 +76,10 @@ def function_PEnogo(df_events, param_dict):
         pGo[cue-1] *= (1 - xi)
         pGo[cue-1] += (xi/2)
         
-        if pressed == 1:
+        PEnogo = 0
+        PEgo = 0
+        
+        if keyPressed == 1:
             PEgo = rho * outcome - qv_g[cue-1]
             qv_g[cue-1] += (ep * PEgo)
         else:
@@ -118,7 +124,10 @@ def function_QVgo(df_events, param_dict):
         
         modulation = qv_g[cue-1]
         
-        if pressed == 1:
+        PEnogo = 0
+        PEgo = 0
+        
+        if keyPressed == 1:
             PEgo = rho * outcome - qv_g[cue-1]
             qv_g[cue-1] += (ep * PEgo)
         else:
@@ -163,7 +172,10 @@ def function_QVnogo(df_events, param_dict):
         
         modulation = qv_ng[cue-1]
         
-        if pressed == 1:
+        PEnogo = 0
+        PEgo = 0
+        
+        if keyPressed == 1:
             PEgo = rho * outcome - qv_g[cue-1]
             qv_g[cue-1] += (ep * PEgo)
         else:
@@ -207,7 +219,10 @@ def function_subjectiveutility(df_events, param_dict):
         
         modulation = wv_g[cue-1] - wv_ng[cue-1]
         
-        if pressed == 1:
+        PEnogo = 0
+        PEgo = 0
+        
+        if keyPressed == 1:
             PEgo = rho * outcome - qv_g[cue-1]
             qv_g[cue-1] += (ep * PEgo)
         else:
@@ -251,7 +266,10 @@ def function_pGo(df_events, param_dict):
         
         modulation = pGo[cue-1]
         
-        if pressed == 1:
+        PEnogo = 0
+        PEgo = 0
+        
+        if keyPressed == 1:
             PEgo = rho * outcome - qv_g[cue-1]
             qv_g[cue-1] += (ep * PEgo)
         else:
@@ -268,9 +286,9 @@ def function_pGo(df_events, param_dict):
 #  name - function dictionary. please match the name.
 latent_process_functions = {'PEgo':function_PEgo,
                             'PEnogo':function_PEnogo,
-                           'QVgo': function_GQgo,
+                           'QVgo': function_QVgo,
                            'QVnogo': function_QVnogo,
-                           'WVgo': function_GQgo,
+                           'WVgo': function_QVgo,
                            'WVnogo': function_QVnogo,
                            'subjectiveutility': function_subjectiveutility,
                            'pGo': function_pGo}

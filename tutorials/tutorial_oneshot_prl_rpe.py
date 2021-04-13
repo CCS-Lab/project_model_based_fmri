@@ -27,7 +27,7 @@ def example_adjust(row):
     return row
 
 def example_filter(row):
-    return row['choice'] in [1,2]
+    return row['choice'] in [1,2] 
 
 
 

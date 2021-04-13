@@ -201,7 +201,8 @@ class LatentProcessGenerator():
 
             df_events= pd.concat([df_events[[filter_function(row) \
                                 for _, row in df_events.iterrows()]]])
-
+            
+            
             if type(dm_model) == str:
                 print("INFO: running hBayesDM")
                 model = getattr(
@@ -209,7 +210,6 @@ class LatentProcessGenerator():
                         data=df_events,
                         ncore=self.n_core,
                         **kwargs)
-
             individual_params = pd.DataFrame(model.all_ind_pars)
             individual_params.index.name = "subjID"
             individual_params = individual_params.reset_index()
