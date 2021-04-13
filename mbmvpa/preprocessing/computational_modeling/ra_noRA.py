@@ -1,4 +1,4 @@
-from mbmvpa.utils.dataframe_utils import get_named_iterater, inv_logit, TIME_FEEDBACK
+from mbmvpa.utils.dataframe_utils import *
 
 def function_subjectiveutility(df_events, param_dict):
     

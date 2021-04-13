@@ -1,4 +1,4 @@
-from mbmvpa.utils.dataframe_utils import get_named_iterater, TIME_FEEDBACK
+from mbmvpa.utils.dataframe_utils import *
 
 
 def function_PEchosen(df_events, param_dict):

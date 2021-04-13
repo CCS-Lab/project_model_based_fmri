@@ -10,3 +10,6 @@ def get_named_iterater(df_events, name_list):
 
 def inv_logit(p):
     return np.exp(p) / (1 + np.exp(p))
+
+def exp(x):
+    return np.exp(x)

@@ -4,7 +4,7 @@ from mbmvpa.utils.dataframe_utils import *
 def function_subjectiveutility(df_events, param_dict):
     
     # get individual parameter values.
-    k = param_dict["k"]
+    r = param_dict["r"]
     
     modulations = []
     
@@ -17,8 +17,8 @@ def function_subjectiveutility(df_events, param_dict):
                                                       'delay_sooner']):
         
         # calculation here
-        ev_later = amount_later / (1 + k * delay_later)
-        ev_sooner  = amount_sooner / (1 + k * delay_sooner)
+        ev_later = amount_later * exp(-1 * r * delay_later)
+        ev_sooner  = amount_sooner * exp(-1 * r * delay_sooner)
         modulation = ev_later - ev_sooner
         
         modulations.append(modulation)
@@ -30,7 +30,7 @@ def function_subjectiveutility(df_events, param_dict):
 def function_evSooner(df_events, param_dict):
     
     # get individual parameter values.
-    k = param_dict["k"]
+    r = param_dict["r"]
     
     modulations = []
     
@@ -39,7 +39,7 @@ def function_evSooner(df_events, param_dict):
                                                       'delay_sooner']):
         
         # calculation here
-        ev_sooner  = amount_sooner / (1 + k * delay_sooner)
+        ev_sooner  = amount_sooner * exp(-1 * r * delay_sooner)
         modulation = ev_sooner
         
         modulations.append(modulation)
@@ -51,7 +51,7 @@ def function_evSooner(df_events, param_dict):
 def function_evLater(df_events, param_dict):
     
     # get individual parameter values.
-    k = param_dict["k"]
+    r = param_dict["r"]
     
     modulations = []
     
@@ -60,7 +60,7 @@ def function_evLater(df_events, param_dict):
                                                       'delay_later']):
         
         # calculation here
-        ev_later = amount_later / (1 + k * delay_later)
+        ev_later = amount_later * exp(-1 * r * delay_later)
         modulation = ev_later
         
         modulations.append(modulation)
@@ -72,7 +72,7 @@ def function_evLater(df_events, param_dict):
 def function_pLater(df_events, param_dict):
     
     # get individual parameter values.
-    k = param_dict["k"]
+    r = param_dict["r"]
     beta  = param_dict["beta"]
     
     modulations = []
@@ -86,8 +86,8 @@ def function_pLater(df_events, param_dict):
                                                       'delay_sooner']):
         
         # calculation here
-        ev_later = amount_later / (1 + k * delay_later)
-        ev_sooner  = amount_sooner / (1 + k * delay_sooner)
+        ev_later = amount_later * exp(-1 * r * delay_later)
+        ev_sooner  = amount_sooner * exp(-1 * r * delay_sooner)
         modulation = inv_logit(beta * (ev_later - ev_sooner))
         
         modulations.append(modulation)
