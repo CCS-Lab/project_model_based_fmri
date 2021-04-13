@@ -73,8 +73,9 @@ class LatentProcessGenerator():
         self.dm_model = dm_model
         self.filter_for_modeling = filter_for_modeling
         if individual_params is None:
+            model_name = ''.join(dm_model.split('_'))
             individual_params = Path(self.bids_controller.mbmvpa_layout.root)/ (
-                f"task-{self.bids_controller.task_name}_model-{self.dm_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
+                f"task-{self.bids_controller.task_name}_model-{model_name}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
         self.individual_params = _process_indiv_params(individual_params)
 
         # setting BOLD-like signal generating specification
@@ -221,7 +222,7 @@ class LatentProcessGenerator():
         self.individual_params = individual_params
         
         
-    def run(self, overwrite=False, process_name=None,modelling_kwargs={},**kwargs):
+    def run(self, overwrite=True, process_name=None,modelling_kwargs={},**kwargs):
         if process_name is None:
             process_name = self.process_name
             
