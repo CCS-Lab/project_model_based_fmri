@@ -106,17 +106,14 @@ class MBMVPA():
         recursive_add(kwargs, self.config)
         
             
-    def _add_latent_info_kwargs(self, dm_model,process, kwargs):
+    def _add_latent_info_kwargs(self, dm_model,process_name, kwargs):
         
         modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
         modelling_module = importlib.import_module(modelling_module)
-        latent_process_functions = modelling_module.latent_process_functions
-        assert process in latent_process_functions.keys(), f"{process} is not in {latent_process_functions.keys()}"
+        kwargs['modulation_dfwise'] = modelling_module.ComputationalModel(process_name)
         
-        kwargs['modulation_dfwise'] = latent_process_functions[process]
-        
-        if process in modelling_module.latent_process_onset.keys():
-            kwargs['onset_name'] = modelling_module.latent_process_onset[process]
+        if process_name in modelling_module.latent_process_onset.keys():
+            kwargs['onset_name'] = modelling_module.latent_process_onset[process_name]
     
     def _copy_config(self):
     

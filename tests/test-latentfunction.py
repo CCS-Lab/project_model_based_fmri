@@ -14,7 +14,8 @@ non_pass = []
 for dm_model in model_list:
     modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
     modelling_module = importlib.import_module(modelling_module)
-    latent_process_functions = modelling_module.latent_process_functions
+    _ = modelling_module.ComputationalModel("")
+    #latent_process_functions = modelling_module.latent_process_functions
     model = getattr(
             hbayesdm.models, dm_model)(
                 data='example',
@@ -36,12 +37,17 @@ for dm_model in model_list:
         df_events = data[data['subjID']==subjID].copy()
         param_dict = dict(individual_params[individual_params['subjID']==subjID])
         
+        try:
+            _._set_latent_process(df_events,param_dict)
+        except:
+                non_pass.append(dm_model)
+        '''
         for k, func in latent_process_functions.items():
             try:
                 _ = func(df_events,param_dict)
             except:
                 non_pass.append(f'{dm_model}.{k}')
-
+        '''
 if len(non_pass) ==0:
     print("TEST PASS!")
 else:

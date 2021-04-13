@@ -1,85 +1,27 @@
 from mbmvpa.utils.dataframe_utils import *
+from mbmvpa.utils.dataframe_utils import *
+from .base_model import Base
 
-def function_subjectiveutility(df_events, param_dict):
+class ComputationalModel(Base):
+    def _set_latent_process(self, df_events, param_dict):
     
-    # get individual parameter values.
-    lambda_ = param_dict["lambda"]
-    
-    modulations = []
-    
-    for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
-        
-        # calculation here
-        evSafe   = cert
-        evGamble = 0.5 * (gain - lambda_ *loss)
-        modulation = evGamble - evSafe
-        modulations.append(modulation)
-        
-    df_events["modulation"] = modulations
-    
-    return df_events[['onset','duration','modulation']]
+        # get individual parameter values.
+        lambda_ = param_dict["lambda"]
+        tau = param_dict["tau"]
 
-def function_evGamble(df_events, param_dict):
-    
-    # get individual parameter values.
-    lambda_ = param_dict["lambda"]
-    
-    modulations = []
-    
-    for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
-        
-        # calculation here
-        evGamble = 0.5 * (gain - lambda_ *loss)
-        modulation = evGamble
-        modulations.append(modulation)
-        
-    df_events["modulation"] = modulations
-    
-    return df_events[['onset','duration','modulation']]
+        for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
 
-def function_evSafe(df_events, param_dict):
-    
-    # get individual parameter values.
-    lambda_ = param_dict["lambda"]
-    
-    modulations = []
-    
-    for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
-        
-        # calculation here
-        evSafe = cert
-        modulation = evSafe
-        modulations.append(modulation)
-        
-    df_events["modulation"] = modulations
-    
-    return df_events[['onset','duration','modulation']]
+            # calculation here
+            evSafe   = cert
+            evGamble = 0.5 * (gain**rho - lambda_ *loss)
+            subjectiveutility = evGamble - evSafe
+            pGamble = inv_logit(tau*(evGamble - evSafe))
 
-def function_pGamble(df_events, param_dict):
-    
-    # get individual parameter values.
-    lambda_ = param_dict["lambda"]
-    tau = param_dict["tau"]
-    
-    modulations = []
-    
-    for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
-        
-        # calculation here
-        evSafe   = cert
-        evGamble = 0.5 * (gain- lambda_ *loss)
-        modulation = inv_logit(tau*(evGamble - evSafe))
-        modulations.append(modulation)
-        
-    df_events["modulation"] = modulations
-    
-    return df_events[['onset','duration','modulation']]
-
-
-latent_process_functions = {'subjectiveutility':function_subjectiveutility,
-                           'evGamble': function_evGamble,
-                           'evGafe': function_evSafe,
-                           'pGamble': function_pGamble}
-
-
+            self._add('EVsafe',evSafe)
+            self._add('EVgamble',evGamble)
+            self._add('SUgamble',subjectiveutility)
+            self._add('SUsave', -subjectiveutility)
+            self._add('Pgamble', pGamble)
+            self._add('Psafe', 1-pGamble)
+            
 latent_process_onset = {}
