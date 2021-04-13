@@ -1,5 +1,4 @@
-#Do not change
-from mbmvpa.utils.dataframe_utils import *
+from mbmvpa.utils.dataframe_utils import * #Do not change
 
 # function for process 1
 def function_processname1(df_events, param_dict):
