@@ -1,55 +1,53 @@
+import hbayesdm
 import hbayesdm.models
 import os, importlib
 import pandas as pd
+from pathlib import Path
 
+example_data_path = hbayesdm.base.PATH_EXTDATA 
+indiv_param_path = 'tests/indiv_params'
 # 'bart_ewmv' ?? 
 # 'pst_Q' ??
 # 'wcs_sql' ??
 
-exclude = ['template.py','__init__.py','base_model.py', 'bart_ewmv']
-model_list = os.listdir('mbmvpa/preprocessing/computational_modeling')
-model_list = [f for f in model_list if f not in exclude]
-model_list = [f for f in model_list if f[0] != '.']
-model_list = [f for f in model_list if f[:2] != '__']
-model_list = [f.split('.py')[0] for f in model_list]
-#model_list = ['gng_m4','gng_m1','gng_m2','gng_m3','bart_par4','bart_ewmv']
-model_list = ['dbdm_prob_weight']
+exclude = ['bart_ewmv','pst_Q','wcs_sql','task2AFC_sdt','alt_delta','alt_gamma','cgt_cm',
+          'choiceRT_ddm','choiceRT_ddm_single','choiceRT_lba','choiceRT_lba_single']
+
+hbayesdm_model_list = [f for f in dir(hbayesdm.models) if f[0] != '_']
+model_list = [f.split('.tsv')[0] for f in os.listdir(indiv_param_path)]
+model_list = [m for m in model_list if m not in exclude]
+model_list = [m for m in model_list if m != '']
+model_list = [m for m in model_list if m in hbayesdm_model_list]
+
 ncore = 4
 
+def _process_indiv_params(individual_params):
+    if type(individual_params) == str\
+        or type(individual_params) == type(Path()):
+        try:
+            individual_params = pd.read_table(individual_params)
+            #print("INFO: individual parameters are loaded")
+        except:
+            individual_params = None
+        
+        return individual_params
+    elif type(individual_params) == pd.DataFrame:
+        return individual_params
+    else:
+        return None
+
 for dm_model in model_list:
+    print("testing..."+dm_model)
+    individual_params_path = os.path.join(indiv_param_path,f'{dm_model}.tsv')
+    individual_params =_process_indiv_params(individual_params_path)
     modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
     modelling_module = importlib.import_module(modelling_module)
-    _ = modelling_module.ComputationalModel("")
-    #latent_process_functions = modelling_module.latent_process_functions
-    model = getattr(
-            hbayesdm.models, dm_model)(
-                data='example',
-                ncore=ncore,
-                vb=False,
-                nwarmup=5,
-                niter=10,
-                nchain=1)
-    
-    individual_params = pd.DataFrame(model.all_ind_pars)
-    individual_params.index.name = "subjID"
-    individual_params = individual_params.reset_index()
-    data  = model._TaskModel__raw_data
-    data['onset'] = [0]*len(data)
-    data['duration'] = [0]*len(data)
-    subjID_list = data['subjID'].unique()
-    
-    for subjID in subjID_list:
-        df_events = data[data['subjID']==subjID].copy()
-        param_dict = dict(individual_params[individual_params['subjID']==subjID])
-        param_dict = {k:d.item() for k,d in param_dict.items()}
+    python_model = modelling_module.ComputationalModel("")
+    task_name = dm_model.split('_')[0]
+    example_task_data_path  = os.path.join(example_data_path, f'{task_name}_exampleData.txt')
+    df_events = pd.read_table(example_task_data_path, sep='\t')
+    for subjID in individual_params['subjID'].unique():
+        param_dict = {k:d.item() for k, d in dict(individual_params[individual_params['subjID']==subjID]).items()}
+        _ = python_model._set_latent_process(df_events.copy(),param_dict)
         
-        _._set_latent_process(df_events,param_dict)
-        
-        '''
-        for k, func in latent_process_functions.items():
-            try:
-                _ = func(df_events,param_dict)
-            except:
-                non_pass.append(f'{dm_model}.{k}')
-        '''
 print("TEST PASS!")

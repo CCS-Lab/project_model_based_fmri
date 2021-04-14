@@ -5,7 +5,7 @@ class ComputationalModel(Base):
     def _set_latent_process(self, df_events, param_dict):
         
         Arew = param_dict['Arew']
-        Apew = param_dict['Apew']
+        Apun = param_dict['Apun']
         xi = param_dict['xi']
         
         Qr = np.zeros(4)

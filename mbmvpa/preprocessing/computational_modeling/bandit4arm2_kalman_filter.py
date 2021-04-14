@@ -12,7 +12,7 @@ class ComputationalModel(Base):
         sigmaD = param_dict['sigmaD']
         
         mu_ev = np.ones(4)*mu0
-        sd_ev_sq = np.ones(4)*(sigma0[i]**2)
+        sd_ev_sq = np.ones(4)*(sigma0**2)
 
         for choice,\
             outcome in get_named_iterater(df_events,['choice',
@@ -20,12 +20,12 @@ class ComputationalModel(Base):
             
             
             # learning rate
-            k = sd_ev_sq[choice-1] / ( sd_ev_sq[choice-1] + sigmaO**2 )
+            k = sd_ev_sq[choice-1] / ( sd_ev_sq[choice-1] + sigma0**2 )
             # prediction error
             pe = outcome - mu_ev[choice-1]
-            self._set('PEchosen',pe)
+            self._add('PEchosen',pe)
             # value updating (learning)
-            self._set('EVchosen',mu_ev[choice-1])
+            self._add('EVchosen',mu_ev[choice-1])
             mu_ev[choice-1] += k * pe
             sd_ev_sq[choice-1] *= (1-k)
             # diffusion process

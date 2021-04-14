@@ -21,7 +21,7 @@ class ComputationalModel(Base):
             cert,\
             type_,\
             gamble,\
-            outcome,\ in get_named_iterater(df_events,['gain',
+            outcome in get_named_iterater(df_events,['gain',
                                                       'loss',
                                                       'cert',
                                                       'type',

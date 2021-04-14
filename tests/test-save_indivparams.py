@@ -8,6 +8,9 @@ import pandas as pd
 
 model_list = [f for f in dir(hbayesdm.models) if f[0] != '_']
 for dm_model in model_list:
+    individual_params_path = 'indiv_params/'+f'{dm_model}.tsv'
+    if os.path.exists(individual_params_path):
+        continue
     #latent_process_functions = modelling_module.latent_process_functions
     model = getattr(
             hbayesdm.models, dm_model)(
@@ -16,13 +19,9 @@ for dm_model in model_list:
                 vb=False,
                 )
     
-    individual_params_path = 'indiv_params/'+f'{dm_model}.tsv'
-    if os.path.exists(individual_params_path):
-        continue
     individual_params = pd.DataFrame(model.all_ind_pars)
     individual_params.index.name = "subjID"
     individual_params = individual_params.reset_index()
-    individual_params_path = 'indiv_params/'+f'{dm_model}.tsv'
     individual_params.to_csv(individual_params_path,
                                      sep="\t", index=False)
     

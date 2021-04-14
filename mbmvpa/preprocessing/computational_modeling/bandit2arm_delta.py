@@ -17,7 +17,7 @@ class ComputationalModel(Base):
 
             self._add('EVchosen',ev[choice-1])
             PE = outcome - ev[choice-1]
-            self._add('PEchosen',PE[choice-1])
+            self._add('PEchosen',PE)
             # value updating (learning)
             ev[choice-1] += A * PE
             
