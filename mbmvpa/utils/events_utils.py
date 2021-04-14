@@ -155,6 +155,7 @@ def _get_individual_param_dict(subject_id, individual_params):
         idp = individual_params[individual_params["subjID"] == int(subject_id)]
     if len(idp) == 0:
         return None
+    idp = {k:d.item() for k,d in dict(idp).items()}
     return idp
 
 def _add_latent_process_single_eventdata(modulation, condition,

@@ -4,32 +4,29 @@ from .base_model import Base
 class ComputationalModel(Base):
     def _set_latent_process(self, df_events, param_dict):
         
-        eta_pos = float(param_dict['eta_pos'])
-        eta_neg = float(param_dict['eta_neg'])
+        Arew= param_dict['Arew']
+        Apun = param_dict['Apun']
+        beta = param_dict['beta']
 
         ev = [0,0]
-
+        
         for choice, outcome in get_named_iterater(df_events,['choice',
                                                              'outcome']):
-            choice = int(choice)
-            outcome = int(outcome)
-            
+        
+        
             self._add('EVchosen',ev[choice-1])
             self._add('EVnotchosen',ev[2 - choice])
             
             PE  =  outcome - ev[choice-1]
-            PEnc = -outcome - ev[2 - choice]
             
             self._add('PEchosen',PE)
             self._add('PEnotchosen',PEnc)
             
-            if PE >= 0:
-                ev[choice-1] += eta_pos * PE
-                ev[2 - choice] += eta_pos * PEnc
+            if outcome >= 0:
+                ev[choice-1] += Arew * PE
             else :
-                ev[choice-1] += eta_neg * PE
-                ev[2 - choice] += eta_neg * PEnc
-
-
+                ev[choice-1] += Apun * PE
+                
+    
 latent_process_onset = {'PEchosen': TIME_FEEDBACK,
                         'PEnotchosen': TIME_FEEDBACK}
