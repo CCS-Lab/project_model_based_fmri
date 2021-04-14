@@ -3,6 +3,7 @@ import numpy as np
 
 TIME_ONSET = "onset"
 TIME_FEEDBACK = "time_feedback"
+np = np
 
 def get_named_iterater(df_events, name_list, default={}):
     iter_list = []
@@ -28,3 +29,7 @@ def sign_out(gain,loss):
 
 def log(x):
     return np.log(x)
+
+def softmax(x):
+    f_x = np.exp(x) / np.sum(np.exp(x))
+    return f_x

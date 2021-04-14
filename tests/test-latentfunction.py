@@ -4,6 +4,7 @@ import pandas as pd
 
 # 'bart_ewmv' ?? 
 # 'pst_Q' ??
+# 'wcs_sql' ??
 
 exclude = ['template.py','__init__.py','base_model.py', 'bart_ewmv']
 model_list = os.listdir('mbmvpa/preprocessing/computational_modeling')
