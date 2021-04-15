@@ -46,7 +46,7 @@ class ComputationalModel(Base):
             self._add('EV',ev)
             self._add('PEsum',rpe_sum)
             self._add('EVsum',ev_sum)
-            sefl._add('Certsum',cert_sum)
+            self._add('Certsum',cert_sum)
 
 latent_process_onset = {'PE': TIME_FEEDBACK,
                         'PEsum}': TIME_FEEDBACK}

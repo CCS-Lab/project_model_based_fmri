@@ -10,15 +10,19 @@ class ComputationalModel(Base):
         lambda_ = param_dict['lambda']
 
         
-        ev    = [0,0,0,0]
+        ev    = np.zeros(4) # [0,0,0,0]
         theta = pow(3, cons) -1
         
-        for outcome,\
-            choice in get_named_iterater(df_events,['outcome',
-                                                    'choice']):
+        for gain,\
+            loss,\
+            choice,\
+            payscale in get_named_iterater(df_events,['gain',
+                                                      'loss',
+                                                      'choice',
+                                                      'payscale'],{'payscale':100}):
             
+            outcome = (gain - abs(loss))/payscale
             
-            self._add('SUchosen', util[choice-1])
             self._add('EVchosen',ev[choice-1])
             
             if outcome >= 0: # x(t) >= 0

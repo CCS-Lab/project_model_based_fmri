@@ -18,8 +18,9 @@ model_list = [f.split('.tsv')[0] for f in os.listdir(indiv_param_path)]
 model_list = [m for m in model_list if m not in exclude]
 model_list = [m for m in model_list if m != '']
 model_list = [m for m in model_list if m in hbayesdm_model_list]
+model_list.sort()
 
-ncore = 4
+ncore = 16
 
 def _process_indiv_params(individual_params):
     if type(individual_params) == str\
@@ -37,7 +38,7 @@ def _process_indiv_params(individual_params):
         return None
 
 for dm_model in model_list:
-    print("testing..."+dm_model)
+    print("testing... "+dm_model)
     individual_params_path = os.path.join(indiv_param_path,f'{dm_model}.tsv')
     individual_params =_process_indiv_params(individual_params_path)
     modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'

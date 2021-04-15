@@ -5,12 +5,13 @@ class ComputationalModel(Base):
     def _set_latent_process(self, df_events, param_dict):
     
         # get individual parameter values.
-        rho = param_dict["rho"] 
-        lambda_ = param_dict["lambda"]
-        tau = param_dict["tau"]
+        rho = float(param_dict["rho"]) 
+        lambda_ = float(param_dict["lambda"])
+        tau = float(param_dict["tau"])
 
         for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
-
+            
+            loss = abs(loss)
             # calculation here
             evSafe   = cert**rho
             evGamble = 0.5 * (gain**rho - lambda_ *(loss**rho))

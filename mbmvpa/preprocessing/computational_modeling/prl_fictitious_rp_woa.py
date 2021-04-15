@@ -4,15 +4,13 @@ from .base_model import Base
 class ComputationalModel(Base):
     def _set_latent_process(self, df_events, param_dict):
         
-        eta_pos = float(param_dict['eta_pos'])
-        eta_neg = float(param_dict['eta_neg'])
+        eta_pos = param_dict['eta_pos']
+        eta_neg = param_dict['eta_neg']
 
         ev = [0,0]
 
         for choice, outcome in get_named_iterater(df_events,['choice',
                                                              'outcome']):
-            choice = int(choice)
-            outcome = int(outcome)
             
             self._add('EVchosen',ev[choice-1])
             self._add('EVnotchosen',ev[2 - choice])

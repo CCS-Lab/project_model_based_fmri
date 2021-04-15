@@ -40,6 +40,6 @@ class ComputationalModel(Base):
             self._add('EVrisky',U_safe)
             self._add('SUrisky',U_risky - U_safe)
             self._add('Prisky',pRisky)
-            self._add('Psafe', 1-Risky)
+            self._add('Psafe', 1-pRisky)
             
 latent_process_onset = {}

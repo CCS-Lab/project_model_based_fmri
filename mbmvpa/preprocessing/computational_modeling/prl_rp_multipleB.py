@@ -20,7 +20,6 @@ class ComputationalModel(Base):
             PE  =  outcome - ev[choice-1]
             
             self._add('PEchosen',PE)
-            self._add('PEnotchosen',PEnc)
             
             if outcome >= 0:
                 ev[choice-1] += Arew * PE

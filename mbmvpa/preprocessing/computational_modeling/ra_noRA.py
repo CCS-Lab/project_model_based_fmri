@@ -9,7 +9,8 @@ class ComputationalModel(Base):
         tau = param_dict["tau"]
 
         for gain,loss,cert in get_named_iterater(df_events,['gain','loss','cert']):
-
+            
+            loss = abs(loss)
             # calculation here
             evSafe   = cert
             evGamble = 0.5 * (gain - lambda_ *loss)

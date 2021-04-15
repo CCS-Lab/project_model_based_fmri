@@ -23,7 +23,7 @@ class ComputationalModel(Base):
             sig2_new = (nu_old/nu_new) * sig2_old + (1/nu_new) * (k_old/k_new) * pow((offer - mu_old), 2)
             PE   = offer - mu_old
             self._add('PE',PE)
-            util = offer - alpha * fmax(mu_new - offer, 0.0) - beta * max(offer - mu_new, 0.0)
+            util = offer - alpha * max(mu_new - offer, 0.0) - beta * max(offer - mu_new, 0.0)
             self._add('Util',util)
             mu_old   = mu_new
             sig2_old = sig2_new

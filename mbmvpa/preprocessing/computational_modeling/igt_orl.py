@@ -10,20 +10,25 @@ class ComputationalModel(Base):
         betaF = param_dict['betaF']
         betaP = param_dict['betaP'] 
 
-        ef    = [0,0,0,0]
-        ev    = [0,0,0,0]
-        pers  = [0,0,0,0]
-        util  = [0,0,0,0]
+        ef    = np.zeros(4) # [0,0,0,0]
+        ev    = np.zeros(4) # [0,0,0,0]
+        pers  = np.zeros(4) # [0,0,0,0]
+        util  = np.zeros(4) # [0,0,0,0]
         K_tr = pow(3, K) - 1;
 
-        for outcome,\
-            choice in get_named_iterater(df_events,['outcome',
-                                                    'choice']):
+        for gain,\
+            loss,\
+            choice,\
+            payscale in get_named_iterater(df_events,['gain',
+                                                      'loss',
+                                                      'choice',
+                                                      'payscale'],{'payscale':100}):
             
+            outcome = (gain - abs(loss))/payscale
             self._add('SUchosen', util[choice-1])
             PEval  = outcome - ev[choice-1];
             self._add('PEval', PEval)
-            PEfreq = sign_out[i,t] - ef[ choice-1]
+            PEfreq = np.sign(outcome) - ef[choice-1]
             self._add('PEfreq', PEfreq)
             PEfreq_fic = -sign_out(gain,loss)/3 - ef
             

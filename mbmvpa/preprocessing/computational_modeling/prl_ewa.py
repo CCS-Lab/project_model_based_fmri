@@ -8,14 +8,14 @@ class ComputationalModel(Base):
         rho = param_dict['rho']
         beta = param_dict['beta']
         
-        ev = [0,0]
-        ew = [0,0]
+        ev = np.zeros(2) # [0,0]
+        ew = np.zeros(2) # [0,0]
 
         for choice, outcome in get_named_iterater(df_events,['choice',
                                                              'outcome']):
             
             # Store previous experience weight value
-            ewt1 = ew;
+            ewt1 = ew[choice-1];
             
             self._add('EVchosen',ev[choice-1])
             self._add('EVnotchosen',ev[2 - choice])

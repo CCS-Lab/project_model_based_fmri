@@ -14,7 +14,6 @@ class ComputationalModel(Base):
         for type_, choice, reward in get_named_iterater(df_events,['type',
                                                                     'choice',
                                                                     'reward']):
-            self._add('EVchosen',)
             
             option1 = type_ // 10
             option2 = type_ % 10
@@ -26,8 +25,9 @@ class ComputationalModel(Base):
         
             # Luce choice rule
             delta = ev[option1-1] - ev[option2-1]
-            pe = reward - ev[co-1];
-            ev[co-1] += alpha * pe;
+            pe = reward - ev[co-1]
+            alpha = alpha_pos if pe >= 0 else alpha_neg
+            ev[co-1] += alpha * pe
             self._add('PE',pe)
             self._add('Delta',delta)
         

@@ -17,15 +17,16 @@ class ComputationalModel(Base):
         
         for level1_choice,\
             level2_choice,\
-            reward in get_named_iterater(df_events,['level1_choice',
+            reward,\
+            trans_prob in get_named_iterater(df_events,['level1_choice',
                                                     'level2_choice',
                                                     'reward',
                                                     'trans_prob'],{'trans_prob':0.7}):
             
             t += 1
             
-            v_mb[0] = trans_prob * fmax(v_mf[2], v_mf[3]) + (1 - trans_prob) * fmax(v_mf[4], v_mf[5]) # for level1, stim 1
-            v_mb[1] = (1 - trans_prob) * fmax(v_mf[2], v_mf[3]) + trans_prob * fmax(v_mf[4], v_mf[5]) # for level1, stim 2
+            v_mb[0] = trans_prob * max(v_mf[2], v_mf[3]) + (1 - trans_prob) * max(v_mf[4], v_mf[5]) # for level1, stim 1
+            v_mb[1] = (1 - trans_prob) * max(v_mf[2], v_mf[3]) + trans_prob * max(v_mf[4], v_mf[5]) # for level1, stim 2
 
             # compute v_hybrid
             v_hybrid[0] = w * v_mb[0] + (1-w) * v_mf[0]   # hybrid stim 1= weighted sum
@@ -44,7 +45,7 @@ class ComputationalModel(Base):
             v_mf[level1_choice-1] += a*(v_mf[1+ level2_choice] - v_mf[level1_choice-1])
 
             # Prob of choosing stim 2 (2 from [1,2] OR 4 from [3,4]) in ** Level (step) 2 **
-            level2_choice_01 = 1 - (level2_choice[i,t] % 2) # 1,3 --> 0; 2,4 --> 1
+            level2_choice_01 = 1 - (level2_choice % 2) # 1,3 --> 0; 2,4 --> 1
             
             if level2_choice > 2:  # level2_choice = 3 or 4
                 level2_prob_choice2 = inv_logit( beta*( v_mf[5] - v_mf[4] ) )
@@ -58,6 +59,6 @@ class ComputationalModel(Base):
             # Update Level 1 v_mf
             v_mf[level1_choice] += a * (reward - v_mf[1+level2_choice])
             
-            prev_lavel1_choice = level1_choice
+            prev_level1_choice = level1_choice
             
 latent_process_onset = {'PE': TIME_FEEDBACK}
