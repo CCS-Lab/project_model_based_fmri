@@ -106,11 +106,11 @@ class MBMVPA():
         recursive_add(kwargs, self.config)
         
             
-    def _add_latent_info_kwargs(self, dm_model,process_name, kwargs):
+    def _add_latent_info_kwargs(self, dm_model, process_name, kwargs):
         
         modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
         modelling_module = importlib.import_module(modelling_module)
-        kwargs['modulation_dfwise'] = modelling_module.ComputationalModel(process_name)
+        kwargs['latent_function_dfwise'] = modelling_module.ComputationalModel(process_name)
         
         if process_name in modelling_module.latent_process_onset.keys():
             kwargs['onset_name'] = modelling_module.latent_process_onset[process_name]
@@ -140,7 +140,7 @@ class MBMVPA():
     
     def run(self,**kwargs):
         self.X_generator.run(**kwargs)
-        self.y_generator.run(modelling_kwargs=self.config['HBAYESDM'],**kwargs)
+        self.y_generator.run(modeling_kwargs=self.config['HBAYESDM'],**kwargs)
         self.bids_controller.reload()
         self.config['LOADER']['layout']=self.bids_controller.mbmvpa_layout
         self.loader = BIDSDataLoader(**self.config['LOADER'])

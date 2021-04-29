@@ -72,35 +72,30 @@ def _add_event_info(df_events, event_infos):
     
     return new_df
 
-def _preprocess_event(preprocess, df_events):
-    """
-    Preprocess dataframe of events of single "run" 
-    """
-    """
-    Arguments:
-        preprocess (function(pandas.Series, dict)-> pandas.Series)):
-            a user-defined function for modifying each row of behavioral data.
-            - f(single_row_data_frame) -> single_row_data_frame_with_modified_behavior_data check
-        df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
 
-    Return:
-        new_df (pandas.Dataframe): a dataframe with preprocessed rows
-    """
+def _make_function_dfwise(function):
+    
+    def dfwise_function(df_events,**kwargs):
+        new_df = []
+        for _, row in df_events.iterrows():
+            output = function(row,**kwargs)
+            if isinstance(output,bool):
+                # if output of function is boolean
+                # it means that the given function is a filter.
+                if output:
+                    new_df.append(row)
+            else:
+                new_df.append(output)
 
-    new_df = []
+        new_df = pd.concat(
+            new_df, axis=1,
+            keys=[s.name for s in new_df]
+        ).transpose()
+        return new_df
+    
+    return dfwise_function
 
-    for _, row in df_events.iterrows():
-        new_df.append(preprocess(row))
-
-    new_df = pd.concat(
-        new_df, axis=1,
-        keys=[s.name for s in new_df]
-    ).transpose()
-    #new_df = new_df.sort_values(by="onset")
-    return new_df
-
-def _make_single_time_mask(condition, df_events, time_length, t_r, 
-                           preprocess=None,
+def _make_single_time_mask(df_events, time_length, t_r,
                            use_duration=False):
     """
     Get binary masked data indicating time points in use
@@ -124,15 +119,11 @@ def _make_single_time_mask(condition, df_events, time_length, t_r,
     else:
         durations = np.array(
             list(df_events["onset"][1:]) + [time_length * t_r]) - onsets
-    if callable(preprocess):
-        mask = [condition(preprocess(row)) for _, row in df_events.iterrows()]
-    else:
-        mask = [condition(row) for _, row in df_events.iterrows()]
+        
     time_mask = np.zeros(time_length)
 
-    for do_use, onset, duration in zip(mask, onsets, durations):
-        if do_use:
-            time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
+    for onset, duration in zip(onsets, durations):
+        time_mask[int(onset / t_r): int((onset + duration) / t_r)] = 1
 
     return time_mask
 
@@ -157,36 +148,6 @@ def _get_individual_param_dict(subject_id, individual_params):
         return None
     idp = {k:d.item() for k,d in dict(idp).items()}
     return idp
-
-def _add_latent_process_single_eventdata(modulation, condition,
-                                         df_events, param_dict, preprocess=None):
-    """
-    Add latent state value to for each row of dataframe of single "run"
-    """
-    """
-    Argumnets:
-        modulation (function(pandas.Series, dict)-> Series): a user-defined function for calculating latent process (modulation). 
-            - f(single_row_data_frame, model_parameter_dict) -> single_row_data_frame_with_latent_state 
-        condition (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
-            - f(single_row_data_frame) -> True or False
-        df_events (pandas.DataFrame): a dataframe retrieved from "events.tsv" file and preprocessed in the previous stage.
-        param_dict (dict): a dictionary containing model parameter value
-
-    Return:
-        new_df (pandas.DataFrame): a dataframe with latent state value ("modulation")
-    """
-    new_df = []
-    df_events = df_events.sort_values(by="onset")
-    for _, row in df_events.iterrows():
-        if callable(preprocess):
-            row = preprocess(row)
-        if condition is not None and condition(row):
-            new_df.append(modulation(preprocess(row), param_dict)[['onset','duration','modulation']])
-    new_df = pd.concat(
-        new_df, axis=1, keys=[s.name for s in new_df]
-    ).transpose()
-
-    return new_df
 
 def _boldify(modulation_, hrf_model, frame_times):
     """

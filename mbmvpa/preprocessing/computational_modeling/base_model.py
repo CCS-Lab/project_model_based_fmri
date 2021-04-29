@@ -14,6 +14,7 @@ class Base():
         self.latent_process[key].append(value)
     
     def __call__(self, df_events, param_dict):
+        self.latent_process = {}
         self._set_latent_process(df_events, param_dict)
         df_events["modulation"] = self.latent_process[self.process_name]
         return df_events[['onset','duration','modulation']]

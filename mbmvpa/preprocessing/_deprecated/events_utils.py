@@ -70,6 +70,28 @@ def _add_event_info(df_events, event_infos):
 
     return new_df
 
+def _make_function_dfwise(function):
+    
+    def dfwise_function(df_events,**kwargs):
+        new_df = []
+        for _, row in df_events.iterrows():
+            output = function(row,**kwargs)
+            if isinstance(output,bool):
+                # if output of function is boolean
+                # it means that the given function is a filter.
+                if output:
+                    new_df.append(row)
+            else:
+                new_df.append(output)
+
+        new_df = pd.concat(
+            new_df, axis=1,
+            keys=[s.name for s in new_df]
+        ).transpose()
+        return new_df
+    
+    return dfwise_function
+
 def _preprocess_event(preprocess, df_events):
     """
     Preprocess dataframe of events of single "run" 
