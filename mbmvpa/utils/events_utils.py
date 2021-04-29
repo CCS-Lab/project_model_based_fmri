@@ -6,7 +6,7 @@
 ## last modification: 2020.12.17
 
 """
-Helper functions for preprocessing behavior data
+helper functions for preprocessing behavior data
 """
 
 from pathlib import Path
@@ -19,7 +19,6 @@ from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
 
 from ..utils import config # configuration for default names used in the package
-
 
     
 def _process_indiv_params(individual_params):
@@ -38,17 +37,6 @@ def _process_indiv_params(individual_params):
         return None
     
 def _add_event_info(df_events, event_infos):
-    """
-    Add subject, run, session info to dataframe of events of single "run" 
-    """
-    """
-    Arguments:
-        df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
-        event_infos (dict): a dictionary containing "subject", "run", (and "session" if applicable).
-
-    Return:
-        new_df (pandas.Dataframe): a dataframe with event info
-    """
 
     new_df = []
 
@@ -97,21 +85,7 @@ def _make_function_dfwise(function):
 
 def _make_single_time_mask(df_events, time_length, t_r,
                            use_duration=False):
-    """
-    Get binary masked data indicating time points in use
-    """
-    """
-    Arguments:
-        condition (function(pandas.Series)-> boolean)): a user-defined function for filtering each row of behavioral data. 
-            - f(single_row_data_frame) -> True or False
-        df_events (pandas.Dataframe): a dataframe retrieved from "events.tsv" file
-        time_length (int): the length of target BOLD signal 
-        t_r (float): time resolution
-        use_duration (boolean): if True, use "duration" column for masking, 
-                      else use the gap between consecutive onsets as duration
-    Return:
-        time_mask (numpy.array): binary array with shape: time_length
-    """
+    
     df_events = df_events.sort_values(by="onset")
     onsets = df_events["onset"].to_numpy()
     if use_duration:
@@ -128,19 +102,7 @@ def _make_single_time_mask(df_events, time_length, t_r,
     return time_mask
 
 def _get_individual_param_dict(subject_id, individual_params):
-    """
-    Get individual parameter dictionary
-    so the value can be referred by its name (type:str)
-    """
-    """
-    Arguments:
-        subject_id (int or str): subject ID number
-        individual_params (pandas.DataFrame): pandas dataframe with individual parameter values where each row number matches with subject ID.
-
-    Return:
-        ind_pars (dict): individual parameter value. dictionary{parameter_name:value}
-
-    """
+    
     idp = individual_params[individual_params["subjID"] == subject_id]
     if len(idp) == 0:
         idp = individual_params[individual_params["subjID"] == int(subject_id)]
@@ -150,21 +112,7 @@ def _get_individual_param_dict(subject_id, individual_params):
     return idp
 
 def _boldify(modulation_, hrf_model, frame_times):
-    """
-    BOLDify event data.
-    by converting behavior data to weighted impulse seqeunce and convolve it with hemodynamic response function. 
-    """
-    """
-    Arguments:
-        modulation_ (numpy.array): a array with onset, duration, and modulation values. shape : 3 x time point #
-        hrf_model (str): name for hemodynamic model
-        frame_times (numpy.array or list): frame array indicating time slot for BOLD-like signals
-        
-    Return:
-        boldified_signals (numpy.array): BOLD-like signal. 
-        
-    """
-
+    
     boldified_signals, name = compute_regressor(
         exp_condition=modulation_.astype(float),
         hrf_model=hrf_model,
