@@ -123,15 +123,16 @@ class BIDSController():
         self._set_voxelmask_path()
         
     def get_base_layout(self,bids_layout):
+        
+        # get BIDS layout which has events files
         print('INFO: start loading BIDSLayout')
         
-        if isinstance(bids_layout,str):
+        if isinstance(bids_layout,str) or isinstance(bids_layout,Path): 
+            # input is given as path for bids layout root.
             layout = BIDSLayout(root=Path(bids_layout),derivatives=True)
-        elif isinstance(bids_layout,Path):
-            layout = BIDSLayout(root=bids_layout, derivatives=True)
-        elif isinstance(bids_layout,BIDSLayout):
+        elif isinstance(bids_layout,BIDSLayout): # input is BIDS layout.
             layout = bids_layout
-        elif isinstance(bids_layout, BIDSController):
+        elif isinstance(bids_layout, BIDSController): # input is already initiated.
             # assumed that BIDSController is already well initiated and just handed over.
             layout = BIDSLayout(root=bids_layout.root, derivatives=True)
         else:
@@ -144,20 +145,23 @@ class BIDSController():
             
     def _set_metainfo(self):
         
-        meta_infos = {'subject':[],
-                        'session':[],
-                        'run':[],
-                        'task':[],
-                        'bold_path':[],
-                        'confound_path':[],
-                        'event_path':[],
-                        't_r':[],
-                        'n_scans':[]
-                        }
+        # set meta info for each run data in DataFrame format
+        meta_infos = {'subject':[],        # subejct ID
+                      'session':[],        # session ID
+                      'run':[],            # run ID 
+                      'task':[],           # task name
+                      'bold_path':[],      # preprocessed bold file path 
+                      'confound_path':[],  # regressor file path
+                      'event_path':[],     # events file path
+                      't_r':[],            # time resolution (sec)
+                      'n_scans':[]         # number of scan (time dimension)
+                     }
         
         for bold_file in self.get_bold_all():
             entities = bold_file.get_entities()
-            if 'session' in entities.keys():
+            if 'session' in entities.keys(): 
+                # if session is included in BIDS
+                # old version of BIDS doesn't have it
                 ses_id = entities['session']
             else:
                 ses_id = None
@@ -171,21 +175,26 @@ class BIDSController():
                                              task_name=entities['task'])
             
             if len(reg_file) < 1:
+                # if regressor file is not found.
                 continue
             if not self.ignore_original and len(event_file) < 1:
+                # ignore_original means ignore events file.
                 continue
-                
+            
+            # get t_r
             json_data = json.load(open(
                     self.fmriprep_layout.get(
                     return_type="file",
                     suffix=self.bold_suffix,
                     task=entities['task'],
                     extension="json")[0]))
+            
             if "root" in json_data.keys():
                 t_r = json_data["root"]["RepetitionTime"]
             else:
                 t_r = json_data["RepetitionTime"]
             
+            # get n_scans
             n_scans = nib.load(bold_file.path).shape[-1]
             
             meta_infos['subject'].append(entities['subject'])
@@ -199,6 +208,7 @@ class BIDSController():
             meta_infos['n_scans'].append(n_scans)
         
         self.meta_infos = pd.DataFrame(meta_infos)
+        
         if not self.ignore_original:
             print(f'INFO: {len(self.meta_infos)} file(s) in Original & fMRIPrep.')
         else:
@@ -220,19 +230,23 @@ class BIDSController():
         print('INFO: MB-MVPA is loaded')
         
     def _set_save_path(self):
+        # set root path for MB-MVPA derivative layout
         if self.save_path is None:
             self.save_path = Path(self.root)/'derivatives'/config.DEFAULT_DERIV_ROOT_DIR
             
     def _set_task_name(self):
+        # if task_name is not given, find the most common task name in the layout
         if self.task_name is None:
             print('INFO: task name is not designated. find most common task name')
             try:
                 task_names = self.layout.get_task()
-                task_name_lens = [len(self.layout.get(task=task_name,suffix=self.bold_suffix)) for task_name in task_names]
+                task_name_lens = [len(self.layout.get(task=task_name,
+                                                      suffix=self.bold_suffix)) for task_name in task_names]
                 self.task_name = task_names[np.array(task_name_lens).argmax()]
             except:
                 task_names = self.fmriprep_layout.get_task()
-                task_name_lens = [len(self.fmriprep_layout.get(task=task_name,suffix=self.bold_suffix)) for task_name in task_names]
+                task_name_lens = [len(self.fmriprep_layout.get(task=task_name,
+                                                               suffix=self.bold_suffix)) for task_name in task_names]
                 self.task_name = task_names[np.array(task_name_lens).argmax()]
             
             print('INFO: selected task_name is '+self.task_name)
@@ -246,7 +260,7 @@ class BIDSController():
         print('INFO: fMRIPrep is loaded')
         
     def summary(self):
-        
+        # print summary of loaded layout
         summaries = {}
         
         if self.fmriprep_layout is not None:
@@ -268,6 +282,7 @@ class BIDSController():
         print(summary_report)
     
     def reload(self):
+        # reload MB-MVPA layout
         self.layout = BIDSLayout(root=self.root,derivatives=True)
             
         if not self.mbmvpa_name in self.layout.derivatives.keys():
@@ -275,7 +290,7 @@ class BIDSController():
         self.mbmvpa_layout = self.layout.derivatives[self.mbmvpa_name]
         
     def make_mbmvpa(self,mbmvpa_root):
-
+        # make MB-MVPA base layout if not exists
         mbmvpa_root = Path(mbmvpa_root)
         
         if not mbmvpa_root.exists():
@@ -297,8 +312,11 @@ class BIDSController():
         return True
             
     def set_path(self, sub_id, ses_id=None):
-        sub_path = Path(self.mbmvpa_layout.root) / f'sub-{sub_id}'
+        # set & return path for saving MB-MVPA data
+        # path is defined as BIDS convention
+        # make directory if not exists
         
+        sub_path = Path(self.mbmvpa_layout.root) / f'sub-{sub_id}'
         if not sub_path.exists():
             sub_path.mkdir()
         if ses_id is not None:
@@ -315,6 +333,7 @@ class BIDSController():
         return func_path
         
     def get_path(self, sub_id, ses_id=None):
+        # get path for saving directory of MB-MVPA of a single session
         if ses_id is not None:
             return Path(self.mbmvpa_layout.root)/f'sub-{sub_id}'/f'ses-{ses_id}'/'func'
         else:
