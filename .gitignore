@@ -155,7 +155,7 @@ examples/*/*.pkl
 examples/*/*scratch*
 examples/scratch/*
 tests/test_example
-tests/test_example.zip
+tests/test_example/*
 tests/Untitled*
 tests/report*
 tests/*.ipynb
@@ -168,4 +168,4 @@ tutorials/*report*
 tutorials/*data*
 tutorials/result
 cached*/
-_temp/
+_deprecated
