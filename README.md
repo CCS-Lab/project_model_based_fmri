@@ -14,7 +14,7 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 2) Extraction & time series generation for state values in the model (a.k.a latent process)
 3) Relate latent process with task-fMRI time series data
 
-**MB-MVPA** replaced GLM in the prevailing  massive univariate approach with MVPA regression models and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]. Second, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
+**MB-MVPA** replaced GLM in the prevailing  massive univariate approach with MVPA regression models and has the following two major differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]. Second, instead of mapping statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
 **MB-MVPA** supports Python 3.6 or above and relies on [NiLearn](https://github.com/nilearn/nilearn), [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python), [py-glmnet](https://github.com/civisanalytics/python-glmnet), and [tensorflow](https://www.tensorflow.org/api_docs/python/tf/keras?hl=ko)(tested on v2.4.0).
 
@@ -22,7 +22,7 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 
 - MB-MVPA is based on MVPA regression model.
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
-- MB-MVPA is free of analytic hierarhy (e.g. first-level anal. or second-level anal.).
+- MB-MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
 ## Notes
 
