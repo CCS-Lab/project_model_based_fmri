@@ -28,6 +28,14 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
 - MB-MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
+
+## Flow
+
+<p align="center">
+  <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
+</p>
+
+
 ## Input
 
 <p align="center">
@@ -55,17 +63,6 @@ Ex.
                                        |-loss_association-test_z_FDR_0.01.nii.gz
 ```
 
-Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow the corresponding use case in the example code. 
-
-Another important requirement is preparing a user-defined python "function" to calculate the latent space of the computational model. The function is assumed to work on each row of pandas.DataFrame. 
-
-``` python
-def user_defined_modulation(row:pandas.Series, param_dict:dict) -> pandas.Series:
-    # example from prospect theory model.
-    modulation = (row["gain"] ** param_dict["rho"]) - (param_dict["lambda"] * (row["loss"] ** param_dict["rho"]))
-    row["modulation"] = modulation
-    return row
-```
 
 ## Use case scenarios
 
@@ -84,6 +81,17 @@ The above issues are fully explained in the simple working example [notebooks](#
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
 </p>
 
+Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow the corresponding use case in the example code. 
+
+Another important requirement is preparing a user-defined python "function" to calculate the latent space of the computational model. The function is assumed to work on each row of pandas.DataFrame. 
+
+``` python
+def user_defined_modulation(row:pandas.Series, param_dict:dict) -> pandas.Series:
+    # example from prospect theory model.
+    modulation = (row["gain"] ** param_dict["rho"]) - (param_dict["lambda"] * (row["loss"] ** param_dict["rho"]))
+    row["modulation"] = modulation
+    return row
+```
 
 ### Usage example 
 
