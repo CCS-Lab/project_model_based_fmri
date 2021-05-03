@@ -30,7 +30,7 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 
 ## Computational modeling
 
-Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to the [model list](~~) to check the available models and latent processes. If the model you are looking for is not in the list, then you can still conduct the analysis. In this case, please follow the corresponding use case the tutorials, which match best your situation.
+Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to the [model list](~~) to check the available models and latent processes. Even the model you are looking for is not in the list, you can still conduct the analysis with some manipulations. In this case, please follow the corresponding use case the tutorials, which match best your situation.
 
 ## MVPA model
 
