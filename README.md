@@ -37,13 +37,6 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 
 Before using MB-MVPA, raw fMRI data should be primarily processed by conventional fMRI preprocessing pipeline. *recommend to use* [*fmriprep*](https://fmriprep.org/en/stable/) Then, the preprocessed fMRI data are required to be formatted as [**BIDS**](https://bids-specification.readthedocs.io/en/stable/) layout.
 
-```
-{BIDS_ROOT}/derivatives/fmriprep/ -sub-01
-                                 |-sub-02
-                                  ...
-                                 |-sub-##
-```
-
 MB-MVPA also needs mask images for ROI masking. We recommend to download forward and backward probability maps from [**Neurosynth**](https://neurosynth.org/). Then the MB-MVPA will integrate them into a single mask file. If not provided, the MNI 152 mask will be used instead. Please place mask files under *BIDS_ROOT/derivatives/fmriprep/masks*.
 
 Ex.
