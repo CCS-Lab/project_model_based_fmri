@@ -6,18 +6,12 @@
 ## last modification: 2021.04.29
 
 """
-(old version, need to re-write.)
-It is for preprocessing behavior data ("events.tsv") to convert them to BOLD-like signals.
-The result BOLD-like signals will be used for a target(y) in MVPA.
-Also, it will produce time masks which are binary arrays with the same size as the time dimension of the data 
-to indicate which time point of data will be included in MVPA.
-The default setting is calculating latent process (or "modulation") 
-by using hierarchical Bayesian modeling by running "hBayesDM" package.
-
-User can optionally skip the steps in this process in the following possible scenarios
-- User can provide **precalculated behavioral data** through *df_events_custom* argument. In this case, it will skip both fitting model and extracting latent process. 
-- User can provide **precalculated individual model parameter values** through *individual_params_custom* argument.In this case, it will only skip model fitting part.
-
+This code is for converting behavior data ("events.tsv") to BOLD-like signals,
+so the time dimension of them can match the time diemnsion of voxel feature data.
+The output files will be stored in the derivative BIDS layout for the package.
+You can expect a modulation tsv file with onset, duration, modulation, 
+a time mask npy file, a binary map for indicating valid time points, and a 
+BOLD-like signal npy file for each run of events.tsv files.
 """
 
 from pathlib import Path
