@@ -3,7 +3,7 @@
 
 ## author: Cheoljun cho, Yedarm Seong
 ## contact: cjfwndnsl@gmail.com
-## last modification: 2021.04.29
+## last modification: 2021.05.03
 
 """
 This code is for masking fMRI data ("events.tsv") to make voxel features.
@@ -120,6 +120,7 @@ class VoxelFeatureGenerator():
                   ignore_original=True,
                   **kwargs):
         
+        # set path informations and load layout
         if bids_controller is None:
             self.bids_controller = BIDSController(bids_layout,
                                             save_path=save_path,
@@ -139,6 +140,7 @@ class VoxelFeatureGenerator():
             self.mask_path = None
         else:
             self.mask_path = Path(mask_path)
+    
         self.confounds = confounds
         self.n_thread = n_thread
         self.mask_threshold = mask_threshold
@@ -148,9 +150,7 @@ class VoxelFeatureGenerator():
         self.high_pass = high_pass
         self.detrend = detrend
         self.feature_name = feature_name
-        
         self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
-        
         self.voxel_mask = None
         self.masker = None
         
@@ -159,34 +159,61 @@ class VoxelFeatureGenerator():
         
     def _load_voxel_mask(self,overwrite=False):
         if self.bids_controller.voxelmask_path.exists() and not overwrite:
+            # if a mask file exists, then load it
+            # if overwrite is True, then re-make the mask file
             self.voxel_mask = nib.load(self.bids_controller.voxelmask_path)
+            # for printing 
             m = self.voxel_mask.get_fdata()
             survived = int(m.sum())
             total = np.prod(m.shape)
             print('INFO: existing voxel mask is loaded.'+f': {survived}/{total}')
         else:
+            # integrate mask files in mask_path. 
             self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
+        # save voxel mask
         self.bids_controller.save_voxelmask(self.voxel_mask)    
         
-    def run(self,feature_name=None, overwrite=False, confounds=None,n_thread=None,**kwargs):
+    def run(self,
+            feature_name=None,
+            overwrite=False,
+            confounds=None,
+            n_thread=None,
+            **kwargs):
         
         if n_thread is None:
             n_thread = self.n_thread
         assert isinstance(n_thread, int)
         
         n_thread = max(n_thread,1)
-        chunk_size = config.MAX_FMRIPREP_CHUNK_SIZE if n_thread > config.MAX_FMRIPREP_CHUNK_SIZE else n_thread
+        chunk_size = min(n_thread,config.MAX_FMRIPREP_CHUNK_SIZE)
+        
+        # upperbound for n_thread is MAX_FMRIPREP_CHUNK_SIZE
+        # check utils/config.py
+        # "chunk_size" is the number of threads.
+        # In generalm this number improves performance as it grows,
+        # but we recommend less than 4 because it consumes more memory.
+        # TODO: We can specify only the number of threads at this time,
+        #       but we must specify only the number of cores or both late
+        
+        
         
         self._load_voxel_mask(overwrite=overwrite)
+        
         t_r = self.bids_controller.meta_infos['t_r'].unique()
         if len(t_r) != 1:
+            # check if all the time resolution are same.
             assert False, "not consistent time resolution"
         t_r = float(t_r[0])
+        
+        # initiate maskers thread-by-thread.
+        # so, len(self.maskers) == chunk_size
+        # masker masks and zooms each image to get voxel features
         self.maskers = [_custom_masking(
                                     self.voxel_mask, t_r,
                                     self.smoothing_fwhm, self.standardize,
                                     self.high_pass, self.detrend
                                     ) for _ in range(chunk_size)]
+        
         if feature_name is None:
             suffix = self.mbmvpa_X_suffix
         else:
@@ -198,11 +225,14 @@ class VoxelFeatureGenerator():
         if confounds is None:
             confounds = self.confounds
             
-        files_layout = []
+        # stats
         skipped_count = 0
         item_count = 0
+        
+        files_layout = []
+
         for _, row in self.bids_controller.meta_infos.iterrows():
-            
+            # get and organize input data for running maskers
             reg_filename = row['confound_path']
             nii_filename = row['bold_path']
             sub_id = row['subject']
@@ -218,18 +248,20 @@ class VoxelFeatureGenerator():
                 save_filename = self.bids_controller.set_path(sub_id=sub_id)/save_filename
                 
             if not overwrite and save_filename.exists():
+                # if the output already exists, skip it.
                 skipped_count += 1
                 continue
-            item_count += 1
+                
             save_filename = str(save_filename)
-            files_layout.append([nii_filename,reg_filename,save_filename, self.confounds, self.maskers[item_count%chunk_size]])
             
-        # "chunk_size" is the number of threads.
-        # In generalm this number improves performance as it grows,
-        # but we recommend less than 4 because it consumes more memory.
-        # TODO: We can specify only the number of threads at this time,
-        #       but we must specify only the number of cores or both later.
+            files_layout.append([nii_filename,
+                                 reg_filename,
+                                 save_filename, 
+                                 self.confounds, 
+                                 self.maskers[item_count%chunk_size]])
+            item_count += 1
         
+        # re-organize input infos chunk-wise
         params_chunks = [files_layout[i:i + chunk_size]
                             for i in range(0, len(files_layout), chunk_size)]
         task_size = len(params_chunks)
@@ -243,6 +275,7 @@ class VoxelFeatureGenerator():
         
         future_result = {}
         print(f'INFO: start processing {item_count} fMRI. (nii_img/thread)*(n_thread)={task_size}*{chunk_size}. {skipped_count} image(s) is(are) skipped.')
+        
         iterater = tqdm(range(task_size))
         for i in iterater:
             iterater.set_description(f"[{i+1}/{task_size}]")
@@ -255,13 +288,12 @@ class VoxelFeatureGenerator():
                     _image_preprocess, params): \
                                                 params for params in params_chunk
                                 }            
-                #for future in as_completed(future_result):
+            # check if any error occured.
             for result in future_result.keys():
                 if isinstance(result.exception(),Exception):
-                    #print(future_result[result])
                     raise result.exception()
                     
-        
+        # end of process
         print(f'INFO: fMRI processing is done.')
         return
         
