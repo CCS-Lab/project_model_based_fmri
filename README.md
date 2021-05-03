@@ -34,6 +34,19 @@ Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-
 
 ## MVPA model
 
+## Example
+
+The following code is the simplest case of using the package. You can find the detail and other cases in the tutorials.
+
+``` python
+from mbmvpa.core.engine import run_mbmvpa
+
+_ = run_mbmvpa(bids_layout='tutorial_data/ccsl_prl',
+               dm_model='prl_fictitious_rp_woa',
+               task_name='prl',
+               process_name='PEchosen')
+```
+
 
 ## Input data
 
@@ -55,71 +68,6 @@ Ex.
                                        |-loss_association-test_z_FDR_0.01.nii.gz
 ```
 
-## Procedure
-
-<p align="center">
-  <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
-</p>
-
-
-## Flow
-
-<p align="center">
-  <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
-</p>
-
-Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to its [documentation](https://hbayesdm.readthedocs.io/en/v1.0.1/models.html) to check the available models. If the model you are looking for is not in the list, then you can still conduct the analysis with your precalculated latent process. In this case, please follow the corresponding use case in the example code. 
-
-Another important requirement is preparing a user-defined python "function" to calculate the latent space of the computational model. The function is assumed to work on each row of pandas.DataFrame. 
-
-``` python
-def user_defined_modulation(row:pandas.Series, param_dict:dict) -> pandas.Series:
-    # example from prospect theory model.
-    modulation = (row["gain"] ** param_dict["rho"]) - (param_dict["lambda"] * (row["loss"] ** param_dict["rho"]))
-    row["modulation"] = modulation
-    return row
-```
-
-### Usage example 
-
-It assumes that user prepared {BIDS_ROOT} satisfying input [requirements](#Notes). It also requires some {USER_DEFINED_...} functions, you can check the detail with example in our working notebook examples.
-
-``` python
-from mbmvpa.preprocessing.bids import bids_preprocess
-from mbmvpa.preprocessing.events import events_preprocess
-from mbmvpa.data.loader import prepare_dataset
-from mbmvpa.utils.coef2map import get_map
-from mbmvpa.models.regressor import mlp_regression
-
-root = {BIDS_ROOT}
-
-# process fMRI data for mb-mvpa [X]
-X, voxel_mask, layout, data_root = bids_preprocess(root, smoothing_fwhm=None, zoom=(2, 2, 2), ncore=2, nthread=4)
-
-# generate time series data of latent process [y]
-dm_model, df_events, signals, time_masks, _ = \
-    events_preprocess(root,
-                      modulation={USER_DEFINED_MODULATION_FUNCTION})
-
-# prepare dataset for MVPA regression
-X, y, voxel_mask = prepare_dataset(data_root)
-
-# train Multi-Layer Perceptron model with X, y
-coefs = mlp_regression(X, y,
-                       layout,
-                       layer_dims=[1024, 1024],
-                       activation="linear",
-                       dropout_rate=0.5,
-                       epochs=100,
-                       patience=10,
-                       batch_size=64,
-                       N=3,
-                       verbose=1)
-
-# extract brain activation pattern from trained model
-result = get_map(coefs, voxel_mask, task_name="tom2007_mlp", map_type="z", save_path=".", sigma=1)
-```
-
 ## Installation
 
 TODO. It would tenatatively be the below pip command.
@@ -127,15 +75,6 @@ TODO. It would tenatatively be the below pip command.
 ``` bash
 pip install mb-mvpa
 ```
-
-
-## Working examples
-
-Mixed gamble task by Tom et al. 2007 retrieved from https://openneuro.org/datasets/ds000005/versions/00001<br>
-[ipynb notebook link](https://nbviewer.jupyter.org/gist/mybirth0407/58c2f854a8b8790acfb525abedd92571#file-tom_mvpa_model_based_fmri-ipynb) (only viewer)
-
-Delayed discount task by Piva et al. 2019 retrieved from https://doi.org/10.18112/openneuro.ds001882.v1.0.5<br>
-notebook: TBU
 
 ## Resources
 - [**Documentation**](TODO) 
