@@ -41,6 +41,9 @@ The MVPA models for regressing voxel features against the target latent process 
 |ElasticNet|[link]()|
 |MLP|[link]()|
 |CNN|[link]()|
+
+
+
 You can also plug-in your own models for MB-MVPA analysis, so please refer to the [developer guide](~~). Be aware that the input dimension is likely to be high so training models would require a lot of computing resources including cores, memories and time. 
 
 ## Example
