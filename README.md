@@ -28,7 +28,12 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
 - MB-MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
-## Notes
+## Input
+
+<p align="center">
+  <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_input_layout.png" width="1000px">
+</p>
+
 
 Before using MB-MVPA, raw fMRI data should be primarily processed by conventional fMRI preprocessing pipeline. *recommend to use* [*fmriprep*](https://fmriprep.org/en/stable/) Then, the preprocessed fMRI data are required to be formatted as [**BIDS**](https://bids-specification.readthedocs.io/en/stable/) layout.
 
