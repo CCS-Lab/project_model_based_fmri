@@ -28,15 +28,7 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
 - MB-MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
-
-## Flow
-
-<p align="center">
-  <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
-</p>
-
-
-## Input
+## Input data
 
 <p align="center">
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_input_layout.png" width="1000px">
@@ -62,6 +54,12 @@ Ex.
                                          ...
                                        |-loss_association-test_z_FDR_0.01.nii.gz
 ```
+
+## Procedure
+
+<p align="center">
+  <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
+</p>
 
 
 ## Use case scenarios
