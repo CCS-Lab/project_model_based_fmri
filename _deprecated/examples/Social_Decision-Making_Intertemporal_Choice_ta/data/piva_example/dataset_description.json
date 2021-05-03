@@ -1,0 +1,18 @@
+{
+    "Name": "Social Decision-Making Intertemporal Choice Task Dataset",
+    "BIDSVersion": "1.0.2",
+    "License": "CC0",
+    "Authors": [
+        "Matthew Piva",
+        "Kayla Velnoskey",
+        "Ruonan Jia",
+        "Amrita Nair",
+        "Ifat Levy",
+        "Steve W.C. Chang"
+    ],
+    "Acknowledgements": "",
+    "HowToAcknowledge": "",
+    "Funding": ["Natural Sciences and Engineering Research Council of Canada Fellowship (PGSD3-471313-2015) awarded to M.P."],
+    "ReferencesAndLinks": ["Piva, M., Velnoskey, K., Jia, R., Nair, A., Levy, I., & Chang, S. W. (2019). The dorsomedial prefrontal cortex computes task-invariant relative subjective value for self and other. eLife, 8, e44939."],
+    "DatasetDOI": ""
+}
