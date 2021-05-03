@@ -34,7 +34,19 @@ Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-
 
 ## MVPA model
 
-The MVPA models for regressing voxel features against the target latent process can be implemented as any kinds of machine learning models for regression. The package support readily implemented a linear model (ElasticNet), and deep learning models (multi-layer perceptron (MLP) and convolutional neural network (CNN)). You can also use your own models for MB-MVPA analysis, so please refer to the [developer guide](~~). Be aware that the input dimension is likely to be high so training models would require a lot of computing resources including cores, memories and time. 
+The MVPA models for regressing voxel features against the target latent process can be implemented as any kinds of machine learning models for regression. The package support readily implemented a linear model (ElasticNet), and deep learning models (multi-layer perceptron (MLP) and convolutional neural network (CNN)). 
+
++------------+------------+
+| model      | examples   | 
++============+============+
+| ElasticNet | [link]()   |
++------------+------------+
+| MLP        | [link]()   |
++------------+------------+
+| CNN        | [link]()   | 
++------------+------------+
+
+You can also plug-in your own models for MB-MVPA analysis, so please refer to the [developer guide](~~). Be aware that the input dimension is likely to be high so training models would require a lot of computing resources including cores, memories and time. 
 
 ## Example
 
