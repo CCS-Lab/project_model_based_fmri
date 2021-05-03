@@ -8,7 +8,7 @@
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/mbmvpa_diagram.png" width="1000px">
 </p>
 
-**MB-MVPA** is a unified Python fMRI analysis tool to find a brain implementation of a latent behavioral state.
+**MB-MVPA** is a unified Python fMRI analysis tool on task-based fMRI data to find a brain implementation of a latent behavioral state.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MB-MVPA provides simple executable functions to conduct 
 computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. To [install](#Installation).
 
@@ -27,6 +27,13 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 - MB-MVPA is based on MVPA regression model.
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
 - MB-MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
+
+## Computational modeling
+
+Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to the [model list](~~) to check the available models and latent processes. If the model you are looking for is not in the list, then you can still conduct the analysis. In this case, please follow the corresponding use case the tutorials, which match best your situation.
+
+## MVPA model
+
 
 ## Input data
 
@@ -54,17 +61,6 @@ Ex.
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/dev0/images/pipeline_fig.png" >
 </p>
 
-
-## Use case scenarios
-
-From the below [flowchart](#Flow), the preprocessing of input data is done for fMRI images and event files respectively. In the fMRI preprocessing, users need to care about *bids root* and *mask* files*. (.. and some might need to consider core/thread # regarding their computing resource.) This procedure is same for all use cases, and has little freedom. However, the event preprocessing has much more freedom in procedure that users can run it considering their own data conditions or preferences. The issues of high-variability in use cases are the followings.
-
-
-1) Models in need are not implemented in hBayesDM (or might not want to fit models with the package).
-2) BIDS convention only necessitate "onset" and "duration" columns in event.file, so column names would not match with requirements of hBayesDM.
-3) In the counter-balanced task paradigms, only subsets of event data should be considered, which means it requires a function of "filtering." 
-
-The above issues are fully explained in the simple working example [notebooks](#Working examples). 
 
 ## Flow
 
