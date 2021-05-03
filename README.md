@@ -30,11 +30,11 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 
 ## Computational modeling
 
-Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to the [model list](~~) to check the available models and latent processes. Even the model you are looking for is not in the list, you can still conduct the analysis with some manipulations. In this case, please follow the corresponding use case the tutorials, which match best your situation.
+Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to the [model list](~~) to check the available models and latent processes. Even the model you are looking for is not in the list, you can still conduct the analysis with some manipulations. In this case, please follow use cases in the tutorials, which match best your situation.
 
 ## MVPA model
 
-The MVPA models for regressing voxel features against the target latent process can be implemented as any kinds of machine learning models for regression. The package support readily implemented a linear model (ElasticNet), and deep learning models (multi-layer perceptron (MLP) and convolutional neural network (CNN)). You can also use your own models for MB-MVPA analysis, so please refer to the [developer guide](~~). But, be aware that the input dimension is likely to be high so training models would require a lot of computing resources including cores, memories and time. 
+The MVPA models for regressing voxel features against the target latent process can be implemented as any kinds of machine learning models for regression. The package support readily implemented a linear model (ElasticNet), and deep learning models (multi-layer perceptron (MLP) and convolutional neural network (CNN)). You can also use your own models for MB-MVPA analysis, so please refer to the [developer guide](~~). Be aware that the input dimension is likely to be high so training models would require a lot of computing resources including cores, memories and time. 
 
 ## Example
 
@@ -91,5 +91,5 @@ pip install mb-mvpa
 [3] Poldrack, R. A. (2006). Can cognitive processes be inferred from neuroimaging data? Trends in Cognitive Sciences, 10(2), 59–63. https://doi.org/10.1016/j.tics.2005.12.004
 
 ## Developed by
-Yedarm Seong: mybirth0407@gmail.com<br>
 CheolJun Cho: cjfwndnsl@gmail.com<br>
+Yedarm Seong: mybirth0407@gmail.com<br>
