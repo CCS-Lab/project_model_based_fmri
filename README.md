@@ -28,6 +28,17 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 - MB-MVPA is flexible as it allows various MVPA models plugged in.
 - MB-MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
+The following code is the simplest case of using the package. You can find the detail and other cases in the tutorials.
+
+``` python
+from mbmvpa.core.engine import run_mbmvpa
+
+_ = run_mbmvpa(bids_layout='tutorial_data/ccsl_prl',
+               dm_model='prl_fictitious_rp_woa',
+               task_name='prl',
+               process_name='PEchosen')
+```
+
 ## Computational modeling
 
 Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python) package by Ahn et al. (2017)[1]. Please refer to the [model list](~~) to check the available models and latent processes. Even the model you are looking for is not in the list, you can still conduct the analysis with some manipulations. In this case, please follow use cases in the tutorials, which match best your situation.
@@ -45,20 +56,6 @@ The MVPA models for regressing voxel features against the target latent process 
 
 
 You can also plug-in your own models for MB-MVPA analysis, so please refer to the [developer guide](~~). Be aware that the input dimension is likely to be high so training models would require a lot of computing resources including cores, memories and time. 
-
-## Example
-
-The following code is the simplest case of using the package. You can find the detail and other cases in the tutorials.
-
-``` python
-from mbmvpa.core.engine import run_mbmvpa
-
-_ = run_mbmvpa(bids_layout='tutorial_data/ccsl_prl',
-               dm_model='prl_fictitious_rp_woa',
-               task_name='prl',
-               process_name='PEchosen')
-```
-
 
 ## Input data
 
