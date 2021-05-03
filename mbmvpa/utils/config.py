@@ -14,7 +14,6 @@ DEFAULT_MODULATION_SUFFIX = "modulation"
 DEFAULT_SIGNAL_SUFFIX = "signal"
 DEFAULT_TIMEMASK_SUFFIX = "timemask"
 DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME = "individual_params.tsv"
-DEFAULT_SAVE_PATH_CKPT = "mvpa/fitting_result"
 
 # configuration
 DEFAULT_ANALYSIS_CONFIGS = {

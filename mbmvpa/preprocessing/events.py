@@ -47,7 +47,7 @@ class LatentProcessGenerator():
         The path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
     task_name : str, default=None
-        The name of the task. If not given, the most common task name will be automatically selected.v
+        The name of the task. If not given, the most common task name will be automatically selected.
     process_name : str, default="unnamed"
         The name of the target latent process.
         It should be match with the name defined in computational modeling
