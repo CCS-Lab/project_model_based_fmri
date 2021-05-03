@@ -167,4 +167,5 @@ tests/*report*
 tutorials/*report*
 tutorials/*data*
 tutorials/result
-cached*
+cached*/
+_temp/
