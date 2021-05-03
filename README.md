@@ -37,6 +37,7 @@ Computational modeling is done by wrapping up [hBayesDM](https://github.com/CCS-
 The MVPA models for regressing voxel features against the target latent process can be implemented as any kinds of machine learning models for regression. The package support readily implemented a linear model (ElasticNet), and deep learning models (multi-layer perceptron (MLP) and convolutional neural network (CNN)). 
 
 |model|example|
+| :---: | :---: |
 |ElasticNet|[link]()|
 |MLP|[link]()|
 |CNN|[link]()|
