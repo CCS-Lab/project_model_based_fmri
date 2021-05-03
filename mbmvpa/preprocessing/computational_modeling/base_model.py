@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+## author: Cheoljun cho
+## contact: cjfwndnsl@gmail.com
+## last modification: 2021.05.03
+
+"""
+This code is an interface for implementing Python classes for 
+computational models.
+Most of models implemented in hBayesDM are implemented. 
+Refer to the codes in mbmvpa/preprocessing/computational_modeling/.
+"""
 
 class Base():
     def __init__(self, process_name):
