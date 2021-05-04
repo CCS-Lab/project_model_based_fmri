@@ -101,8 +101,7 @@ class MVPA_CV():
             subject_list = list(self.X_dict.keys())
             n_val_subj = int(self.method.split('-')[0])
             
-            assert len(subject_list)>n_val_subj, "The number of subject must be bigger than n_val_subj."
-            
+            assert len(subject_list)>n_val_subj, f"The number of subject must be bigger than the leave-out number, {n_val_subj}."
             
             for j in tqdm(range(self.n_cv_repeat),leave=True, desc='cv_repeat'):
                 random.shuffle(subject_list)

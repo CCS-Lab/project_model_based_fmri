@@ -5,14 +5,6 @@
 ## contact: cjfwndnsl@gmail.com
 ## last modification: 2021.05.03
 
-"""
-This code is for masking fMRI data ("events.tsv") to make voxel features.
-The mask image will be obtained by union of given mask images, 
-which are recommended to be downloaded from Neurosynth.
-The output files will be stored in the derivative BIDS layout for the package.
-You can expect a voxel feature npy file with shape=(time,feature_num) for each run of bold.nii files.
-"""
-
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 import numpy as np
@@ -33,6 +25,12 @@ import pdb
 class VoxelFeatureGenerator():
     r"""
     
+    *VoxelFeatureGenerator* is for masking fMRI data ("events.tsv") to make voxel features.
+    The mask image will be obtained by union of given mask images, 
+    which are recommended to be downloaded from Neurosynth.
+    The output files will be stored in the derivative BIDS layout for the package.
+    Users can expect a voxel feature npy file with shape=(time,feature_num) for each run of bold.nii files.
+
     Parameters
     ----------
     

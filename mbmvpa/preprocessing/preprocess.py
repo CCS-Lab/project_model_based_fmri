@@ -5,21 +5,6 @@
 ## contact: cjfwndnsl@gmail.com
 ## last modification: 2021.05.03
 
-"""
-This code is for wrapping preprocessing modules for fMRI data and behavioral data.
-
-The fMRI data preprocessing class, "VoxelFeatureGenerator," is for masking & zooming
-fMRI data ("events.tsv") to make voxel features.
-And, the behavioral data preprocessing class, "LatentProcessGenerator," is for 
-converting behavior data ("events.tsv") to BOLD-like signals.
-You can expect a voxel feature npy file with shape=(time,feature_num) for each run of bold.nii files, 
-and a modulation tsv file with onset, duration, modulation, 
-a time mask npy file, a binary map for indicating valid time points, and a 
-BOLD-like signal npy file for each run of events.tsv files.
-
-"""
-
-
 from .events import LatentProcessGenerator
 from .bold import VoxelFeatureGenerator
 import numpy as np
@@ -27,6 +12,18 @@ import numpy as np
 class DataPreprocessor():
     r"""
     
+    *DataPreprocessor* is for wrapping preprocessing modules for fMRI data and behavioral data.
+
+    The fMRI data preprocessing class, "VoxelFeatureGenerator," is for masking & zooming
+    fMRI data ("events.tsv") to make voxel features.
+    And, the behavioral data preprocessing class, "LatentProcessGenerator," is for 
+    converting behavior data ("events.tsv") to BOLD-like signals.
+    You can expect a voxel feature npy file with shape=(time,feature_num) for each run of bold.nii files, 
+    and a modulation tsv file with onset, duration, modulation, 
+    a time mask npy file, a binary map for indicating valid time points, and a 
+    BOLD-like signal npy file for each run of events.tsv files.
+
+
     Parameters
     ----------
     

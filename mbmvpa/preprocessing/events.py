@@ -5,15 +5,6 @@
 ## contact: cjfwndnsl@gmail.com
 ## last modification: 2021.04.29
 
-"""
-This code is for converting behavior data ("events.tsv") to BOLD-like signals,
-so the time dimension of them can match the time diemnsion of voxel feature data.
-The output files will be stored in the derivative BIDS layout for the package.
-You can expect a modulation tsv file with onset, duration, modulation, 
-a time mask npy file, a binary map for indicating valid time points, and a 
-BOLD-like signal npy file for each run of events.tsv files.
-"""
-
 from pathlib import Path
 
 import hbayesdm.models
@@ -34,6 +25,13 @@ from ..utils import config # configuration for default names used in the package
 class LatentProcessGenerator():
     r"""
     
+    *LatetentPrecessGenerator* is for converting behavior data ("events.tsv") to BOLD-like signals,
+    so the time dimension of them can match the time diemnsion of voxel feature data.
+    The output files will be stored in the derivative BIDS layout for the package.
+    You can expect a modulation tsv file with onset, duration, modulation, 
+    a time mask npy file, a binary map for indicating valid time points, and a 
+    BOLD-like signal npy file for each run of events.tsv files.
+
     Parameters
     ----------
     
