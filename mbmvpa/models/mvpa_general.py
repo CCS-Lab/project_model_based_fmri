@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 from mbmvpa.utils import config
 import random
 
-import pdb
 
 class MVPA_Base():
     # interface for MVPA model
@@ -99,6 +98,7 @@ class MVPA_CV():
         self.report_function_dict = report_function_dict
         self.output_stats = {}
         
+        # set save path with current time
         if self.cv_save:
             now = datetime.datetime.now()
             self.save_root = Path(cv_save_path) / f'report_{self.model.name}_{self.experiment_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
@@ -111,28 +111,44 @@ class MVPA_CV():
                         X_test,
                         y_test,
                         **kwargs):
-        
+        """
+        fit an MVPA model and return involved data
+        """
+        # 1. reset model
         self.model.reset()
+        
+        # make additional input parameter from model_param_dict
         for k,d in self.model_param_dict.items():
             kwargs[k] = d
+            
+        # 2. fit model
         self.model.fit(X_train,y_train, **kwargs)
         pred_train = self.model.predict(X_train)
         pred_test = self.model.predict(X_test)
+        
+        # 3. report results
+        
+        # if weight extraction is offered, get weights from models
         if 'get_weights' in dir(self.model):
             weights = self.model.get_weights() # {weight_name: weight_tensor_value}
         else:
             weights = None
-            
+        
+        # basic output layout
         output = {'weights':weights,
                  'pred_train':pred_train,
                   'y_train':y_train,
                   'y_test':y_test,
                  'pred_test':pred_test}
         
+        # if additional report function exists,
+        # add reported data to the output
         if 'report' in dir(self.model):
             additional_reports = self.model.report(**kwargs)
             for name, data in additional_reports.items():
                 output[name] = data
+                
+        # if save function is implemented in the model, save.
         if 'save' in dir(self.model):
             self.model.save(self.cv_save_path)
         return output
@@ -166,7 +182,8 @@ class MVPA_CV():
                     kwargs['repeat']=j
                     outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
                 
-        elif 'fold' in self.method:
+        elif 'fold' in self.method: # n-fold cross-validation
+            
             n_fold = int(self.method.split('-')[0])
             X = np.concatenate([v for _,v in self.X_dict.items()],0)
             y = np.concatenate([v for _,v in self.y_dict.items()],0)
@@ -186,17 +203,19 @@ class MVPA_CV():
                     kwargs['fold']=i
                     kwargs['repeat']=j
                     outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
-                 
+        
+        # statistics of outputs
         for _,output in outputs.items():
             for key in output.keys():
                 if key not in self.output_stats.keys():
                     self.output_stats[key] = 0
                 self.output_stats[key] += 1
-            
+
         print("INFO: output statistics")
         for key, count in self.output_stats.items():
                 print(f"      {key:<30}{count}")
-            
+        
+        # save raw data
         if self.cv_save:
             report_path = self.save_root/ 'raw_result'
             report_path.mkdir(exist_ok=True)
@@ -207,14 +226,16 @@ class MVPA_CV():
             print(f"INFO: results are saved at {str(report_path)}.")
         
         def reshape_dict(_dict, inner_keys):
+            # transpose-like function of dict.
             return {inner_key: {key:data[inner_key] for key,data in _dict.items()} for inner_key in inner_keys}
             
         def check_report_key(keys):
+            # sanity check if keywords required in report function exist in the outputs.
             for key in keys:
                 assert key in self.output_stats.keys(), f'{key} is not in {str(list(self.output_stats.keys()))}'
-                
+        
+        # run report functions and save reports
         for report_key, function in self.report_function_dict.items():
-            
             report_name, report_key = report_key[0], report_key[1:]
             check_report_key(report_key)
             save_path = Path(self.save_root)/report_name 
