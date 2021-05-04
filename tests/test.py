@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+## author: Cheoljun cho
+## contact: cjfwndnsl@gmail.com
+## last modification: 2021.05.03
+
+"""
+This is a test code for testing the package with
+a simplest input. The test file is made from Tom et al., 2007.
+
+https://openneuro.org/datasets/ds000005/versions/00001 
+
+"""
+
+
 from mbmvpa.core.engine import run_mbmvpa
 from pathlib import Path
 

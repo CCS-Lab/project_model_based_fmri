@@ -15,7 +15,6 @@ import json
 from bids import BIDSLayout
 import pandas as pd
 from ..utils.descriptor import make_mbmvpa_description, version_diff
-
 from ..utils import config # configuration for default names used in the package
 
 import pdb
