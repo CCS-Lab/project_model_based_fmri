@@ -80,7 +80,7 @@ class Report_PearsonR():
                         pred_train=[pred_train[key] for key in key_list],
                         pred_test=[pred_test[key] for key in key_list],
                      pval_threshold=self.pval_threshold)
-        
+
         
 def build_base_report_functions(voxel_mask,
                              task_name='unnamed',

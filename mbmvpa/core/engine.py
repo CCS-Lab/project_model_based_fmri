@@ -97,7 +97,7 @@ class MBMVPA():
                                 self.config['LOADER']['task_name'],
                                 self.config['LOADER']['process_name'],
                                 self.config['LOADER']['feature_name']])
-        self.config['MVPAREPORT'][self.mvpa_model_name]['task_name'] = result_name
+        self.config['MVPAREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
         self.config['MVPACV']['task_name'] = result_name
         
         # initiating internal modules for preprocessing input data

@@ -17,6 +17,7 @@ import random
 import pdb
 
 class MVPA_Base():
+    # interface for MVPA model
     def __init__(self):
         self.name = "unnamed"
     def reset(self,**kwargs):
@@ -28,6 +29,51 @@ class MVPA_Base():
     
 class MVPA_CV():
     
+    r"""
+    
+    MVPA_CV class runs cross-validation experiments for given X, y and a regression model.
+    To allow subjec-wise cross-validation, *leave-n-subject-out*,
+    X and y data are required to be in dictionary, which a subject's data can be indexed by its ID.
+    The cross-validation itself can be repeated, and contain the data involved including data used for training,
+    validating, model weights fitted, and additional report values the model offers. 
+    (an example of report values is internal cross-validation errors from fitting ElasticNet)
+    The data obtained from fitting models then post-processed by report functions in *report_function_dict*.
+    Making a brain activation map from interpreting models is also included in these report functions.
+    Please refer to mbmvpa.models.elasticnet and mbmvpa.models.tf_mlp for detail.
+    
+    Parameters
+    ----------
+    X_dict : dict
+        dictionary containing voxel features for each subject.
+        X_dict[{subject_id}] = np.array(time, voxel_num)
+    y_dict : dict
+        dictionary containing bold-like signals of latent process for each subject.
+        y_dict[{subject_id}] = np.array(time,)
+    model : MVPA_Base
+        MVPA model implemented uppon *MVPA_Base* interface. 
+        ElasticNet, MLP and CNN are available.
+        please refer to the documentation
+    model_param_dict : dict, default={}
+        dictionary for keywarded arguments, which will be additionally fed to MVPA model.
+        its uppon MVPA model implementation. Please check the codes of the models.
+        (not used in models offered by this package.)
+    method : str, default='5-fold'
+        name of method for cross-validation
+        "{n}-fold" : n will be parsed as integer and n cross-validation will be conducted.
+        "{n}-lnso" : n will be parsed as integer and leave-n-subject-out will be conducted.
+    n_cv_repaet : int, default=1
+        number of repetition of running cross-validation
+        bigger the valeu, more time for computation and more stability.
+    cv_save : boolean, default=True
+        indicate whether save results or not
+    cv_save_path : str or pathlib.PosixPath, default='.'
+        path for saving results.
+    experiment_name : str, default="unnamed"
+        name for cross-validation experiment
+    report_function : dict, default={}
+        dictionary for report function. 
+        please refer to mbmvpa.utils.report for the detail.
+    """
     def __init__(self, 
                 X_dict,
                 y_dict,
@@ -37,7 +83,7 @@ class MVPA_CV():
                 n_cv_repeat=1,
                 cv_save=True,
                 cv_save_path=".",
-                task_name="unnamed",
+                experiment_name="unnamed",
                 report_function_dict={}
                 ):
         
@@ -49,13 +95,13 @@ class MVPA_CV():
         self.n_cv_repeat = n_cv_repeat
         self.cv_save = cv_save
         self.cv_save_path = cv_save_path
-        self.task_name = task_name
+        self.experiment_name = experiment_name
         self.report_function_dict = report_function_dict
         self.output_stats = {}
         
         if self.cv_save:
             now = datetime.datetime.now()
-            self.save_root = Path(cv_save_path) / f'report_{self.model.name}_{self.task_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+            self.save_root = Path(cv_save_path) / f'report_{self.model.name}_{self.experiment_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir(exist_ok=True)
             
     
@@ -64,7 +110,7 @@ class MVPA_CV():
                         y_train,
                         X_test,
                         y_test,
-                       **kwargs):
+                        **kwargs):
         
         self.model.reset()
         for k,d in self.model_param_dict.items():
