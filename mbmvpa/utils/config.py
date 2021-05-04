@@ -84,6 +84,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'n_sample': 100000,
             'use_bias': True,
             'use_bipolar_balancing': False,
+            'gpu_visible_devices':[0]
         },
         'cnn':{
             'layer_dims': [8, 16, 32],
@@ -102,12 +103,14 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'n_sample': 100000,
             'batch_norm': True,
             'use_bipolar_balancing': False,
+            'gpu_visible_devices':[0]
         }
     },
     'MVPACV':{
         'method':'5-fold',
         'n_cv_repeat':1,
         'cv_save':True,
+        
     },
     'MVPAREPORT':{
         'elasticnet':{
@@ -118,7 +121,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         },
         'mlp':{
             'map_type': 'z',
-            'sigma': 1
+            'sigma': 1,
         },
         'cnn':{
             'map_type': 'z',

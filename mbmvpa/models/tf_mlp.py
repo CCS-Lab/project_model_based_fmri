@@ -14,6 +14,7 @@ import random
 import os
 from pathlib import Path
 
+
 class MVPA_MLP(MVPA_Base):
     
     def __init__(self, 
@@ -31,7 +32,9 @@ class MVPA_MLP(MVPA_Base):
                  n_batch = 64,
                  n_sample = 30000,
                  use_bias = True,
-                 use_bipolar_balancing = False):
+                 use_bipolar_balancing = False,
+                 gpu_visible_devices = None,
+                 **kwargs):
         
         self.name = "MLP_TF"
         if isinstance(input_shape, int):
@@ -52,6 +55,8 @@ class MVPA_MLP(MVPA_Base):
         self.val_ratio = val_ratio
         self.use_bipolar_balancing = use_bipolar_balancing
         self.model = None
+        if gpu_visible_devices is not None:
+            os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices]v)
     
     
     def reset(self,**kwargs):

@@ -16,9 +16,16 @@ import random
 
 
 class MVPA_Base():
+    
     # interface for MVPA model
-    def __init__(self):
+    # recommend to add **kwargs for each function
+    # to avoid any conflict
+    
+    def __init__(self,
+                 voxel_mask=None,
+                 **kwargs):
         self.name = "unnamed"
+        
     def reset(self,**kwargs):
         return
     def fit(self,X,y,**kwargs):

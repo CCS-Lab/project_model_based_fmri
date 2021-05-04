@@ -240,8 +240,8 @@ class MBMVPA():
         # set MVPA model and report function
         input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
         self.config['MVPA'][self.mvpa_model_name]['input_shape'] = input_shape
-        self.model = self._mvpa_model_class(voxel_mask=voxel_mask,
-                                            **self.config['MVPA'][self.mvpa_model_name])
+        self.config['MVPA'][self.mvpa_model_name]['voxel_mask'] = voxel_mask
+        self.model = self._mvpa_model_class(**self.config['MVPA'][self.mvpa_model_name])
         self.report_function_dict = self._mvpa_report_func(voxel_mask=voxel_mask, 
                                                           **self.config['MVPAREPORT'][self.mvpa_model_name])
         

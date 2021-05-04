@@ -36,7 +36,9 @@ class MVPA_CNN(MVPA_Base):
                  n_sample = 30000,
                  batch_norm=True,
                  use_bipolar_balancing = False,
-                 voxel_mask=None):
+                 voxel_mask=None,
+                 gpu_visible_devices = None,
+                 **kwargs):
         
         self.name = "CNN_TF"
         self.input_shape = input_shape
@@ -58,6 +60,8 @@ class MVPA_CNN(MVPA_Base):
         self.use_bipolar_balancing = use_bipolar_balancing
         self.voxel_mask = voxel_mask
         self.model = None
+        if gpu_visible_devices is not None:
+            os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
     
     
     def reset(self,**kwargs):
