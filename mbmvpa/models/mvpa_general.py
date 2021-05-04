@@ -173,9 +173,9 @@ class MVPA_CV():
             
                 inner_iterater = tqdm(subject_ids_list,desc='subject',leave=False)
                 for i, subject_ids in enumerate(inner_iterater):
-                    inner_iterater.set_description(f"subject_{subject_id}")
-                    X_test = np.concatengate([self.X_dict[subject_id] for subject_id in subject_ids],0)
-                    y_test = np.concatengate([self.y_dict[subject_id] for subject_id in subject_ids],0)
+                    inner_iterater.set_description(f"subject_{subject_ids}")
+                    X_test = np.concatenate([self.X_dict[subject_id] for subject_id in subject_ids],0)
+                    y_test = np.concatenate([self.y_dict[subject_id] for subject_id in subject_ids],0)
                     
                     X_train = np.concatenate([self.X_dict[v] for v in subject_list if v not in subject_ids],0)
                     y_train = np.concatenate([self.y_dict[v] for v in subject_list if v not in subject_ids],0)

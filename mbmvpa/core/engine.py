@@ -164,6 +164,8 @@ class MBMVPA():
                         added_keywords.append(k)
                     else:
                         recursive_add(kwargs,d)
+                        
+        recursive_add(kwargs, self.config)
         
         # any non-found keyword in default will be regarded as 
         # keyword for hBayesDM
@@ -171,7 +173,6 @@ class MBMVPA():
             if keyword not in added_keywords:
                 self.config['HBAYESDM'][keyword] = value
         
-        recursive_add(kwargs, self.config)
         
     def _add_latent_info_kwargs(self, dm_model, process_name, kwargs):
         """
