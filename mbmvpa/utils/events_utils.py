@@ -74,11 +74,12 @@ def _make_function_dfwise(function):
                     new_df.append(row)
             else:
                 new_df.append(output)
-
+        
         new_df = pd.concat(
             new_df, axis=1,
             keys=[s.name for s in new_df]
         ).transpose()
+            
         return new_df
     
     return dfwise_function

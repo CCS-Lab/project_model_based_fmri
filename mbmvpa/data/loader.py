@@ -6,18 +6,6 @@
 ## last modification: 2020.12.17
 
 
-"""
-This code is for loading preprocessed fMRI and behaviral data. 
-The files for voxel features, bold-like signals of latent process, time masks,
-and a voxel mask will be aggregated subject-wisely.
-A tensor X with shape (time, voxel_feature_num), and a tensor y with shape (time,)
-will be prepared for each subject. 
-The users can dictionaries for X,y indexed by corresponding subject IDs. 
-Also, temporal masking will be done for each data using time mask file 
-along the time dimension for both of X and y data. 
-Check the codes below for the detail.
-"""
-
 from pathlib import Path
 
 import nibabel as nib
@@ -61,6 +49,16 @@ class Normalizer():
 class BIDSDataLoader():
     
     r"""
+    
+    BIDSDataLoader is for loading preprocessed fMRI and behaviral data. 
+    The files for voxel features, bold-like signals of latent process, time masks,
+    and a voxel mask will be aggregated subject-wisely.
+    A tensor X with shape (time, voxel_feature_num), and a tensor y with shape (time,)
+    will be prepared for each subject. 
+    The users can dictionaries for X,y indexed by corresponding subject IDs. 
+    Also, temporal masking will be done for each data using time mask file 
+    along the time dimension for both of X and y data. 
+    Check the codes below for the detail.
     
     Parameters
     ----------
@@ -128,7 +126,7 @@ class BIDSDataLoader():
         
         if verbose > 0:
             print('INFO: retrieving from '+str(self.layout))
-            print(f'      task-{task_name}, process-{process_name}, featurre-{feature_name}')
+            print(f'      task-{task_name}, process-{process_name}, feature-{feature_name}')
             
         self.task_name=task_name
         self.process_name=process_name

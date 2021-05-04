@@ -14,12 +14,11 @@ from scipy.stats import ttest_1samp, zscore
 
 
 def reconstruct(array, mask):
-    assert (mask==1).sum() == len(array)
     
     if array.shape[-1] == 1:
         array = array.squeeze(-1)
     blackboard = np.zeros(list(mask.shape))
-    blackboard[mask.nonzero()] = array.squeeze()
+    blackboard[mask.nonzero()] = array
     
     return blackboard
     

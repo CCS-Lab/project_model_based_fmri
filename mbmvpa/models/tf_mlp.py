@@ -56,7 +56,7 @@ class MVPA_MLP(MVPA_Base):
         self.use_bipolar_balancing = use_bipolar_balancing
         self.model = None
         if gpu_visible_devices is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices]v)
+            os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
     
     
     def reset(self,**kwargs):

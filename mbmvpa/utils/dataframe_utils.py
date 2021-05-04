@@ -20,20 +20,27 @@ def get_named_iterater(df_events, name_list, default={}):
 # arithmetic helper functions
 
 def inv_logit(p):
+    p = float(p)
     return np.exp(p) / (1 + np.exp(p))
 
 def exp(x):
+    x = float(x)
     return np.exp(x)
 
 def log1m(x):
+    x = float(x)
     return np.log(1-x)
 
 def sign_out(gain,loss):
+    gain = float(gain)
+    loss = float(loss)
     return np.sign(gain-np.abs(loss))
 
 def log(x):
+    x = float(x)
     return np.log(x)
 
 def softmax(x):
+    x = float(x)
     f_x = np.exp(x) / np.sum(np.exp(x))
     return f_x
