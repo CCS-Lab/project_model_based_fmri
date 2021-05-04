@@ -29,7 +29,7 @@ class MVPA_ElasticNet(MVPA_Base):
                  n_splits=5,
                  **kwargs):
         
-        # [alpha * L1 + (1-alpha)/2 * L2] * lambda
+        # penalty = [alpha * L1 + (1-alpha)/2 * L2] * lambda
         
         self.shuffle = shuffle
         self.n_jobs = n_jobs

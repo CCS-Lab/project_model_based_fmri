@@ -168,6 +168,7 @@ class BIDSController():
                      }
         
         for bold_file in self.get_bold_all():
+            
             entities = bold_file.get_entities()
             if 'session' in entities.keys(): 
                 # if session is included in BIDS

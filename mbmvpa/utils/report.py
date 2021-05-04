@@ -8,12 +8,12 @@ class Report_BrainMap():
     
     def __init__(self,
                 voxel_mask,
-             task_name='unnamed',
-             map_type='z',
-             sigma=1):
+                 experiment_name='unnamed',
+                 map_type='z',
+                 sigma=1):
         
         self.voxel_mask = voxel_mask
-        self.task_name = task_name
+        self.experiment_name = experiment_name
         self.map_type = map_type
         self.sigma = sigma
         
@@ -28,7 +28,7 @@ class Report_BrainMap():
         else:
             coefs = weights.reshape(-1, weights.shape[-1])
             
-        get_map(coefs, self.voxel_mask, self.task_name,
+        get_map(coefs, self.voxel_mask, self.experiment_name,
                 map_type=self.map_type, save_path=save_path, sigma=self.sigma)
 
 class Report_ElasticNet():
@@ -83,7 +83,7 @@ class Report_PearsonR():
 
         
 def build_base_report_functions(voxel_mask,
-                             task_name='unnamed',
+                             experiment_name='unnamed',
                              map_type='z',
                              sigma=1
                              ):
@@ -92,7 +92,7 @@ def build_base_report_functions(voxel_mask,
 
     report_function_dict[('brain_map',
                           'weights') ] = Report_BrainMap(voxel_mask,
-                                                         task_name,
+                                                         experiment_name,
                                                          map_type,
                                                          sigma)
     report_function_dict[('pearsonr',
@@ -107,7 +107,7 @@ def build_base_report_functions(voxel_mask,
 def build_elasticnet_report_functions(voxel_mask,
                                      confidence_interval=.99,
                                      n_coef_plot=150,
-                                     task_name='unnamed',
+                                     experiment_name='unnamed',
                                      map_type='z',
                                      sigma=1
                                      ):
@@ -123,7 +123,7 @@ def build_elasticnet_report_functions(voxel_mask,
 
     report_function_dict[('brain_map',
                           'weights') ] = Report_BrainMap(voxel_mask,
-                                                         task_name,
+                                                         experiment_name,
                                                          map_type,
                                                          sigma)
     report_function_dict[('pearsonr',

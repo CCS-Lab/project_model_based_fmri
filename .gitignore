@@ -156,6 +156,7 @@ examples/*/*scratch*
 examples/scratch/*
 tests/test_example
 tests/test_example/*
+tests/test_report
 tests/Untitled*
 tests/report*
 tests/*.ipynb

@@ -73,6 +73,7 @@ class MVPA_CV():
         dictionary for report function. 
         please refer to mbmvpa.utils.report for the detail.
     """
+    
     def __init__(self, 
                 X_dict,
                 y_dict,

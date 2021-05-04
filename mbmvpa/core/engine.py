@@ -98,7 +98,7 @@ class MBMVPA():
                                 self.config['LOADER']['process_name'],
                                 self.config['LOADER']['feature_name']])
         self.config['MVPAREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
-        self.config['MVPACV']['task_name'] = result_name
+        self.config['MVPACV']['experiment_name'] = result_name
         
         # initiating internal modules for preprocessing input data
         self.X_generator = VoxelFeatureGenerator(**self.config['VOXELFEATURE'])
@@ -152,6 +152,7 @@ class MBMVPA():
         find the leaf node in configuration tree which match the keyward.
         then override the value.
         """
+        added_keywords = []
         def recursive_add(kwargs,config):
             # recursive function
             if not isinstance(config,dict):
@@ -160,8 +161,15 @@ class MBMVPA():
                 for k,d in config.items():
                     if k in kwargs.keys():
                         config[k] = kwargs[k]
+                        added_keywords.append(k)
                     else:
                         recursive_add(kwargs,d)
+        
+        # any non-found keyword in default will be regarded as 
+        # keyword for hBayesDM
+        for keyword,value in kwargs.items():
+            if keyword not in added_keywords:
+                self.config['HBAYESDM'][keyword] = value
         
         recursive_add(kwargs, self.config)
         
@@ -203,7 +211,7 @@ class MBMVPA():
         
         return recursive_copy(self.config)
     
-    def run(self):
+    def run(self,overwrite=False):
         """
         run the following procedures.
         
@@ -213,10 +221,11 @@ class MBMVPA():
         """
         
         # X (fMRI): masking & zooming
-        self.X_generator.run() 
+        self.X_generator.run(overwrite=overwrite) 
         
         # y (latent process): comp. model. & hrf convolution
-        self.y_generator.run(modeling_kwargs=self.config['HBAYESDM']) 
+        self.y_generator.run(modeling_kwargs=self.config['HBAYESDM'],
+                            overwrite=overwrite) 
         
         # set layout for loading X, y data
         self.bids_controller.reload()

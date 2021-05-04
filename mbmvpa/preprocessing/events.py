@@ -293,7 +293,7 @@ class LatentProcessGenerator():
                 "if df_events is None, must be assigned to dm_model.")
             
             if df_events is None:
-                df_events_list,_ = self._init_df_events_from_bids(adjust_function=adjust_function)
+                df_events_list,_ = self._init_df_events_from_bids()
                 df_events_list = [filter_function_dfwise(
                                         adjust_function_dfwise(df_events)) for df_events in df_events_list]
                 df_events_list = [df_events.sort_values(by=self.onset_name) for df_events in df_events_list]
