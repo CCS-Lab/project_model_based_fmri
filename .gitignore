@@ -144,29 +144,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Example data
-*scratch*
-examples/*/*.npy
-examples/*/*/*.nii*
-examples/*/*.nii*
-examples/*.nii*
-examples/*/*.tsv
-examples/*/*.pkl
-examples/*/*scratch*
-examples/scratch/*
+# test & tutorial data
 tests/test_example
-tests/test_example/*
 tests/test_report
-tests/Untitled*
-tests/report*
-tests/*.ipynb
-tutorials/report*
-tutorials/scratch*
+tutorials/tutorial_data
+tutorials/tutorial_report
 .DS_Store
-*.mat
-tests/*report*
-tutorials/*report*
-tutorials/*data*
-tutorials/result
 cached*/
 _deprecated
