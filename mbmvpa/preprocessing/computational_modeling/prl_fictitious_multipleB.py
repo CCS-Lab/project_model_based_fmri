@@ -1,5 +1,4 @@
-from mbmvpa.utils.dataframe_utils import *
-from .base_model import Base
+from mbmvpa.utils.computational_modeling_utils import *
 
 class ComputationalModel(Base):
     def _set_latent_process(self, df_events, param_dict):

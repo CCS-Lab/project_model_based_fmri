@@ -1,5 +1,4 @@
-from mbmvpa.utils.dataframe_utils import *
-from .base_model import Base
+from mbmvpa.utils.computational_modeling_utils import *
 
 class ComputationalModel(Base):
     def _set_latent_process(self, df_events, param_dict):
@@ -36,7 +35,8 @@ class ComputationalModel(Base):
                 else:
                     U_opt[0] =  w_prob[0]*(opt1hval**rho) - w_prob[1]* (abs(opt1lval)**rho)*lambda_
             else:
-                U_opt[0] = -w_prob[0]*(abs(opt1hval)**rho)*lambda_- w_prob[1]*(abs(opt1lval)^rho)*lambda_
+                U_opt[0] = -w_prob[0]*(abs(opt1hval)**rho)*lambda_- w_prob[1]*(abs(opt1lval)**rho)*lambda_
+                
             
             if opt2hval > 0:
                 if opt2lval >= 0:

@@ -1,5 +1,4 @@
-from mbmvpa.utils.dataframe_utils import *
-from .base_model import Base
+from mbmvpa.utils.computational_modeling_utils import *
 
 # Not implemented due to complex preprocessing in hBayesDM
 
