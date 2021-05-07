@@ -13,9 +13,11 @@ import tempfile
 import random
 import os
 from pathlib import Path
+from .tf_mlp import MVPA_MLP
 
 
-class MVPA_MLP(MVPA_Base):
+    
+class MVPA_MLP_SHAP(MVPA_MLP):
     
     def __init__(self, 
                  input_shape,
@@ -34,57 +36,34 @@ class MVPA_MLP(MVPA_Base):
                  use_bias = True,
                  use_bipolar_balancing = False,
                  gpu_visible_devices = None,
+                 use_null_background = False,
+                 background_num = 1000,
+                 sample_num = 1000
                  **kwargs):
         
-        self.name = "MLP_TF"
-        if isinstance(input_shape, int):
-            input_shape = [input_shape,]
-        self.input_shape = input_shape
-        self.layer_dims = layer_dims
-        self.activation = activation
-        self.activation_output = activation_output
-        self.dropout_rate = dropout_rate
-        self.optimizer = optimizer
-        self.loss = loss
-        self.learning_rate = learning_rate
-        self.use_bias = use_bias
-        self.n_patience = n_patience
-        self.n_batch = n_batch
-        self.n_sample = n_sample
-        self.n_epoch = n_epoch
-        self.val_ratio = val_ratio
-        self.use_bipolar_balancing = use_bipolar_balancing
-        self.model = None
-        if gpu_visible_devices is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
-    
-    
-    def reset(self,**kwargs):
+        super().__init__(input_shape,
+                         layer_dims=[1024, 1024],
+                         activation="linear",
+                         activation_output="linear",
+                         dropout_rate=0.5,
+                         val_ratio=0.2,
+                         optimizer="adam",
+                         loss="mse",
+                         learning_rate=0.001,
+                         n_epoch = 50,
+                         n_patience = 10,
+                         n_batch = 64,
+                         n_sample = 30000,
+                         use_bias = True,
+                         use_bipolar_balancing = False,
+                         gpu_visible_devices = None,
+                         **kwargs)
         
-        self.model = Sequential()
-        self.model.add(Dense(self.layer_dims[0],
-                        activation=self.activation,
-                        input_shape=self.input_shape,
-                        use_bias=self.use_bias))
-        self.model.add(Dropout(self.dropout_rate))
-
-        # add layers
-        for dim in self.layer_dims[1:]:
-            self.model.add(Dense(dim, activation=self.activation, use_bias=self.use_bias))
-            self.model.add(Dropout(self.dropout_rate))
-
-        self.model.add(Dense(1, activation=self.activation_output, use_bias=self.use_bias))
+        self.background_num = background_num
+        self.use_null_background = use_null_background
+        self.sample_num = sample_num
+        self.shap_values = None
         
-        # set optimizer
-        if self.optimizer == "adam":
-            optlayer = Adam(learning_rate=self.learning_rate,name=self.optimizer)
-        else: # not implemented
-            optlayer = Adam(learning_rate=self.learning_rate,name=self.optimizer)
-
-        self.model.compile(loss=self.loss, optimizer=self.optimizer)
-
-        return 
-
     def fit(self,X,y,**kwargs):
         # add saving total weights. get input from user
         if self.model is None:
@@ -143,20 +122,15 @@ class MVPA_MLP(MVPA_Base):
         os.remove(best_model_filepath+'.data-00000-of-00001')
         os.remove(best_model_filepath+'.index')
         
+        background = X_train[np.random.choice(X_train.shape[0], self.background_num, replace=False)]
+        sample =  X_test[np.random.choice(X_test.shape[0], self.sample_num, replace=False)]
+        e = shap.DeepExplainer(self.model, background)
+        self.shap_values = e.shap_values(sample)[0]
         return
     
     def predict(self,X,**kwargs):
         return self.model.predict(X)
     
     def get_weights(self,**kwargs):
-        weights = []
-        for layer in self.model.layers:
-            if "dense" not in layer.name:
-                continue
-            weights.append(layer.get_weights()[0])
-
-        coef = weights[0]
-        for weight in weights[1:]:
-            coef = np.matmul(coef, weight)
-
-        return coef
+        
+        return self.shap_values.mean(0)

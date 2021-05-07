@@ -15,12 +15,14 @@ import yaml, importlib, copy
 # dictionary for module path and class name for implemented model.
 MVPA_MODEL_DICT = {'elasticnet':['mbmvpa.models.elasticnet','MVPA_ElasticNet'],
                    'mlp':['mbmvpa.models.tf_mlp','MVPA_MLP'],
+                   'mlp_shap':['mbmvpa.models.tf_mlp_shap','MVPA_MLP_SHAP'],
                    'cnn':['mbmvpa.models.tf_cnn','MVPA_CNN']}
 
 # dictionary for report function for implemented model.
 MVPA_REPORT_DICT = {'elasticnet':build_elasticnet_report_functions,
                    'mlp':build_base_report_functions,
-                   'cnn':build_base_report_functions}
+                   'cnn':build_base_report_functions,
+                   'mlp_shap':build_base_report_functions,}
 
 NEED_RECONSTRUCT_MODEL = ['cnn']
 
