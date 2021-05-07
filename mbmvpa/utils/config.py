@@ -106,7 +106,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'gpu_visible_devices':[0]
         },
         'mlp_shap':{
-            'layer_dims': [1024, 1024],
+            'layer_dims': [512, 512],
             'activation': 'linear',
             'activation_output': 'linear',
             'dropout_rate': 0.5,
@@ -116,14 +116,14 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'loss': 'mse',
             'n_epoch': 50,
             'n_patience': 10,
-            'n_batch': 64,
+            'n_batch': 32,
             'n_sample': 100000,
             'use_bias': True,
             'use_bipolar_balancing': False,
             'gpu_visible_devices':[0],
-            'use_null_background':False,
+            'use_null_background': True,
             'background_num': 1000,
-            'sample_num' : 1000,
+            'sample_num' : 100,
         },
     },
     'MVPACV':{

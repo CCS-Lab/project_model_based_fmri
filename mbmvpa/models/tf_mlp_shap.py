@@ -38,26 +38,26 @@ class MVPA_MLP_SHAP(MVPA_MLP):
                  use_bipolar_balancing = False,
                  gpu_visible_devices = None,
                  use_null_background = False,
-                 background_num = 1000,
+                 background_num = 100,
                  sample_num = 1000,
                  **kwargs):
         
         super().__init__(input_shape,
-                         layer_dims=[1024, 1024],
-                         activation="linear",
-                         activation_output="linear",
-                         dropout_rate=0.5,
-                         val_ratio=0.2,
-                         optimizer="adam",
-                         loss="mse",
-                         learning_rate=0.001,
-                         n_epoch = 50,
-                         n_patience = 10,
-                         n_batch = 64,
-                         n_sample = 30000,
-                         use_bias = True,
-                         use_bipolar_balancing = False,
-                         gpu_visible_devices = None,
+                         layer_dims=layer_dims,
+                         activation=activation,
+                         activation_output=activation_output,
+                         dropout_rate=dropout_rate,
+                         val_ratio=val_ratio,
+                         optimizer=optimizerv,
+                         loss=loss,
+                         learning_rate=learning_rate,
+                         n_epoch = n_epoch,
+                         n_patience = n_patiencev,
+                         n_batch = n_batch,
+                         n_sample = n_sample,
+                         use_bias = use_bias,
+                         use_bipolar_balancing = use_bipolar_balancing,
+                         gpu_visible_devices = gpu_visible_devices,
                          **kwargs)
         
         self.background_num = background_num
@@ -123,8 +123,10 @@ class MVPA_MLP_SHAP(MVPA_MLP):
         
         os.remove(best_model_filepath+'.data-00000-of-00001')
         os.remove(best_model_filepath+'.index')
-        
-        background = X_train[np.random.choice(X_train.shape[0], self.background_num, replace=False)]
+        if  self.use_null_background:
+            background = np.zeros([1]+list(X_train.shape)[1:])
+        else:
+            background = X_train[np.random.choice(X_train.shape[0], self.background_num, replace=False)]
         sample =  X_test[np.random.choice(X_test.shape[0], self.sample_num, replace=False)]
         e = shap.DeepExplainer(self.model, background)
         self.shap_values = e.shap_values(sample)[0]
