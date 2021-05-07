@@ -33,7 +33,7 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                n_core=4,
                n_thread=4,
                method='5-fold',
-               gpu_visible_devices=[2],
+               gpu_visible_devices=[3],
               adjust_function= example_adjust,
               filter_function=example_filter,
-              overwrite=True)
+              overwrite=False)

@@ -36,4 +36,4 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                gpu_visible_devices=[2],
               adjust_function= example_adjust,
               filter_function=example_filter,
-              overwrite=True)
+              overwrite=False)

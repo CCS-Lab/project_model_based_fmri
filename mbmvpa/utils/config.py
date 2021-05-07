@@ -104,7 +104,27 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'batch_norm': True,
             'use_bipolar_balancing': False,
             'gpu_visible_devices':[0]
-        }
+        },
+        'mlp_shap':{
+            'layer_dims': [1024, 1024],
+            'activation': 'linear',
+            'activation_output': 'linear',
+            'dropout_rate': 0.5,
+            'val_ratio': 0.2,
+            'optimizer': 'adam',
+            'learning_rate': 0.001,
+            'loss': 'mse',
+            'n_epoch': 50,
+            'n_patience': 10,
+            'n_batch': 64,
+            'n_sample': 100000,
+            'use_bias': True,
+            'use_bipolar_balancing': False,
+            'gpu_visible_devices':[0],
+            'use_null_background':False,
+            'background_num': 1000,
+            'sample_num' : 1000,
+        },
     },
     'MVPACV':{
         'method':'5-fold',
@@ -124,6 +144,10 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'sigma': 1,
         },
         'cnn':{
+            'map_type': 'z',
+            'sigma': 1,
+        },
+        'mlp_shap':{
             'map_type': 'z',
             'sigma': 1,
         },

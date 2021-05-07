@@ -13,6 +13,7 @@ import tempfile
 import random
 import os
 from pathlib import Path
+
 from .tf_mlp import MVPA_MLP
 
 
@@ -38,7 +39,7 @@ class MVPA_MLP_SHAP(MVPA_MLP):
                  gpu_visible_devices = None,
                  use_null_background = False,
                  background_num = 1000,
-                 sample_num = 1000
+                 sample_num = 1000,
                  **kwargs):
         
         super().__init__(input_shape,
@@ -63,6 +64,7 @@ class MVPA_MLP_SHAP(MVPA_MLP):
         self.use_null_background = use_null_background
         self.sample_num = sample_num
         self.shap_values = None
+        self.name = "MLP_TF_SHAP"
         
     def fit(self,X,y,**kwargs):
         # add saving total weights. get input from user
