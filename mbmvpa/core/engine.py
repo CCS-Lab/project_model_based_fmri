@@ -7,7 +7,7 @@
 from ..preprocessing.events import LatentProcessGenerator
 from ..preprocessing.bold import VoxelFeatureGenerator
 from ..data.loader import BIDSDataLoader
-from ..models.mvpa_general import MVPA_CV
+from ..models.mvpa_general import MVPA_CV,MVPA_CV_1stL
 from ..utils.config import DEFAULT_ANALYSIS_CONFIGS
 from ..utils.report import build_elasticnet_report_functions, build_base_report_functions
 import yaml, importlib, copy
@@ -28,6 +28,7 @@ def run_mbmvpa(config=None,
               mvpa_model='elasticnet',
               report_path='.',
               overwrite=False,
+              level=None,
               **kwargs):
     
     # callable wrapper of MBMVPA
@@ -35,6 +36,7 @@ def run_mbmvpa(config=None,
     mbmvpa = MBMVPA(config=config,
                      mvpa_model=mvpa_model,
                      report_path=report_path,
+                     level=level,
                      **kwargs)
 
     return mbmvpa.run(overwrite=overwrite)
@@ -75,6 +77,7 @@ class MBMVPA():
                  config=None,
                  mvpa_model='elasticnet',
                  report_path='.',
+                 level=None,
                  **kwargs):
         
         # load & set configuration
@@ -120,6 +123,10 @@ class MBMVPA():
         self.model = None
         self.report_function_dict = None
         self.model_cv = None
+        if level is None:
+            self.model_cv_builder = MVPA_CV
+        elif level == '1st':
+            self.model_cv_builder = MVPA_CV_1stL
         
     def _override_config(self,config):
         """
@@ -246,11 +253,11 @@ class MBMVPA():
                                                           **self.config['MVPAREPORT'][self.mvpa_model_name])
         
         # set cross-validation module of MVPA (model_cv)
-        self.model_cv = MVPA_CV(X_dict,
-                                y_dict,
-                                self.model,
-                                report_function_dict=self.report_function_dict,
-                                **self.config['MVPACV'])
+        self.model_cv = self.model_cv_builder(X_dict,
+                                                y_dict,
+                                                self.model,
+                                                report_function_dict=self.report_function_dict,
+                                                **self.config['MVPACV'])
         
         # run model_cv: fit models & interprete models 
         reports = self.model_cv.run()

@@ -27,11 +27,54 @@ class MVPA_Base():
         self.name = "unnamed"
         
     def reset(self,**kwargs):
-        return
+        pass
+    
     def fit(self,X,y,**kwargs):
-        return
+        pass
+    
     def predict(self,X,**kwargs):
-        return 
+        pass
+    
+class MVPA_CV_1stL():
+    def __init__(self, 
+                X_dict,
+                y_dict,
+                model,
+                model_param_dict={},
+                method='5-fold',
+                n_cv_repeat=1,
+                cv_save=True,
+                cv_save_path=".",
+                experiment_name="unnamed",
+                report_function_dict={}):
+        
+        assert len(X_dict) == len(y_dict)
+        self.n_subject = len(X_dict)
+        self.mvpa_cv_dict= {subj_id:MVPA_CV(X_dict={subj_id:X_dict[subj_id]},
+                                            y_dict={subj_id:y_dict[subj_id]},
+                                            model=model,
+                                            model_param_dict=model_param_dict,
+                                            method=method,
+                                            n_cv_repeat=n_cv_repeat,
+                                            cv_save=False,
+                                            cv_save_path=None,
+                                           experiment_name=experiment_name,
+                                           report_function_dict=report_function_dict) for subj_id in X_dict.keys()}
+        if cv_save:
+            now = datetime.datetime.now()
+            self.save_root = Path(cv_save_path) / f'report_{model.name}_{experiment_name}-1stlevel_{method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+            self.save_root.mkdir(exist_ok=True)
+            for subj_id in X_dict.keys():
+                subj_save_root = self.save_root / subj_id
+                subj_save_root.mkdir(exist_ok=True)
+                self.mvpa_cv_dict[subj_id].save_root = subj_save_root
+                self.mvpa_cv_dict[subj_id].cv_save = True
+    
+    def run(self,**kwargs):
+        for _, mvpa_cv in tqdm(self.mvpa_cv_dict.items()):
+            mvpa_cv.run(**kwargs)
+
+    
     
 class MVPA_CV():
     

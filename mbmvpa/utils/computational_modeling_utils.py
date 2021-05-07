@@ -25,8 +25,7 @@ class Base():
         self.latent_process = {}
     
     def _set_latent_process(self, df_events, param_dict):
-        # implement
-        return
+        pass
     
     def _add(self, key, value):
         if key not in self.latent_process.keys():
