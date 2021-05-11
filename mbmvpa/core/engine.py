@@ -22,7 +22,9 @@ MVPA_MODEL_DICT = {'elasticnet':['mbmvpa.models.elasticnet','MVPA_ElasticNet'],
 MVPA_REPORT_DICT = {'elasticnet':build_elasticnet_report_functions,
                    'mlp':build_base_report_functions,
                    'cnn':build_base_report_functions,
-                   'mlp_shap':build_base_report_functions,}
+                   'mlp_shap':build_base_report_functions,
+                   }
+DEFAULT_REPORT = build_base_report_functions
 
 NEED_RECONSTRUCT_MODEL = ['cnn']
 
@@ -116,7 +118,7 @@ class MBMVPA():
         self._mvpa_model_class = getattr(
                                     importlib.import_module(MVPA_MODEL_DICT[mvpa_model][0]),
                                     MVPA_MODEL_DICT[mvpa_model][1])
-        self._mvpa_report_func = MVPA_REPORT_DICT[mvpa_model]
+        self._mvpa_report_func = MVPA_REPORT_DICT[mvpa_model] if mvpa_model in MVPA_REPORT_DICT.keys() else DEFAULT_REPORT
         
         # set flag if reconstructing voxel feature (1D) to 4D is required
         if self.mvpa_model_name in NEED_RECONSTRUCT_MODEL:

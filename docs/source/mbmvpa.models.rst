@@ -4,27 +4,18 @@ mbmvpa.models package
 Submodules
 ----------
 
-mbmvpa.models.model module
---------------------------
+.. toctree::
 
-.. automodule:: mbmvpa.models.model
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mbmvpa.models.regressor module
-------------------------------
-
-.. automodule:: mbmvpa.models.regressor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mbmvpa.models.elasticnet
+   mbmvpa.models.mvpa_general
+   mbmvpa.models.tf_cnn
+   mbmvpa.models.tf_mlp
+   mbmvpa.models.tf_mlp_shap
 
 Module contents
 ---------------
 
 .. automodule:: mbmvpa.models
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

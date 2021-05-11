@@ -31,12 +31,12 @@ class LatentProcessGenerator():
     You can expect a modulation tsv file with onset, duration, modulation, 
     a time mask npy file, a binary map for indicating valid time points, and a 
     BOLD-like signal npy file for each run of events.tsv files.
-
+    
     Parameters
     ----------
     
     bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
-        (Original) BIDSLayout of input data. It should follow `BIDS convention`_.
+        (Original) BIDSLayout of input data. It should follow **BIDS** convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
     bids_controller : mbmvpa.utils.bids_utils.BIDSController, default=None
         BIDSController instance for controlling BIDS layout for preprocessing.
@@ -49,16 +49,16 @@ class LatentProcessGenerator():
     process_name : str, default="unnamed"
         The name of the target latent process.
         It should be match with the name defined in computational modeling
-    adjust_function : function(pandas.Series, dict)-> pandas.Series, default=lambda x : x
+    adjust_function : function(pandas.Series, dict)-> pandas.Series, default=lambda x \: x
         A user-defined row-wise function for modifying each row of behavioral data.
-        *adjust_function*(a row of DataFrame)-> a row of DataFrame with modified behavior data
-    filter_function : function(pandas.Series, dict)-> boolean, default=lambda _ : True
+        *adjust_function* (a row of DataFrame) \: a row of DataFrame with modified behavior data
+    filter_function : function(pandas.Series, dict)-> boolean, default=lambda \_ \: True
         A user-defined row-wise function for filtering each row of behavioral data.
-        *filter_function*(a row of DataFrame)-> True or False
+        *filter_function* (a row of DataFrame) \: True or False
     latent_function : function(pandas.Series, dict)-> pandas.Series, default=None
-         A user-defined row-wise function for calculating latent process.
+         A user-defined row wise function for calculating latent process.
          The values will be indexed by 'modulation' column name.
-         *latent_function*(a row of DataFrame)-> a row of DataFrame with modulation
+         *latent_function* (a row of DataFrame)-> a row of DataFrame with modulation
     adjust_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
         A user-defined dataframe-wise function for modifying each row of behavioral data.
         If not given, it will be made by using *adjust_function*.
@@ -72,7 +72,7 @@ class LatentProcessGenerator():
         If not given, it will be made by using *latent_function*.
         If given, it will override *latent_function*.
     dm_model : str, default="unnamed"
-        The name for computational modeling by `hBayesDM`_. 
+        The name for computational modeling by **hBayesDM**. 
         You can still use this parameter to assign the name of the model, 
         even you would not choose to depend on hBayesDM.
     individual_params : str or pathlib.PosixPath or pandas.DataFrame, default=None
@@ -97,7 +97,7 @@ class LatentProcessGenerator():
         If True use "duration" column to make a time mask, 
         if False all the gaps following trials after valid trials would be included in the time mask.
     n_core : int, default=4
-        The number of core in `hBayesDM`_.
+        The number of core in **hBayesDM**.
     ignore_original : boolean, default=False
         A flag for indicating whether it would cover behaviroal data in the original BIDSLayout ``layout``.
         If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
@@ -116,10 +116,8 @@ class LatentProcessGenerator():
         If True, *duration* will be fixed as 1 second.
         This parameter will override *duration_name* and *end_name*.
     kwargs : dict
-        A dictionary for arguments for indicating additional parameters for running `hBayesDM`_.
+        A dictionary for arguments for indicating additional parameters for running **hBayesDM**.
         
-    .. _`BIDS convention`: https://bids.neuroimaging.io/
-    .. _`hBayesDM`: https://hbayesdm.readthedocs.io/en/v1.0.1/models.html
         
     """
     

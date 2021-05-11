@@ -153,3 +153,9 @@ DEFAULT_ANALYSIS_CONFIGS = {
         },
     },
 }
+
+
+# dict[hbayesdm model name] = list of pair(latent process, explanation) 
+AVAILABLE_LATENT_PROCESS = {'bandit2arm_delta':[('EVchosen', 'expected value of chosen option'),
+                                                ('PEchosen', 'prediction error of chosen option')],
+                           }

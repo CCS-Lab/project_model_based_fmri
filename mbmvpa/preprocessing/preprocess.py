@@ -81,14 +81,14 @@ class DataPreprocessor():
         It should be match with the name defined in computational modeling
     adjust_function : function(pandas.Series, dict)-> pandas.Series, default=lambda x : x
         A user-defined row-wise function for modifying each row of behavioral data.
-        *adjust_function*(a row of DataFrame)-> a row of DataFrame with modified behavior data
-    filter_function : function(pandas.Series, dict)-> boolean, default=lambda _ : True
+        *adjust_function* (a row of DataFrame)-> a row of DataFrame with modified behavior data
+    filter_function : function(pandas.Series, dict)-> boolean, default=lambda \_ : True
         A user-defined row-wise function for filtering each row of behavioral data.
-        *filter_function*(a row of DataFrame)-> True or False
+        *filter_function* (a row of DataFrame)-> True or False
     latent_function : function(pandas.Series, dict)-> pandas.Series, default=None
          A user-defined row-wise function for calculating latent process.
          The values will be indexed by 'modulation' column name.
-         *latent_function*(a row of DataFrame)-> a row of DataFrame with modulation
+         *latent_function* (a row of DataFrame)-> a row of DataFrame with modulation
     adjust_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
         A user-defined dataframe-wise function for modifying each row of behavioral data.
         If not given, it will be made by using *adjust_function*.

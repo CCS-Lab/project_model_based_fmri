@@ -13,9 +13,61 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy.stats import norm
-from mbmvpa.models.mvpa_general import MVPA_Base
+from mbmvpa.models.mvpa_general import MVPA_Base, MVPA_CV
+from mbmvpa.utils.report import build_elasticnet_report_functions
 
 
+class MVPACV_ElasticNet(MVPA_CV):
+    
+    def __init__(self,
+                 X_dict,
+                 y_dict,
+                 voxel_mask,
+                 method='5-fold',
+                 n_cv_repeat=1,
+                 cv_save=True,
+                 cv_save_path=".",
+                 experiment_name="unnamed",
+                 alpha=0.001,
+                 n_samples=30000,
+                 shuffle=True,
+                 max_lambda=10,
+                 min_lambda_ratio=1e-4,
+                 lambda_search_num=100,
+                 n_jobs=16,
+                 n_splits=5,
+                 confidence_interval=.99,
+                 n_coef_plot=150,
+                 map_type='z',
+                 sigma=1):
+    
+        self.model = MVPA_ElasticNet(alpha=alpha,
+                                    n_samples=n_samples,
+                                    shuffle=shuffle,
+                                    max_lambda=max_lambda,
+                                    min_lambda_ratio=min_lambda_ratio,
+                                    lambda_search_num=lambda_search_num,
+                                    n_jobs=n_jobs,
+                                    n_splits=n_splits)
+
+        self.report_function_dict = build_elasticnet_report_functions(voxel_mask=voxel_mask,
+                                                                     confidence_interval=confidence_interval,
+                                                                     n_coef_plot=n_coef_plot,
+                                                                     experiment_name=experiment_name,
+                                                                     map_type=map_type,
+                                                                     sigma=sigma)
+
+        super().__init__(X_dict=X_dict,
+                        y_dict=y_dict,
+                        model=self.model,
+                        method=method,
+                        n_cv_repeat=n_cv_repeat,
+                        cv_save=cv_save,
+                        cv_save_path=cv_save_path,
+                        experiment_name=experiment_name,
+                        report_function_dict=self.report_function_dict)
+    
+    
 class MVPA_ElasticNet(MVPA_Base):
     
     def __init__(self,
@@ -87,6 +139,31 @@ class MVPA_ElasticNet(MVPA_Base):
         
         return reports 
     
+def _report_preprocess(cv_mean_score, 
+               cv_standard_error,
+               lambda_path,
+               lambda_val,
+               coef_path):
+    
+    if isinstance(lambda_path,dict):
+        lambda_path = lambda_path[list(lambda_path.keys())[0]]
+    if isinstance(cv_mean_score,dict):
+        cv_mean_score = np.array([np.squeeze(data) for _, data in cv_mean_score.items()])
+        cv_mean_score = cv_mean_score.reshape(-1, len(lambda_path))
+        cv_mean_score = cv_mean_score.mean(0)
+    if isinstance(cv_standard_error,dict):
+        cv_standard_error = np.array([np.squeeze(data) for _, data in cv_standard_error.items()])    
+        cv_standard_error = cv_standard_error.reshape(-1, len(lambda_path))
+        cv_standard_error = cv_standard_error.mean(0)
+    if isinstance(lambda_val, dict):
+        lambda_val = np.array([np.squeeze(data) for _, data in lambda_val.items()])
+    if isinstance(coef_path,dict):
+        coef_path = np.array([np.squeeze(data) for _, data in coef_path.items()])    
+        coef_path = coef_path.reshape(-1, coef_path.shape[-2], coef_path.shape[-1])
+        coef_path = coef_path.mean(0)
+        
+    return lambda_path, cv_mean_score, cv_standard_error, lambda_val, coef_path
+    
 def plot_elasticnet_result(save_root, 
                            save,
                            cv_mean_score, 
@@ -100,25 +177,16 @@ def plot_elasticnet_result(save_root,
     if save:
         save_root = Path(save_root) /'plot'
         save_root.mkdir(exist_ok = True)
-    # plot survival rate...
-    if isinstance(lambda_path,dict):
-        lambda_path = lambda_path[list(lambda_path.keys())[0]]
-    if isinstance(cv_mean_score,dict):
-        cv_mean_score = np.array([np.squeeze(data) for _, data in cv_mean_score.items()])
-        cv_mean_score = cv_mean_score.reshape(-1, len(lambda_path))
-        cv_mean_score = cv_mean_score.mean(0)
-    if isinstance(cv_standard_error,dict):
-        cv_standard_error = np.array([np.squeeze(data) for _, data in cv_standard_error.items()])    
-        cv_standard_error = cv_standard_error.reshape(-1, len(lambda_path))
-        cv_standard_error = cv_standard_error.mean(0)
     
-    if isinstance(lambda_val, dict):
-        lambda_val = np.array([np.squeeze(data) for _, data in lambda_val.items()])
-        
-    if isinstance(coef_path,dict):
-        coef_path = np.array([np.squeeze(data) for _, data in coef_path.items()])    
-        coef_path = coef_path.reshape(-1, coef_path.shape[-2], coef_path.shape[-1])
-        coef_path = coef_path.mean(0)
+    # make dictionary as reportable array.
+    
+    lambda_path, cv_mean_score,\
+        cv_standard_error, lambda_val,
+            coef_path = _report_preprocess(cv_mean_score, 
+                                           cv_standard_error,
+                                           lambda_path,
+                                           lambda_val,
+                                           coef_path)
         
     plt.figure(figsize=(10, 8))
     plt.errorbar(np.log(lambda_path), cv_mean_score,

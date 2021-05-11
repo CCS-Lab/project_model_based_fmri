@@ -4,7 +4,6 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, BatchNormalization, Flatten, AveragePooling2D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
-from mbmvpa.models.mvpa_general import MVPA_Base
 import numpy as np
 from ..data.tf_generator import DataGenerator
 from sklearn.model_selection import train_test_split
@@ -14,8 +13,76 @@ import random
 import os
 from pathlib import Path
 
-import pdb
+from mbmvpa.models.mvpa_general import MVPA_Base, MVPA_CV
+from mbmvpa.utils.report import build_base_report_functions
 
+class MVPACV_CNN(MVPA_CV):
+    
+    def __init__(self,
+                 X_dict,
+                 y_dict,
+                 voxel_mask,
+                 method='5-fold',
+                 n_cv_repeat=1,
+                 cv_save=True,
+                 cv_save_path=".",
+                 experiment_name="unnamed",
+                 layer_dims=[8,16,32],
+                 kernel_size=[3,3,3],
+                 logit_layer_dim=256,
+                 activation="relu",
+                 activation_output="linear",
+                 dropout_rate=0.2,
+                 val_ratio=0.2,
+                 optimizer="adam",
+                 loss="mse",
+                 learning_rate=0.001,
+                 n_epoch = 50,
+                 n_patience = 10,
+                 n_batch = 64,
+                 n_sample = 30000,
+                 batch_norm=True,
+                 use_bipolar_balancing = False,
+                 gpu_visible_devices = None,
+                 map_type='z',
+                 sigma=1):
+    
+        input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
+
+        self.model = MVPA_CNN(input_shape=input_shape,
+                             layer_dims=layer_dims,
+                             kernel_size=kernel_size,
+                             logit_layer_dim=logit_layer_dim,
+                             activation=activation,
+                             activation_output=activation_output,
+                             dropout_rate=dropout_rate,
+                             val_ratio=val_ratio,
+                             optimizer=optimizer,
+                             loss=loss,
+                             learning_rate=learning_rate,
+                             n_epoch=n_epoch,
+                             n_patience=n_patience,
+                             n_batch=n_batch,
+                             n_sample=n_sample,
+                             batch_norm=batch_norm,
+                             use_bipolar_balancing=use_bipolar_balancing,
+                             voxel_mask=voxel_mask,
+                             gpu_visible_devices=gpu_visible_devices)
+
+        self.report_function_dict = build_base_report_functions(voxel_mask=voxel_mask,
+                                                                 experiment_name=experiment_name,
+                                                                 map_type=map_type,
+                                                                 sigma=sigma)
+        super().__init__(X_dict=X_dict,
+                        y_dict=y_dict,
+                        model=self.model,
+                        method=method,
+                        n_cv_repeat=n_cv_repeat,
+                        cv_save=cv_save,
+                        cv_save_path=cv_save_path,
+                        experiment_name=experiment_name,
+                        report_function_dict=self.report_function_dict)
+    
 class MVPA_CNN(MVPA_Base):
     
     def __init__(self, 

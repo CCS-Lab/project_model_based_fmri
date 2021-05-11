@@ -6,27 +6,23 @@ Subpackages
 
 .. toctree::
 
-    mbmvpa.data
-    mbmvpa.models
-    mbmvpa.preprocessing
-    mbmvpa.utils
+   mbmvpa.core
+   mbmvpa.data
+   mbmvpa.models
+   mbmvpa.preprocessing
+   mbmvpa.utils
 
 Submodules
 ----------
 
-mbmvpa.conf module
-------------------
+.. toctree::
 
-.. automodule:: mbmvpa.conf
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mbmvpa.conf
 
 Module contents
 ---------------
 
 .. automodule:: mbmvpa
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

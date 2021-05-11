@@ -150,5 +150,6 @@ tests/test_report
 tutorials/tutorial_data
 tutorials/tutorial_report
 .DS_Store
+docs/.DS_Store
 cached*/
 _deprecated

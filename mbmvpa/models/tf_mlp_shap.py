@@ -13,7 +13,7 @@ import tempfile
 import random
 import os
 from pathlib import Path
-
+import shap
 from .tf_mlp import MVPA_MLP
 
 
@@ -48,11 +48,11 @@ class MVPA_MLP_SHAP(MVPA_MLP):
                          activation_output=activation_output,
                          dropout_rate=dropout_rate,
                          val_ratio=val_ratio,
-                         optimizer=optimizerv,
+                         optimizer=optimizer,
                          loss=loss,
                          learning_rate=learning_rate,
                          n_epoch = n_epoch,
-                         n_patience = n_patiencev,
+                         n_patience = n_patience,
                          n_batch = n_batch,
                          n_sample = n_sample,
                          use_bias = use_bias,

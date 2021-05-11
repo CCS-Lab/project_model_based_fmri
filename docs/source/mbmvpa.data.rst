@@ -4,19 +4,15 @@ mbmvpa.data package
 Submodules
 ----------
 
-mbmvpa.data.loader module
--------------------------
+.. toctree::
 
-.. automodule:: mbmvpa.data.loader
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mbmvpa.data.loader
+   mbmvpa.data.tf_generator
 
 Module contents
 ---------------
 
 .. automodule:: mbmvpa.data
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

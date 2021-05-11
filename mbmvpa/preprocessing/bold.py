@@ -20,8 +20,6 @@ from mbmvpa.utils import config # configuration used in the package
 
 bids.config.set_option("extension_initial_dot", True)
 
-import pdb
-
 class VoxelFeatureGenerator():
     r"""
     
@@ -35,7 +33,7 @@ class VoxelFeatureGenerator():
     ----------
     
     bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
-        (Original) BIDSLayout of input data. It should follow `BIDS convention`_.
+        (Original) BIDSLayout of input data. It should follow BIDS convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
     bids_controller : mbmvpa.utils.bids_utils.BIDSController, default=None
         BIDSController instance for controlling BIDS layout for preprocessing.
@@ -50,10 +48,10 @@ class VoxelFeatureGenerator():
         This is adopted for distinguishing different configuration of feature processing.
     fmriprep_name : str, default="fMRIPrep"
         The name for derivatve BIDS layout for fmriprep.
-        As default, it is "fMRIPrep", which is the name of preprocessing by `fMRIPrep`_.
+        As default, it is "fMRIPrep", which is the name of preprocessing by **fMRIPrep**.
     mask_path : str or pathlib.PosixPath, default=None
         The path for directory containing mask files. 
-        Mask files are nii files recommended to be downloaded from `Neurosynth`_. 
+        Mask files are nii files recommended to be downloaded from **Neurosynth**. 
         As default, each of the nii files is regarded as a probablistic map, and
         the *mask_trheshold* will be used as the cut-off value for binarizing.
         The absolute values are used for thresholding.
@@ -92,9 +90,7 @@ class VoxelFeatureGenerator():
     ignore_original : boolean, default=True
         A flag for indicating whether it would cover behaviroal data in the original BIDSLayout.
         If True, it will only consider data in the derivative layout for fMRI preprocessed data.
-      
-    .. _`fMRIPrep`: https://fmriprep.org/en/stable/
-    .. _`Neurosynth`: https://neurosynth.org/
+    
     """
     
     def  __init__(self,

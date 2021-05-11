@@ -1,46 +1,26 @@
 mbmvpa.preprocessing package
 ============================
 
+Subpackages
+-----------
+
+.. toctree::
+
+   mbmvpa.preprocessing.computational_modeling
+
 Submodules
 ----------
 
-mbmvpa.preprocessing.bids module
---------------------------------
+.. toctree::
 
-.. automodule:: mbmvpa.preprocessing.bids
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mbmvpa.preprocessing.event\_utils module
-----------------------------------------
-
-.. automodule:: mbmvpa.preprocessing.event_utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mbmvpa.preprocessing.events module
-----------------------------------
-
-.. automodule:: mbmvpa.preprocessing.events
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mbmvpa.preprocessing.fMRI module
---------------------------------
-
-.. automodule:: mbmvpa.preprocessing.fMRI
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mbmvpa.preprocessing.bold
+   mbmvpa.preprocessing.events
+   mbmvpa.preprocessing.preprocess
 
 Module contents
 ---------------
 
 .. automodule:: mbmvpa.preprocessing
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
