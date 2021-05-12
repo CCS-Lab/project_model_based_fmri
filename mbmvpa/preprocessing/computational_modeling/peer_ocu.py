@@ -26,6 +26,9 @@ class ComputationalModel(Base):
 
             U_safe  = p_gamble * pow(safe_Hpayoff, rho) + \
                 (1-p_gamble) * pow(safe_Lpayoff, rho)
+            
+            self._add('EVsafe',U_safe)
+            
             U_risky = p_gamble * pow(risky_Hpayoff, rho) + \
                 (1-p_gamble) * pow(risky_Lpayoff, rho)
             if condition == 1: # safe-safe
@@ -35,7 +38,7 @@ class ComputationalModel(Base):
                 
             pRisky = inv_logit(tau * (U_risky - U_safe))
 
-            self._add('EVsafe',U_safe)
+            self._add('OCUModifiedEVsafe',U_safe)
             self._add('EVrisky',U_safe)
             self._add('SUrisky',U_risky - U_safe)
             self._add('Prisky',pRisky)
