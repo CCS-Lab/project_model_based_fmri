@@ -2,6 +2,9 @@ from .coef2map import get_map
 from .plot import plot_pearsonr
 from scipy.stats import pearsonr
 import numpy as np
+from pathlib import Path
+import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 class Report_BrainMap():
     
@@ -179,13 +182,11 @@ def plot_elasticnet_result(save_root,
     
     # make dictionary as reportable array.
     
-    lambda_path, cv_mean_score,\
-        cv_standard_error, lambda_val,
-            coef_path = _report_preprocess(cv_mean_score, 
-                                           cv_standard_error,
-                                           lambda_path,
-                                           lambda_val,
-                                           coef_path)
+    lambda_path, cv_mean_score, cv_standard_error, lambda_val, coef_path = _report_preprocess(cv_mean_score, 
+                                                                                               cv_standard_error,
+                                                                                               lambda_path,
+                                                                                               lambda_val,
+                                                                                               coef_path)
         
     plt.figure(figsize=(10, 8))
     plt.errorbar(np.log(lambda_path), cv_mean_score,
