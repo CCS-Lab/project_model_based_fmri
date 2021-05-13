@@ -48,4 +48,4 @@ class ComputationalModel(Base):
             self._add('Certsum',cert_sum)
 
 latent_process_onset = {'PE': TIME_FEEDBACK,
-                        'PEsum}': TIME_FEEDBACK}
+                        'PEsum': TIME_FEEDBACK}
