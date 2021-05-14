@@ -136,6 +136,63 @@ class MVPACV_ElasticNet(MVPA_CV):
     
 class MVPA_ElasticNet(MVPA_Base):
     
+    r"""
+    
+    **MVPA_ElasticNet** is an MVPA model implementation of ElasticNet,
+    wrapping ElasticNet from "glmnet" python package. 
+    Please refer to (https://github.com/civisanalytics/python-glmnet).
+    
+    ElasticNet adopts a mixed L1 and L2 norm as a penalty term additional to Mean Squerred Error (MSE) in regression.
+    
+        - L1 norm and L2 norm is mixed as alpha * L1 + (1-alpha)/2 * L2
+        - Total penalalty is modulated with shrinkage parameter : [alpha * L1 + (1-alpha)/2 * L2] * lambda
+        
+    Shrinkage parameter is searched through lambda search space, *lambda_path*, 
+    and will be selected by comparing N-fold cross-validation MSE.
+    *lambda_path* is determined by log-linearly slicing *lambda_search_num* times which exponentially decaying from *max_lambda* to *max_lambda* * *min_lambda_ratio*
+    
+    The model interpretation, which means extracting the weight value for each voxel, 
+    is done by reading coefficient values of the linear layer.
+    
+    Also, additional intermediate results are reported by *report* attribute.
+    The below data will be used for reporting and plotting the results.
+        - 'cv_mean_score' : mean CV MSE of each CV in lambda search space
+        - 'coef_path' : coefficient values of each CV in lambda search space
+        - 'cv_standard_error' : SE of CV MSE of each CV in lambda search space
+        - 'lambda_best' : best lambda valeu
+        - 'lambda_path' : lambda search space
+    
+    
+    
+    Parameters
+    ----------
+    
+    alpha : float, default=0.001
+        A value between 0 and 1, indicating the mixing parameter in ElasticNet.
+        *penalty* = [alpha * L1 + (1-alpha)/2 * L2] * lambda
+    n_samples : int, default=30000
+        Max number of samples used in a single fitting.
+        If the number of data is bigger than *n_samples*, sampling will be done for 
+        each model fitting.
+        This is for preventing memory overload.
+    max_lambda : float, default=10
+        The maximum value of lambda in lambda search space.
+        The lambda search space is used when searching the best lambda value.
+    min_lambda_ratio : float, default=1e-4
+        The ratio of minimum lambda value to maximum value. 
+        With this ratio, a log-linearly scaled lambda space will be created.
+    lambda_search_num : int, default=100
+        The number of points in lambda search space. 
+        Bigger the number, finer will the lambda searching be.
+    n_jobs : int, default=16
+        The number of cores used in fitting ElasticNet
+    n_splits : int, default=5
+        The number of fold used in inner cross-validation,
+        which aims to find the best lambda value.
+    
+    """
+    
+    
     def __init__(self,
                  alpha=0.001,
                  n_samples=30000,
