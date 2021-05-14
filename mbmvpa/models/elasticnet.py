@@ -4,10 +4,6 @@
 #contact: cjfwndnsl@gmail.com
 #last modification: 2020.03.23
     
-"""
-Wrapper of ElasticNet
-
-"""
 from glmnet import ElasticNet
 import numpy as np
 from pathlib import Path
@@ -16,6 +12,79 @@ from mbmvpa.utils.report import build_elasticnet_report_functions
 
 
 class MVPACV_ElasticNet(MVPA_CV):
+    
+    r"""
+    
+    **MVPACV_ElasticNet** is for providing cross-validation (CV) framework with ElasticNet as an MVPA model.
+    Users can choose the option for CV (e.g. 5-fold or leave-one-subject-out), and the model specification.
+    Also, users can modulate the configuration for reporting function which includes making brain map (nii), 
+    and plots.
+    
+    Parameters
+    ----------
+    
+    X_dict : dict{str : numpy.ndarray}
+        A dictionary for the input voxel feature data which can be indexed by subject IDs.
+        Each voxel feature array should be in shape of [time len, voxel feature name]
+    y_dict : dict{str : numpy.ndarray}
+        A dictionary for the input latent process signals which can be indexed by subject IDs.
+        Each signal should be in sahpe of [time len, ]
+    voxel_mask : nibabel.nifti1.Nifti1Image
+        A brain mask image (nii) used for masking the fMRI images. It will be used to reconstruct a 3D image
+        from flattened array of model weights.
+    method : str, default='5-fold'
+        The name for type of cross-validation to use. 
+        Currently, two options are available.
+            - "N-fold" : *N*-fold cross-valiidation
+            - "N-lnso" : leave-*N*-subjects-out
+            
+        If the "N" should be a positive integer and it will be parsed from the input string. 
+        In the case of lnso, N should be >= 1 and <= total subject # -1.
+    n_cv_repeat : int, default=1
+        The number of repetition of the entire cross-validation.
+        Larger the number, (normally) more stable results and more time required.
+    cv_save : bool, default=True
+        indictates save results or not
+    cv_save_path : str or pathlib.PosixPath, default="."
+        A path for saving results
+    experiment_name : str, default="unnamed"
+        A name for a single run of this analysis
+        It will be included in the name of the report folder created.
+    alpha : float, default=0.001
+        A value between 0 and 1, indicating the mixing parameter in ElasticNet.
+        *penalty* = [alpha * L1 + (1-alpha)/2 * L2] * lambda
+    n_samples : int, default=30000
+        Max number of samples used in a single fitting.
+        If the number of data is bigger than *n_samples*, sampling will be done for 
+        each model fitting.
+        This is for preventing memory overload.
+    max_lambda : float, default=10
+        The maximum value of lambda in lambda search space.
+        The lambda search space is used when searching the best lambda value.
+    min_lambda_ratio : float, default=1e-4
+        The ratio of minimum lambda value to maximum value. 
+        With this ratio, a log-linearly scaled lambda space will be created.
+    lambda_search_num : int, default=100
+        The number of points in lambda search space. 
+        Bigger the number, finer will the lambda searching be.
+    n_jobs : int, default=16
+        The number of cores used in fitting ElasticNet
+    n_splits : int, default=5
+        The number of fold used in inner cross-validation,
+        which aims to find the best lambda value.
+    confidence_interval : float, default=.99
+        Confidence level for plotting CV errors in lambda searching.
+    n_coef_plot : int, default=150
+        The number of samples for plotting coefficient values in lambda searching.
+    map_type : str, default="z"
+        The type of making brain map. 
+            - "z" : z-map will be created using all the weights from CV experiment.
+            - "t" : t-map will be created using all the weights from CV experiment.v
+    sigma : float, default=1
+        The sigma value for running Gaussian smoothing on each of reconstructed maps, 
+        before integrating maps to z- or t-map.
+    
+    """
     
     def __init__(self,
                  X_dict,
@@ -28,7 +97,6 @@ class MVPACV_ElasticNet(MVPA_CV):
                  experiment_name="unnamed",
                  alpha=0.001,
                  n_samples=30000,
-                 shuffle=True,
                  max_lambda=10,
                  min_lambda_ratio=1e-4,
                  lambda_search_num=100,
@@ -71,7 +139,6 @@ class MVPA_ElasticNet(MVPA_Base):
     def __init__(self,
                  alpha=0.001,
                  n_samples=30000,
-                 shuffle=True,
                  max_lambda=10,
                  min_lambda_ratio=1e-4,
                  lambda_search_num=100,
@@ -81,7 +148,6 @@ class MVPA_ElasticNet(MVPA_Base):
         
         # penalty = [alpha * L1 + (1-alpha)/2 * L2] * lambda
         
-        self.shuffle = shuffle
         self.n_jobs = n_jobs
         self.n_splits = n_splits
         self.n_samples = n_samples
@@ -104,15 +170,14 @@ class MVPA_ElasticNet(MVPA_Base):
         return
     
     def fit(self,X,y,**kwargs):
-        if self.shuffle:
-            ids = np.arange(X.shape[0])
-            if X.shape[0] > self.n_samples:
-                np.random.shuffle(ids)
-                ids = ids[:self.n_samples]
-            y = y.ravel()
-            X_data = X[ids]
-            y_data = y[ids]
-            self.model = self.model.fit(X_data, y_data)
+        ids = np.arange(X.shape[0])
+        if X.shape[0] > self.n_samples:
+            np.random.shuffle(ids)
+            ids = ids[:self.n_samples]
+        y = y.ravel()
+        X_data = X[ids]
+        y_data = y[ids]
+        self.model = self.model.fit(X_data, y_data)
             
         return
             

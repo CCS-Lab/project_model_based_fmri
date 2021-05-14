@@ -62,7 +62,6 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'elasticnet':{
             'alpha': 0.001,
             'n_samples': 100000,
-            'shuffle': True,
             'max_lambda': 10,
             'min_lambda_ratio': 1e-4,
             'lambda_search_num': 100,
