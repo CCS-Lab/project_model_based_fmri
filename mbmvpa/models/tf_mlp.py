@@ -19,6 +19,83 @@ from mbmvpa.utils.report import build_base_report_functions
 
 class MVPACV_MLP(MVPA_CV):
     
+    r"""
+    
+    **MVPACV_MLP** is for providing cross-validation (CV) framework with Multi-layer Perceptron (MLP) as an MVPA model.
+    The model is implemented upon Tensorflow (>= 2.0.0).
+    Users can choose the option for CV (e.g. 5-fold or leave-one-subject-out), and the model specification.
+    Also, users can modulate the configuration for reporting function which includes making brain map (nii), 
+    and plots.
+    
+    Fitting Multi-Layer Perceptron (MLP) as a regression model for multi-voxel
+    pattern analysis and extracting fitted coefficients. 
+    Mini-batch gradient descent with earlystopping.
+
+    Coefficient extraction is done by sequential matrix multiplication of
+    layers. The activation function is assumed to be linear.
+    Repeat several times (=N) and return N coefficients.
+    
+    Parameters
+    ----------
+    
+    X_dict : dict{str : numpy.ndarray}
+        A dictionary for the input voxel feature data which can be indexed by subject IDs.
+        Each voxel feature array should be in shape of [time len, voxel feature name]
+    y_dict : dict{str : numpy.ndarray}
+        A dictionary for the input latent process signals which can be indexed by subject IDs.
+        Each signal should be in sahpe of [time len, ]
+    voxel_mask : nibabel.nifti1.Nifti1Image
+        A brain mask image (nii) used for masking the fMRI images. It will be used to reconstruct a 3D image
+        from flattened array of model weights.
+    method : str, default='5-fold'
+        The name for type of cross-validation to use. 
+        Currently, two options are available.
+            - "N-fold" : *N*-fold cross-valiidation
+            - "N-lnso" : leave-*N*-subjects-out
+            
+        If the "N" should be a positive integer and it will be parsed from the input string. 
+        In the case of lnso, N should be >= 1 and <= total subject # -1.
+    n_cv_repeat : int, default=1
+        The number of repetition of the entire cross-validation.
+        Larger the number, (normally) more stable results and more time required.
+    cv_save : bool, default=True
+        indictates save results or not
+    cv_save_path : str or pathlib.PosixPath, default="."
+        A path for saving results
+    experiment_name : str, default="unnamed"
+        A name for a single run of this analysis
+        It will be included in the name of the report folder created.
+    layer_dims : list of int, default=[1024, 1024]
+        A list of integer specifying the dimensions of each hidden layer.
+        The fully-connected layers will be stacked with the sizes indicated by *layer_dims*.
+        The last layer, *layer_dims[-1]* --> *1*, will be added.
+    activation : str, default="linear"
+        The name of activation function which will be applied to the output of hidden layers.
+    activation_output : str, default="linear"
+        The name of activation function for the final output.
+    dropout_rate : float, default=0.5
+        The rate of drop out, which will be applied after the hidden layers.
+    use_bias : bool, default=True
+        If True, bias will be used in layers, otherwise bias term will not be considered.
+    gpu_visible_devices : list of str or list of int, default=None
+        Users can indicate a list of GPU resources here. 
+        It would have a same effect as "CUDA_VSIBLE_DEVICES=..."
+    n_samples : int, default=30000
+        Max number of samples used in a single fitting.
+        If the number of data is bigger than *n_samples*, sampling will be done for 
+        each model fitting.
+        This is for preventing memory overload.
+    map_type : str, default="z"
+        The type of making brain map. 
+            - "z" : z-map will be created using all the weights from CV experiment.
+            - "t" : t-map will be created using all the weights from CV experiment.
+    sigma : float, default=1
+        The sigma value for running Gaussian smoothing on each of reconstructed maps, 
+        before integrating maps to z- or t-map.
+    
+    """
+    
+    
     def __init__(self,
                  X_dict,
                  y_dict,
@@ -80,6 +157,54 @@ class MVPACV_MLP(MVPA_CV):
     
 
 class MVPA_MLP(MVPA_Base):
+    
+    r"""
+    
+    **MVPA_MLP** is an MVPA model implementation of Multi-layer Perceptron (MLP).
+    The model is implemented upon Tensorflow (>= 2.0.0).
+
+    Mini-batch gradient descent with earlystopping is adopted for model fitting using Keras APIs.
+
+    Coefficient extraction is done by sequential matrix multiplication of
+    layers. The activation function is assumed to be linear.
+    Repeat several times (=N) and return N coefficients.
+    
+    Parameters
+    ----------
+    
+    input_shape : int or [int]
+        The dimension of data, which will be fed as input (X). 
+        It should be same as the number of voxel-feature.
+    layer_dims : list of int, default=[1024, 1024]
+        A list of integer specifying the dimensions of each hidden layer.
+        The fully-connected layers will be stacked with the sizes indicated by *layer_dims*.
+        The last layer, *layer_dims[-1]* --> *1*, will be added.
+    activation : str, default="linear"
+        The name of activation function which will be applied to the output of hidden layers.
+    activation_output : str, default="linear"
+        The name of activation function for the final output.
+    dropout_rate : float, default=0.5
+        The rate of drop out, which will be applied after the hidden layers.
+    use_bias : bool, default=True
+        If True, bias will be used in layers, otherwise bias term will not be considered.
+    gpu_visible_devices : list of str or list of int, default=None
+        Users can indicate a list of GPU resources here. 
+        It would have a same effect as "CUDA_VSIBLE_DEVICES=..."
+    n_samples : int, default=30000
+        Max number of samples used in a single fitting.
+        If the number of data is bigger than *n_samples*, sampling will be done for 
+        each model fitting.
+        This is for preventing memory overload.
+    map_type : str, default="z"
+        The type of making brain map. 
+            - "z" : z-map will be created using all the weights from CV experiment.
+            - "t" : t-map will be created using all the weights from CV experiment.
+    sigma : float, default=1
+        The sigma value for running Gaussian smoothing on each of reconstructed maps, 
+        before integrating maps to z- or t-map.
+    
+    """
+    
     
     def __init__(self, 
                  input_shape,

@@ -61,7 +61,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
     'MVPA':{
         'elasticnet':{
             'alpha': 0.001,
-            'n_samples': 100000,
+            'n_sample': 100000,
             'max_lambda': 10,
             'min_lambda_ratio': 1e-4,
             'lambda_search_num': 100,

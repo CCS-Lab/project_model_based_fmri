@@ -53,9 +53,9 @@ class MVPACV_ElasticNet(MVPA_CV):
     alpha : float, default=0.001
         A value between 0 and 1, indicating the mixing parameter in ElasticNet.
         *penalty* = [alpha * L1 + (1-alpha)/2 * L2] * lambda
-    n_samples : int, default=30000
+    n_sample : int, default=30000
         Max number of samples used in a single fitting.
-        If the number of data is bigger than *n_samples*, sampling will be done for 
+        If the number of data is bigger than *n_sample*, sampling will be done for 
         each model fitting.
         This is for preventing memory overload.
     max_lambda : float, default=10
@@ -96,7 +96,7 @@ class MVPACV_ElasticNet(MVPA_CV):
                  cv_save_path=".",
                  experiment_name="unnamed",
                  alpha=0.001,
-                 n_samples=30000,
+                 n_sample=30000,
                  max_lambda=10,
                  min_lambda_ratio=1e-4,
                  lambda_search_num=100,
@@ -108,7 +108,7 @@ class MVPACV_ElasticNet(MVPA_CV):
                  sigma=1):
     
         self.model = MVPA_ElasticNet(alpha=alpha,
-                                    n_samples=n_samples,
+                                    n_sample=n_sample,
                                     shuffle=shuffle,
                                     max_lambda=max_lambda,
                                     min_lambda_ratio=min_lambda_ratio,
@@ -170,9 +170,9 @@ class MVPA_ElasticNet(MVPA_Base):
     alpha : float, default=0.001
         A value between 0 and 1, indicating the mixing parameter in ElasticNet.
         *penalty* = [alpha * L1 + (1-alpha)/2 * L2] * lambda
-    n_samples : int, default=30000
+    n_sample : int, default=30000
         Max number of samples used in a single fitting.
-        If the number of data is bigger than *n_samples*, sampling will be done for 
+        If the number of data is bigger than *n_sample*, sampling will be done for 
         each model fitting.
         This is for preventing memory overload.
     max_lambda : float, default=10
@@ -195,7 +195,7 @@ class MVPA_ElasticNet(MVPA_Base):
     
     def __init__(self,
                  alpha=0.001,
-                 n_samples=30000,
+                 n_sample=30000,
                  max_lambda=10,
                  min_lambda_ratio=1e-4,
                  lambda_search_num=100,
@@ -207,7 +207,7 @@ class MVPA_ElasticNet(MVPA_Base):
         
         self.n_jobs = n_jobs
         self.n_splits = n_splits
-        self.n_samples = n_samples
+        self.n_sample = n_sample
         self.alpha = alpha
         self.model = None
         self.lambda_path = np.exp(
@@ -228,9 +228,9 @@ class MVPA_ElasticNet(MVPA_Base):
     
     def fit(self,X,y,**kwargs):
         ids = np.arange(X.shape[0])
-        if X.shape[0] > self.n_samples:
+        if X.shape[0] > self.n_sample:
             np.random.shuffle(ids)
-            ids = ids[:self.n_samples]
+            ids = ids[:self.n_sample]
         y = y.ravel()
         X_data = X[ids]
         y_data = y[ids]
