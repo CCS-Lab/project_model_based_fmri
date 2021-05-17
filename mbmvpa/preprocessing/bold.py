@@ -39,36 +39,38 @@ class VoxelFeatureGenerator():
         BIDSController instance for controlling BIDS layout for preprocessing.
         If not given, then initiates the controller.
     save_path : str or pathlib.PosixPath, default=None
-        The path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
+        Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
     task_name : str, default=None
-        The name of the task. If not given, the most common task name will be automatically selected.
+        Name of the task. If not given, the most common task name will be automatically selected.
     feature_name : str, default="unnamed"
-        The name for indicating preprocessed feature.
+        Name for indicating preprocessed feature.
         This is adopted for distinguishing different configuration of feature processing.
     fmriprep_name : str, default="fMRIPrep"
-        The name for derivatve BIDS layout for fmriprep.
+        Name for derivatve BIDS layout for fmriprep.
         As default, it is "fMRIPrep", which is the name of preprocessing by **fMRIPrep**.
+        (https://fmriprep.org/en/stable/)
     mask_path : str or pathlib.PosixPath, default=None
-        The path for directory containing mask files. 
-        Mask files are nii files recommended to be downloaded from **Neurosynth**. 
+        Path for directory containing mask files. 
+        Mask files are nii files recommended to be downloaded from **Neurosynth**.
+        (https://neurosynth.org/)
         As default, each of the nii files is regarded as a probablistic map, and
         the *mask_trheshold* will be used as the cut-off value for binarizing.
         The absolute values are used for thresholding.
         The binarized maps will be integrated by union operation to be a single binary image.
         If None, the default mask_path is 'fmriprep_ROOT/masks.'
     bold_suffix : str, default='bold'
-        The name of suffix indicating 'bold' image.
+        Name of suffix indicating 'bold' image.
         It will be used for searching image files through BIDS layout.
     confound_suffix : str, default='regressors'
-        The name of suffix indicating confounds file
+        Name of suffix indicating confounds file
         It will be used for searching confounds files through BIDS layout.
     mask_threshold : float, default=2.58
-        The cut-off value for thresholding mask images. 
+        Cut-off value for thresholding mask images. 
         The default value, 2.58 is determined as it assume the input masks as z maps,
         and 99% confidence interval is considered.
     zoom : tuple[float, float, float], defualt=(2,2,2)
-        The window size for zooming fMRI images. Each of three components means x, y ,z axis respectively.
+        Window size for zooming fMRI images. Each of three components means x, y ,z axis respectively.
         The size of voxels will be enlarged by the factor of corresponding component value.
         Ex. zoom = (2,2,2) means the original 2 mm^3 voxels will be 4mm^3, so reducing the total number of
         voxels in a single image.
@@ -81,14 +83,14 @@ class VoxelFeatureGenerator():
         The list of names for indicating columns in confounds files.
         The values of *confounds* will be regressed out. 
     high_pass : float, default = 1/128
-        The value for high pass filter. [Hz]
+        Value for high pass filter. [Hz]
     detrend : boolean, default=False
         If True, remove a global linear trend in data.
     n_thread : int, default=4
-        The number of threads for multi-processing. 
+        Number of threads for multi-processing. 
         Please consider your computing capcity and enter the affordable number.
     ignore_original : boolean, default=True
-        A flag for indicating whether it would cover behaviroal data in the original BIDSLayout.
+        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout.
         If True, it will only consider data in the derivative layout for fMRI preprocessed data.
     
     """

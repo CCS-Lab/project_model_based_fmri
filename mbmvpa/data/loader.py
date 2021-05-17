@@ -67,30 +67,30 @@ class BIDSDataLoader():
         Users can input the root for entire BIDS layout with original data,
         or the root for MB-MVPA derivative layout.
     voxel_mask_path : str or pathlib.PosixPath, default=None
-        The path for voxel mask file. If None, then find it from default path,
+        Path for voxel mask file. If None, then find it from default path,
         "MB-MVPA_ROOT/voxelmask_{feature_name}.nii.gz"
     reconstruct : boolean, default=False
-        The flag for indicating whether reshape flattened voxel features to
+        Flag for indicating whether reshape flattened voxel features to
         4D images.
         Normally, it needs to be done for running CNNs.
     normalizer : str, default="none"
-        The type for subject-wise normalizaiont of bold-like signals of the latent process.
+        Type of subject-wise normalizaion of bold-like signals of the latent process.
         "none" - do noting.
         "standard" - Gaussian normalization
         "minmax" - Min-Max scaling. linearly rescale to fit in *scale* range.
     scale : tuple[float,float], default=(-1,1)
-        The range for "minmax" *normalizer*, otherwise ignored.
+        Range for "minmax" *normalizer*, otherwise ignored.
     task_name : str, default=None
-        The name of the task. 
+        Name of the task. 
         If not given, ignored in searching through BIDS layout.
     process_name : str, default="unnamed"
-        The name of the target latent process.
+        Name of the target latent process.
         If not given, ignored in searching through BIDS layout.
     feature_name : str, default="unnamed"
-        The name for indicating preprocessed feature.
+        Name for indicating preprocessed feature.
         If not given, ignored in searching through BIDS layout.
     verbose : int, default=1
-        The level of verbosity. 
+        Level of verbosity. 
         Currently, if verbose > 0, print all the info. while loading.
     
     """

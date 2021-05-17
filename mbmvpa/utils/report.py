@@ -63,6 +63,7 @@ class Report_ElasticNet():
                            n_coef_plot=self.n_coef_plot)
         
 class Report_PearsonR():
+    
     def __init__(self, pval_threshold=0.01):
         self.pval_threshold = pval_threshold
         

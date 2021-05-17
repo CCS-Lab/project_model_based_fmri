@@ -42,47 +42,47 @@ class LatentProcessGenerator():
         BIDSController instance for controlling BIDS layout for preprocessing.
         If not given, then initiates the controller.
     save_path : str or pathlib.PosixPath, default=None
-        The path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
+        Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
     task_name : str, default=None
-        The name of the task. If not given, the most common task name will be automatically selected.
+        Name of the task. If not given, the most common task name will be automatically selected.
     process_name : str, default="unnamed"
-        The name of the target latent process.
+        Name of the target latent process.
         It should be match with the name defined in computational modeling
     adjust_function : function(pandas.Series, dict)-> pandas.Series, default=lambda x \: x
-        A user-defined row-wise function for modifying each row of behavioral data.
+        User-defined row-wise function for modifying each row of behavioral data.
         *adjust_function* (a row of DataFrame) \: a row of DataFrame with modified behavior data
     filter_function : function(pandas.Series, dict)-> boolean, default=lambda \_ \: True
-        A user-defined row-wise function for filtering each row of behavioral data.
+        User-defined row-wise function for filtering each row of behavioral data.
         *filter_function* (a row of DataFrame) \: True or False
     latent_function : function(pandas.Series, dict)-> pandas.Series, default=None
-         A user-defined row wise function for calculating latent process.
-         The values will be indexed by 'modulation' column name.
-         *latent_function* (a row of DataFrame)-> a row of DataFrame with modulation
+        User-defined row wise function for calculating latent process.
+        The values will be indexed by 'modulation' column name.
+        *latent_function* (a row of DataFrame)-> a row of DataFrame with modulation
     adjust_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
-        A user-defined dataframe-wise function for modifying each row of behavioral data.
+        User-defined dataframe-wise function for modifying each row of behavioral data.
         If not given, it will be made by using *adjust_function*.
         If given, it will override *adjust_function*.
     filter_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
-        A user-defined dataframe-wise function for filtering each row of behavioral data.
+        User-defined dataframe-wise function for filtering each row of behavioral data.
         If not given, it will be made by using *filter_function*.
         If given, it will override *filter_function*.
     latent_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
-        A user-defined dataframe-wise function for calculating latent process.
+        User-defined dataframe-wise function for calculating latent process.
         If not given, it will be made by using *latent_function*.
         If given, it will override *latent_function*.
     dm_model : str, default="unnamed"
-        The name for computational modeling by **hBayesDM**. 
+        Name for computational modeling by **hBayesDM**. 
         You can still use this parameter to assign the name of the model, 
         even you would not choose to depend on hBayesDM.
     individual_params : str or pathlib.PosixPath or pandas.DataFrame, default=None
-        The path or loaded DataFrame for tsv file with individual parameter values.
+        Path or loaded DataFrame for tsv file with individual parameter values.
         If not given, find the file from the default path
         ``MB-MVPA_root/task-*task_name*_model-*model_name*_individual_params.tsv``
         If the path is empty, it will remain ``None`` indicating a need for running hBayesDM.
         So, it will be set after runniing hBayesDM package.
     hrf_model : str, default="glover"
-        The name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal.
+        Name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal.
         The below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
         (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
 
@@ -97,26 +97,26 @@ class LatentProcessGenerator():
         If True use "duration" column to make a time mask, 
         if False all the gaps following trials after valid trials would be included in the time mask.
     n_core : int, default=4
-        The number of core in **hBayesDM**.
+        Number of core in **hBayesDM**.
     ignore_original : boolean, default=False
-        A flag for indicating whether it would cover behaviroal data in the original BIDSLayout ``layout``.
+        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout ``layout``.
         If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
         And it means that the LatentProcessGenerator would not use events data in BIDSLayout, 
         rather it would use the list of files input by user.
         It will be used for initiating BIDSController.
     onset_name : str, default="onset"
-        The column name indicating  *onset* values.
+        Column name indicating  *onset* values.
     duration_name : str, default="duration"
-        The column name indicating *duration* values.
+        Column name indicating *duration* values.
     end_name : str, default=None
-        The column name indicating end of valid time.
+        Column name indicating end of valid time.
         If given, *end*-*onset* will be used as *duration* and override *duration_name*.
         If ``None``, it would be ignored and *duration_name* will be used.
     use_1sec_duration : boolean, default=True
         If True, *duration* will be fixed as 1 second.
         This parameter will override *duration_name* and *end_name*.
     kwargs : dict
-        A dictionary for arguments for indicating additional parameters for running **hBayesDM**.
+        Dictionary for arguments for indicating additional parameters for running **hBayesDM**.
         
         
     """

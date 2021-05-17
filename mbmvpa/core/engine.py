@@ -37,20 +37,9 @@ def run_mbmvpa(config=None,
     
     # callable wrapper of MBMVPA
     
-    mbmvpa = MBMVPA(config=config,
-                     mvpa_model=mvpa_model,
-                     report_path=report_path,
-                     level=level,
-                     **kwargs)
-
-    return mbmvpa.run(overwrite=overwrite)
-    
-
-class MBMVPA():
-    
     r"""
     
-    A wrapper of functions in MB-MVPA package to enable a single line usage.
+    Callable function of MB-MVPA package to enable a single line usage.
     The following procedures are done by MBMVPA class.
 
     1. preprocess fMRI & behavioral data
@@ -64,15 +53,56 @@ class MBMVPA():
     ----------
     
     config : dict or str or pathlib.PosixPath, default=None
-        dictionary for keyworded configuration, or path for yaml file.
+        Dictionary for keyworded configuration, or path for yaml file.
         The configuration input will override the default configuration.
     mvpa_model : str, default="elasticnet"
-        name for MVPA model. Currently, "elasticnet," "mlp" and "cnn" are allowed.
+        Name for MVPA model. Currently, "elasticnet," "mlp" and "cnn" are allowed.
     report_path : str or pathlib.PosixPath, defualt="."
-        path for saving outputs of MVPA_CV module. 
+        Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
     **kwargs : dict
-        dictionary for keywarded arguments.
+        Dictionary for keywarded arguments.
+        This allows users to override default configuration and *config* input.
+        Argument names are same as those of wrapped modules.
+        
+    """
+    
+    mbmvpa = MBMVPA(config=config,
+                     mvpa_model=mvpa_model,
+                     report_path=report_path,
+                     level=level,
+                     **kwargs)
+
+    return mbmvpa.run(overwrite=overwrite)
+    
+
+class MBMVPA():
+    
+    r"""
+    
+    Wrapper of functions in MB-MVPA package to enable a single line usage.
+    The following procedures are done by MBMVPA class.
+
+    1. preprocess fMRI & behavioral data
+    2. load preprocessed data
+    3. fit MVPA models and interprete the models
+
+    By running this code, users can expect to get a brain activation pattern attributed to
+    the target latent process defined in the computational model. 
+    
+    Parameters
+    ----------
+    
+    config : dict or str or pathlib.PosixPath, default=None
+        Dictionary for keyworded configuration, or path for yaml file.
+        The configuration input will override the default configuration.
+    mvpa_model : str, default="elasticnet"
+        Name for MVPA model. Currently, "elasticnet," "mlp" and "cnn" are allowed.
+    report_path : str or pathlib.PosixPath, defualt="."
+        Path for saving outputs of MVPA_CV module. 
+        please refer to mbmvpa.models.mvpa_general.MVPA_CV
+    **kwargs : dict
+        Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
         Argument names are same as those of wrapped modules.
         

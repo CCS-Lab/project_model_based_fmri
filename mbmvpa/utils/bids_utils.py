@@ -31,24 +31,24 @@ class BIDSController():
         (Original) BIDSLayout of input data. It should follow **BIDS** convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
     save_path : str or pathlib.PosixPath, default=None
-        The path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
+        Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
     fmriprep_name : str, default="fMRIPrep"
-        The name of the derivative layout of fMRI preprocessed data.
+        Name of the derivative layout of fMRI preprocessed data.
     task_name : str, default=None
-        The name of the task. If not given, the most common task name will be automatically selected.
+        Name of the task. If not given, the most common task name will be automatically selected.
     bold_suffix : str, default="bold"
-        The suffix of filename indicating bold image data. Please refer to file naming convention in **BIDS** convention.
+        Suffix of filename indicating bold image data. Please refer to file naming convention in **BIDS** convention.
         ``sub-{}_task-{}_ses-{}_run-{}_space-{}_desc-preproc_bold.nii.gz`` is a typical bold image file.
     event_suffix : str, default,"events"
-        The suffix of filename indicating behavioral data. Please refer to file naming convention in **BIDS** convention.
+        Suffix of filename indicating behavioral data. Please refer to file naming convention in **BIDS** convention.
         ``sub-{}_task-{}_ses-{}_run-{}_events.tsv`` is a typical event file.
     confound_suffix : str, default="regressors"
-        The suffix of filename indicating confounds or regressors data. Please refer to file naming convention in **BIDS** convention.
+        Suffix of filename indicating confounds or regressors data. Please refer to file naming convention in **BIDS** convention.
         Also refer to **fMRIPrep**.
         ``sub-{}_task-{}_ses-{}_run-{}_desc-confounds_regressors.tsv`` is a typical confounds file.
     ignore_original : boolean, default=False
-        A flag for indicating whether it would cover behaviroal data in the original BIDSLayout ``layout``.
+        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout ``layout``.
         If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
         
         
@@ -59,40 +59,40 @@ class BIDSController():
         (Original) BIDSLayout of input data. It should follow **BIDS** convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
     fmriprep_layout : bids.layout.layout.BIDSLayout
-        The derivative layout for fMRI preprocessed data. 
+        Derivative layout for fMRI preprocessed data. 
         ``fmriprep_layout`` is holding primarily preprocessed fMRI images (e.g. motion corrrected, registrated,...) 
         This package is built upon **fMRIPrep** by *Poldrack lab at Stanford University*. 
     mbmvpa_layout : ids.layout.layout.BIDSLayout
-        The derivative layout for MB-MVPA. 
+        Derivative layout for MB-MVPA. 
         The preprocessed voxel features and modeled latent process will be organized within this layout.
     root : str
-        The root path of layout.
+        Root path of layout.
     save_path : pathlib.PosixPath
-        The path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
+        Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
     ignore_original : boolean
-        A flag for indicating whether it would cover behaviroal data in the original BIDSLayout ``layout``.
+        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout ``layout``.
         If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
     bold_suffix : str, default="bold"
-        The suffix of filename indicating bold image data. Please refer to file naming convention in **BIDS** convention.
+        Suffix of filename indicating bold image data. Please refer to file naming convention in **BIDS** convention.
         ``sub-{}_task-{}_ses-{}_run-{}_space-{}_desc-preproc_bold.nii.gz`` is a typical bold image file.
     event_suuffix : str, default="events"
-        The suffix of filename indicating behavioral data. Please refer to file naming convention in **BIDS** convention.
+        Suffix of filename indicating behavioral data. Please refer to file naming convention in **BIDS** convention.
         ``sub-{}_task-{}_ses-{}_run-{}_events.tsv`` is a typical event file.
     confound_suffix : str, default="regressors"
-        The suffix of filename indicating confounds or regressors data. Please refer to file naming convention in **BIDS** convention.
+        Suffix of filename indicating confounds or regressors data. Please refer to file naming convention in **BIDS** convention.
         Also refer to **fMRIPrep**.
         ``sub-{}_task-{}_ses-{}_run-{}_desc-confounds_regressors.tsv`` is a typical confounds file.
     fmriprep_name : str, default="fMRIPrep"
-        The name of the derivative layout of fMRI preprocessed data. 
+        Name of the derivative layout of fMRI preprocessed data. 
     mbmvpa_name : str, default="MB-MVPA"
-        The name of the derivative layout of MB-MVPA data.
+        Name of the derivative layout of MB-MVPA data.
     task_name : str
-        The name of the task. If not given, the most common task name will be automatically selected.
+        Name of the task. If not given, the most common task name will be automatically selected.
     voxelmask_path : pathlib.PosixPath
-        The path for saving and locating integrated ROI mask. 
+        Path for saving and locating integrated ROI mask. 
     meta_infos : pandas.DataFrame
-        The dataframe of meta information of each run. 
+        Dataframe of meta information of each run. 
         Following columns are included.
         ['subject', 'session', 'run', 'task', 'bold_path', 'confound_path', 'event_path', 't_r', 'n_scans']
     

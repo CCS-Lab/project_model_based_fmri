@@ -31,12 +31,12 @@ class DataPreprocessor():
         (Original) BIDSLayout of input data. It should follow `BIDS convention`_.
         The main data used from this layout is behaviroal data,``events.tsv``.
     save_path : str or pathlib.PosixPath, default=None
-        The path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
+        Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
     task_name : str, default=None
-        The name of the task. If not given, the most common task name will be automatically selected.
+        Name of the task. If not given, the most common task name will be automatically selected.
     mask_path : str or pathlib.PosixPath, default=None
-        The path for directory containing mask files. 
+        Path for directory containing mask files. 
         Mask files are nii files recommended to be downloaded from `Neurosynth`_. 
         As default, each of the nii files is regarded as a probablistic map, and
         the *mask_trheshold* will be used as the cut-off value for binarizing.
@@ -44,75 +44,76 @@ class DataPreprocessor():
         The binarized maps will be integrated by union operation to be a single binary image.
         If None, the default mask_path is 'fmriprep_ROOT/masks.'
     fmriprep_name : str, default="fMRIPrep"
-        The name for derivatve BIDS layout for fmriprep.
+        Name for derivatve BIDS layout for fmriprep.
     bold_suffix : str, default='bold'
-        The name of suffix indicating 'bold' image.
+        Name of suffix indicating 'bold' image.
         It will be used for searching image files through BIDS layout.
     confound_suffix : str, default='regressors'
-        The name of suffix indicating confounds file
+        Name of suffix indicating confounds file
         It will be used for searching confounds files through BIDS layout.
     mask_threshold : float, default=2.58
-        The cut-off value for thresholding mask images. 
+        Cut-off value for thresholding mask images. 
         The default value, 2.58 is determined as it assume the input masks as z maps,
         and 99% confidence interval is considered.
     zoom : tuple[float, float, float], defualt=(2,2,2)
-        The window size for zooming fMRI images. Each of three components means x, y ,z axis respectively.
+        Window size for zooming fMRI images. Each of three components means x, y ,z axis respectively.
         The size of voxels will be enlarged by the factor of corresponding component value.
         Ex. zoom = (2,2,2) means the original 2 mm^3 voxels will be 4mm^3, so reducing the total number of
         voxels in a single image.
     smoothing_fwhm : float, default=None
-        If smoothing_fwhm is not None, it gives the size in millimeters of the
-        spatial smoothing to apply to the signal.
+        Size in millimeters of the spatial smoothing. If None, skip smoothing.
     standardize : boolean, default=True
-        If True, standardization (Gaussian normalization) would be done for each image.
+        Indicator for standardization.
+        If True, Gaussian normalization would be done for each image.
     confounds : list of str, default=[]
-        The list of names for indicating columns in confounds files.
+        List of names for indicating columns in confounds files.
         The values of *confounds* will be regressed out. 
     high_pass : float, default = 1/128
-        The value for high pass filter. [Hz]
+        Value for high pass filter. [Hz]
     detrend : boolean, default=False
+        Indicator for detrending.
         If True, remove a global linear trend in data.
     n_core : int, default=4
-        The number of threads for multi-processing. 
+        Number of threads for multi-processing. 
         Please consider your computing capcity and enter the affordable number.
         It will be also used as the number of cores for running `hBayesDM`_.
     process_name : str, default="unnamed"
-        The name of the target latent process.
+        Name of the target latent process.
         It should be match with the name defined in computational modeling
     adjust_function : function(pandas.Series, dict)-> pandas.Series, default=lambda x : x
-        A user-defined row-wise function for modifying each row of behavioral data.
+        User-defined row-wise function for modifying each row of behavioral data.
         *adjust_function* (a row of DataFrame)-> a row of DataFrame with modified behavior data
     filter_function : function(pandas.Series, dict)-> boolean, default=lambda \_ : True
-        A user-defined row-wise function for filtering each row of behavioral data.
+        User-defined row-wise function for filtering each row of behavioral data.
         *filter_function* (a row of DataFrame)-> True or False
     latent_function : function(pandas.Series, dict)-> pandas.Series, default=None
-         A user-defined row-wise function for calculating latent process.
-         The values will be indexed by 'modulation' column name.
-         *latent_function* (a row of DataFrame)-> a row of DataFrame with modulation
+        User-defined row-wise function for calculating latent process.
+        The values will be indexed by 'modulation' column name.
+        *latent_function* (a row of DataFrame)-> a row of DataFrame with modulation
     adjust_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
-        A user-defined dataframe-wise function for modifying each row of behavioral data.
+        User-defined dataframe-wise function for modifying each row of behavioral data.
         If not given, it will be made by using *adjust_function*.
         If given, it will override *adjust_function*.
     filter_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
-        A user-defined dataframe-wise function for filtering each row of behavioral data.
+        User-defined dataframe-wise function for filtering each row of behavioral data.
         If not given, it will be made by using *filter_function*.
         If given, it will override *filter_function*.
     latent_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
-        A user-defined dataframe-wise function for calculating latent process.
+        User-defined dataframe-wise function for calculating latent process.
         If not given, it will be made by using *latent_function*.
         If given, it will override *latent_function*.
     dm_model : str, default="unnamed"
-        The name for computational modeling by `hBayesDM`_. 
+        Name for computational modeling by `hBayesDM`_. 
         You can still use this parameter to assign the name of the model, 
         even you would not choose to depend on hBayesDM.
     individual_params : str or pathlib.PosixPath or pandas.DataFrame, default=None
-        The path or loaded DataFrame for tsv file with individual parameter values.
+        Path or loaded DataFrame for tsv file with individual parameter values.
         If not given, find the file from the default path
         ``MB-MVPA_root/task-*task_name*_model-*model_name*_individual_params.tsv``
         If the path is empty, it will remain ``None`` indicating a need for running hBayesDM.
         So, it will be set after runniing hBayesDM package.
     hrf_model : str, default="glover"
-        The name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal.
+        Name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal.
         The below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
         (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
 
@@ -124,17 +125,18 @@ class DataPreprocessor():
              - "glover + derivative": the Glover hrf + time derivative (2 regressors).
              - "glover + derivative + dispersion": idem + dispersion derivative. (3 regressors)
     use_duration : boolean, default=False
+        Indicator for making time mask. 
         If True use "duration" column to make a time mask, 
-        if False all the gaps following trials after valid trials would be included in the time mask.    
+        else all the gaps following trials after valid trials would be included in the time mask.    
     ignore_original : boolean, default=False
-        A flag for indicating whether it would cover behaviroal data in the original BIDSLayout.
+        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout.
         If True, it will only consider data in the derivative layout for fMRI preprocessed data.
     onset_name : str, default="onset"
-        The column name indicating  *onset* values.
+        Column name indicating  *onset* values.
     duration_name : str, default="duration"
-        The column name indicating *duration* values.
+        Column name indicating *duration* values.
     end_name : str, default=None
-        The column name indicating end of valid time.
+        Column name indicating end of valid time.
         If given, *end*-*onset* will be used as *duration* and override *duration_name*.
         If ``None``, it would be ignored and *duration_name* will be used.
     use_1sec_duration : boolean, default=True
