@@ -259,7 +259,7 @@ class MVPA_CNN(MVPA_Base):
         If True, BatchNormalization layer will follow each convolutional layer.
     gpu_visible_devices : list of str or list of int, default=None
         Users can indicate a list of GPU resources here. 
-        It would have a same effect as "CUDA_VSIBLE_DEVICES=..."v
+        It would have a same effect as "CUDA_VSIBLE_DEVICES=..."
     """
     
     def __init__(self, 
@@ -281,7 +281,6 @@ class MVPA_CNN(MVPA_Base):
                  n_sample = 30000,
                  batch_norm=True,
                  use_bipolar_balancing = False,
-                 voxel_mask=None,
                  gpu_visible_devices = None,
                  **kwargs):
         
