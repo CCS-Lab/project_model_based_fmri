@@ -27,28 +27,20 @@ class MVPACV_MLP(MVPA_CV):
     Also, users can modulate the configuration for reporting function which includes making brain map (nii), 
     and plots.
     
-    Fitting Multi-Layer Perceptron (MLP) as a regression model for multi-voxel
-    pattern analysis and extracting fitted coefficients. 
-    Mini-batch gradient descent with earlystopping.
-
-    Coefficient extraction is done by sequential matrix multiplication of
-    layers. The activation function is assumed to be linear.
-    Repeat several times (=N) and return N coefficients.
-    
     Parameters
     ----------
     
     X_dict : dict{str : numpy.ndarray}
-        A dictionary for the input voxel feature data which can be indexed by subject IDs.
+        Dictionary for the input voxel feature data which can be indexed by subject IDs.
         Each voxel feature array should be in shape of [time len, voxel feature name]
     y_dict : dict{str : numpy.ndarray}
-        A dictionary for the input latent process signals which can be indexed by subject IDs.
+        Dictionary for the input latent process signals which can be indexed by subject IDs.
         Each signal should be in sahpe of [time len, ]
     voxel_mask : nibabel.nifti1.Nifti1Image
-        A brain mask image (nii) used for masking the fMRI images. It will be used to reconstruct a 3D image
+        Brain mask image (nii) used for masking the fMRI images. It will be used to reconstruct a 3D image
         from flattened array of model weights.
     method : str, default='5-fold'
-        The name for type of cross-validation to use. 
+        Name for type of cross-validation to use. 
         Currently, two options are available.
             - "N-fold" : *N*-fold cross-valiidation
             - "N-lnso" : leave-*N*-subjects-out
@@ -56,41 +48,61 @@ class MVPACV_MLP(MVPA_CV):
         If the "N" should be a positive integer and it will be parsed from the input string. 
         In the case of lnso, N should be >= 1 and <= total subject # -1.
     n_cv_repeat : int, default=1
-        The number of repetition of the entire cross-validation.
+        Number of repetition of the entire cross-validation.
         Larger the number, (normally) more stable results and more time required.
     cv_save : bool, default=True
-        indictates save results or not
+        Indictator to save results or not
     cv_save_path : str or pathlib.PosixPath, default="."
-        A path for saving results
+        Path for saving results
     experiment_name : str, default="unnamed"
-        A name for a single run of this analysis
+        Name for a single run of this analysis
         It will be included in the name of the report folder created.
     layer_dims : list of int, default=[1024, 1024]
-        A list of integer specifying the dimensions of each hidden layer.
-        The fully-connected layers will be stacked with the sizes indicated by *layer_dims*.
+        List of integer specifying the dimensions of each hidden layer.
+        Fully-connected layers will be stacked with the sizes indicated by *layer_dims*.
         The last layer, *layer_dims[-1]* --> *1*, will be added.
     activation : str, default="linear"
-        The name of activation function which will be applied to the output of hidden layers.
+        Name of activation function which will be applied to the output of hidden layers.
     activation_output : str, default="linear"
-        The name of activation function for the final output.
+        Name of activation function for the final output.
     dropout_rate : float, default=0.5
-        The rate of drop out, which will be applied after the hidden layers.
+        Rate of drop out, which will be applied after the hidden layers.
+    val_ratio : float, default=0.2
+        Rate for inner cross-validation, which will be used to split input data to 
+        (train[1-val_ratio], valid[val_ratio]). The validation dataset will be used for 
+        determining *early stopping*.
+    optimizer : str, default="adam"
+        Name of optimizer used for fitting model. The default optimizer is **Adam**. (https://arxiv.org/abs/1412.6980)
+        Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
+    loss : str, default="mse"
+        Name of objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
+        Please refer to Keras loss api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/losses)
+    learning_rate : float, default=0.001
+        Tensor, floating point value, or a schedule that is a tf.keras.optimizers.schedules.LearningRateSchedule, or a callable that takes no arguments and returns the actual value to use, The learning rate. Defaults to 0.001.
+        Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
+    n_epoch : int, default=50
+        Number of epochs to train the model. An epoch is an iteration over the entire x and y data provided. Note that in conjunction with initial_epoch, epochs is to be understood as "final epoch". The model is not trained for a number of iterations given by epochs, but merely until the epoch of index epochs is reached.
+    n_patience : int, default=10
+        Number of epochs with no improvement after which training will be stopped.
+        Please refer to https://keras.io/api/callbacks/early_stopping/
+    n_batch : int, default=64
+        Number of samples per gradient update.
+    n_sample : int, default=30000
+        Max number of samples used in a single fitting.
+        If the number of data is bigger than *n_samples*, sampling will be done for 
+        each model fitting.
+        This is for preventing memory overload.
     use_bias : bool, default=True
         If True, bias will be used in layers, otherwise bias term will not be considered.
     gpu_visible_devices : list of str or list of int, default=None
         Users can indicate a list of GPU resources here. 
         It would have a same effect as "CUDA_VSIBLE_DEVICES=..."
-    n_samples : int, default=30000
-        Max number of samples used in a single fitting.
-        If the number of data is bigger than *n_samples*, sampling will be done for 
-        each model fitting.
-        This is for preventing memory overload.
     map_type : str, default="z"
-        The type of making brain map. 
+        Type of making brain map. 
             - "z" : z-map will be created using all the weights from CV experiment.
             - "t" : t-map will be created using all the weights from CV experiment.
     sigma : float, default=1
-        The sigma value for running Gaussian smoothing on each of reconstructed maps, 
+        Sigma value for running Gaussian smoothing on each of reconstructed maps, 
         before integrating maps to z- or t-map.
     
     """
@@ -173,35 +185,48 @@ class MVPA_MLP(MVPA_Base):
     ----------
     
     input_shape : int or [int]
-        The dimension of data, which will be fed as input (X). 
+        Dimension of input data, which will be fed as X. 
         It should be same as the number of voxel-feature.
     layer_dims : list of int, default=[1024, 1024]
-        A list of integer specifying the dimensions of each hidden layer.
-        The fully-connected layers will be stacked with the sizes indicated by *layer_dims*.
+        List of integer specifying the dimensions of each hidden layer.
+        Fully-connected layers will be stacked with the sizes indicated by *layer_dims*.
         The last layer, *layer_dims[-1]* --> *1*, will be added.
     activation : str, default="linear"
-        The name of activation function which will be applied to the output of hidden layers.
+        Name of activation function which will be applied to the output of hidden layers.
     activation_output : str, default="linear"
-        The name of activation function for the final output.
+        Name of activation function for the final output.
     dropout_rate : float, default=0.5
-        The rate of drop out, which will be applied after the hidden layers.
+        Rate of drop out, which will be applied after the hidden layers.
+    val_ratio : float, default=0.2
+        Rate for inner cross-validation, which will be used to split input data to 
+        (train[1-val_ratio], valid[val_ratio]). The validation dataset will be used for 
+        determining *early stopping*.
+    optimizer : str, default="adam"
+        Name of optimizer used for fitting model. The default optimizer is **Adam**. (https://arxiv.org/abs/1412.6980)
+        Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
+    loss : str, default="mse"
+        Name of objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
+        Please refer to Keras loss api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/losses)
+    learning_rate : float, default=0.001
+        Tensor, floating point value, or a schedule that is a tf.keras.optimizers.schedules.LearningRateSchedule, or a callable that takes no arguments and returns the actual value to use, The learning rate. Defaults to 0.001.
+        Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
+    n_epoch : int, default=50
+        Number of epochs to train the model. An epoch is an iteration over the entire x and y data provided. Note that in conjunction with initial_epoch, epochs is to be understood as "final epoch". The model is not trained for a number of iterations given by epochs, but merely until the epoch of index epochs is reached.
+    n_patience : int, default=10
+        Number of epochs with no improvement after which training will be stopped.
+        Please refer to https://keras.io/api/callbacks/early_stopping/
+    n_batch : int, default=64
+        Number of samples per gradient update.
+    n_sample : int, default=30000
+        Max number of samples used in a single fitting.
+        If the number of data is bigger than *n_samples*, sampling will be done for 
+        each model fitting.
+        This is for preventing memory overload.
     use_bias : bool, default=True
         If True, bias will be used in layers, otherwise bias term will not be considered.
     gpu_visible_devices : list of str or list of int, default=None
         Users can indicate a list of GPU resources here. 
         It would have a same effect as "CUDA_VSIBLE_DEVICES=..."
-    n_samples : int, default=30000
-        Max number of samples used in a single fitting.
-        If the number of data is bigger than *n_samples*, sampling will be done for 
-        each model fitting.
-        This is for preventing memory overload.
-    map_type : str, default="z"
-        The type of making brain map. 
-            - "z" : z-map will be created using all the weights from CV experiment.
-            - "t" : t-map will be created using all the weights from CV experiment.
-    sigma : float, default=1
-        The sigma value for running Gaussian smoothing on each of reconstructed maps, 
-        before integrating maps to z- or t-map.
     
     """
     
