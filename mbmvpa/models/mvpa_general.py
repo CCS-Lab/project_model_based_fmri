@@ -13,6 +13,7 @@ from bids import BIDSLayout
 import matplotlib.pyplot as plt
 from mbmvpa.utils import config
 import random
+import nibabel as nib
 from scipy.stats import ttest_1samp
 
 
@@ -63,7 +64,7 @@ class MVPA_CV_1stL():
                                            report_function_dict=report_function_dict) for subj_id in X_dict.keys()}
         if cv_save:
             now = datetime.datetime.now()
-            self.save_root = Path(cv_save_path) / f'report_{model.name}_{experiment_name}-1stlevel_{method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+            self.save_root = Path(cv_save_path) / f'report_{model.name}_{experiment_name}_1stlevel-{method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir(exist_ok=True)
             for subj_id in X_dict.keys():
                 subj_save_root = self.save_root / subj_id
@@ -76,14 +77,14 @@ class MVPA_CV_1stL():
         for subj_id, mvpa_cv in tqdm(self.mvpa_cv_dict.items()):
             output_dict[subj_id] = mvpa_cv.run(**kwargs)
         
-        nii_files = self.save_root.glob('**/*.nii')
+        nii_files = [f for f in self.save_root.glob('**/*.nii')]
         if len(nii_files) == 0:
             return
         nii_loaded = [nib.load(f) for f in nii_files]
         activation_maps = np.array([f.get_fdata() for f in nii_loaded])
-        t_map_2nd = ttest_1samp(activation_maps, 0).statisticv
+        t_map_2nd = ttest_1samp(activation_maps, 0).statistic
         nib.Nifti1Image(t_map_2nd,
-                        affine=nii_loaded[0].affine).to_filename(self.save_root/'t_map_2nd.nii')
+                        affine=nii_loaded[0].affine).to_filename(self.save_root/f'{experiment_name}_2nd_t_map.nii')
         
         
 class MVPA_CV():
