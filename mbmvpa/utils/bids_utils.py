@@ -416,7 +416,8 @@ class BIDSController():
                               h=h, 
                               fontsize=fontsize,
                               save=True,
-                              save_path=save_path)
+                              save_path=save_path,
+                              show=False)
             n_try += 1
             if plotted >0:
                 n_plot += 1

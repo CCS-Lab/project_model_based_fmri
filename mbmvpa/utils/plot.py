@@ -55,9 +55,12 @@ def plot_data(mbmvpa_layout,
               h=7, 
               fontsize=15,
               save=False,
-              save_path=None):
+              save_path=None,
+              show=True):
     
-    
+    if not show:
+        plt.ioff()
+        
     run_kwargs = {'subject':subject,
                  'run':run,
                  'task':task_name}
@@ -88,8 +91,12 @@ def plot_data(mbmvpa_layout,
         else:
             file_name = f'sub-{subject}_task-{task_name}_run-{run}_plot.png'
         plt.savefig(Path(save_path)/file_name,bbox_inches='tight')
-    else:
+    
+    if show:
         plt.show()
+    else:
+        plt.ion()
+    plt.close()
     return 1
     
 def add_voxel_feature_subplot(feature_file, 
@@ -166,18 +173,24 @@ def add_latent_process_subplot(modulation_file,
     
     ax_mod = fig.add_subplot(total_number*2, 1, 2*ax_idx-1)
     ax_mod.stem(mod_array, label='modulation',linefmt='black', markerfmt=' ',basefmt="black")
-    for (si,ei) in timemask_ranges:
-        ax_mod.axvspan(si, ei,color='gray', alpha=.3, lw=1, label='masked-out')
+    if len(timemask_ranges) > 0:
+        ax_mod.axvspan(timemask_ranges[0][0], timemask_ranges[0][1],
+                          color='gray', alpha=.3, lw=1, label='masked-out')
+        for (si,ei) in timemask_ranges:
+            ax_mod.axvspan(si, ei,color='gray', alpha=.3, lw=1)
     ax_mod.set_title(modulation_file.stem, fontsize=fontsize)
     ax_mod.get_xaxis().set_visible(False)
     ax_mod.set_ylabel('value (a.u.)',fontsize=fontsize)
-    ax_mod.legend()
+    ax_mod.legend(loc='upper right')
     
     
     ax_signal = fig.add_subplot(total_number*2, 1, 2*ax_idx)
     ax_signal.plot(signal, label='signal', color='red')
-    for (si,ei) in timemask_ranges:
-        ax_signal.axvspan(si, ei,color='gray', alpha=.3, lw=1, label='masked-out')
+    if len(timemask_ranges) > 0:
+        ax_signal.axvspan(timemask_ranges[0][0], timemask_ranges[0][1],
+                          color='gray', alpha=.3, lw=1, label='masked-out')
+        for (si,ei) in timemask_ranges[1:]:
+            ax_signal.axvspan(si, ei,color='gray', alpha=.3, lw=1)
     ax_signal.set_title(signal_file.stem, fontsize=fontsize)
     ax_signal.set_ylabel('value (a.u.)',fontsize=fontsize)
     if not skip_xlabel:
@@ -186,6 +199,6 @@ def add_latent_process_subplot(modulation_file,
     xticklabels = xticks*t_r
     ax_signal.set_xticks(xticks)
     ax_signal.set_xticklabels(xticklabels)
-    ax_signal.legend()
+    ax_signal.legend(loc='upper right')
     
     

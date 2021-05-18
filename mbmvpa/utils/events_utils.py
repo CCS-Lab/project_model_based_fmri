@@ -85,7 +85,7 @@ def _make_function_dfwise(function):
     return dfwise_function
 
 def _make_single_time_mask(df_events, time_length, t_r,
-                           use_duration=False):
+                           use_duration):
     
     df_events = df_events.sort_values(by="onset")
     onsets = df_events["onset"].to_numpy()
