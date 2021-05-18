@@ -32,5 +32,10 @@ class ComputationalModel(Base):
             
             # delta
             ev[choice-1] += A * (curUtil - ev[choice-1])
+            
+            self._add('Delta', A * (curUtil - ev[choice-1]))
+            self._add('pred_err', curUtil - ev[choice-1])
         
 latent_process_onset = {'curUtil', TIME_FEEDBACK}
+latent_process_onset = {'Delta', TIME_FEEDBACK}
+latent_process_onset = {'pred_error', TIME_FEEDBACK}
