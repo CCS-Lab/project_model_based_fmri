@@ -273,7 +273,7 @@ class MBMVPA():
         self.bids_controller.reload()
         self.bids_controller.plot_processed_data(feature_name=self.X_generator.feature_name,
                                                  process_name=self.y_generator.process_name,
-                                                h=self.config['DATAPLOT']['_hight'],
+                                                h=self.config['DATAPLOT']['_height'],
                                                 w=self.config['DATAPLOT']['_width'],
                                                 fontsize=self.config['DATAPLOT']['_fontsize'])
         # set layout for loading X, y data

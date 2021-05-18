@@ -242,6 +242,10 @@ class DataPreprocessor():
                    adjust_function=None, 
                    filter_function=None,
                    skip_modeling=False,
+                   make_plots=True,
+                   plot_w=10,
+                   plot_h=5,
+                   plot_fontsize=12,
                    **kwargs):
             
         
@@ -265,6 +269,18 @@ class DataPreprocessor():
                             process_name=process_name)
         
         self.bids_controller.reload()
+        
+        # make plots of processed data
+        if feature_name is None:
+            feature_name = self.X_generator.feature_name
+        if process_name is None:
+            process_name = self.y_generator.process_name
+            
+        self.bids_controller.plot_processed_data(feature_name=feature_name,
+                                                 process_name=process_name,
+                                                 w=plot_w,
+                                                 h=plot_h,
+                                                 fontsize=plot_fontsize)
         
         
         

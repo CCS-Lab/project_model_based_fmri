@@ -152,7 +152,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         },
     },
     'DATAPLOT':{
-        '_hight': 5,
+        '_height': 5,
         '_width': 10,
         '_fontsize': 12
     }
