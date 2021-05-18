@@ -38,3 +38,4 @@ class ComputationalModel(Base):
             self._add('pred_error',curUtil - ev[choice - 1])
         
 latent_process_onset = {'Delta', TIME_FEEDBACK}
+latent_process_onset = {'pred_error', TIME_FEEDBACK}
