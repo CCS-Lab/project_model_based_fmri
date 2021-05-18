@@ -16,6 +16,7 @@ from bids import BIDSLayout
 import pandas as pd
 from ..utils.descriptor import make_mbmvpa_description, version_diff
 from ..utils import config # configuration for default names used in the package
+from .plot import plot_data
 
 import pdb
 
@@ -387,5 +388,39 @@ class BIDSController():
         
     def save_voxelmask(self, voxel_mask):
         nib.save(voxel_mask, self.voxelmask_path)
+        
+        
+    def plot_processed_data(self,
+                            feature_name,
+                            process_name,
+                            h=10,
+                            w=5,
+                            fontsize=12):
+        
+        save_path = Path(self.mbmvpa_layout.root)/f'plot_feature-{feature_name}_process-{process_name}'
+        save_path.mkdir(exist_ok=True)
+        
+        n_plot = 0
+        n_try = 0
+        for _, row in self.meta_infos.iterrows():
+            
+            plotted = plot_data(mbmvpa_layout=self.mbmvpa_layout, 
+                              subject=row['subject'],
+                              run=row['run'],
+                              feature_name=feature_name,
+                              task_name= row['task'],
+                              process_name=process_name,
+                              session=row['session'],
+                              t_r=row['t_r'],
+                              w=w, 
+                              h=h, 
+                              fontsize=fontsize,
+                              save=True,
+                              save_path=save_path)
+            n_try += 1
+            if plotted >0:
+                n_plot += 1
+                
+        print(f'INFO: processed data [{n_plot}/{n_try}] are plotted for quality check.')
         
         

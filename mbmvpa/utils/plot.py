@@ -1,8 +1,11 @@
 from scipy.stats import pearsonr
 from statsmodels.stats.multitest import fdrcorrection
 import matplotlib.pyplot as plt
-import pdb
-from pathliib import Path
+import numpy as np
+import pandas as pd
+from pathlib import Path
+from .config import DEFAULT_MODULATION_SUFFIX, DEFAULT_FEATURE_SUFFIX, \
+                    DEFAULT_TIMEMASK_SUFFIX, DEFAULT_SIGNAL_SUFFIX 
 
 def plot_pearsonr(y_train,
                   y_test,
@@ -36,7 +39,7 @@ def plot_pearsonr(y_train,
     plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
     plt.title(f'Pearson R. FDR corrected. p<{pval_threshold}')
     if save:
-        plt.savefig(save_path/f'plot_pearsonr.png',bbox_inches='tight')
+        plt.savefig(Path(save_path)/f'plot_pearsonr.png',bbox_inches='tight')
     plt.show()
     
     
@@ -47,19 +50,47 @@ def plot_data(mbmvpa_layout,
               task_name,
               process_name,
               t_r,
+              session=None,
               w=14, 
               h=7, 
-              fontsize=15):
+              fontsize=15,
+              save=False,
+              save_path=None):
     
-    signal_file = mbmvpa_layout.get(subject=subject, run=run, desc=process_name,suffix='signal')[0]
-    modulation_file = mbmvpa_layout.get(subject=subject, run=run, desc=process_name,suffix='modulation')[0]
-    timemask_file = mbmvpa_layout.get(subject=subject, run=run, desc=process_name,suffix='timemask')[0]
-    feature_file = mbmvpa_layout.get(subject=subject, run=run, desc=feature_name,suffix='voxelfeature')[0]
+    
+    run_kwargs = {'subject':subject,
+                 'run':run,
+                 'task':task_name}
+    
+    if session is not None:
+        run_kwargs['session'] = session
+        
+    files = [mbmvpa_layout.get(desc=process_name,suffix=DEFAULT_SIGNAL_SUFFIX,**run_kwargs),
+             mbmvpa_layout.get(desc=process_name,suffix=DEFAULT_MODULATION_SUFFIX,**run_kwargs),
+             mbmvpa_layout.get(desc=process_name,suffix=DEFAULT_TIMEMASK_SUFFIX,**run_kwargs),
+             mbmvpa_layout.get(desc=feature_name,suffix=DEFAULT_FEATURE_SUFFIX,**run_kwargs)]
+    
+    # sanity check
+    for f in files:
+        if len(f) != 1:
+            return -1
+
+    signal_file, modulation_file,\
+        timemask_file, feature_file = [f[0] for f in files]
     
     fig = plt.figure(figsize=(w,h*2))
     add_voxel_feature_subplot(feature_file, t_r, ax_idx=1, fig=fig, total_number=2,fontsize=fontsize, skip_xlabel=True)
     add_latent_process_subplot(modulation_file, signal_file, timemask_file, t_r, ax_idx=2, fig=fig, total_number=2,fontsize=fontsize)
     
+    if save:
+        if session is not None:
+            file_name = f'sub-{subject}_ses-{session}_task-{task_name}_run-{run}_plot.png'
+        else:
+            file_name = f'sub-{subject}_task-{task_name}_run-{run}_plot.png'
+        plt.savefig(Path(save_path)/file_name,bbox_inches='tight')
+    else:
+        plt.show()
+    return 1
     
 def add_voxel_feature_subplot(feature_file, 
                               t_r, 
@@ -135,7 +166,7 @@ def add_latent_process_subplot(modulation_file,
     
     ax_mod = fig.add_subplot(total_number*2, 1, 2*ax_idx-1)
     ax_mod.stem(mod_array, label='modulation',linefmt='black', markerfmt=' ',basefmt="black")
-    for (si,ei) in timemask2unvalidrange(timemask):
+    for (si,ei) in timemask_ranges:
         ax_mod.axvspan(si, ei,color='gray', alpha=.3, lw=1, label='masked-out')
     ax_mod.set_title(modulation_file.stem, fontsize=fontsize)
     ax_mod.get_xaxis().set_visible(False)
@@ -145,7 +176,7 @@ def add_latent_process_subplot(modulation_file,
     
     ax_signal = fig.add_subplot(total_number*2, 1, 2*ax_idx)
     ax_signal.plot(signal, label='signal', color='red')
-    for (si,ei) in timemask2unvalidrange(timemask):
+    for (si,ei) in timemask_ranges:
         ax_signal.axvspan(si, ei,color='gray', alpha=.3, lw=1, label='masked-out')
     ax_signal.set_title(signal_file.stem, fontsize=fontsize)
     ax_signal.set_ylabel('value (a.u.)',fontsize=fontsize)

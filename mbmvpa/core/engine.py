@@ -269,8 +269,14 @@ class MBMVPA():
         self.y_generator.run(modeling_kwargs=self.config['HBAYESDM'],
                             overwrite=overwrite) 
         
-        # set layout for loading X, y data
+        # reload bids layout and plot processed data
         self.bids_controller.reload()
+        self.bids_controller.plot_processed_data(feature_name=self.X_generator.feature_name,
+                                                 process_name=self.y_generator.process_name,
+                                                h=self.config['DATAPLOT']['_hight'],
+                                                w=self.config['DATAPLOT']['_width'],
+                                                fontsize=self.config['DATAPLOT']['_fontsize'])
+        # set layout for loading X, y data
         self.config['LOADER']['layout']=self.bids_controller.mbmvpa_layout
         self.loader = BIDSDataLoader(**self.config['LOADER'])
         

@@ -151,6 +151,11 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'sigma': 1,
         },
     },
+    'DATAPLOT':{
+        '_hight': 5,
+        '_width': 10,
+        '_fontsize': 12
+    }
 }
 
 

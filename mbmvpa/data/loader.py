@@ -171,6 +171,7 @@ class BIDSDataLoader():
             self.subjects = self.layout.get_subjects()
         else:
             self.subjects = subjects
+        
         self.has_session = len(self.layout.get_sessions())>0
         
         self.X = {}
