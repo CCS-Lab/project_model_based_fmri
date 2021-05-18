@@ -34,5 +34,7 @@ class ComputationalModel(Base):
             # decay-RI
             ev *= A
             ev[choice-1] += curUtil;
+            
+            self._add('pred_error',curUtil - ev[choice - 1])
         
 latent_process_onset = {'Delta', TIME_FEEDBACK}
