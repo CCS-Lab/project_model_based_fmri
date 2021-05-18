@@ -36,7 +36,6 @@ class ComputationalModel(Base):
             evChosen = ev[choice-1]
             self._add('EFchosen',efChosen)
             self._add('EVchosen',evChosen)
-            self._add('PEval', PEval)
             
             if outcome >= 0:
                 # Update ev for all decks
