@@ -13,6 +13,7 @@ from bids import BIDSLayout
 import matplotlib.pyplot as plt
 from mbmvpa.utils import config
 import random
+from scipy.stats import ttest_1samp
 
 
 class MVPA_Base():
@@ -71,11 +72,20 @@ class MVPA_CV_1stL():
                 self.mvpa_cv_dict[subj_id].cv_save = True
     
     def run(self,**kwargs):
-        for _, mvpa_cv in tqdm(self.mvpa_cv_dict.items()):
-            mvpa_cv.run(**kwargs)
-
-    
-    
+        output_dict = {}
+        for subj_id, mvpa_cv in tqdm(self.mvpa_cv_dict.items()):
+            output_dict[subj_id] = mvpa_cv.run(**kwargs)
+        
+        nii_files = self.save_root.glob('**/*.nii')
+        if len(nii_files) == 0:
+            return
+        nii_loaded = [nib.load(f) for f in nii_files]
+        activation_maps = np.array([f.get_fdata() for f in nii_loaded])
+        t_map_2nd = ttest_1samp(activation_maps, 0).statisticv
+        nib.Nifti1Image(t_map_2nd,
+                        affine=nii_loaded[0].affine).to_filename(self.save_root/'t_map_2nd.nii')
+        
+        
 class MVPA_CV():
     
     r"""
