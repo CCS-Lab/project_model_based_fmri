@@ -29,7 +29,6 @@ class ComputationalModel(Base):
             p_burst = phi + (1 - exp(-n_pump * eta)) * ((0.0 + n_pump - n_succ) / n_pump - phi)
             
             self._add('Pburst', p_burst)
-            self._add('Uloss', u_loss)
             self._add('Upump', u_pump)
 
 latent_process_onset = {}
