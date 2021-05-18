@@ -30,6 +30,7 @@ class ComputationalModel(Base):
             PEfreq = np.sign(outcome) - ef[choice-1]
             self._add('PEfreq', PEfreq)
             PEfreq_fic = -sign_out(gain,loss)/3 - ef
+            self._add('PEfreq_fic',PEfreq_fic)
             
             efChosen = ef[choice-1]
             evChosen = ev[choice-1]
