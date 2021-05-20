@@ -38,6 +38,9 @@ class LatentProcessGenerator():
     bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
         (Original) BIDSLayout of input data. It should follow **BIDS** convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
+    subjects : list of str or "all",default="all"
+        List of subject IDs to load. 
+        If "all", all the subjects found in the layout will be loaded.
     bids_controller : mbmvpa.utils.bids_utils.BIDSController, default=None
         BIDSController instance for controlling BIDS layout for preprocessing.
         If not given, then initiates the controller.
@@ -123,6 +126,7 @@ class LatentProcessGenerator():
     
     def __init__(self, 
                   bids_layout,
+                  subjects="all",
                   bids_controller=None,
                   save_path=None,
                   task_name=None,
@@ -148,6 +152,7 @@ class LatentProcessGenerator():
         # set path informations and load layout
         if bids_controller is None:
             self.bids_controller = BIDSController(bids_layout,
+                                            subjects=subjects,
                                             save_path=save_path,
                                             task_name=task_name,
                                             ignore_original=ignore_original)

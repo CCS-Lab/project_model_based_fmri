@@ -130,29 +130,35 @@ class MVPA_CV_1stL():
         # run MVPA_CV for each subject
         output_dict = {}
         for subj_id, mvpa_cv in tqdm(self.mvpa_cv_dict.items()):
-            print(f"INFO: start running MVPA_CV on subject-{subj_id}")
+            print(f"INFO: MVPA_CV on subject-{subj_id}")
             output_dict[subj_id] = mvpa_cv.run(**kwargs)
             
-        # aggregate 1st-level brain maps
-        # get (one-sample) T-map from 1st-level brain maps.
+        # get 2nd-level T-map
+        self._make_2nd_t_map()
+        # plot distribution of pearson r value of each subject.
+        self._plot_pearsonr(save=self.cv_save,
+                            pval_threshold=pval_threshold_2nd)
+        return output_dict
+    
+    def _make_2nd_t_map(self):
+        
         if self.cv_save:
+            # aggregate 1st-level brain maps
             nii_files = [f for f in self.save_root.glob('**/*.nii')]
-            if len(nii_files) == 0:
+            if len(nii_files) != 0:
                 print(f"INFO: {len(nii_files)} 1st-level brain images is(are) found.")
                 nii_loaded = [nib.load(f) for f in nii_files]
                 activation_maps = np.array([f.get_fdata() for f in nii_loaded])
+                
+                # get (one-sample) T-map from 1st-level brain maps.
                 t_map_2nd = ttest_1samp(activation_maps, 0).statistic
                 # save
                 nib.Nifti1Image(t_map_2nd,
                                 affine=nii_loaded[0].affine).to_filename(self.save_root/f'{self.experiment_name}_2nd_t_map.nii')
-                
-                
+                print("INFO: 2nd-level brain map is created.")
             else:
                 print("INFO: No 1st-level brain image is found.")
-                
-        self._plot_pearsonr(save=self.cv_save,
-                            pval_threshold=pval_threshold_2nd)
-        return output_dict
+        
     
     def _plot_pearsonr(self, 
                        save=True,
@@ -173,28 +179,29 @@ class MVPA_CV_1stL():
             pred_train_files.sort()
             y_train_files.sort()
 
-            pred_test = np.concatenate([np.load(f) for f in pred_test_files])
-            y_test = np.concatenate([np.load(f) for f in y_test_files])
-            pred_train = np.concatenate([np.load(f) for f in pred_train_files])
-            y_train = np.concatenate([np.load(f) for f in y_train_files])
+            pred_test = np.concatenate([np.load(f) for f in pred_test_files],0)
+            y_test = np.concatenate([np.load(f) for f in y_test_files],0)
+            pred_train = np.concatenate([np.load(f) for f in pred_train_files],0)
+            y_train = np.concatenate([np.load(f) for f in y_train_files],0)
 
             return pred_test, y_test, pred_train, y_train
         
         for subject_id in self.mvpa_cv_dict.keys():
             pred_test, y_test,\
-                pred_train, y_train= get_subjects_pred(subject_id)
+                pred_train, y_train= _get_subjects_pred(subject_id)
             pred_test_list.append(pred_test)
-            y_test_list.append(y_test_list)
-            pred_train_list.append(pred_train_list)
-            y_train_list.append(y_train_list)
+            y_test_list.append(y_test)
+            pred_train_list.append(pred_train)
+            y_train_list.append(y_train)
             
-        
-        plot_pearsonr(y_train,
-                      y_test,
-                      pred_train,
-                      pred_test,
+        save_path = self.save_root / '2nd_pearsonr'
+        save_path.mkdir(exist_ok=True)
+        plot_pearsonr(y_train_list,
+                      y_test_list,
+                      pred_train_list,
+                      pred_test_list,
                       save=save,
-                      save_path=self.save_root/f'{self.experiment_name}_2nd_pearsonr.png',
+                      save_path=save_path,
                       pval_threshold=pval_threshold)
             
 

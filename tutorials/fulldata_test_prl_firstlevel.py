@@ -24,7 +24,6 @@ def example_filter(row):
 
 
 _ = run_mbmvpa(bids_layout=bids_layout,
-               subjects=['03','04','05'],
                level='1st',
                mvpa_model='elasticnet',
                dm_model='prl_fictitious_rp_woa',

@@ -17,6 +17,7 @@ DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME = "individual_params.tsv"
 DEFAULT_ANALYSIS_CONFIGS = {
     'VOXELFEATURE': {
         'bids_layout':'.',
+        'subjects':'all',
         'task_name':None,
         'fmriprep_name': 'fMRIPrep',
         'bold_suffix': 'bold',
@@ -33,6 +34,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
     },
     'LATENTPROCESS': {
         'bids_layout':'.',
+        'subjects':'all',
         'task_name':None,
         'process_name':'unnamed',
         'dm_model':None,
@@ -50,6 +52,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         },
     'LOADER':{
         'layout':'.',
+        'subjects':'all',
         'reconstruct': False,
         'normalizer': 'none',
         'scale': [-1, 1],

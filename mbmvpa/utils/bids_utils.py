@@ -31,6 +31,9 @@ class BIDSController():
     bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
         (Original) BIDSLayout of input data. It should follow **BIDS** convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
+    subjects : list of str or "all",default="all"
+        List of subject IDs to load. 
+        If "all", all the subjects found in the layout will be loaded.
     save_path : str or pathlib.PosixPath, default=None
         Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
@@ -59,6 +62,9 @@ class BIDSController():
     layout : bids.layout.layout.BIDSLayout
         (Original) BIDSLayout of input data. It should follow **BIDS** convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
+    subjects : list of str or "all",default="all"
+        List of subject IDs to load. 
+        If "all", all the subjects found in the layout will be loaded.
     fmriprep_layout : bids.layout.layout.BIDSLayout
         Derivative layout for fMRI preprocessed data. 
         ``fmriprep_layout`` is holding primarily preprocessed fMRI images (e.g. motion corrrected, registrated,...) 
@@ -103,6 +109,7 @@ class BIDSController():
     
     def __init__(self,
                 bids_layout,
+                subjects='all',
                 save_path=None,
                 fmriprep_name="fMRIPrep",
                 task_name=None,
@@ -122,6 +129,7 @@ class BIDSController():
         self.task_name = task_name
         self.save_path = save_path
         self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
+        self.subjects=subjects
         self._set_fmriprep_layout()
         self._set_task_name()
         self._set_save_path()
@@ -152,6 +160,8 @@ class BIDSController():
             
     def _set_metainfo(self):
         
+        print(f'INFO: target subjects-{self.subjects}')
+        
         # set meta info for each run data in DataFrame format
         meta_infos = {'subject':[],        # subejct ID
                       'session':[],        # session ID
@@ -167,6 +177,10 @@ class BIDSController():
         for bold_file in self.get_bold_all():
             
             entities = bold_file.get_entities()
+            
+            if self.subjects != 'all' and entities['subject'] not in self.subjects:
+                continue
+                
             if 'session' in entities.keys(): 
                 # if session is included in BIDS
                 # old version of BIDS doesn't have it

@@ -66,6 +66,9 @@ class BIDSDataLoader():
         BIDS layout for retrieving MB-MVPA preprocessed data files.
         Users can input the root for entire BIDS layout with original data,
         or the root for MB-MVPA derivative layout.
+    subjects : list of str or "all",default="all"
+        List of subject IDs to load. 
+        If "all", all the subjects found in the layout will be loaded.
     voxel_mask_path : str or pathlib.PosixPath, default=None
         Path for voxel mask file. If None, then find it from default path,
         "MB-MVPA_ROOT/voxelmask_{feature_name}.nii.gz"
@@ -97,7 +100,7 @@ class BIDSDataLoader():
     
     def __init__(self,
                  layout,
-                 subjects=None,
+                 subjects='all',
                  voxel_mask_path=None,
                  reconstruct=False,
                  normalizer="none",
@@ -167,7 +170,7 @@ class BIDSDataLoader():
         if self.task_name:
             self.X_kwargs['task']=self.task_name
             
-        if subjects is None:
+        if subjects == 'all':
             self.subjects = self.layout.get_subjects()
         else:
             self.subjects = subjects

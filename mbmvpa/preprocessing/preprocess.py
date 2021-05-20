@@ -30,6 +30,9 @@ class DataPreprocessor():
     bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
         (Original) BIDSLayout of input data. It should follow `BIDS convention`_.
         The main data used from this layout is behaviroal data,``events.tsv``.
+    subjects : list of str or "all",default="all"
+        List of subject IDs to load. 
+        If "all", all the subjects found in the layout will be loaded.
     save_path : str or pathlib.PosixPath, default=None
         Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
@@ -153,6 +156,7 @@ class DataPreprocessor():
     
     def __init__(self,
                   bids_layout,
+                  subjects="all",
                   save_path=None,
                   task_name=None,
                   mask_path=None,
@@ -186,46 +190,47 @@ class DataPreprocessor():
                   use_1sec_duration=True):
         
         self.X_generator = VoxelFeatureGenerator(bids_layout=bids_layout,
-                                          save_path=save_path,
-                                          task_name=task_name,
-                                          feature_name=feature_name,
-                                          fmriprep_name=fmriprep_name,
-                                          mask_path=mask_path,
-                                          bold_suffix=bold_suffix,
-                                          confound_suffix=confound_suffix,
-                                          mask_threshold=mask_threshold,
-                                          zoom=zoom,
-                                          smoothing_fwhm=smoothing_fwhm,
-                                          standardize=standardize,
-                                          confounds=confounds,
-                                          high_pass=high_pass,
-                                          detrend=detrend,
-                                          n_thread=n_core,
-                                          ignore_original=ignore_original)
+                                                  subjects=subjects,
+                                                  save_path=save_path,
+                                                  task_name=task_name,
+                                                  feature_name=feature_name,
+                                                  fmriprep_name=fmriprep_name,
+                                                  mask_path=mask_path,
+                                                  bold_suffix=bold_suffix,
+                                                  confound_suffix=confound_suffix,
+                                                  mask_threshold=mask_threshold,
+                                                  zoom=zoom,
+                                                  smoothing_fwhm=smoothing_fwhm,
+                                                  standardize=standardize,
+                                                  confounds=confounds,
+                                                  high_pass=high_pass,
+                                                  detrend=detrend,
+                                                  n_thread=n_core,
+                                                  ignore_original=ignore_original)
         
         self.bids_controller = self.X_generator.bids_controller
         
-        self.y_generator = LatentProcessGenerator(
-                                          bids_layout=bids_layout,
-                                          bids_controller=self.bids_controller,
-                                          save_path=save_path,
-                                          task_name=task_name,
-                                          process_name=process_name,
-                                          adjust_function=adjust_function,
-                                          filter_function=filter_function,
-                                          latent_function=latent_function,
-                                          adjust_function_dfwise=adjust_function_dfwise,
-                                          filter_function_dfwise=filter_function_dfwise,
-                                          latent_function_dfwise=latent_function_dfwise,
-                                          dm_model=dm_model,
-                                          individual_params=individual_params,
-                                          hrf_model=hrf_model,
-                                          use_duration=use_duration,
-                                          n_core=n_core,
-                                          onset_name=onset_name,
-                                          duration_name=duration_name,
-                                          end_name=end_name,
-                                          use_1sec_duration=use_1sec_duration)
+        self.y_generator = LatentProcessGenerator(bids_layout=bids_layout,
+                                                  subjects=subjects,
+                                                  bids_controller=self.bids_controller,
+                                                  save_path=save_path,
+                                                  task_name=task_name,
+                                                  process_name=process_name,
+                                                  adjust_function=adjust_function,
+                                                  filter_function=filter_function,
+                                                  latent_function=latent_function,
+                                                  adjust_function_dfwise=adjust_function_dfwise,
+                                                  filter_function_dfwise=filter_function_dfwise,
+                                                  latent_function_dfwise=latent_function_dfwise,
+                                                  dm_model=dm_model,
+                                                  individual_params=individual_params,
+                                                  hrf_model=hrf_model,
+                                                  use_duration=use_duration,
+                                                  n_core=n_core,
+                                                  onset_name=onset_name,
+                                                  duration_name=duration_name,
+                                                  end_name=end_name,
+                                                  use_1sec_duration=use_1sec_duration)
     
     def summary(self):
         self.bids_controller.summary()
