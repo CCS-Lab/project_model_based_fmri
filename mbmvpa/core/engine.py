@@ -101,6 +101,11 @@ class MBMVPA():
     report_path : str or pathlib.PosixPath, defualt="."
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
+    level : str, defualt=None
+        if '1st', use MVPA_CV_1stL class instead to run hiearchical version.
+        The hiearchical version of the MB-MVPA analysis is composed of two parts.
+        1) Run individual MB-MVPA on each subject
+        2) creat (one sample) T-map using brain maps from each subject.
     **kwargs : dict
         Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
