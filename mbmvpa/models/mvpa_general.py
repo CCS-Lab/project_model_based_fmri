@@ -38,6 +38,46 @@ class MVPA_Base():
         pass
     
 class MVPA_CV_1stL():
+    r"""
+    
+    Hierarchical version of MVPA_CV.
+    MVPA_CV_1stL runs MVPA_CV on each subject to get individual brain maps.(1st-level brain maps)
+    Then, by one sample T test, 1st-level brain maps will be converted to a 2nd-level brain map.
+    
+    Parameters
+    ----------
+    X_dict : dict
+        dictionary containing voxel features for each subject.
+        X_dict[{subject_id}] = np.array(time, voxel_num)
+    y_dict : dict
+        dictionary containing bold-like signals of latent process for each subject.
+        y_dict[{subject_id}] = np.array(time,)
+    model : MVPA_Base
+        MVPA model implemented uppon *MVPA_Base* interface. 
+        ElasticNet, MLP and CNN are available.
+        please refer to the documentation
+    model_param_dict : dict, default={}
+        dictionary for keywarded arguments, which will be additionally fed to MVPA model.
+        its uppon MVPA model implementation. Please check the codes of the models.
+        (not used in models offered by this package.)
+    method : str, default='5-fold'
+        name of method for cross-validation
+        leave-n-subject-out is not allowed as cross-validation will be applied to one subject at a time.
+        "{n}-fold" : n will be parsed as integer and n cross-validation will be conducted.
+    n_cv_repaet : int, default=1
+        number of repetition of running cross-validation
+        bigger the valeu, more time for computation and more stability.
+    cv_save : boolean, default=True
+        indicate whether save results or not
+    cv_save_path : str or pathlib.PosixPath, default='.'
+        path for saving results.
+    experiment_name : str, default="unnamed"
+        name for cross-validation experiment
+    report_function : dict, default={}
+        dictionary for report function. 
+        please refer to mbmvpa.utils.report for the detail.
+    """
+    
     def __init__(self, 
                 X_dict,
                 y_dict,
@@ -49,9 +89,14 @@ class MVPA_CV_1stL():
                 cv_save_path=".",
                 experiment_name="unnamed",
                 report_function_dict={}):
-        
+    
         assert len(X_dict) == len(y_dict)
+        # leave-n-subject-out is not allowed as MVPA is fitted on one subject at a time.
+        assert 'fold' in method 
+        
         self.n_subject = len(X_dict)
+        
+        # initiate MVPA_CV instance for each subject separately
         self.mvpa_cv_dict= {subj_id:MVPA_CV(X_dict={subj_id:X_dict[subj_id]},
                                             y_dict={subj_id:y_dict[subj_id]},
                                             model=model,
@@ -62,7 +107,12 @@ class MVPA_CV_1stL():
                                             cv_save_path=None,
                                            experiment_name=experiment_name,
                                            report_function_dict=report_function_dict) for subj_id in X_dict.keys()}
-        if cv_save:
+        
+        self.experiment_name = experiment_name
+        self.cv_save = cv_save
+        
+        # enter subjectwise save path in each MVPA_CV instance
+        if self.cv_save:
             now = datetime.datetime.now()
             self.save_root = Path(cv_save_path) / f'report_{model.name}_{experiment_name}_1stlevel-{method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir(exist_ok=True)
@@ -73,19 +123,28 @@ class MVPA_CV_1stL():
                 self.mvpa_cv_dict[subj_id].cv_save = True
     
     def run(self,**kwargs):
+        
+        # run MVPA_CV for each subject
         output_dict = {}
         for subj_id, mvpa_cv in tqdm(self.mvpa_cv_dict.items()):
+            print(f"INFO: start running MVPA_CV on subject-{subj_id}")
             output_dict[subj_id] = mvpa_cv.run(**kwargs)
-        
-        nii_files = [f for f in self.save_root.glob('**/*.nii')]
-        if len(nii_files) == 0:
-            return
-        nii_loaded = [nib.load(f) for f in nii_files]
-        activation_maps = np.array([f.get_fdata() for f in nii_loaded])
-        t_map_2nd = ttest_1samp(activation_maps, 0).statistic
-        nib.Nifti1Image(t_map_2nd,
-                        affine=nii_loaded[0].affine).to_filename(self.save_root/f'{experiment_name}_2nd_t_map.nii')
-        
+            
+        # aggregate 1st-level brain maps
+        # get (one-sample) T-map from 1st-level brain maps.
+        if self.cv_save:
+            nii_files = [f for f in self.save_root.glob('**/*.nii')]
+            if len(nii_files) == 0:
+                print(f"INFO: {len(nii_files)} 1st-level brain images is(are) found.")
+                nii_loaded = [nib.load(f) for f in nii_files]
+                activation_maps = np.array([f.get_fdata() for f in nii_loaded])
+                t_map_2nd = ttest_1samp(activation_maps, 0).statistic
+                # save
+                nib.Nifti1Image(t_map_2nd,
+                                affine=nii_loaded[0].affine).to_filename(self.save_root/f'{self.experiment_name}_2nd_t_map.nii')
+            else:
+                print("INFO: No 1st-level brain image is found.")
+        return output_dict
         
 class MVPA_CV():
     
