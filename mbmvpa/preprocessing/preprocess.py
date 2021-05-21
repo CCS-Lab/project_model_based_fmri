@@ -105,8 +105,10 @@ class DataPreprocessor():
         User-defined dataframe-wise function for calculating latent process.
         If not given, it will be made by using *latent_function*.
         If given, it will override *latent_function*.
-    computational_model : TODO
-        TODO
+    computational_model : Object, default=None
+        User-defined comutational model, which should include two callable methods.
+        - fit : computational_model.fit(df_events) will conduct model fitting
+        - get_parameters : computational_model.get_parameters() will get a Dataframe containing individual parameters.
     dm_model : str, default="unnamed"
         Name for computational modeling by `hBayesDM`_. 
         You can still use this parameter to assign the name of the model, 
