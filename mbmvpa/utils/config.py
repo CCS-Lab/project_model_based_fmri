@@ -37,6 +37,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'subjects':'all',
         'task_name':None,
         'process_name':'unnamed',
+        'computational_model':None,
         'dm_model':None,
         'hrf_model': 'glover',
         'use_duration': False,

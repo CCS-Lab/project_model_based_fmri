@@ -74,6 +74,8 @@ class LatentProcessGenerator():
         User-defined dataframe-wise function for calculating latent process.
         If not given, it will be made by using *latent_function*.
         If given, it will override *latent_function*.
+    computational_model : TODO
+        TODO
     dm_model : str, default="unnamed"
         Name for computational modeling by **hBayesDM**. 
         You can still use this parameter to assign the name of the model, 
@@ -137,6 +139,7 @@ class LatentProcessGenerator():
                   adjust_function_dfwise=None,
                   filter_function_dfwise=None,
                   latent_function_dfwise=None,
+                  computational_model=None,
                   dm_model="unnamed",
                   individual_params=None,
                   hrf_model="glover",
@@ -196,6 +199,7 @@ class LatentProcessGenerator():
         self.duration_name=duration_name
         self.end_name=end_name
         self.use_1sec_duration = use_1sec_duration
+        self.computational_model = computational_model
         
     def summary(self):
         self.bids_controller.summary()
@@ -269,6 +273,7 @@ class LatentProcessGenerator():
                                 adjust_function_dfwise=None, 
                                 filter_function_dfwise=None,
                                 n_core=None,
+                                computational_model=None,
                                 **kwargs):
             
         if n_core is None:
@@ -279,6 +284,9 @@ class LatentProcessGenerator():
         if individual_params is None:
             individual_params = self.individual_params
         
+        if computational_model is None:
+            computational_model = self.computational_model
+            
         dm_model = self.dm_model
         
         if adjust_function_dfwise is None:
@@ -302,21 +310,29 @@ class LatentProcessGenerator():
                 df_events_list = [df_events.sort_values(by=self.onset_name) for df_events in df_events_list]
                 df_events= pd.concat(df_events_list)
             
-            if type(dm_model) == str:
-                print("INFO: running hBayesDM")
+            if computational_model is not None:
+                print("INFO: running computational model [user-defined]")
+                model.fit(df_events)
+                individual_params = model.all_ind_pars
+                
+            elif self.use_hbayesdm and type(dm_model) == str:
+                print(f"INFO: running computational model [hBayesDM-{dm_model}]")
                 model = getattr(
                     hbayesdm.models, dm_model)(
                         data=df_events,
                         ncore=self.n_core,
                         **kwargs)
                 
-            individual_params = pd.DataFrame(model.all_ind_pars)
-            individual_params.index.name = "subjID"
-            individual_params = individual_params.reset_index()
-            model_name = ''.join(dm_model.split('_'))
+                individual_params = pd.DataFrame(model.all_ind_pars)
+                individual_params.index.name = "subjID"
+                individual_params = individual_params.reset_index()
+                model_name = ''.join(dm_model.split('_'))
+                
+                
+                
             individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
                 f"task-{self.bids_controller.task_name}_model-{model_name}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
-            
+
             # save indiv params
             individual_params.to_csv(individual_params_path,
                                      sep="\t", index=False)

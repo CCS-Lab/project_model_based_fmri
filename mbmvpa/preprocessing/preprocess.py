@@ -105,6 +105,8 @@ class DataPreprocessor():
         User-defined dataframe-wise function for calculating latent process.
         If not given, it will be made by using *latent_function*.
         If given, it will override *latent_function*.
+    computational_model : TODO
+        TODO
     dm_model : str, default="unnamed"
         Name for computational modeling by `hBayesDM`_. 
         You can still use this parameter to assign the name of the model, 
@@ -179,6 +181,7 @@ class DataPreprocessor():
                   adjust_function_dfwise=None,
                   filter_function_dfwise=None,
                   latent_function_dfwise=None,
+                  computational_model=None,
                   dm_model="unnamed",
                   individual_params=None,
                   hrf_model="glover",
@@ -222,6 +225,7 @@ class DataPreprocessor():
                                                   adjust_function_dfwise=adjust_function_dfwise,
                                                   filter_function_dfwise=filter_function_dfwise,
                                                   latent_function_dfwise=latent_function_dfwise,
+                                                  computational_model=computational_model,
                                                   dm_model=dm_model,
                                                   individual_params=individual_params,
                                                   hrf_model=hrf_model,
