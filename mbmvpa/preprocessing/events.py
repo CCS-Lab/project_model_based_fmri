@@ -153,6 +153,7 @@ class LatentProcessGenerator():
                   duration_name="duration",
                   end_name=None,
                   use_1sec_duration=True,
+                  skip_compmodel=False,
                   **kwargs):
 
         # set path informations and load layout
@@ -178,7 +179,7 @@ class LatentProcessGenerator():
         else:
             self.filter_function_dfwise = _make_function_dfwise(filter_function)
             
-        if latent_function_dfwise is not None:
+        if latent_function_dfwise is not None or skip_compmodel:
             self.latent_function_dfwise = latent_function_dfwise
         else:
             self.latent_function_dfwise = _make_function_dfwise(latent_function)
@@ -188,11 +189,17 @@ class LatentProcessGenerator():
         
         # setting model fitting specification
         self.dm_model = dm_model
-        if individual_params is None:
-            model_name = ''.join(dm_model.split('_'))
-            individual_params = Path(self.bids_controller.mbmvpa_layout.root)/ (
-                f"task-{self.bids_controller.task_name}_model-{model_name}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
-        self.individual_params = _process_indiv_params(individual_params)
+        
+        self.skip_computational_modeling = skip_compmodel
+        
+        if self.skip_computational_modeling:
+            self.individual_params = config.IGNORE_INDIV_PARAM
+        else:
+            if individual_params is None:
+                model_name = ''.join(dm_model.split('_'))
+                individual_params = Path(self.bids_controller.mbmvpa_layout.root)/ (
+                    f"task-{self.bids_controller.task_name}_model-{model_name}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
+            self.individual_params = _process_indiv_params(individual_params)
 
         # setting BOLD-like signal generating specification
         self.hrf_model = hrf_model
@@ -415,13 +422,18 @@ class LatentProcessGenerator():
                 np.save(timemask_path, timemask)
             
             # get & save latent process (modulation) dataframe
+            
             if overwrite or not modulation_df_path.exists():
                 
-                param_dict = _get_individual_param_dict(sub_id, self.individual_params)
-                if param_dict is None:
-                    continue
+                if self.skip_computational_modeling:
+                    df_events['modulation'] = df_events[self.process_name]
+                    modulation_df = df_events
+                else:
+                    param_dict = _get_individual_param_dict(sub_id, self.individual_params)
+                    if param_dict is None:
+                        continue
+                    modulation_df = self.latent_function_dfwise(df_events,param_dict=param_dict)
                     
-                modulation_df = self.latent_function_dfwise(df_events,param_dict=param_dict)
                 modulation_df = modulation_df[['onset','duration','modulation']]
                 modulation_df = modulation_df.astype({'modulation': 'float'})
                 modulation_df = modulation_df.sort_values(by="onset")

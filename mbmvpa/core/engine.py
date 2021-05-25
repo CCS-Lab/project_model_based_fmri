@@ -129,7 +129,9 @@ class MBMVPA():
         # if the function is not given, then it will find from implemented models
         # please refer to the document for available models and latent processes
         #if 'latent_function' not in self.config['LATENTPROCESS'].keys():
-        if 'latent_function' not in kwargs.keys() and 'latent_function_dfwise' not in kwargs.keys():
+        if not self.config['LATENTPROCESS']['skip_compmodel'] and \
+            'latent_function' not in kwargs.keys() and \
+            'latent_function_dfwise' not in kwargs.keys():
             self._add_latent_info_kwargs(self.config['LATENTPROCESS']['dm_model'],
                                          self.config['LATENTPROCESS']['process_name'], 
                                          self.config['LATENTPROCESS'])

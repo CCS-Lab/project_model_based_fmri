@@ -168,7 +168,9 @@ def add_latent_process_subplot(modulation_file,
             continue
     if is_valid >0:
         timemask_ranges.append((sid,len(timemask)))
-            
+    
+    xticks = np.arange(0,n_scan+1,n_scan//10)
+    xticklabels = xticks*t_r
     
     
     ax_mod = fig.add_subplot(total_number*2, 1, 2*ax_idx-1)
@@ -181,6 +183,7 @@ def add_latent_process_subplot(modulation_file,
     ax_mod.set_title(modulation_file.stem, fontsize=fontsize)
     ax_mod.get_xaxis().set_visible(False)
     ax_mod.set_ylabel('value (a.u.)',fontsize=fontsize)
+    ax_mod.set_xlim([xticks[0],xticks[-1]])
     ax_mod.legend(loc='upper right')
     
     
@@ -195,10 +198,9 @@ def add_latent_process_subplot(modulation_file,
     ax_signal.set_ylabel('value (a.u.)',fontsize=fontsize)
     if not skip_xlabel:
         ax_signal.set_xlabel('time (s)',fontsize=fontsize)
-    xticks = np.arange(0,n_scan+1,n_scan//10)
-    xticklabels = xticks*t_r
     ax_signal.set_xticks(xticks)
     ax_signal.set_xticklabels(xticklabels)
+    ax_signal.set_xlim([xticks[0],xticks[-1]])
     ax_signal.legend(loc='upper right')
     
     

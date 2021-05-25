@@ -188,8 +188,7 @@ class BIDSDataLoader():
         # data paths for the given subject. 
         
         subject_Xs =self.layout.get(subject=subject,**self.X_kwargs)
-        import pdb
-        pdb.set_trace()
+        
         subject_X_paths = []
         subject_y_paths = []
         timemask_paths = []

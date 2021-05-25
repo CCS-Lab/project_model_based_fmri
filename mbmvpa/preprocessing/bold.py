@@ -246,7 +246,7 @@ class VoxelFeatureGenerator():
                 save_filename += f'_ses-{ses_id}'
             if run_id is not None:
                 save_filename += f'_run-{run_id}'
-            save_filename = f'_desc-{self.feature_name}_{suffix}.npy'
+            save_filename += f'_desc-{self.feature_name}_{suffix}.npy'
             save_filename = self.bids_controller.set_path(sub_id=sub_id,ses_id=ses_id)/save_filename
             
             if not overwrite and save_filename.exists():

@@ -103,7 +103,6 @@ def _make_single_time_mask(df_events, time_length, t_r,
     return time_mask
 
 def _get_individual_param_dict(subject_id, individual_params):
-    
     idp = individual_params[individual_params["subjID"] == subject_id]
     if len(idp) == 0:
         idp = individual_params[individual_params["subjID"] == int(subject_id)]

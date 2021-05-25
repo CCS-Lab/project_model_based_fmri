@@ -12,7 +12,7 @@ DEFAULT_MODULATION_SUFFIX = "modulation"
 DEFAULT_SIGNAL_SUFFIX = "signal"
 DEFAULT_TIMEMASK_SUFFIX = "timemask"
 DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME = "individual_params.tsv"
-
+IGNORE_INDIV_PARAM = 'ignored'
 # default configuration for running MBMVPA
 DEFAULT_ANALYSIS_CONFIGS = {
     'VOXELFEATURE': {
@@ -52,7 +52,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'filter_function_dfwise': None,
         'latent_function_dfwise': None,
         'latent_function': None,
-        'computational_model': None
+        'computational_model': None,
+        'skip_compmodel': False
     },
     'HBAYESDM': {
         },
