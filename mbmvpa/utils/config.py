@@ -48,6 +48,11 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'use_1sec_duration': True,
         'adjust_function': lambda v: v,
         'filter_function': lambda _: True,
+        'adjust_function_dfwise': None,
+        'filter_function_dfwise': None,
+        'latent_function_dfwise': None,
+        'latent_function': None,
+        'computational_model': None
     },
     'HBAYESDM': {
         },

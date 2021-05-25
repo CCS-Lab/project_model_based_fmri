@@ -378,6 +378,7 @@ class LatentProcessGenerator():
                                 self.adjust_function_dfwise(df_events))
             df_events = df_events.sort_values(by=self.onset_name)
             
+            
             # set save path for timemaske, modulation_df and signal
             sub_id = event_infos['subject']
             ses_id = event_infos['session'] if 'session' in event_infos.keys() else None
