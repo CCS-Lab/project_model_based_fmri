@@ -12,7 +12,7 @@ class ComputationalModel(Base):
             outcome in get_named_iterater(df_events,['choice',
                                                     'outcome']):
             
-            self._add('EVchosen',ev[choice-1])
+            self._add('Qchosen',ev[choice-1])
             PE = outcome - ev[choice-1]
             self._add('PEchosen',PE)
             # value updating (learning)

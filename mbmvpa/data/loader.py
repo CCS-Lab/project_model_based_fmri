@@ -127,6 +127,7 @@ class BIDSDataLoader():
         # sanity check
         assert self.layout.description['PipelineDescription']['Name'] == config.MBMVPA_PIPELINE_NAME
         
+        proces_name = ''.join(process_name.split('_'))
         if verbose > 0:
             print('INFO: retrieving from '+str(self.layout))
             print(f'      task-{task_name}, process-{process_name}, feature-{feature_name}')

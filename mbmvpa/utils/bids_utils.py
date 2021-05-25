@@ -435,6 +435,7 @@ class BIDSController():
                             w=5,
                             fontsize=12):
         
+        process_name = ''.join(process_name.split('_'))
         save_path = Path(self.mbmvpa_layout.root)/f'plot_feature-{feature_name}_process-{process_name}'
         save_path.mkdir(exist_ok=True)
         

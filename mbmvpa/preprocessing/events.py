@@ -395,7 +395,8 @@ class LatentProcessGenerator():
                 prefix += f"_ses-{ses_id}"
             if run_id is not None:
                 prefix += f"_run-{run_id}"
-            prefix += f"_desc-{process_name}"
+            trimmed_process_name = ''.join(process_name.split('_'))
+            prefix += f"_desc-{trimmed_process_name}"
             save_path = self.bids_controller.set_path(sub_id=sub_id, ses_id=ses_id)
             
             timemask_path = save_path/(prefix+f'_{config.DEFAULT_TIMEMASK_SUFFIX}.npy')
@@ -426,7 +427,7 @@ class LatentProcessGenerator():
             if overwrite or not modulation_df_path.exists():
                 
                 if self.skip_computational_modeling:
-                    df_events['modulation'] = df_events[self.process_name]
+                    df_events['modulation'] = df_events[process_name]
                     modulation_df = df_events
                 else:
                     param_dict = _get_individual_param_dict(sub_id, self.individual_params)
