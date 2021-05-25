@@ -21,7 +21,7 @@ class ComputationalModel(Base):
             loss = - abs(loss)
             
             # Prediction error signals
-            PEr = R*gain - Qr[-1]
+            PEr = R*gain - Qr[choice-1]
             PEp = P*loss - Qp[choice-1]
             self._add('PEreward',PEr)
             self._add('PEpunishment',PEp)

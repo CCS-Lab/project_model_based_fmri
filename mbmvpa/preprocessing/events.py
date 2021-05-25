@@ -17,7 +17,7 @@ from ..utils.bids_utils import BIDSController
 from bids import BIDSLayout
 from tqdm import tqdm
 from scipy.io import loadmat
-import pdb
+import importlib
 
 from ..utils import config # configuration for default names used in the package
 
@@ -119,7 +119,7 @@ class LatentProcessGenerator():
         Column name indicating end of valid time.
         If given, *end*-*onset* will be used as *duration* and override *duration_name*.
         If ``None``, it would be ignored and *duration_name* will be used.
-    use_1sec_duration : boolean, default=True
+    use_1sec_duration : bool, default=True
         If True, *duration* will be fixed as 1 second.
         This parameter will override *duration_name* and *end_name*.
     kwargs : dict
@@ -148,6 +148,7 @@ class LatentProcessGenerator():
                   use_duration=False,
                   n_core=4,
                   ignore_original=False,
+                  ignore_fmriprep=False,
                   onset_name="onset",
                   duration_name="duration",
                   end_name=None,
@@ -202,6 +203,7 @@ class LatentProcessGenerator():
         self.end_name=end_name
         self.use_1sec_duration = use_1sec_duration
         self.computational_model = computational_model
+        
         
     def summary(self):
         self.bids_controller.summary()
@@ -317,7 +319,7 @@ class LatentProcessGenerator():
                 model.fit(df_events)
                 individual_params = model.get_parameters()
                 
-            elif self.use_hbayesdm and type(dm_model) == str:
+            elif type(dm_model) == str:
                 print(f"INFO: running computational model [hBayesDM-{dm_model}]")
                 model = getattr(
                     hbayesdm.models, dm_model)(
@@ -329,7 +331,6 @@ class LatentProcessGenerator():
                 individual_params.index.name = "subjID"
                 individual_params = individual_params.reset_index()
                 model_name = ''.join(dm_model.split('_'))
-                
                 
                 
             individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
@@ -381,12 +382,13 @@ class LatentProcessGenerator():
             sub_id = event_infos['subject']
             ses_id = event_infos['session'] if 'session' in event_infos.keys() else None
             run_id = event_infos['run']
+            prefix = f"sub-{sub_id}_task-{task_name}"
             if ses_id is not None:
-                prefix = f"sub-{sub_id}_task-{task_name}_ses-{ses_id}_run-{run_id}_desc-{process_name}"
-                save_path = self.bids_controller.set_path(sub_id=sub_id, ses_id=ses_id)
-            else:
-                prefix = f"sub-{sub_id}_task-{task_name}_run-{run_id}_desc-{process_name}"
-                save_path = self.bids_controller.set_path(sub_id=sub_id)
+                prefix += f"_ses-{ses_id}"
+            if run_id is not None:
+                prefix += f"_run-{run_id}"
+            prefix += f"_desc-{process_name}"
+            save_path = self.bids_controller.set_path(sub_id=sub_id, ses_id=ses_id)
             
             timemask_path = save_path/(prefix+f'_{config.DEFAULT_TIMEMASK_SUFFIX}.npy')
             modulation_df_path = save_path/(prefix+f'_{config.DEFAULT_MODULATION_SUFFIX}.tsv')
@@ -438,5 +440,3 @@ class LatentProcessGenerator():
                 
         print(f'INFO: events processing is done.')
         return 
-    
-    

@@ -8,11 +8,10 @@ class ComputationalModel(Base):
         R = param_dict['R']
         P = param_dict['P']
         xi = param_dict['xi']
-        d = param_dict['d']
         
-        Qr = np.zeros(4)
-        Qp = np.zeros(4)
-        Qsum = np.zeros(4)
+        Qr = np.zeros(50)
+        Qp = np.zeros(50)
+        Qsum = np.zeros(50)
         
         for choice,\
             gain,\
@@ -29,7 +28,9 @@ class ComputationalModel(Base):
             PEp = P*loss - Qp[choice-1]
             self._add('PEreward',PEr)
             self._add('PEpunishment',PEp)
-            self._add('PEchosen',PEr+PEp)
+            
+            PEr_fic = -Qr
+            PEp_fic = -Qp
 
             # store chosen deck Q values (rew and pun)
             Qr_chosen = Qr[choice-1]
@@ -39,10 +40,8 @@ class ComputationalModel(Base):
             self._add('QPchosen',Qp_chosen)
             
             # First, update Qr & Qp for all decks w/ fictive updating
-            
-            Qr = (1-d) * Qr
-            Qp = (1-d) * Qp;
-            
+            Qr += Arew * PEr_fic
+            Qp += Apun * PEp_fic
             # Replace Q values of chosen deck with correct values using stored values
             Qr[choice-1] = Qr_chosen + Arew * PEr
             Qp[choice-1] = Qp_chosen + Apun * PEp
@@ -51,5 +50,4 @@ class ComputationalModel(Base):
             Qsum = Qr + Qp
             
 latent_process_onset = {'PEreward': TIME_FEEDBACK,
-                       'PEpunishment': TIME_FEEDBACK,
-                       'PEchosen': TIME_FEEDBACK}
+                       'PEpunishment': TIME_FEEDBACK}

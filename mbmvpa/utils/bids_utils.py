@@ -18,7 +18,6 @@ from ..utils.descriptor import make_mbmvpa_description, version_diff
 from ..utils import config # configuration for default names used in the package
 from .plot import plot_data
 
-import pdb
 
 
 class BIDSController():
@@ -117,11 +116,13 @@ class BIDSController():
                 event_suffix="events",
                 confound_suffix="regressors",
                 ignore_original=False,
+                ignore_fmriprep=False,
                 ):
         
         self.layout = self.get_base_layout(bids_layout)
         self.root = self.layout.root
         self.ignore_original = ignore_original
+        self.ignore_fmriprep = ignore_fmriprep
         self.bold_suffix = bold_suffix
         self.event_suffix = event_suffix
         self.confound_suffix = confound_suffix
@@ -174,30 +175,45 @@ class BIDSController():
                       'n_scans':[]         # number of scan (time dimension)
                      }
         
-        for bold_file in self.get_bold_all():
+        for file in self.get_bold_all():
             
-            entities = bold_file.get_entities()
+            entities = file.get_entities()
             
             if self.subjects != 'all' and entities['subject'] not in self.subjects:
                 continue
                 
             if 'session' in entities.keys(): 
                 # if session is included in BIDS
-                # old version of BIDS doesn't have it
                 ses_id = entities['session']
             else:
                 ses_id = None
+                
+            if 'run' in entities.keys(): 
+                # if run is included in BIDS
+                run_id = entities['run']
+            else:
+                run_id = None
+                
             reg_file =self.get_confound(sub_id=entities['subject'],
                                              ses_id=ses_id,
-                                             run_id=entities['run'],
-                                             task_name=entities['task'])
-            event_file =self.get_event(sub_id=entities['subject'],
-                                             ses_id=ses_id,
-                                             run_id=entities['run'],
+                                             run_id=run_id,
                                              task_name=entities['task'])
             
-            if len(reg_file) < 1:
+            event_file =self.get_event(sub_id=entities['subject'],
+                                             ses_id=ses_id,
+                                             run_id=run_id,
+                                             task_name=entities['task'])
+            
+            bold_file = self.get_bold(sub_id=entities['subject'],
+                                             ses_id=ses_id,
+                                             run_id=run_id,
+                                             task_name=entities['task'])
+            
+            if not self.ignore_fmriprep and len(reg_file) < 1:
                 # if regressor file is not found.
+                continue
+            if not self.ignore_fmriprep and len(bold_file) < 1:
+                # if bold file is not found.
                 continue
             if not self.ignore_original and len(event_file) < 1:
                 # ignore_original means ignore events file.
@@ -217,13 +233,13 @@ class BIDSController():
                 t_r = json_data["RepetitionTime"]
             
             # get n_scans
-            n_scans = nib.load(bold_file.path).shape[-1]
+            n_scans = nib.load(bold_file[0].path).shape[-1]
             
             meta_infos['subject'].append(entities['subject'])
             meta_infos['session'].append(ses_id)
-            meta_infos['run'].append(entities['run'])
+            meta_infos['run'].append(run_id)
             meta_infos['task'].append(entities['task'])
-            meta_infos['bold_path'].append(bold_file.path)
+            meta_infos['bold_path'].append(bold_file[0].path)
             meta_infos['confound_path'].append(reg_file[0].path)
             meta_infos['event_path'].append(event_file[0].path)
             meta_infos['t_r'].append(t_r)
@@ -274,6 +290,9 @@ class BIDSController():
             print('INFO: selected task_name is '+self.task_name)
         
     def _set_fmriprep_layout(self):
+        if self.ignore_fmriprep:
+            self.fmriprep_layout = self.layout
+            return
         assert self.fmriprep_name in self.layout.derivatives.keys(), ("fmri prep. is not found")
         self.fmriprep_layout = self.layout.derivatives[self.fmriprep_name]
         self.fmriprep_version = self.fmriprep_layout.get_dataset_description()['PipelineDescription']['Version']
@@ -381,6 +400,11 @@ class BIDSController():
                         run=run_id,
                         suffix='events',
                         extension="tsv")
+    
+    def get_event_all(self):
+        return self.layout.get(task=self.task_name,
+                                suffix='events',
+                                extension="tsv")
         
     def get_confound(self, sub_id=None, task_name=None, run_id=None, ses_id=None):
         return self.fmriprep_layout.get(
@@ -438,4 +462,73 @@ class BIDSController():
                 
         print(f'INFO: processed data [{n_plot}/{n_try}] are plotted for quality check.')
         
+        
+
+class BIDSConEventsOnly(BIDSController):
+    
+    def __init__(self,
+                bids_layout,
+                subjects='all',
+                save_path=None,
+                task_name=None,
+                event_suffix="events",
+                ):
+        
+        self.layout = self.get_base_layout(bids_layout)
+        self.root = self.layout.root
+        self.ignore_original = False
+        self.event_suffix = event_suffix
+        self.task_name = task_name
+        self.save_path = save_path
+        self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
+        self.subjects=subjects
+        self._set_task_name()
+        self._set_save_path()
+        self._set_mbmvpa_layout()
+        self._set_metainfo()
+        
+        
+    def _set_metainfo(self):
+        
+        print(f'INFO: target subjects-{self.subjects}')
+        
+        # set meta info for each run data in DataFrame format
+        meta_infos = {'subject':[],        # subejct ID
+                      'session':[],        # session ID
+                      'run':[],            # run ID 
+                      'task':[],           # task name
+                      'event_path':[],     # events file path
+                     }
+        
+        for event_file in self.get_event_all():
+            
+            entities = event_file.get_entities()
+            
+            if self.subjects != 'all' and entities['subject'] not in self.subjects:
+                continue
+                
+            if 'session' in entities.keys(): 
+                # if session is included in BIDS
+                # old version of BIDS doesn't have it
+                ses_id = entities['session']
+            else:
+                ses_id = None
+                
+            if 'run' in entities.keys(): 
+                # if session is included in BIDS
+                # old version of BIDS doesn't have it
+                run_id = entities['run']
+            else:
+                run_id = None
+                
+            
+            meta_infos['subject'].append(entities['subject'])
+            meta_infos['session'].append(ses_id)
+            meta_infos['run'].append(run_id)
+            meta_infos['task'].append(entities['task'])
+            meta_infos['event_path'].append(event_file.path)
+        
+        self.meta_infos = pd.DataFrame(meta_infos)
+        
+        print(f'INFO: {len(self.meta_infos)} file(s) in Original')
         

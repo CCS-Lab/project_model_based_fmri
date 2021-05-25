@@ -241,13 +241,14 @@ class VoxelFeatureGenerator():
             ses_id = row['session']
             run_id = row['run']
             
+            save_filename = f'sub-{sub_id}_task-{task_id}'
             if ses_id is not None: 
-                save_filename = f'sub-{sub_id}_task-{task_id}_ses-{ses_id}_run-{run_id}_desc-{self.feature_name}_{suffix}.npy'
-                save_filename = self.bids_controller.set_path(sub_id=sub_id,ses_id=ses_id)/save_filename
-            else :
-                save_filename = f'sub-{sub_id}_task-{task_id}_run-{run_id}_desc-{self.feature_name}_{suffix}.npy'
-                save_filename = self.bids_controller.set_path(sub_id=sub_id)/save_filename
-                
+                save_filename += f'_ses-{ses_id}'
+            if run_id is not None:
+                save_filename += f'_run-{run_id}'
+            save_filename = f'_desc-{self.feature_name}_{suffix}.npy'
+            save_filename = self.bids_controller.set_path(sub_id=sub_id,ses_id=ses_id)/save_filename
+            
             if not overwrite and save_filename.exists():
                 # if the output already exists, skip it.
                 skipped_count += 1

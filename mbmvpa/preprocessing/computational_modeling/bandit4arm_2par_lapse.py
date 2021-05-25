@@ -23,7 +23,7 @@ class ComputationalModel(Base):
             self._add('Pchosen',Prob[choice-1])
             
             # Prediction error signals
-            PEr = gain - Qr[-1]
+            PEr = gain - Qr[choice-1]
             PEp = loss - Qp[choice-1]
             self._add('PEreward',PEr)
             self._add('PEpunishment',PEp)

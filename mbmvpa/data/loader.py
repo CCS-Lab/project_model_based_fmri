@@ -175,8 +175,6 @@ class BIDSDataLoader():
         else:
             self.subjects = subjects
         
-        self.has_session = len(self.layout.get_sessions())>0
-        
         self.X = {}
         self.y = {}
         self.timemask = {}
@@ -196,30 +194,31 @@ class BIDSDataLoader():
         
         for subject_X in subject_Xs:
             entities = subject_X.get_entities()
-            if self.has_session:
-                subject_y = self.layout.get(subject=subject,
-                                run=entities['run'],
-                                session=entities['session'],
-                                task=entities['task'],
-                                **self.y_kwargs
-                               )
-                timemask = self.layout.get(subject=subject,
-                                run=entities['run'],
-                                session=entities['session'],
-                                task=entities['task'],
-                                **self.timemask_kwargs
-                               )
+            
+            if 'session' in entities.keys(): 
+                # if session is included in BIDS
+                ses_id = entities['session']
             else:
-                subject_y = self.layout.get(subject=subject,
-                                run=entities['run'],
-                                 task=entities['task'],
-                                **self.y_kwargs
-                               )
-                timemask = self.layout.get(subject=subject,
-                                task=entities['task'],
-                                run=entities['run'],
-                                **self.timemask_kwargs
-                               )
+                ses_id = None
+                
+            if 'run' in entities.keys(): 
+                # if run is included in BIDS
+                run_id = entities['run']
+            else:
+                run_id = None
+                
+            subject_y = self.layout.get(subject=subject,
+                            run=run_id,
+                            session=ses_id,
+                            task=entities['task'],
+                            **self.y_kwargs
+                           )
+            timemask = self.layout.get(subject=subject,
+                            run=run_id,
+                            session=ses_id,
+                            task=entities['task'],
+                            **self.timemask_kwargs
+                           )
 
             if len(subject_y) < 1 or len(timemask) < 1:
                 # not found. skipped.

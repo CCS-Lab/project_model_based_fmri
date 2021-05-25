@@ -192,7 +192,7 @@ class DataPreprocessor():
                   onset_name="onset",
                   duration_name="duration",
                   end_name=None,
-                  use_1sec_duration=True):
+                  use_1sec_duration=True,):
         
         self.X_generator = VoxelFeatureGenerator(bids_layout=bids_layout,
                                                   subjects=subjects,
@@ -236,7 +236,7 @@ class DataPreprocessor():
                                                   onset_name=onset_name,
                                                   duration_name=duration_name,
                                                   end_name=end_name,
-                                                  use_1sec_duration=use_1sec_duration)
+                                                  use_1sec_duration=use_1sec_duration,)
     
     def summary(self):
         self.bids_controller.summary()

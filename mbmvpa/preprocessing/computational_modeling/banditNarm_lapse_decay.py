@@ -10,9 +10,9 @@ class ComputationalModel(Base):
         xi = param_dict['xi']
         d = param_dict['d']
         
-        Qr = np.zeros(4)
-        Qp = np.zeros(4)
-        Qsum = np.zeros(4)
+        Qr = np.zeros(50)
+        Qp = np.zeros(50)
+        Qsum = np.zeros(50)
         
         for choice,\
             gain,\
@@ -37,7 +37,7 @@ class ComputationalModel(Base):
             
             self._add('QRchosen',Qr_chosen)
             self._add('QPchosen',Qp_chosen)
-            
+            self._add('Qchosen',Qr_chosen+Qp_chosen)
             # First, update Qr & Qp for all decks w/ fictive updating
             
             Qr = (1-d) * Qr
@@ -52,4 +52,4 @@ class ComputationalModel(Base):
             
 latent_process_onset = {'PEreward': TIME_FEEDBACK,
                        'PEpunishment': TIME_FEEDBACK,
-                       'PEchosen': TIME_FEEDBACK}
+                       'PEchosen':TIME_FEEDBACK}
