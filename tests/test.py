@@ -42,6 +42,7 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                niter=200,
                n_thread=4,
                method='5-fold',
-               overwrite=True)
+               overwrite=True,
+               pval_threshold=5)
 
 print("TEST PASS!")

@@ -154,6 +154,7 @@ class LatentProcessGenerator():
                   end_name=None,
                   use_1sec_duration=True,
                   skip_compmodel=False,
+                  separate_run=False,
                   **kwargs):
 
         # set path informations and load layout
@@ -210,7 +211,7 @@ class LatentProcessGenerator():
         self.end_name=end_name
         self.use_1sec_duration = use_1sec_duration
         self.computational_model = computational_model
-        
+        self.separate_run = separate_run
         
     def summary(self):
         self.bids_controller.summary()
@@ -227,7 +228,7 @@ class LatentProcessGenerator():
         
         # add meta info to events data
         df_events_list = [
-            _add_event_info(df_events, event_infos)
+            _add_event_info(df_events, event_infos,self.separate_run)
             for df_events, event_infos in zip(df_events_list, event_infos_list)
         ]
         
@@ -278,7 +279,7 @@ class LatentProcessGenerator():
         return df_events_list, event_infos_list
         
     def set_computational_model(self, 
-                                overwrite=True,
+                                refit_compmodel=True,
                                 individual_params=None, 
                                 df_events=None, 
                                 adjust_function_dfwise=None, 
@@ -307,7 +308,7 @@ class LatentProcessGenerator():
             filter_function_dfwise = self.filter_function_dfwise
             
 
-        if individual_params is None or overwrite:
+        if individual_params is None or refit_compmodel:
             # the case user does not provide individual model parameter values
             # obtain parameter values using hBayesDM package
 
@@ -430,7 +431,7 @@ class LatentProcessGenerator():
                     df_events['modulation'] = df_events[process_name]
                     modulation_df = df_events
                 else:
-                    param_dict = _get_individual_param_dict(sub_id, self.individual_params)
+                    param_dict = _get_individual_param_dict(sub_id,ses_id,run_id, self.individual_params,self.separate_run)
                     if param_dict is None:
                         continue
                     modulation_df = self.latent_function_dfwise(df_events,param_dict=param_dict)

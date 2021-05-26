@@ -135,7 +135,6 @@ class MVPACV_CNN(MVPA_CV):
                  n_batch = 64,
                  n_sample = 30000,
                  batch_norm=True,
-                 use_bipolar_balancing = False,
                  gpu_visible_devices = None,
                  map_type='z',
                  sigma=1):
@@ -158,7 +157,6 @@ class MVPACV_CNN(MVPA_CV):
                              n_batch=n_batch,
                              n_sample=n_sample,
                              batch_norm=batch_norm,
-                             use_bipolar_balancing=use_bipolar_balancing,
                              voxel_mask=voxel_mask,
                              gpu_visible_devices=gpu_visible_devices)
 
@@ -280,7 +278,6 @@ class MVPA_CNN(MVPA_Base):
                  n_batch = 64,
                  n_sample = 30000,
                  batch_norm=True,
-                 use_bipolar_balancing = False,
                  gpu_visible_devices = None,
                  **kwargs):
         
@@ -301,7 +298,6 @@ class MVPA_CNN(MVPA_Base):
         self.n_sample = n_sample
         self.n_epoch = n_epoch
         self.val_ratio = val_ratio
-        self.use_bipolar_balancing = use_bipolar_balancing
         self.model = None
         if gpu_visible_devices is not None:
             os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
@@ -368,10 +364,8 @@ class MVPA_CNN(MVPA_Base):
 
         # create helper class for generating data
         # support mini-batch training implemented in Keras
-        train_generator = DataGenerator(X_train, y_train, self.n_batch, shuffle=True,
-                                        use_bipolar_balancing=self.use_bipolar_balancing)
-        val_generator = DataGenerator(X_test, y_test, self.n_batch, shuffle=False,
-                                        use_bipolar_balancing=self.use_bipolar_balancing)
+        train_generator = DataGenerator(X_train, y_train, self.n_batch, shuffle=True)
+        val_generator = DataGenerator(X_test, y_test, self.n_batch, shuffle=False)
         
         
         #best_model_filepath = tempdir + f"/{self.name}_best_{int(random.random()*100000)}.ckpt"

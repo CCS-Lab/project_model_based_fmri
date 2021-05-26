@@ -92,7 +92,6 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'n_batch': 64,
             'n_sample': 100000,
             'use_bias': True,
-            'use_bipolar_balancing': False,
             'gpu_visible_devices':[0]
         },
         'cnn':{
@@ -111,7 +110,6 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'n_batch': 64,
             'n_sample': 100000,
             'batch_norm': True,
-            'use_bipolar_balancing': False,
             'gpu_visible_devices':[0]
         },
         'mlp_shap':{
@@ -128,7 +126,6 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'n_batch': 32,
             'n_sample': 100000,
             'use_bias': True,
-            'use_bipolar_balancing': False,
             'gpu_visible_devices':[0],
             'use_null_background': True,
             'background_num': 1000,
@@ -146,19 +143,23 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'confidence_interval': 0.99,
             'n_coef_plot': 150,
             'map_type': 'z',
-            'sigma': 1
+            'sigma': 1,
+            'pval_threshold': 0.05
         },
         'mlp':{
             'map_type': 'z',
             'sigma': 1,
+            'pval_threshold': 0.05
         },
         'cnn':{
             'map_type': 'z',
             'sigma': 1,
+            'pval_threshold': 0.05
         },
         'mlp_shap':{
             'map_type': 'z',
             'sigma': 1,
+            'pval_threshold': 0.05
         },
     },
     'DATAPLOT':{

@@ -17,10 +17,27 @@ import pandas as pd
 from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
+import arviz as az
 
 from ..utils import config # configuration for default names used in the package
 
-    
+
+def _get_looic(fit):
+    inference = az.convert_to_inference_data(fit)
+    inference['sample_stats']['log_likelihood'] = inference['posterior']['log_lik']
+    return az.loo(inference).loo
+
+def _update_looic(table_path, model_name, looic):
+    to_add = pd.DataFrame({'model':[model_name],'looic':[looic]})
+    if Path(table_path).exists():
+        table = pd.read_table(table_path)
+        if model_name in list(table['model']):
+            table = table[table['model']!=model_name]
+        table = pd.concat([table,to_add])
+    else:
+        table = pd.DataFrame({'model':[model_name],'looic':[looic]})
+    table.to_csv(table_path,sep="\t", index=False)
+
 def _process_indiv_params(individual_params):
     if type(individual_params) == str\
         or type(individual_params) == type(Path()):
@@ -36,13 +53,19 @@ def _process_indiv_params(individual_params):
     else:
         return None
     
-def _add_event_info(df_events, event_infos):
+def _add_event_info(df_events, event_infos,separate_run=False):
 
     new_df = []
 
     def _add(i, row, info):
         row["trial"] = i 
-        row["subjID"] = info["subject"]
+        if separate_run:
+            if "session" in info.keys():
+                row["subjID"] = info["subject"]+str(info["session"])+str(info["run"])
+            else:
+                row["subjID"] = info["subject"]+str(info["run"])
+        else:
+            row["subjID"] = info["subject"]
         row["run"] = info["run"]
         if "session" in info.keys():
             row["session"] = info["session"]  # if applicable
@@ -102,7 +125,9 @@ def _make_single_time_mask(df_events, time_length, t_r,
 
     return time_mask
 
-def _get_individual_param_dict(subject_id, individual_params):
+def _get_individual_param_dict(subject_id, ses_id,run_id, individual_params, separate_run):
+    if separate_run:
+        subject_id=str(subject_id)+str(ses_id)+str(run_id)
     idp = individual_params[individual_params["subjID"] == subject_id]
     if len(idp) == 0:
         idp = individual_params[individual_params["subjID"] == int(subject_id)]

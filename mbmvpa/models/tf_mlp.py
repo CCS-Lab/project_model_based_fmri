@@ -323,10 +323,8 @@ class MVPA_MLP(MVPA_Base):
 
         # create helper class for generating data
         # support mini-batch training implemented in Keras
-        train_generator = DataGenerator(X_train, y_train, self.n_batch, shuffle=True,
-                                        use_bipolar_balancing=self.use_bipolar_balancing)
-        val_generator = DataGenerator(X_test, y_test, self.n_batch, shuffle=False,
-                                        use_bipolar_balancing=self.use_bipolar_balancing)
+        train_generator = DataGenerator(X_train, y_train, self.n_batch, shuffle=True)
+        val_generator = DataGenerator(X_test, y_test, self.n_batch, shuffle=False)
         
         
         #best_model_filepath = tempdir + f"/{self.name}_best_{int(random.random()*100000)}.ckpt"

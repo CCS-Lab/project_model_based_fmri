@@ -35,7 +35,6 @@ class MVPA_MLP_SHAP(MVPA_MLP):
                  n_batch = 64,
                  n_sample = 30000,
                  use_bias = True,
-                 use_bipolar_balancing = False,
                  gpu_visible_devices = None,
                  use_null_background = False,
                  background_num = 100,
@@ -56,7 +55,6 @@ class MVPA_MLP_SHAP(MVPA_MLP):
                          n_batch = n_batch,
                          n_sample = n_sample,
                          use_bias = use_bias,
-                         use_bipolar_balancing = use_bipolar_balancing,
                          gpu_visible_devices = gpu_visible_devices,
                          **kwargs)
         
@@ -92,10 +90,8 @@ class MVPA_MLP_SHAP(MVPA_MLP):
 
         # create helper class for generating data
         # support mini-batch training implemented in Keras
-        train_generator = DataGenerator(X_train, y_train, self.n_batch, shuffle=True,
-                                        use_bipolar_balancing=self.use_bipolar_balancing)
-        val_generator = DataGenerator(X_test, y_test, self.n_batch, shuffle=False,
-                                        use_bipolar_balancing=self.use_bipolar_balancing)
+        train_generator = DataGenerator(X_train, y_train, self.n_batch, shuffle=True,)
+        val_generator = DataGenerator(X_test, y_test, self.n_batch, shuffle=False,)
         
         
         #best_model_filepath = tempdir + f"/{self.name}_best_{int(random.random()*100000)}.ckpt"

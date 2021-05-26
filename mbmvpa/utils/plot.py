@@ -1,6 +1,7 @@
 from scipy.stats import pearsonr
 from statsmodels.stats.multitest import fdrcorrection
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -35,8 +36,14 @@ def plot_pearsonr(y_train,
     
     r_test = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
     
-    plt.figure(figsize=(4, 8))
-    plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
+    
+    data = pd.DataFrame({'pearsonr': r_train+r_test,
+                          'type':['train']*len(r_train)+['test']*len(r_test)})
+    plt.figure(figsize=(8, 8))
+    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
+    
+    sns.violinplot(x="type", y="pearsonr", data=data, order=['train', 'test'])
+    sns.stripplot(x="type", y="pearsonr", data=data, order=['train', 'test'],color='black')
     plt.title(f'Pearson R. FDR corrected. p<{pval_threshold}')
     if save:
         plt.savefig(Path(save_path)/f'plot_pearsonr.png',bbox_inches='tight')

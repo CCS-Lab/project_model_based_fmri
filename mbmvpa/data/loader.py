@@ -118,6 +118,7 @@ class BIDSDataLoader():
                 self.layout = root_layout.derivatives[config.MBMVPA_PIPELINE_NAME]
             else:
                 self.layout = BIDSLayout(root=layout,validate=False)
+                self.layout.add_derivatives(layout)
         elif isinstance(layout,BIDSLayout):
             if config.MBMVPA_PIPELINE_NAME in layout.derivatives.keys():
                 self.layout = layout.derivatives[config.MBMVPA_PIPELINE_NAME]

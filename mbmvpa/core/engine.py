@@ -32,6 +32,7 @@ def run_mbmvpa(config=None,
               mvpa_model='elasticnet',
               report_path='.',
               overwrite=False,
+              overwrite_latent_process=True,
               level=None,
               **kwargs):
     
@@ -73,7 +74,8 @@ def run_mbmvpa(config=None,
                      level=level,
                      **kwargs)
 
-    return mbmvpa.run(overwrite=overwrite)
+    return mbmvpa.run(overwrite=overwrite,
+                     overwrite_latent_process=overwrite_latent_process)
     
 
 class MBMVPA():
@@ -261,7 +263,9 @@ class MBMVPA():
         
         return recursive_copy(self.config)
     
-    def run(self,overwrite=False):
+    def run(self,
+            overwrite=False,
+            overwrite_latent_process=True):
         """
         run the following procedures.
         
@@ -275,7 +279,7 @@ class MBMVPA():
         
         # y (latent process): comp. model. & hrf convolution
         self.y_generator.run(modeling_kwargs=self.config['HBAYESDM'],
-                            overwrite=overwrite) 
+                            overwrite=overwrite|overwrite_latent_process) 
         
         # reload bids layout and plot processed data
         self.bids_controller.reload()

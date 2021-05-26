@@ -89,7 +89,8 @@ class Report_PearsonR():
 def build_base_report_functions(voxel_mask,
                              experiment_name='unnamed',
                              map_type='z',
-                             sigma=1
+                             sigma=1,
+                             pval_threshold=0.05
                              ):
     
     report_function_dict = {}
@@ -103,7 +104,7 @@ def build_base_report_functions(voxel_mask,
                          'y_train',
                          'y_test',
                          'pred_train',
-                         'pred_test')] = Report_PearsonR()
+                         'pred_test')] = Report_PearsonR(pval_threshold=pval_threshold)
     
     return report_function_dict
 
@@ -113,7 +114,8 @@ def build_elasticnet_report_functions(voxel_mask,
                                      n_coef_plot=150,
                                      experiment_name='unnamed',
                                      map_type='z',
-                                     sigma=1
+                                     sigma=1,
+                                     pval_threshold=0.05
                                      ):
     
     report_function_dict = {}
@@ -134,7 +136,7 @@ def build_elasticnet_report_functions(voxel_mask,
                          'y_train',
                          'y_test',
                          'pred_train',
-                         'pred_test')] = Report_PearsonR()
+                         'pred_test')] = Report_PearsonR(pval_threshold=pval_threshold)
     
     return report_function_dict
 
