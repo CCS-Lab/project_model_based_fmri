@@ -29,6 +29,7 @@ def test_adjust(row):
 
 _ = run_mbmvpa(bids_layout=bids_layout,
                dm_model='ra_prospect',
+               mvpa_model='cnn',
                feature_name='zoom2',
                task_name='mixedgamblestask',
                #process_name='SUgamble',
@@ -43,6 +44,8 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                n_thread=4,
                method='5-fold',
                overwrite=True,
+               gpu_visible_devices = [2],
+               n_batch=4,
                pval_threshold=5)
 
 print("TEST PASS!")

@@ -95,11 +95,7 @@ class LatentProcessGenerator():
 
         The different hemodynamic models can be understood as follows:
              - "spm": this is the hrf model used in SPM.
-             - "spm + derivative": SPM model plus its time derivative (2 regressors).
-             - "spm + time + dispersion": idem, plus dispersion derivative. (3 regressors)
              - "glover": this one corresponds to the Glover hrf.
-             - "glover + derivative": the Glover hrf + time derivative (2 regressors).
-             - "glover + derivative + dispersion": idem + dispersion derivative. (3 regressors)
     use_duration : boolean, default=False
         If True use "duration" column to make a time mask, 
         if False all the gaps following trials after valid trials would be included in the time mask.
@@ -186,7 +182,7 @@ class LatentProcessGenerator():
             self.latent_function_dfwise = _make_function_dfwise(latent_function)
             
         self.process_name = process_name
-        assert "_" not in self.process_name, (" '_'should not be included in the process name.")
+        #assert "_" not in self.process_name, (" '_'should not be included in the process name.")
         
         # setting model fitting specification
         self.dm_model = dm_model

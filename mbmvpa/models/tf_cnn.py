@@ -299,6 +299,9 @@ class MVPA_CNN(MVPA_Base):
         self.n_epoch = n_epoch
         self.val_ratio = val_ratio
         self.model = None
+        self.voxel_mask = voxel_mask
+        if not isinstance(voxel_mask, np.ndarray):
+            self.voxel_mask = voxel_mask.get_fdata()
         if gpu_visible_devices is not None:
             os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
     
@@ -340,6 +343,7 @@ class MVPA_CNN(MVPA_Base):
 
     def fit(self,X,y,**kwargs):
         # add saving total weights. get input from user
+        
         if self.model is None:
             self.reset()
             

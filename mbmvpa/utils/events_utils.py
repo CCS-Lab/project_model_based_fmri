@@ -25,7 +25,7 @@ from ..utils import config # configuration for default names used in the package
 def _get_looic(fit):
     inference = az.convert_to_inference_data(fit)
     inference['sample_stats']['log_likelihood'] = inference['posterior']['log_lik']
-    return az.loo(inference).loo
+    return az.loo(inference).loo * (-2)
 
 def _update_looic(table_path, model_name, looic):
     to_add = pd.DataFrame({'model':[model_name],'looic':[looic]})

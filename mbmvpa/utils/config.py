@@ -31,6 +31,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'detrend': False,
         'n_thread': 1,
         'feature_name':'unnamed',
+        'ignore_original':False,
     },
     'LATENTPROCESS': {
         'bids_layout':'.',
@@ -38,7 +39,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'task_name':None,
         'process_name':'unnamed',
         'computational_model':None,
-        'dm_model':None,
+        'dm_model':'unnamed',
         'hrf_model': 'glover',
         'use_duration': False,
         'n_core': 1,
@@ -53,7 +54,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'latent_function_dfwise': None,
         'latent_function': None,
         'computational_model': None,
-        'skip_compmodel': False
+        'skip_compmodel': False,
+        'ignore_fmriprep': False,
     },
     'HBAYESDM': {
         },

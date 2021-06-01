@@ -219,6 +219,9 @@ class BIDSController():
                 # ignore_original means ignore events file.
                 continue
             
+            bold_path = bold_file[0].path if len(bold_file) >=1 else None
+            reg_path = reg_file[0].path if len(reg_file) >=1 else None
+            event_path = event_file[0].path if len(event_file) >=1 else None
             # get t_r
             json_data = json.load(open(
                     self.fmriprep_layout.get(
@@ -239,9 +242,9 @@ class BIDSController():
             meta_infos['session'].append(ses_id)
             meta_infos['run'].append(run_id)
             meta_infos['task'].append(entities['task'])
-            meta_infos['bold_path'].append(bold_file[0].path)
-            meta_infos['confound_path'].append(reg_file[0].path)
-            meta_infos['event_path'].append(event_file[0].path)
+            meta_infos['bold_path'].append(bold_path)
+            meta_infos['confound_path'].append(reg_path)
+            meta_infos['event_path'].append(event_path)
             meta_infos['t_r'].append(t_r)
             meta_infos['n_scans'].append(n_scans)
         

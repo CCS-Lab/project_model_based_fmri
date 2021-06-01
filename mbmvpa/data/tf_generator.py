@@ -57,6 +57,8 @@ class DataGenerator(Sequence):
         indexes = self.indexes[index *
                                self.batch_size:(index + 1) * self.batch_size]
         images = [self.X[i] for i in indexes]
+        targets = [self.y[i] for i in indexes]
+        images = np.array(images)
         targets = np.array(targets)
 
         return images, targets  # return batch

@@ -134,7 +134,7 @@ class BIDSDataLoader():
             print(f'      task-{task_name}, process-{process_name}, feature-{feature_name}')
             
         self.task_name=task_name
-        self.process_name=process_name
+        self.process_name= ''.join(process_name.split('_')) #process_name
         self.feature_name=feature_name
         self.reconstruct = reconstruct
         self.verbose = verbose
