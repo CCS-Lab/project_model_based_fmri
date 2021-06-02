@@ -38,12 +38,12 @@ class MVPA_Base():
     def predict(self,X,**kwargs):
         pass
     
-class MVPA_CV_1stL():
+class MVPA_CV_H():
     r"""
     
     Hierarchical version of MVPA_CV.
-    MVPA_CV_1stL runs MVPA_CV on each subject to get individual brain maps.(1st-level brain maps)
-    Then, by one sample T test, 1st-level brain maps will be converted to a 2nd-level brain map.
+    MVPA_CV_H runs MVPA_CV on each subject to get individual brain maps.(first-level brain maps)
+    Then, by one sample T test, first-level brain maps will be converted to a 2nd-level brain map.
     
     Parameters
     ----------
@@ -115,7 +115,7 @@ class MVPA_CV_1stL():
         # enter subjectwise save path in each MVPA_CV instance
         if self.cv_save:
             now = datetime.datetime.now()
-            self.save_root = Path(cv_save_path) / f'report_{model.name}_{experiment_name}_1stlevel-{method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+            self.save_root = Path(cv_save_path) / f'report_{model.name}_{experiment_name}_hierarchical-{method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir(exist_ok=True)
             for subj_id in X_dict.keys():
                 subj_save_root = self.save_root / subj_id
@@ -143,21 +143,21 @@ class MVPA_CV_1stL():
     def _make_2nd_t_map(self):
         
         if self.cv_save:
-            # aggregate 1st-level brain maps
+            # aggregate first-level brain maps
             nii_files = [f for f in self.save_root.glob('**/*.nii')]
             if len(nii_files) != 0:
-                print(f"INFO: {len(nii_files)} 1st-level brain images is(are) found.")
+                print(f"INFO: {len(nii_files)} first-level brain images is(are) found.")
                 nii_loaded = [nib.load(f) for f in nii_files]
                 activation_maps = np.array([f.get_fdata() for f in nii_loaded])
                 
-                # get (one-sample) T-map from 1st-level brain maps.
+                # get (one-sample) T-map from first-level brain maps.
                 t_map_2nd = ttest_1samp(activation_maps, 0).statistic
                 # save
                 nib.Nifti1Image(t_map_2nd,
-                                affine=nii_loaded[0].affine).to_filename(self.save_root/f'{self.experiment_name}_2nd_t_map.nii')
-                print("INFO: 2nd-level brain map is created.")
+                                affine=nii_loaded[0].affine).to_filename(self.save_root/f'{self.experiment_name}_second_t_map.nii')
+                print("INFO: second-level brain map is created.")
             else:
-                print("INFO: No 1st-level brain image is found.")
+                print("INFO: No first-level brain image is found.")
         
     
     def _plot_pearsonr(self, 
@@ -194,7 +194,7 @@ class MVPA_CV_1stL():
             pred_train_list.append(pred_train)
             y_train_list.append(y_train)
             
-        save_path = self.save_root / '2nd_pearsonr'
+        save_path = self.save_root / 'second_pearsonr'
         save_path.mkdir(exist_ok=True)
         plot_pearsonr(y_train_list,
                       y_test_list,

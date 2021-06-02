@@ -7,7 +7,7 @@
 from ..preprocessing.events import LatentProcessGenerator
 from ..preprocessing.bold import VoxelFeatureGenerator
 from ..data.loader import BIDSDataLoader
-from ..models.mvpa_general import MVPA_CV,MVPA_CV_1stL
+from ..models.mvpa_general import MVPA_CV, MVPA_CV_H
 from ..utils.config import DEFAULT_ANALYSIS_CONFIGS
 from ..utils.report import build_elasticnet_report_functions, build_base_report_functions
 import yaml, importlib, copy
@@ -61,6 +61,11 @@ def run_mbmvpa(config=None,
     report_path : str or pathlib.PosixPath, defualt="."
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
+    level : str, defualt=None
+        if 'hierarchical' or 'H', use MVPA_CV_1stL class instead to run hiearchical version.
+        The hiearchical version of the MB-MVPA analysis is composed of two parts.
+        1) Run individual MB-MVPA on each subject
+        2) creat (one sample) T-map using brain maps from each subject.
     **kwargs : dict
         Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
@@ -104,7 +109,7 @@ class MBMVPA():
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
     level : str, defualt=None
-        if '1st', use MVPA_CV_1stL class instead to run hiearchical version.
+        if 'hierarchical' or 'H', use MVPA_CV_1stL class instead to run hiearchical version.
         The hiearchical version of the MB-MVPA analysis is composed of two parts.
         1) Run individual MB-MVPA on each subject
         2) creat (one sample) T-map using brain maps from each subject.
@@ -169,7 +174,7 @@ class MBMVPA():
         self.model_cv = None
         if level is None:
             self.model_cv_builder = MVPA_CV
-        elif level == '1st':
+        elif level.lower() in ['hirearchical','h']:
             self.model_cv_builder = MVPA_CV_1stL
         
     def _override_config(self,config):
