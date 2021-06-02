@@ -27,15 +27,15 @@ def _get_looic(fit):
     inference['sample_stats']['log_likelihood'] = inference['posterior']['log_lik']
     return az.loo(inference).loo * (-2)
 
-def _update_looic(table_path, model_name, looic):
-    to_add = pd.DataFrame({'model':[model_name],'looic':[looic]})
+def _update_modelcomparison_table(table_path, model_name, value, criterion):
+    to_add = pd.DataFrame({'model':[model_name],'value':[value], 'criterion':[criterion]})
     if Path(table_path).exists():
         table = pd.read_table(table_path)
         if model_name in list(table['model']):
             table = table[table['model']!=model_name]
         table = pd.concat([table,to_add])
     else:
-        table = pd.DataFrame({'model':[model_name],'looic':[looic]})
+        table = pd.DataFrame({'model':[model_name],'value':[value], 'criterion':[criterion]})
     table.to_csv(table_path,sep="\t", index=False)
 
 def _process_indiv_params(individual_params):
