@@ -43,7 +43,17 @@ def plot_pearsonr(y_train,
     #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
     
     sns.violinplot(x="type", y="pearsonr", data=data, order=['train', 'test'])
-    sns.stripplot(x="type", y="pearsonr", data=data, order=['train', 'test'],color='black')
+    sns.stripplot(x="type", y="pearsonr", data=data, order=['train', 'test'],color='black',alpha=0.5)
+    
+    
+    sns.stripplot(x="type", y="pearsonr", data=data, order=['train', 'test'],color='black',alpha=0.5)
+    
+    r_train_mean = np.array(r_train).mean()
+    r_test_mean = np.array(r_test).mean()
+    
+    plt.axhline(r_train_mean, ls='--',label="train_mean",color='k',alpha=.6)
+    plt.axhline(r_test_mean, ls='-.',label="test_mean",color='k',alpha=.6)
+    plt.legend()
     plt.title(f'Pearson R. FDR corrected. p<{pval_threshold}')
     if save:
         plt.savefig(Path(save_path)/f'plot_pearsonr.png',bbox_inches='tight')
