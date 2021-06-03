@@ -264,7 +264,7 @@ class MVPA_CV():
                 cv_save=True,
                 cv_save_path=".",
                 experiment_name="unnamed",
-                report_function_dict={}
+                reporter=None
                 ):
         
         self.X_dict = X_dict
@@ -276,7 +276,7 @@ class MVPA_CV():
         self.cv_save = cv_save
         self.cv_save_path = cv_save_path
         self.experiment_name = experiment_name
-        self.report_function_dict = report_function_dict
+        self.reporter = reporter
         self.output_stats = {}
         
         # set save path with current time
@@ -406,26 +406,11 @@ class MVPA_CV():
                     
             print(f"INFO: results are saved at {str(report_path)}.")
         
-        def reshape_dict(_dict, inner_keys):
-            # transpose-like function of dict.
-            return {inner_key: {key:data[inner_key] for key,data in _dict.items()} for inner_key in inner_keys}
+        if self.reporter is not None:
+            self.reporter.run(search_path=self.save_root,
+                         save=self.cv_save,
+                         save_path=self.save_root)
             
-        def check_report_key(keys):
-            # sanity check if keywords required in report function exist in the outputs.
-            for key in keys:
-                assert key in self.output_stats.keys(), f'{key} is not in {str(list(self.output_stats.keys()))}'
-        
-        # run report functions and save reports
-        for report_key, function in self.report_function_dict.items():
-            report_name, report_key = report_key[0], report_key[1:]
-            check_report_key(report_key)
-            save_path = Path(self.save_root)/report_name 
-            save_path.mkdir(exist_ok=True)
-            function(save=self.cv_save,
-                     save_path=save_path,
-                     **reshape_dict(outputs,report_key))
-            
-        print(f"INFO: {len(self.report_function_dict)} report(s) is(are) done.")
         print(f"INFO: running done.")
             
         return outputs

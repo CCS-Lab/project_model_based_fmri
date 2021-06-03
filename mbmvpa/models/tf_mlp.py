@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 from mbmvpa.models.mvpa_general import MVPA_Base, MVPA_CV
-from mbmvpa.utils.report import build_base_report_functions
+from mbmvpa.utils.report import Reporter
 
 
 class MVPACV_MLP(MVPA_CV):
@@ -152,10 +152,12 @@ class MVPACV_MLP(MVPA_CV):
                              use_bias=use_bias,
                              gpu_visible_devices=gpu_visible_devices)
 
-        self.report_function_dict = build_base_report_functions(voxel_mask=voxel_mask,
-                                                                     experiment_name=experiment_name,
-                                                                     map_type=map_type,
-                                                                     sigma=sigma)
+        self.reporter = Reporter(reports=['brainmap','pearsonr'],
+                                 voxel_mask=voxel_mask,
+                                 experiment_name=experiment_name,
+                                 map_type=map_type,
+                                 sigma=sigma)
+        
         super().__init__(X_dict=X_dict,
                         y_dict=y_dict,
                         model=self.model,
@@ -164,7 +166,7 @@ class MVPACV_MLP(MVPA_CV):
                         cv_save=cv_save,
                         cv_save_path=cv_save_path,
                         experiment_name=experiment_name,
-                        report_function_dict=self.report_function_dict)
+                        reporter=self.reporter)
     
     
 

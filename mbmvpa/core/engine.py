@@ -9,7 +9,7 @@ from ..preprocessing.bold import VoxelFeatureGenerator
 from ..data.loader import BIDSDataLoader
 from ..models.mvpa_general import MVPA_CV, MVPA_CV_H
 from ..utils.config import DEFAULT_ANALYSIS_CONFIGS
-from ..utils.report import build_elasticnet_report_functions, build_base_report_functions
+from ..utils.report import Reporter
 import yaml, importlib, copy
 
 # dictionary for module path and class name for implemented model.
@@ -17,14 +17,6 @@ MVPA_MODEL_DICT = {'elasticnet':['mbmvpa.models.elasticnet','MVPA_ElasticNet'],
                    'mlp':['mbmvpa.models.tf_mlp','MVPA_MLP'],
                    'mlp_shap':['mbmvpa.models.tf_mlp_shap','MVPA_MLP_SHAP'],
                    'cnn':['mbmvpa.models.tf_cnn','MVPA_CNN']}
-
-# dictionary for report function for implemented model.
-MVPA_REPORT_DICT = {'elasticnet':build_elasticnet_report_functions,
-                   'mlp':build_base_report_functions,
-                   'cnn':build_base_report_functions,
-                   'mlp_shap':build_base_report_functions,
-                   }
-DEFAULT_REPORT = build_base_report_functions
 
 NEED_RECONSTRUCT_MODEL = ['cnn']
 
@@ -132,7 +124,7 @@ class MBMVPA():
         self.config = DEFAULT_ANALYSIS_CONFIGS
         self._override_config(config)
         self._add_kwargs_to_config(kwargs)
-        self.config['MVPACV']['cv_save_path']=report_path
+        self.config['MVPA']['CV']['cv_save_path']=report_path
         
         # setting name for saving outputs
         self.mvpa_model_name = mvpa_model
@@ -150,8 +142,8 @@ class MBMVPA():
                                 self.config['LOADER']['task_name'],
                                 self.config['LOADER']['process_name'],
                                 self.config['LOADER']['feature_name']])
-        self.config['MVPAREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
-        self.config['MVPACV']['experiment_name'] = result_name
+        self.config['MVPA']['REPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+        self.config['MVPA']['CV']['experiment_name'] = result_name
         
         # initiating internal modules for preprocessing input data
         self.X_generator = VoxelFeatureGenerator(**self.config['VOXELFEATURE'])
@@ -164,14 +156,13 @@ class MBMVPA():
         self._mvpa_model_class = getattr(
                                     importlib.import_module(MVPA_MODEL_DICT[mvpa_model][0]),
                                     MVPA_MODEL_DICT[mvpa_model][1])
-        self._mvpa_report_func = MVPA_REPORT_DICT[mvpa_model] if mvpa_model in MVPA_REPORT_DICT.keys() else DEFAULT_REPORT
         
         # set flag if reconstructing voxel feature (1D) to 4D is required
         if self.mvpa_model_name in NEED_RECONSTRUCT_MODEL:
             self.config['LOADER']['reconstruct'] = True
             
         self.model = None
-        self.report_function_dict = None
+        self.reporter = None
         self.model_cv = None
         if level is None:
             self.model_cv_builder = MVPA_CV
@@ -295,24 +286,24 @@ class MBMVPA():
         
         # set MVPA model and report function
         input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
-        self.config['MVPA'][self.mvpa_model_name]['input_shape'] = input_shape
-        self.config['MVPA'][self.mvpa_model_name]['voxel_mask'] = voxel_mask
-        self.model = self._mvpa_model_class(**self.config['MVPA'][self.mvpa_model_name])
-        self.report_function_dict = self._mvpa_report_func(voxel_mask=voxel_mask, 
-                                                          **self.config['MVPAREPORT'][self.mvpa_model_name])
+        self.config['MVPA']['MODEL'][self.mvpa_model_name]['input_shape'] = input_shape
+        self.config['MVPA']['MODEL'][self.mvpa_model_name]['voxel_mask'] = voxel_mask
+        self.model = self._mvpa_model_class(**self.config['MVPA']['MODEL'][self.mvpa_model_name])
+        self.reporter = Reporter(voxel_mask=voxel_mask,
+                                 **self.config['MVPA']['REPORT'][self.mvpa_model_name])
         
         # set cross-validation module of MVPA (model_cv)
         self.model_cv = self.model_cv_builder(X_dict,
                                                 y_dict,
                                                 self.model,
-                                                report_function_dict=self.report_function_dict,
-                                                **self.config['MVPACV'])
+                                                reporter=self.reporter,
+                                                **self.config['MVPA']['CV'])
         
         # run model_cv: fit models & interprete models 
-        reports = self.model_cv.run()
+        outputs = self.model_cv.run()
         
         # save configuration
         save_config_path = str(self.model_cv.save_root / 'config.yaml')
         yaml.dump(self._copy_config(),open(save_config_path,'w'),indent=4, sort_keys=False)
         
-        return reports
+        return outputs

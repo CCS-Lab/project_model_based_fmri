@@ -8,8 +8,7 @@ from glmnet import ElasticNet
 import numpy as np
 from pathlib import Path
 from mbmvpa.models.mvpa_general import MVPA_Base, MVPA_CV
-from mbmvpa.utils.report import build_elasticnet_report_functions
-
+from mbmvpa.utils.report import Reporter
 
 class MVPACV_ElasticNet(MVPA_CV):
     
@@ -116,12 +115,13 @@ class MVPACV_ElasticNet(MVPA_CV):
                                     n_jobs=n_jobs,
                                     n_splits=n_splits)
 
-        self.report_function_dict = build_elasticnet_report_functions(voxel_mask=voxel_mask,
-                                                                     confidence_interval=confidence_interval,
-                                                                     n_coef_plot=n_coef_plot,
-                                                                     experiment_name=experiment_name,
-                                                                     map_type=map_type,
-                                                                     sigma=sigma)
+        self.reporter = Reporter(reports=['brainmap','pearsonr','elasticnet'],
+                                             voxel_mask=voxel_mask,
+                                             confidence_interval=confidence_interval,
+                                             n_coef_plot=n_coef_plot,
+                                             experiment_name=experiment_name,
+                                             map_type=map_type,
+                                             sigma=sigma)
 
         super().__init__(X_dict=X_dict,
                         y_dict=y_dict,
@@ -131,7 +131,7 @@ class MVPACV_ElasticNet(MVPA_CV):
                         cv_save=cv_save,
                         cv_save_path=cv_save_path,
                         experiment_name=experiment_name,
-                        report_function_dict=self.report_function_dict)
+                        reporter=self.reporter)
     
     
 class MVPA_ElasticNet(MVPA_Base):
