@@ -93,7 +93,6 @@ class MBGLM(MBFMRI):
         save_config_path = str(self.glm.save_root / 'config.yaml')
         yaml.dump(self._copy_config(),open(save_config_path,'w'),indent=4, sort_keys=False)
         
-        return reports
     
 
 class GLM():
