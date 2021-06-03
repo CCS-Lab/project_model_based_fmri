@@ -112,9 +112,10 @@ class BIDSController():
                 save_path=None,
                 fmriprep_name="fMRIPrep",
                 task_name=None,
+                space_name=None,
                 bold_suffix="bold",
                 event_suffix="events",
-                confound_suffix="regressors",
+                confound_suffix="regressors", 
                 ignore_original=False,
                 ignore_fmriprep=False,
                 ):
@@ -128,6 +129,9 @@ class BIDSController():
         self.confound_suffix = confound_suffix
         self.fmriprep_name = fmriprep_name
         self.task_name = task_name
+        if space_name is None:
+            space_name = config.TEMPLATE_SPACE
+        self.space_name = space_name
         self.save_path = save_path
         self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
         self.subjects=subjects
@@ -393,7 +397,7 @@ class BIDSController():
                         task=task_name,
                         run=run_id,
                         suffix=self.bold_suffix,
-                        space=config.TEMPLATE_SPACE,
+                        space=self.space_name,
                         extension="nii.gz")
         
     def get_event(self, sub_id=None, task_name=None, run_id=None, ses_id=None):
@@ -418,7 +422,7 @@ class BIDSController():
            
     def get_bold_all(self):
         return self.fmriprep_layout.get(suffix=self.bold_suffix,
-                                        space=config.TEMPLATE_SPACE,
+                                        space=self.space_name,
                                         task=self.task_name,
                                         extension="nii.gz")
     

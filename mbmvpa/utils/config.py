@@ -33,6 +33,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'n_thread': 1,
         'feature_name':'unnamed',
         'ignore_original':False,
+        'space_name': None,
     },
     'LATENTPROCESS': {
         'bids_layout':'.',
@@ -56,7 +57,10 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'latent_function': None,
         'computational_model': None,
         'skip_compmodel': False,
+        'separate_run': False,
         'ignore_fmriprep': False,
+        'criterion': 'looic',
+        'lower_better': True,
     },
     'HBAYESDM': {
         },
@@ -70,6 +74,21 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'task_name':None,
         'process_name':'unnamed',
         'feature_name':'unnamed',
+    },
+    'GLM':{
+        'task_name': None,
+        'process_name': None,
+        'space_name': None,
+        'smoothing_fwhm': 6,
+        'mask_path': None,
+        'mask_threshold': 2.58,
+        'confounds': ['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z'],
+        'glm_save_path': '.',
+        'hrf_model': 'glover',
+        'drift_model': 'cosine',
+        'high_pass': 1/128,
+        'n_core': 4,
+        'smoothing_fwhm': 6,
     },
     'MVPA':{
         'elasticnet':{

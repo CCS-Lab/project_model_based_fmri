@@ -104,6 +104,7 @@ class VoxelFeatureGenerator():
                   bids_controller=None,
                   save_path=None,
                   task_name=None,
+                  space_name=None,
                   feature_name="unnamed",
                   fmriprep_name='fMRIPrep',
                   mask_path=None,
@@ -127,6 +128,7 @@ class VoxelFeatureGenerator():
                                             save_path=save_path,
                                             fmriprep_name=fmriprep_name,
                                             task_name=task_name,
+                                            space_name=space_name,      
                                             bold_suffix=bold_suffix,
                                             confound_suffix=confound_suffix,
                                             ignore_original=ignore_original)

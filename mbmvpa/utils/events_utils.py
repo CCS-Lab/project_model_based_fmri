@@ -22,6 +22,26 @@ import arviz as az
 from ..utils import config # configuration for default names used in the package
 
 
+def _fit_dm_model(df_events,
+                     dm_model,
+                     n_core=4,
+                     **kwargs):
+        
+        print(f"INFO: running computational model [hBayesDM-{dm_model}]")
+        model = getattr(
+                    hbayesdm.models, dm_model)(
+                        data=df_events,
+                        ncore=n_core,
+                        **kwargs)
+                
+        individual_params = pd.DataFrame(model.all_ind_pars)
+        individual_params.index.name = "subjID"
+        individual_params = individual_params.reset_index()
+        model_name = ''.join(dm_model.split('_'))
+        
+        return model, individual_params
+    
+    
 def _get_looic(fit):
     inference = az.convert_to_inference_data(fit)
     inference['sample_stats']['log_likelihood'] = inference['posterior']['log_lik']
@@ -32,7 +52,8 @@ def _update_modelcomparison_table(table_path, model_name, value, criterion):
     if Path(table_path).exists():
         table = pd.read_table(table_path)
         if model_name in list(table['model']):
-            table = table[table['model']!=model_name]
+            table = table[~((table['model']==model_name) & \
+                            (table['criterion']==criterion))]
         table = pd.concat([table,to_add])
     else:
         table = pd.DataFrame({'model':[model_name],'value':[value], 'criterion':[criterion]})

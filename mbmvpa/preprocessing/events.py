@@ -7,13 +7,12 @@
 
 from pathlib import Path
 
-import hbayesdm.models
 import nibabel as nib
 import numpy as np
 import pandas as pd
 from ..utils.events_utils import _process_indiv_params, _add_event_info, _make_function_dfwise, \
                                 _make_single_time_mask, _get_individual_param_dict, _boldify, \
-                                _get_looic, _update_modelcomparison_table
+                                _get_looic, _update_modelcomparison_table, _fit_dm_model
 from ..utils.bids_utils import BIDSController
 from bids import BIDSLayout
 from tqdm import tqdm
@@ -153,6 +152,7 @@ class LatentProcessGenerator():
                   skip_compmodel=False,
                   separate_run=False,
                   criterion='looic',
+                  lower_better=True,
                   **kwargs):
 
         # set path informations and load layout
@@ -175,9 +175,8 @@ class LatentProcessGenerator():
         # setting flags for computational modeling
         
         self.need_model_comparison = not skip_compmodel and \
-                                     computational_model is None \
+                                     computational_model is None and \
                                      self.individual_params is None
-        
         
         
         if isinstance(dm_model,list) or isinstance(dm_model,tuple):
@@ -187,7 +186,7 @@ class LatentProcessGenerator():
         else:
             raise TypeError('ERROR: dm_model should be str or list of str')
         
-        if not self.need_model_comparison:
+        if not self.need_model_comparison or len(self.candidate_dm_models)==1:
             self.best_model = self.candidate_dm_models[0]
         else:
             self.best_model = None
@@ -203,15 +202,15 @@ class LatentProcessGenerator():
                 
         self.skip_computational_modeling = skip_compmodel
         
+        self.onset_name=onset_name
         # setting dataframe-wise functions
-        self.adjust_function_dfwise, \
-            self.filter_function_dfwise, \
-            self.latent_function_dfwise = self._set_functions(adjust_function,
-                                                              filter_function,
-                                                              latent_function,
-                                                              adjust_function_dfwise,
-                                                              filter_function_dfwise,
-                                                              latent_function_dfwise)
+        
+        self._set_functions(adjust_function,
+                            filter_function,
+                            latent_function,
+                            adjust_function_dfwise,
+                            filter_function_dfwise,
+                            latent_function_dfwise)
         
         
         if self.skip_computational_modeling:
@@ -221,17 +220,18 @@ class LatentProcessGenerator():
         self.hrf_model = hrf_model
         self.use_duration = use_duration
         self.n_core=n_core
-        self.onset_name=onset_name
         self.duration_name=duration_name
         self.end_name=end_name
         self.use_1sec_duration = use_1sec_duration
         self.computational_model = computational_model
         self.separate_run = separate_run
         self.criterion = criterion
+        self.lower_better = lower_better
         
     def _set_trained_dm_model(self):
-        if self.need_model_comparison.exists():
-            table = pd.read_table(self.need_model_comparison)
+        if self.model_comparison_table_path.exists():
+            table = pd.read_table(self.model_comparison_table_path)
+            table = pd.concat([table[table['model']==dm_model] for dm_model in self.candidate_dm_models])
             logged_models = table['model'].unique()
             for model in logged_models:
                 for _, row in table[table['model']==model].iterrows():
@@ -239,7 +239,19 @@ class LatentProcessGenerator():
                         self._trained_dm_model[model] = {}
                     self._trained_dm_model[model][row['criterion']] = row['value']
                     
-        
+    def _find_latent_function(self,
+                             dm_model,
+                             process_name):
+        '''
+        find the function for calculating the target latent process
+        if the function is not given, then it will find from implemented models
+        '''
+        modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
+        modelling_module = importlib.import_module(modelling_module)
+        self.latent_function_dfwise = modelling_module.ComputationalModel(process_name)
+        if process_name in modelling_module.latent_process_onset.keys():
+            self.onset_name = modelling_module.latent_process_onset[self.process_name]
+
     def _set_functions(self,
                       adjust_function,
                       filter_function,
@@ -248,17 +260,29 @@ class LatentProcessGenerator():
                       filter_function_dfwise,
                       latent_function_dfwise):
         
+        print("INFO: setting functions")
         if adjust_function_dfwise is None:
-            adjust_function_dfwise = _make_function_dfwise(adjust_function)
+            self.adjust_function_dfwise = _make_function_dfwise(adjust_function)
+        else:
+            self.adjust_function_dfwise = adjust_function_dfwise
         if filter_function_dfwise is None:
-            filter_function_dfwise = _make_function_dfwise(filter_function)
-        if latent_function_dfwise is not None or\
-            self.skip_computational_modeling:
-            latent_function_dfwise = _make_function_dfwise(latent_function)
+            self.filter_function_dfwise = _make_function_dfwise(filter_function)
+        else:
+            self.filter_function_dfwise = filter_function_dfwise
+        
+        if self.skip_computational_modeling:
+            self.latent_function_dfwise = None
+        elif latent_function_dfwise is None:
+            if latent_function is not None:
+                self.latent_function_dfwise = _make_function_dfwise(latent_function)
+            elif self.individual_params is not None:
+                print("INFO: latent function is set from predefined list.")
+                self._find_latent_function(self.best_model, self.process_name)
+            else:
+                self.latent_function_dfwise = None
+        else:
+            self.latent_function_dfwise = latent_function_dfwise
             
-        return (adjust_function_dfwise,
-                filter_function_dfwise,
-                latent_function_dfwise)
     
     def summary(self):
         self.bids_controller.summary()
@@ -324,38 +348,21 @@ class LatentProcessGenerator():
             for df_events, event_infos in zip(df_events_list, event_infos_list)
         ]
         return df_events_list, event_infos_list
-        
-        
-    def _fit_dm_model(self,
-                     df_events,
-                     dm_model):
-        
-        print(f"INFO: running computational model [hBayesDM-{dm_model}]")
-        model = getattr(
-                    hbayesdm.models, dm_model)(
-                        data=df_events,
-                        ncore=self.n_core,
-                        **kwargs)
-                
-        individual_params = pd.DataFrame(model.all_ind_pars)
-        individual_params.index.name = "subjID"
-        individual_params = individual_params.reset_index()
-        model_name = ''.join(dm_model.split('_'))
-        
-        return model, individual_params
     
     def _fit_update_dm_model(self,
                             df_events,
-                             dm_model):
-        model, individual_params= _fit_dm_model(df_events,dm_model)
-        value = self.get_comparison(model.fit)
+                            dm_model,
+                            **kwargs):
+        
+        model, individual_params= _fit_dm_model(df_events,dm_model,**kwargs)
+        value = self.get_criterion(model.fit)
         _update_modelcomparison_table(self.model_comparison_table_path,
                                       dm_model,
                                       value,
                                       self.criterion)
-        if dm_model not in self._set_trained_dm_model.keys():
-            self._set_trained_dm_model[dm_model] ={}
-        self._set_trained_dm_model[dm_model] ={'model':model,
+        if dm_model not in self._trained_dm_model.keys():
+            self._trained_dm_model[dm_model] ={}
+        self._trained_dm_model[dm_model] ={'model':model,
                                               self.criterion:value,
                                               'individual_params':individual_params}
 
@@ -365,34 +372,39 @@ class LatentProcessGenerator():
         # save indiv params
         individual_params.to_csv(individual_params_path,
                                  sep="\t", index=False)
-        
+    
+ 
     def _model_comparison(self,
                          df_events,
                          dm_models,
-                         overwrite=False):
+                         overwrite=False,
+                         **kwargs):
         
         for dm_model in dm_models:
-            if not overwrite or \
+            if overwrite or \
                 dm_model not in self._trained_dm_model.keys() or \
                 self.criterion not in self._trained_dm_model[dm_model].keys() :
-                _fit_update_dm_model(df_events,dm_model)
+                self._fit_update_dm_model(df_events,dm_model,**kwargs)
             
-        models_criterion = [(dm_model,info[self.criterion]) \ 
-                         for dm_model, info in self._set_trained_dm_model.items()]
-        models_criterion.sort(key=lambda v :v[-1],reverse=False)
+        models_criterion = [(dm_model,info[self.criterion]) for dm_model, info in self._trained_dm_model.items()]
+        models_criterion.sort(key=lambda v :v[-1],reverse=self.lower_better)
         best_model = models_criterion[0][0]
         
-        if 'individual_params' not in self._set_trained_dm_model[best_model]:
-            _fit_update_dm_model(df_events,dm_model)
+        if 'individual_params' not in self._trained_dm_model[best_model]:
+            individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
+        f"task-{self.bids_controller.task_name}_model-{best_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
+            individual_params = _process_indiv_params(individual_params_path)
+            if individual_params is None:
+                _, individual_params= _fit_dm_model(df_events,best_model,**kwargs)
+            self._trained_dm_model[best_model]['individual_params'] = individual_params
             
-        self.individual_params = self._set_trained_dm_model[best_model]['individual_params']
+        self.individual_params = self._trained_dm_model[best_model]['individual_params']
         self.best_model = best_model
             
     
             
-        
     def set_computational_model(self, 
-                                refit_compmodel=True,
+                                refit_compmodel=False,
                                 individual_params=None, 
                                 df_events=None, 
                                 adjust_function_dfwise=None, 
@@ -439,21 +451,24 @@ class LatentProcessGenerator():
                 model.fit(df_events)
                 self.individual_params = model.get_parameters()
             else:
+                print(f"INFO: start model comparison-{self.candidate_dm_models}")
                 self._model_comparison(df_events,
-                                     self.candidate_dm_models,
-                                     overwrite=refit_compmodel)
+                                       self.candidate_dm_models,
+                                       overwrite=refit_compmodel,
+                                       **kwargs)
                 if self.latent_function_dfwise is None:
-                    modelling_module = f'mbmvpa.preprocessing.computational_modeling.{self.best_model}'
-                    modelling_module = importlib.import_module(modelling_module)
-                    self.latent_function_dfwise = modelling_module.ComputationalModel(self.process_name)
-                    if self.process_name in modelling_module.latent_process_onset.keys():
-                        self.onset_name = modelling_module.latent_process_onset[self.process_name]
+                    self._find_latent_function(self.best_model,self.process_name)
+                print(f"INFO: model comparison done")
+                table = pd.read_table(self.model_comparison_table_path)
+                table = pd.concat([table[table['model']==m] for m in self.candidate_dm_models])
+                print(table)
+                print(f"INFO: the best model is {self.best_model}")
                 
+                        
     def run(self,
             overwrite=True,
             process_name=None,
-            modeling_kwargs={},
-            **kwargs):
+            modeling_kwargs={}):
         
         if process_name is None:
             process_name = self.process_name

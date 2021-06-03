@@ -32,115 +32,147 @@ from tqdm import tqdm
 import nibabel as nib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import importlib
+from mbmvpa.utils.config import DEFAULT_ANALYSIS_CONFIGS
 
-def run_mbglm(**kwargs):
-    mbglm = MBGLM(**kwargs)
-    mbglm.run()
-
+def run_mbglm(config=None,
+              report_path='.',
+              overwrite=False,
+              overwrite_latent_process=True,
+              refit_compmodel=False,
+              **kwargs):
+    
+    mbglm = MBGLM(config=config,report_path=report_path,**kwargs)
+    mbglm.run(overwrite=overwrite,
+             overwrite_latent_process=overwrite_latent_process,
+             refit_compmodel=refit_compmodel)
+    
 class MBGLM():
     
+    r"""
+        
+    """
     def __init__(self,
-                  bids_layout,
-                  task_name,
-                  process_name,
-                  subjects="all",
-                  save_path=None,
-                  adjust_function=lambda x: x,
-                  filter_function=lambda _: True,
-                  latent_function=None,
-                  adjust_function_dfwise=None,
-                  filter_function_dfwise=None,
-                  latent_function_dfwise=None,
-                  computational_model=None,
-                  dm_model="unnamed",
-                  individual_params=None,
-                  hrf_model="glover",
-                  use_duration=False,
-                  n_core=4,
-                  ignore_original=False,
-                  ignore_fmriprep=False,
-                  onset_name="onset",
-                  duration_name="duration",
-                  end_name=None,
-                  use_1sec_duration=True,
-                  skip_compmodel=False,
-                  separate_run=False,
-                  space_name=None,
-                  smoothing_fwhm=6,
-                  mask_path=None,
-                  mask_threshold=2.58,
-                  confounds=['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z'],
-                  glm_save_path='.',
-                  drift_model='cosine',
-                  high_pass=1/128,
-                  smoothing_fwhm=6,
-                  overwrite=False,
-                  **kwargs):
+                 config=None,
+                 report_path='.',
+                 **kwargs):
         
-    if not skip_compmodel and \
-            latent_function is None and\
-            latent_function_dfwise is None:
+        # load & set configuration
+        self.config = DEFAULT_ANALYSIS_CONFIGS
+        self._override_config(config)
+        self._add_kwargs_to_config(kwargs)
+        self.config['GLM']['glm_save_path']=report_path
         
-        modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
-        modelling_module = importlib.import_module(modelling_module)
-        latent_function_dfwise = modelling_module.ComputationalModel(process_name)
+        # initiating internal modules for preprocessing input data
+        self.y_generator = LatentProcessGenerator(**self.config['LATENTPROCESS'])
+        self.config['APPENDIX'] = {}
+        self.glm = None
         
-        if process_name in modelling_module.latent_process_onset.keys():
-            onset_name = modelling_module.latent_process_onset[process_name]
+    def _override_config(self,config):
+        """
+        config should be a dictionary or yaml file.
+        configuration handled in this class is a tree-like dictionary.
+        override the default configuration with input config.
+        """
+        if config is None:
+            return
+        if isinstance(config, str):
+            config = yaml.load(open(config))
+            
+        def override(a, b):
+            # recursive function
+            for k,d in b.items():
+                
+                if isinstance(d,dict):
+                    if k in a.keys():
+                        override(a[k],d)
+                    else:
+                        a[k] = d
+                else:
+                    a[k] = d
         
-    self.y_generator = LatentProcessGenerator(bids_layout=bids_layout,
-                                              subjects=subjects,
-                                              bids_controller=None,
-                                              save_path=save_path,
-                                              task_name=task_name,
-                                              process_name=process_name,
-                                              adjust_function=adjust_function,
-                                              filter_function=filter_function,
-                                              latent_function=latent_function,
-                                              adjust_function_dfwise=adjust_function_dfwise,
-                                              filter_function_dfwise=filter_function_dfwise,
-                                              latent_function_dfwise=latent_function_dfwise,
-                                              computational_model=computational_model,
-                                              dm_model=dm_model,
-                                              individual_params=individual_params,
-                                              hrf_model=hrf_model,
-                                              use_duration=use_duration,
-                                              n_core=n_core,
-                                              ignore_original=ignore_original,
-                                              ignore_fmriprep=ignore_fmriprep,
-                                              onset_name=onset_name,
-                                              duration_name=duration_name,
-                                              end_name=end_name,
-                                              use_1sec_duration=use_1sec_duration,
-                                              skip_compmodel=skip_compmodel,
-                                              separate_run=separate_run,
-                                              **kwargs)
+        override(self.config,config)
+        
+    def _add_kwargs_to_config(self,kwargs):
+        """
+        override configuration dictionary with keywarded arguments.
+        find the leaf node in configuration tree which match the keyward.
+        then override the value.
+        """
+        added_keywords = []
+        def recursive_add(kwargs,config):
+            # recursive function
+            if not isinstance(config,dict):
+                return 
+            else:
+                for k,d in config.items():
+                    if k in kwargs.keys():
+                        config[k] = kwargs[k]
+                        added_keywords.append(k)
+                    else:
+                        recursive_add(kwargs,d)
+                        
+        recursive_add(kwargs, self.config)
+        
+        # any non-found keyword in default will be regarded as 
+        # keyword for hBayesDM
+        for keyword,value in kwargs.items():
+            if keyword not in added_keywords:
+                self.config['HBAYESDM'][keyword] = value
+        
+    def _copy_config(self):
+        """
+        deep copy of configuration dictionary,
+        skipping values which are not writable on yaml file.
+        """
+        def is_writable(d):
+            if isinstance(d,str) or \
+                isinstance(d, list) or \
+                isinstance(d, tuple) or \
+                isinstance(d, int) or \
+                isinstance(d, float): 
+                return True
+            else:
+                return False
+                
+        def recursive_copy(config):
+            copied = {}
+            for k,d in config.items():
+                if isinstance(d,dict):
+                    copied[k] = recursive_copy(d)
+                elif is_writable(d):
+                    copied[k] = d
+            return(copied)
+        
+        return recursive_copy(self.config)
     
-    
-    self.glm = None
-    
-    def run():
-        self.y_generator.run(overwrite=overwrite)
+    def run(self,
+            overwrite=False,
+            overwrite_latent_process=True,
+            refit_compmodel=False):
+        """
+        """
+        
+        # y (latent process): comp. model. & hrf convolution
+        self.config['HBAYESDM']['refit_compmodel']=refit_compmodel
+        self.y_generator.run(modeling_kwargs=self.config['HBAYESDM'],
+                            overwrite=overwrite|overwrite_latent_process) 
+        self.config['APPENDIX']['best_model'] = self.y_generator.best_model
+        # reload bids layout and plot processed data
         self.y_generator.bids_controller.reload()
-
+        
         self.glm = GLM(bids_layout=self.y_generator.bids_controller.layout,
-                     task_name=task_name,
-                     process_name=process_name,
                      fmriprep_layout=self.y_generator.bids_controller.fmriprep_layout,
                      mbmvpa_layout=self.y_generator.bids_controller.mbmvpa_layout,
-                     space_name=space_name,
-                     smoothing_fwhm=smoothing_fwhm,
-                     mask_path=mask_path,
-                     mask_threshold=mask_threshold,
-                     confounds=confounds,
-                     glm_save_path=glm_save_path,
-                     hrf_model=hrf_model,
-                     drift_model=drift_model,
-                     high_pass=high_pass,
-                     n_core=n_core,
-                    )
+                     **self.config['GLM'])
         
         self.glm.run()
+        
+        # save configuration
+        save_config_path = str(self.glm.save_root / 'config.yaml')
+        yaml.dump(self._copy_config(),open(save_config_path,'w'),indent=4, sort_keys=False)
+        
+        return reports
+    
 
 class GLM():
     
@@ -173,7 +205,7 @@ class GLM():
             # input is given as path for bids layout root.
             self.layout = BIDSLayout(root=Path(bids_layout),derivatives=True)
         else:
-            self.layout = layout
+            self.layout = bids_layout
         self.confounds = confounds
         if space_name is not None:
             self.space_name = space_name
@@ -259,15 +291,15 @@ class GLM():
             models.fit([nib.load(run_img) for run_img in models_run_imgs],
                       events=models_events,
                       confounds=models_confounds)
-        
+        '''
         params_chunks = [[[models[i],
                           models_run_imgs[i],
                           models_events[i],
-                          models_confounds[i]] for i in range(j,j+self.n_core)]
+                          models_confounds[i]] for i in range(j,min(len(models),j+self.n_core))]
                             for j in range(0, len(models), self.n_core)]
         future_result = {}
         
-        print(f'INFO: start processing {item_count} fMRI. (nii_img/thread)*(n_thread)={len(params_chunks)}*{self.n_core}.')
+        print(f'INFO: start running first-level glm. (nii_img/thread)*(n_thread)={len(params_chunks)}*{self.n_core}.')
         
         iterater = tqdm(range(len(params_chunks)))
         for i in iterater:
@@ -290,7 +322,7 @@ class GLM():
         first_level_models = [models[i].fit([nib.load(run_img) for run_img in models_run_imgs[i]],
                                             events=models_events[i],
                                             confounds=models_confounds[i]) for i in tqdm(range(len(models)))]
-        '''
+        
         
         first_level_models = models
         
@@ -314,8 +346,8 @@ class GLM():
         
         second_level_input = [nib.load(nii_file) for nii_file in self.save_path_first.glob('*.nii')]
         
-        if len(second_level_input) == 0:
-            print("INFO: only one first-level map is found.")
+        if len(second_level_input) <= 1:
+            print("INFO: only one or zero first-level map is found.")
             print("      Second-level analysis requires two or more subjects' brain maps.")
             return
         else:

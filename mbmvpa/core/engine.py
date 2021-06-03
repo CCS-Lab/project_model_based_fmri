@@ -33,6 +33,7 @@ def run_mbmvpa(config=None,
               report_path='.',
               overwrite=False,
               overwrite_latent_process=True,
+              refit_compmodel=False,
               level=None,
               **kwargs):
     
@@ -80,7 +81,8 @@ def run_mbmvpa(config=None,
                      **kwargs)
 
     return mbmvpa.run(overwrite=overwrite,
-                     overwrite_latent_process=overwrite_latent_process)
+                     overwrite_latent_process=overwrite_latent_process,
+                     refit_compmodel=refit_compmodel)
     
 
 class MBMVPA():
@@ -132,20 +134,19 @@ class MBMVPA():
         self._add_kwargs_to_config(kwargs)
         self.config['MVPACV']['cv_save_path']=report_path
         
-        # find the function for calculating the target latent process
-        # if the function is not given, then it will find from implemented models
-        # please refer to the document for available models and latent processes
-        #if 'latent_function' not in self.config['LATENTPROCESS'].keys():
-        if not self.config['LATENTPROCESS']['skip_compmodel'] and \
-            'latent_function' not in kwargs.keys() and \
-            'latent_function_dfwise' not in kwargs.keys():
-            self._add_latent_info_kwargs(self.config['LATENTPROCESS']['dm_model'],
-                                         self.config['LATENTPROCESS']['process_name'], 
-                                         self.config['LATENTPROCESS'])
-        
         # setting name for saving outputs
         self.mvpa_model_name = mvpa_model
-        result_name = '-'.join([''.join(self.config['LATENTPROCESS']['dm_model'].split('_')),
+        dm_model_name = self.config['LATENTPROCESS']['dm_model']
+        if isinstance(dm_model_name,str):
+            dm_model_name = ''.join(dm_model_name.split('_'))
+        elif isinstance(dm_model_name,list) or \
+            isinstance(dm_model_name,tuple):
+            if len(dm_model_name) ==1 :
+                dm_model_name = ''.join(dm_model_name[0].split('_'))
+            else:
+                dm_model_name = 'modelcomparison'
+            
+        result_name = '-'.join([dm_model_name,
                                 self.config['LOADER']['task_name'],
                                 self.config['LOADER']['process_name'],
                                 self.config['LOADER']['feature_name']])
@@ -176,6 +177,8 @@ class MBMVPA():
             self.model_cv_builder = MVPA_CV
         elif level.lower() in ['hirearchical','h']:
             self.model_cv_builder = MVPA_CV_1stL
+        
+        self.config['APPENDIX'] = {}
         
     def _override_config(self,config):
         """
@@ -229,19 +232,6 @@ class MBMVPA():
             if keyword not in added_keywords:
                 self.config['HBAYESDM'][keyword] = value
         
-        
-    def _add_latent_info_kwargs(self, dm_model, process_name, kwargs):
-        """
-        find the function for calculating the target latent process from implemented models
-        please refer to the document for available models and latent processes
-        """
-        modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
-        modelling_module = importlib.import_module(modelling_module)
-        kwargs['latent_function_dfwise'] = modelling_module.ComputationalModel(process_name)
-        
-        if process_name in modelling_module.latent_process_onset.keys():
-            kwargs['onset_name'] = modelling_module.latent_process_onset[process_name]
-    
     def _copy_config(self):
         """
         deep copy of configuration dictionary,
@@ -270,7 +260,8 @@ class MBMVPA():
     
     def run(self,
             overwrite=False,
-            overwrite_latent_process=True):
+            overwrite_latent_process=True,
+            refit_compmodel=False):
         """
         run the following procedures.
         
@@ -283,9 +274,10 @@ class MBMVPA():
         self.X_generator.run(overwrite=overwrite) 
         
         # y (latent process): comp. model. & hrf convolution
+        self.config['HBAYESDM']['refit_compmodel']=refit_compmodel
         self.y_generator.run(modeling_kwargs=self.config['HBAYESDM'],
                             overwrite=overwrite|overwrite_latent_process) 
-        
+        self.config['APPENDIX']['best_model'] = self.y_generator.best_model
         # reload bids layout and plot processed data
         self.bids_controller.reload()
         self.bids_controller.plot_processed_data(feature_name=self.X_generator.feature_name,
