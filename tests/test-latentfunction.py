@@ -3,7 +3,7 @@ import hbayesdm.models
 import os, importlib
 import pandas as pd
 from pathlib import Path
-from mbmvpa.utils.config import AVAILABLE_LATENT_PROCESS
+from mbfmri.utils.config import AVAILABLE_LATENT_PROCESS
 
 example_data_path = hbayesdm.base.PATH_EXTDATA 
 indiv_param_path = 'tests/test_indiv_params'

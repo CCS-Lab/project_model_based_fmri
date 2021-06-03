@@ -1,4 +1,4 @@
-from mbmvpa.core.glm import GLM
+from mbfmri.core.glm import GLM
 from pathlib import Path
 
 bids_layout = "tutorial_data/ccsl_prl"

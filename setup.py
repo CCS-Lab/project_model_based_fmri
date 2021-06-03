@@ -12,7 +12,7 @@ if sys.version_info[:2] < (3, 6):
 
 PATH_ROOT = Path(__file__).absolute().parent
 
-DISTNAME = 'mb-mvpa'
+DISTNAME = 'mb-fmri'
 
 MAJOR = 0
 MINOR = 2
@@ -22,7 +22,7 @@ VERSION = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 VERSION += '' if ISRELEASED else '.9000'
 
 
-DESC = 'Python library for fMRI multi-voxel pattern analysis'
+DESC = 'Python library for general model-based fMRI analysis'
 # with open('README.rst', 'r', encoding='utf-8') as f:
 #     LONG_DESC = f.read()
 # LONG_DESC_TYPE = 'text/x-rst'

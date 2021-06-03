@@ -13,10 +13,10 @@ https://openneuro.org/datasets/ds000005/versions/00001
 
 """
 
-
-from mbmvpa.core.engine import run_mbmvpa
+from mbfmri.core.engine import run_mbfmri
 from pathlib import Path
 
+## GENERAL SETTING
 bids_layout = "tests/test_example"
 report_path = "tests/test_report"
 Path(report_path).mkdir(exist_ok=True)
@@ -27,13 +27,13 @@ def test_adjust(row):
     row["cert"] = 0
     return row
 
-_ = run_mbmvpa(bids_layout=bids_layout,
+## TEST MVPA BASIC
+_ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
                mvpa_model='elasticnet',
                feature_name='zoom2',
                task_name='mixedgamblestask',
                process_name='SUgamble',
-               #process_name='gain',
                skip_compmodel=False,
                report_path=report_path,
                adjust_function=test_adjust,
@@ -49,13 +49,13 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                pval_threshold=5,
               refit_compmodel=True)
 
-_ = run_mbmvpa(bids_layout=bids_layout,
+## TEST MODELCOMPARISON
+_ = run_mbfmri(bids_layout=bids_layout,
                dm_model=['ra_prospect','ra_noRA','ra_noLA'],
                mvpa_model='elasticnet',
                feature_name='zoom2',
                task_name='mixedgamblestask',
                process_name='SUgamble',
-               #process_name='gain',
                skip_compmodel=False,
                report_path=report_path,
                adjust_function=test_adjust,
@@ -65,12 +65,12 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                niter=200,
                n_thread=4,
                method='5-fold',
-               overwrite=False,
                gpu_visible_devices = [2],
                n_batch=4,
                pval_threshold=5)
 
-_ = run_mbmvpa(bids_layout=bids_layout,
+## TEST PRECALCULATED PROCESS
+_ = run_mbfmri(bids_layout=bids_layout,
                mvpa_model='elasticnet',
                feature_name='zoom2',
                task_name='mixedgamblestask',
@@ -84,8 +84,79 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                niter=200,
                n_thread=4,
                method='5-fold',
-               overwrite=True,
                gpu_visible_devices = [2],
                n_batch=4,
                pval_threshold=5)
+
+## TEST MVPA-MLP
+_ = run_mbfmri(bids_layout=bids_layout,
+               mvpa_model='mlp',
+               feature_name='zoom2',
+               task_name='mixedgamblestask',
+               process_name='gain',
+               skip_compmodel=True,
+               report_path=report_path,
+               adjust_function=test_adjust,
+               n_core=4,
+               nchain=2,
+               nwarmup=50,
+               niter=200,
+               n_thread=4,
+               method='5-fold',
+               gpu_visible_devices = [2],
+               n_batch=4,
+               pval_threshold=5)
+
+## TEST MVPA-CNN
+_ = run_mbfmri(bids_layout=bids_layout,
+               mvpa_model='cnn',
+               feature_name='zoom2',
+               task_name='mixedgamblestask',
+               process_name='gain',
+               skip_compmodel=True,
+               report_path=report_path,
+               adjust_function=test_adjust,
+               n_core=4,
+               nchain=2,
+               nwarmup=50,
+               niter=200,
+               n_thread=4,
+               method='5-fold',
+               gpu_visible_devices = [2],
+               n_batch=4,
+               pval_threshold=5)
+
+## TEST MVPA-HIERARCHICAL
+_ = run_mbfmri(analysis='mbmvpah',
+               bids_layout=bids_layout,
+               dm_model='ra_prospect',
+               mvpa_model='elasticnet',
+               feature_name='zoom2',
+               task_name='mixedgamblestask',
+               process_name='SUgamble',
+               skip_compmodel=False,
+               report_path=report_path,
+               adjust_function=test_adjust,
+               n_core=4,
+               nchain=2,
+               nwarmup=50,
+               niter=200,
+               n_thread=4,
+               method='5-fold',
+               gpu_visible_devices = [2],
+               n_batch=4,
+               pval_threshold=5)
+
+## TEST GLM
+_ = run_mbfmri(analysis='glm',
+              report_path=report_path,
+              bids_layout=bids_layout,
+              dm_model='ra_prospect',
+              task_name='mixedgamblestask',
+              process_name='SUgamble',
+              adjust_function=test_adjust,
+              overwrite=False,
+              overwrite_latent_process=True,
+              refit_compmodel=False)
+
 print("TEST PASS!")

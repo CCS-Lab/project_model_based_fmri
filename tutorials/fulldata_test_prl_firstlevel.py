@@ -1,4 +1,4 @@
-from mbmvpa.core.engine import run_mbmvpa
+from mbfmri.core.engine import run_mbmvpa
 from pathlib import Path
 
 #bids_layout = "tutorial_data/ccsl_prl"
