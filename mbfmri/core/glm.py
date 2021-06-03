@@ -26,7 +26,7 @@ from mbfmri.utils import config
 from mbfmri.utils.glm_utils import first_level_from_bids
 from mbfmri.utils.bold_utils import _build_mask
 from mbfmri.preprocessing.events import LatentProcessGenerator
-from mbfmri.core.mbfmri import MBFMRI
+from mbfmri.core.base import MBFMRI
 import mbfmri.utils.config
 import yaml, importlib, copy, datetime
 from bids import BIDSLayout

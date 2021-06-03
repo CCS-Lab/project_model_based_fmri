@@ -188,6 +188,8 @@ class LatentProcessGenerator():
         
         if not self.need_model_comparison or len(self.candidate_dm_models)==1:
             self.best_model = self.candidate_dm_models[0]
+        elif skip_compmodel:
+            self.best_model = 'unnamed'
         else:
             self.best_model = None
             

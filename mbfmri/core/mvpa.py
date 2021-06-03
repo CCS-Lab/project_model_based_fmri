@@ -9,7 +9,7 @@ from mbfmri.preprocessing.bold import VoxelFeatureGenerator
 from mbfmri.data.loader import BIDSDataLoader
 from mbfmri.models.mvpa_general import MVPA_CV, MVPA_CV_H
 from mbfmri.utils.report import Reporter
-from mbfmri.core.mbfmri import MBFMRI
+from mbfmri.core.base import MBFMRI
 import mbfmri.utils.config
 import yaml, importlib, copy
 
