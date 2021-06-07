@@ -74,6 +74,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'task_name':None,
         'process_name':'unnamed',
         'feature_name':'unnamed',
+        'use_absolute_value':False,
     },
     'GLM':{
         'task_name': None,

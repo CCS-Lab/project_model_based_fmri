@@ -30,7 +30,8 @@ class ComputationalModel(Base):
             self._add('PEreward',PEr)
             self._add('PEpunishment',PEp)
             self._add('PEchosen',PEr+PEp)
-
+            #self._add('absPEchosen',abs(PEr+PEp))
+            
             # store chosen deck Q values (rew and pun)
             Qr_chosen = Qr[choice-1]
             Qp_chosen = Qp[choice-1]
@@ -52,4 +53,6 @@ class ComputationalModel(Base):
             
 latent_process_onset = {'PEreward': TIME_FEEDBACK,
                        'PEpunishment': TIME_FEEDBACK,
-                       'PEchosen':TIME_FEEDBACK}
+                       'PEchosen':TIME_FEEDBACK,
+                       #'absPEchosen':TIME_FEEDBACK
+                       }

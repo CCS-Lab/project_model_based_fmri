@@ -27,12 +27,16 @@ class Normalizer():
     """
     
     def __init__(self, 
+                 use_absolute_value=False,
                  normalizer_name="minmax",
                  scale=(-1,1)):
+        self.use_absolute_value = use_absolute_value
         self.name = normalizer_name
         self.scale = scale
         
     def __call__(self,x):
+        if self.use_absolute_value:
+            x = abs(x)
         if self.name == "standard":
             normalized = zscore(x, axis=None)
         elif self.name == "none":
@@ -104,6 +108,7 @@ class BIDSDataLoader():
                  voxel_mask_path=None,
                  reconstruct=False,
                  normalizer="none",
+                 use_absolute_value=False,
                  scale=(-1,1),
                  task_name=None, 
                  process_name="unnamed",

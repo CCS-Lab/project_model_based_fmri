@@ -36,6 +36,8 @@ def plot_pearsonr(y_train,
     
     r_test = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
     
+    r_train_mean = np.array(r_train).mean()
+    r_test_mean = np.array(r_test).mean()
     
     data = pd.DataFrame({'pearsonr': r_train+r_test,
                           'type':['train']*len(r_train)+['test']*len(r_test)})
@@ -44,12 +46,6 @@ def plot_pearsonr(y_train,
     
     sns.violinplot(x="type", y="pearsonr", data=data, order=['train', 'test'])
     sns.stripplot(x="type", y="pearsonr", data=data, order=['train', 'test'],color='black',alpha=0.5)
-    
-    
-    sns.stripplot(x="type", y="pearsonr", data=data, order=['train', 'test'],color='black',alpha=0.5)
-    
-    r_train_mean = np.array(r_train).mean()
-    r_test_mean = np.array(r_test).mean()
     
     plt.axhline(r_train_mean, ls='--',label="train_mean",color='k',alpha=.6)
     plt.axhline(r_test_mean, ls='-.',label="test_mean",color='k',alpha=.6)
