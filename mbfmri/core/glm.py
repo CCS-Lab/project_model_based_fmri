@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from mbfmri.utils import config
-from mbfmri.utils.glm_utils import first_level_from_bids
+from mbfmri.utils.glm_utils import first_level_from_bids, _fit_firstlevel_model
 from mbfmri.utils.bold_utils import _build_mask
 from mbfmri.preprocessing.events import LatentProcessGenerator
 from mbfmri.core.base import MBFMRI
@@ -206,17 +206,14 @@ class GLM():
                 models_events[i][j] = md
                 
                 
-        def fit_model(params):
-            
-            models, models_run_imgs, models_events, models_confounds = params
-            models.fit([nib.load(run_img) for run_img in models_run_imgs],
-                      events=models_events,
-                      confounds=models_confounds)
-        '''
+        
+        
         params_chunks = [[[models[i],
                           models_run_imgs[i],
                           models_events[i],
-                          models_confounds[i]] for i in range(j,min(len(models),j+self.n_core))]
+                          models_confounds[i],
+                          self.process_name,
+                          self.save_path_first] for i in range(j,min(len(models),j+self.n_core))]
                             for j in range(0, len(models), self.n_core)]
         future_result = {}
         
@@ -231,7 +228,7 @@ class GLM():
             # it might require basic knowledge in multiprocessing.
             with ProcessPoolExecutor(max_workers=self.n_core) as executor:
                 future_result = {executor.submit(
-                    fit_model, params): params for params in params_chunk
+                    _fit_firstlevel_model, params): params for params in params_chunk
                                 }            
             # check if any error occured.
             for result in future_result.keys():
@@ -243,18 +240,8 @@ class GLM():
         first_level_models = [models[i].fit([nib.load(run_img) for run_img in models_run_imgs[i]],
                                             events=models_events[i],
                                             confounds=models_confounds[i]) for i in tqdm(range(len(models)))]
+        '''
         
-        
-        first_level_models = models
-        
-        for first_level_model in first_level_models:
-            contrast_def = [np.zeros( len(dm.columns)) for dm in first_level_model.design_matrices_]
-            for i, dm in enumerate(first_level_model.design_matrices_):
-                contrast_def[i][dm.columns.get_loc(self.process_name)] = 1
-            z_map = first_level_model.compute_contrast(contrast_def=contrast_def,
-                                                       output_type='z_score')
-            subject_id = first_level_model.subject_label
-            nib.save(z_map, self.save_path_first / f'sub-{subject_id}.nii')
             
         
         self.firstlevel_done = True

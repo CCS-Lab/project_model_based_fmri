@@ -153,6 +153,7 @@ class BIDSDataLoader():
         # initiate normalizer function
         if isinstance(normalizer,str):
             self.normalizer = Normalizer(normalizer_name=normalizer,
+                                         use_absolute_value=use_absolute_value,
                                          scale=scale)
         else:
             self.normalizer = normalizer

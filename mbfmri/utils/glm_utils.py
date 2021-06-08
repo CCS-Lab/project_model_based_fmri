@@ -27,7 +27,25 @@ from nilearn.glm._base import BaseGLM
 
 from nilearn.glm.first_level import *
 
+import nibabel as nib
 
+def _fit_firstlevel_model(params):
+            
+            models, models_run_imgs, models_events, \
+                models_confounds, process_name, save_path_first = params
+            models.fit([nib.load(run_img) for run_img in models_run_imgs],
+                      events=models_events,
+                      confounds=models_confounds)
+            
+            contrast_def = [np.zeros( len(dm.columns)) for dm in models.design_matrices_]
+            for i, dm in enumerate(models.design_matrices_):
+                contrast_def[i][dm.columns.get_loc(process_name)] = 1
+                
+            z_map = models.compute_contrast(contrast_def=contrast_def,
+                                                       output_type='z_score')
+            subject_id = models.subject_label
+            nib.save(z_map, save_path_first / f'sub-{subject_id}.nii')
+            
 def first_level_from_bids(dataset_path, task_label, space_label=None,
                           img_filters=None, t_r=None, slice_time_ref=0.,
                           hrf_model='glover', drift_model='cosine',
