@@ -28,6 +28,7 @@ from nilearn.glm._base import BaseGLM
 from nilearn.glm.first_level import *
 
 import nibabel as nib
+from mbfmri.utils import config
 
 def _fit_firstlevel_model(params):
             
@@ -44,7 +45,8 @@ def _fit_firstlevel_model(params):
             z_map = models.compute_contrast(contrast_def=contrast_def,
                                                        output_type='z_score')
             subject_id = models.subject_label
-            nib.save(z_map, save_path_first / f'sub-{subject_id}.nii')
+            nib.save(z_map, save_path_first / f'sub-{subject_id}_map.nii')
+            #nib.save(models.r_square[0], save_path_first / f'sub-{subject_id}_rsquare.nii')
             
 def first_level_from_bids(dataset_path, task_label, space_label=None,
                           img_filters=None, t_r=None, slice_time_ref=0.,
@@ -211,7 +213,7 @@ def first_level_from_bids(dataset_path, task_label, space_label=None,
         else:
             filters = [('task', task_label),
                        ('space', space_label)] + img_filters
-        imgs = get_bids_files(derivatives_path, modality_folder='func',file_tag='bold', file_type='nii*',sub_label=sub_label, filters=filters)
+        imgs = get_bids_files(derivatives_path, modality_folder='func',file_tag='bold', file_type=config.NIIEXT,sub_label=sub_label, filters=filters)
         # If there is more than one file for the same (ses, run), likely we
         # have an issue of underspecification of filters.
         run_check_list = []

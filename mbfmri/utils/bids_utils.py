@@ -129,6 +129,7 @@ class BIDSController():
         self.confound_suffix = confound_suffix
         self.fmriprep_name = fmriprep_name
         self.task_name = task_name
+        self.nii_ext = config.NIIEXT
         if space_name is None:
             space_name = config.TEMPLATE_SPACE
         self.space_name = space_name
@@ -161,7 +162,7 @@ class BIDSController():
         return layout
     
     def _set_voxelmask_path(self,feature_name="unnamed"):
-        self.voxelmask_path = Path(self.mbmvpa_layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.nii.gz"
+        self.voxelmask_path = Path(self.mbmvpa_layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.{self.nii_ext}"
             
     def _set_metainfo(self):
         
@@ -398,7 +399,7 @@ class BIDSController():
                         run=run_id,
                         suffix=self.bold_suffix,
                         space=self.space_name,
-                        extension="nii.gz")
+                        extension=self.nii_ext)
         
     def get_event(self, sub_id=None, task_name=None, run_id=None, ses_id=None):
         return self.layout.get(
@@ -424,7 +425,7 @@ class BIDSController():
         return self.fmriprep_layout.get(suffix=self.bold_suffix,
                                         space=self.space_name,
                                         task=self.task_name,
-                                        extension="nii.gz")
+                                        extension=self.nii_ext)
     
     def get_confound_all(self):
         return self.fmriprep_layout.get(suffix=self.confound_suffix,

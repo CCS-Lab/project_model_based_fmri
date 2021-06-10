@@ -24,7 +24,7 @@ def reconstruct(array, mask):
     
     
 def get_map(coefs, voxel_mask, task_name,
-            map_type="z", save_path=None, sigma=1):
+            map_type="z", save_path=".", sigma=1):
     """
     make nii image file from coefficients of model using masking info.
     """
@@ -93,14 +93,10 @@ def get_map(coefs, voxel_mask, task_name,
     result_map = nib.Nifti1Image(m, affine=voxel_mask.affine)
     ###########################################################################
     # saving
-    if save_path is None:
-        sp = Path(".")
-    else:
-        sp = Path(save_path)
+    
+    save_path = Path(save_path)
+    save_path.mkdir(exist_ok=True)
+    file_path = save_path / f"{task_name}_{map_type}_map.nii"
+    result_map.to_filename(file_path)
 
-    if not sp.exists():
-        sp.mkdir()
-
-    result_map.to_filename(sp / f"{task_name}_{map_type}_map.nii")
-
-    return result_map
+    return result_map, file_path

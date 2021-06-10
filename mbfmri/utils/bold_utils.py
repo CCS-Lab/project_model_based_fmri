@@ -44,7 +44,7 @@ def _build_mask(mask_path, threshold, zoom, verbose=0):
     else:
         if type(mask_path) is not type(Path()):
             mask_path = Path(mask_path)
-        mask_files = [file for file in mask_path.glob("*.nii.gz")]
+        mask_files = [file for file in mask_path.glob("*.nii*")]
 
     mni_mask = load_mni152_brain_mask()
     

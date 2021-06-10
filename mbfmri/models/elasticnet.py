@@ -216,7 +216,7 @@ class MVPA_ElasticNet(MVPA_Base):
                                 np.log(max_lambda * min_lambda_ratio),
                                 lambda_search_num))
         
-        self.name = f'ElasticNet(alpha:{self.alpha})'
+        self.name = f'ElasticNet_alpha-{self.alpha}'
         
     def reset(self,**kwargs):
         self.model = ElasticNet(alpha=self.alpha,

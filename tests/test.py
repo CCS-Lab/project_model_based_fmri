@@ -26,7 +26,7 @@ def test_adjust(row):
     row["gamble"] = 1 if row["respcat"] == 1 else 0
     row["cert"] = 0
     return row
-"""
+
 ## TEST MVPA BASIC
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
@@ -146,7 +146,7 @@ _ = run_mbfmri(analysis='mbmvpah',
                gpu_visible_devices = [2],
                n_batch=4,
                pval_threshold=5)
-"""
+
 ## TEST GLM
 _ = run_mbfmri(analysis='glm',
               report_path=report_path,

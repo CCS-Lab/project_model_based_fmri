@@ -143,10 +143,10 @@ class BIDSDataLoader():
         self.feature_name=feature_name
         self.reconstruct = reconstruct
         self.verbose = verbose
-        
+        self.nii_ext = config.NIIEXT
         # set & load voxel mask file
         if voxel_mask_path is None:
-            voxel_mask_path = Path(self.layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.nii.gz"
+            voxel_mask_path = Path(self.layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.{self.nii_ext}"
         
         self.voxel_mask = nib.load(voxel_mask_path)
         

@@ -14,6 +14,7 @@ DEFAULT_TIMEMASK_SUFFIX = "timemask"
 DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME = "individual_params.tsv"
 IGNORE_INDIV_PARAM = 'ignored'
 DEFAULT_MODELCOMPARISON_FILENAME = 'model_comparison.tsv'
+NIIEXT = 'nii.gz'
 # default configuration for running MBMVPA
 DEFAULT_ANALYSIS_CONFIGS = {
     'VOXELFEATURE': {

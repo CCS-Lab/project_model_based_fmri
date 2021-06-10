@@ -1,5 +1,6 @@
 from mbfmri.utils.coef2map import get_map
-from mbfmri.utils.plot import plot_pearsonr
+from mbfmri.utils.plot import plot_pearsonr, plot_mosaic, plot_surface_interactive,\
+                                plot_slice_interactive
 from scipy.stats import pearsonr
 import numpy as np
 from pathlib import Path
@@ -32,8 +33,14 @@ class Report_BrainMap():
         else:
             coefs = weights.reshape(-1, weights.shape[-1])
             
-        get_map(coefs, self.voxel_mask, self.experiment_name,
+        nii, img = get_map(coefs, self.voxel_mask, self.experiment_name,
                 map_type=self.map_type, save_path=save_path, sigma=self.sigma)
+        
+        img = str(img)
+        plot_mosaic(img,save,save_path)
+        plot_surface_interactive(img,save,save_path)
+        plot_slice_interactive(img,save,save_path)
+        
 
 class Report_ElasticNet():
     

@@ -38,7 +38,7 @@ report_function_dict = {'brainmap':{'module':Report_BrainMap,
                                       'default':{'confidence_interval':.99,
                                                 'n_coef_plot':150
                                                 },
-                                     }
+                                     },
                         }
 
 def aggregate(search_path,

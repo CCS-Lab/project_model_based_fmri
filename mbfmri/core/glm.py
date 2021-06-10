@@ -171,7 +171,9 @@ class GLM():
                                                                     high_pass=self.high_pass,
                                                                     smoothing_fwhm=self.smoothing_fwhm,
                                                                     mask_img = self.mask,
-                                                                    derivatives_folder=self.fmriprep_layout.root)
+                                                                    derivatives_folder=self.fmriprep_layout.root,
+                                                                    #minimize_memory=False,
+                                                                    )
         
         for i in range(len(models_confounds)):
             for j in range(len(models_confounds[i])):
@@ -205,9 +207,6 @@ class GLM():
                 md['trial_type'] = [self.process_name]*len(md)
                 models_events[i][j] = md
                 
-                
-        
-        
         params_chunks = [[[models[i],
                           models_run_imgs[i],
                           models_events[i],
@@ -236,14 +235,6 @@ class GLM():
                     raise result.exception()
                     
             
-        '''                 
-        first_level_models = [models[i].fit([nib.load(run_img) for run_img in models_run_imgs[i]],
-                                            events=models_events[i],
-                                            confounds=models_confounds[i]) for i in tqdm(range(len(models)))]
-        '''
-        
-            
-        
         self.firstlevel_done = True
         print(f'INFO: first-level analysis is done.')
         
@@ -252,7 +243,7 @@ class GLM():
         if not self.firstlevel_done:
             self.run_firstlevel()
         
-        second_level_input = [nib.load(nii_file) for nii_file in self.save_path_first.glob('*.nii')]
+        second_level_input = [nib.load(nii_file) for nii_file in self.save_path_first.glob('*map.nii')]
         
         if len(second_level_input) <= 1:
             print("INFO: only one or zero first-level map is found.")
