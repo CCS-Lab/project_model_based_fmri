@@ -164,7 +164,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         },
         'REPORT':{
                 'elasticnet':{
-                    'reports':['brainmap','pearsonr','elasticnet'],
+                    'reports':['brainmap','pearsonr','elasticnet','mse','permutationtest'],
                     'confidence_interval': 0.99,
                     'n_coef_plot': 150,
                     'map_type': 'z',
@@ -172,19 +172,19 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'pval_threshold': 0.05
                 },
                 'mlp':{
-                    'reports':['brainmap','pearsonr'],
+                    'reports':['brainmap','pearsonr','mse','permutationtest'],
                     'map_type': 'z',
                     'sigma': 1,
                     'pval_threshold': 0.05
                 },
                 'cnn':{
-                    'reports':['brainmap','pearsonr'],
+                    'reports':['brainmap','pearsonr','mse','permutationtest'],
                     'map_type': 'z',
                     'sigma': 1,
                     'pval_threshold': 0.05
                 },
                 'mlp_shap':{
-                    'reports':['brainmap','pearsonr'],
+                    'reports':['brainmap','pearsonr','mse','permutationtest'],
                     'map_type': 'z',
                     'sigma': 1,
                     'pval_threshold': 0.05

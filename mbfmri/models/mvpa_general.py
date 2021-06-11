@@ -332,7 +332,32 @@ class MVPA_CV():
         # if save function is implemented in the model, save.
         if 'save' in dir(self.model):
             self.model.save(self.cv_save_path)
+    
         return output
+    
+    def _run_single_permuted(self,
+                        X_train,
+                        y_train,
+                        X_test,
+                        y_test,
+                        data_dict={},
+                        **kwargs):
+        
+        permuted_y_train = y_train.copy()
+        permuted_y_test = y_test.copy()
+        np.random.shuffle(permuted_y_train)
+        np.random.shuffle(permuted_y_test)
+        output = self._run_singletime(X_train,
+                                    permuted_y_train,
+                                    X_test,
+                                    permuted_y_test,
+                                    **kwargs)
+        
+        for k, v in output.items():
+            data_dict['permuted_'+k] = v
+        
+        return data_dict
+        
     
     def run(self,**kwargs):
         
@@ -362,7 +387,9 @@ class MVPA_CV():
                     kwargs['fold']=i
                     kwargs['repeat']=j
                     outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
-                
+                    outputs[f'{j}-{i}'] = self._run_single_permuted(X_train, y_train,X_test,
+                                                                    y_test,data_dict=outputs[f'{j}-{i}'],
+                                                                    **kwargs)
         elif 'fold' in self.method: # n-fold cross-validation
             
             n_fold = int(self.method.split('-')[0])
@@ -384,6 +411,9 @@ class MVPA_CV():
                     kwargs['fold']=i
                     kwargs['repeat']=j
                     outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
+                    outputs[f'{j}-{i}'] = self._run_single_permuted(X_train,y_train,X_test,
+                                                                    y_test,data_dict=outputs[f'{j}-{i}'],
+                                                                    **kwargs)
         
         # statistics of outputs
         for _,output in outputs.items():

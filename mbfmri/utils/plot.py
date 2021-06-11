@@ -1,4 +1,5 @@
 from scipy.stats import pearsonr
+from sklearn.metrics import mean_squared_error 
 from statsmodels.stats.multitest import fdrcorrection
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -6,6 +7,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from nilearn import plotting
+from statannot import add_stat_annotation
 from mbfmri.utils.config import DEFAULT_MODULATION_SUFFIX, DEFAULT_FEATURE_SUFFIX, \
                     DEFAULT_TIMEMASK_SUFFIX, DEFAULT_SIGNAL_SUFFIX 
 
@@ -90,6 +92,140 @@ def plot_pearsonr(y_train,
         plt.savefig(Path(save_path)/f'plot_pearsonr.png',bbox_inches='tight')
     plt.show()
     
+
+def plot_mse(y_train,
+              y_test,
+              pred_train,
+              pred_test,
+              save,
+              save_path):
+    
+    mses_train = []
+
+    for p,y in zip(pred_train,y_train):
+        mse = mean_squared_error(p.ravel(),y.ravel())
+        mses_train.append(mse)
+        
+    mses_test = []
+    for p,y in zip(pred_test,y_test):
+        mse = mean_squared_error(p.ravel(),y.ravel())
+        mses_test.append(mse)
+    
+    mses_train_mean = np.array(mses_train).mean()
+    mses_test_mean = np.array(mses_test).mean()
+    
+    data = pd.DataFrame({'mse': mses_train+mses_test,
+                          'type':['train']*len(mses_train)+['test']*len(mses_test)})
+    plt.figure(figsize=(8, 8))
+    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
+    
+    sns.violinplot(x="type", y="mse", data=data, order=['train', 'test'])
+    sns.stripplot(x="type", y="mse", data=data, order=['train', 'test'],color='black',alpha=0.5)
+    
+    plt.axhline(mses_train_mean, ls='--',label="train_mean",color='k',alpha=.6)
+    plt.axhline(mses_test_mean, ls='-.',label="test_mean",color='k',alpha=.6)
+    plt.legend()
+    plt.title(f'Mean Squeared Error (MSE)')
+    if save:
+        plt.savefig(Path(save_path)/f'plot_mse.png',bbox_inches='tight')
+    plt.show()
+    
+def plot_pearsonr_permuteation_test(y_test,
+                              permuted_y_test,
+                              pred_test,
+                              permuted_pred_test,
+                              save,
+                              save_path,
+                              pval_threshold=0.05):
+    
+    
+    rs = []
+    pvals = []
+
+    for p,y in zip(pred_test,y_test):
+        r,pv = pearsonr(p.ravel(),y.ravel())
+        rs.append(r)
+        pvals.append(pv)
+    
+    r_test = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
+            
+    rs = []
+    pvals = []
+    for p,y in zip(permuted_pred_test,permuted_y_test):
+        r,pv = pearsonr(p.ravel(),y.ravel())
+        rs.append(r)
+        pvals.append(pv)
+    
+    r_test_permuted = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
+    
+    r_test_mean = np.array(r_test).mean()
+    r_test_permuted_mean = np.array(r_test_permuted).mean()
+    
+    data = pd.DataFrame({'pearsonr': r_test+r_test_permuted,
+                          'type':['test']*len(r_test)+['test_permuted']*len(r_test_permuted)})
+    plt.figure(figsize=(8, 8))
+    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
+    
+    ax = sns.violinplot(x="type", y="pearsonr", data=data, order=['test', 'test_permuted'])
+    sns.stripplot(x="type", y="pearsonr", data=data, order=['test', 'test_permuted'],color='black',alpha=0.5)
+    
+    add_stat_annotation(ax, data=data, x="type", y="pearsonr", order=['test', 'test_permuted'],
+                    box_pairs=[('test', 'test_permuted')],
+                    test='Mann-Whitney', text_format='star', loc='inside', verbose=0)
+    
+    plt.axhline(r_test_mean, ls='--',label="test_mean",color='k',alpha=.6)
+    plt.axhline(r_test_permuted_mean, ls='-.',label="test_permuted_mean",color='k',alpha=.6)
+    plt.legend()
+    plt.title(f'Pearson R. FDR corrected. p<{pval_threshold}')
+    if save:
+        plt.savefig(Path(save_path)/f'plot_pearsonr_permutation_test.png',bbox_inches='tight')
+    plt.show()
+    
+    
+    
+def plot_mse_permuteation_test(y_test,
+                              permuted_y_test,
+                              pred_test,
+                              permuted_pred_test,
+                              save,
+                              save_path,
+                              pval_threshold=0.05):
+    
+    
+    mses_test = []
+
+    for p,y in zip(pred_test,y_test):
+        mse = mean_squared_error(p.ravel(),y.ravel())
+        mses_test.append(mse)
+        
+    mses_test_permuted = []
+    for p,y in zip(permuted_pred_test,permuted_y_test):
+        mse = mean_squared_error(p.ravel(),y.ravel())
+        mses_test_permuted.append(mse)
+    
+    mses_test_mean = np.array(mses_test).mean()
+    mses_test_permuted_mean = np.array(mses_test).mean()
+    data = pd.DataFrame({'mse': mses_test+mses_test_permuted,
+                          'type':['test']*len(mses_test)+['test_permuted']*len(mses_test_permuted)})
+    plt.figure(figsize=(8, 8))
+    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
+    
+    ax = sns.violinplot(x="type", y="mse", data=data, order=['test', 'test_permuted'])
+    sns.stripplot(x="type", y="mse", data=data, order=['test', 'test_permuted'],color='black',alpha=0.5)
+    
+    
+    add_stat_annotation(ax, data=data, x="type", y="mse", order=['test', 'test_permuted'],
+                    box_pairs=[('test', 'test_permuted')],
+                    test='Mann-Whitney', text_format='star', loc='inside', verbose=0)
+
+
+    plt.axhline(mses_test_mean, ls='--',label="test_mean",color='k',alpha=.6)
+    plt.axhline(mses_test_permuted_mean, ls='-.',label="test_permuted_mean",color='k',alpha=.6)
+    plt.legend()
+    plt.title(f'Mean Squeared Error (MSE)')
+    if save:
+        plt.savefig(Path(save_path)/f'plot_mse_permutation_test.png',bbox_inches='tight')
+    plt.show()
     
 def plot_data(mbmvpa_layout, 
               subject,

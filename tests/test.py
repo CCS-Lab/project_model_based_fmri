@@ -28,6 +28,7 @@ def test_adjust(row):
     return row
 
 ## TEST MVPA BASIC
+'''
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
                mvpa_model='elasticnet',
@@ -48,6 +49,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                n_batch=4,
                pval_threshold=5,
               refit_compmodel=True)
+'''
 
 ## TEST MODELCOMPARISON
 _ = run_mbfmri(bids_layout=bids_layout,
@@ -68,7 +70,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                gpu_visible_devices = [2],
                n_batch=4,
                pval_threshold=5)
-
+'''
 ## TEST PRECALCULATED PROCESS
 _ = run_mbfmri(bids_layout=bids_layout,
                mvpa_model='elasticnet',
@@ -158,5 +160,5 @@ _ = run_mbfmri(analysis='glm',
               overwrite=False,
               overwrite_latent_process=True,
               refit_compmodel=False)
-
+'''
 print("TEST PASS!")

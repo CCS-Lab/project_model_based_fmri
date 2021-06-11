@@ -1,12 +1,63 @@
 from mbfmri.utils.coef2map import get_map
 from mbfmri.utils.plot import plot_pearsonr, plot_mosaic, plot_surface_interactive,\
-                                plot_slice_interactive
+                                plot_slice_interactive, plot_mse, \
+                                plot_mse_permuteation_test, \
+                                plot_pearsonr_permuteation_test
 from scipy.stats import pearsonr
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import re
+
+class Report_PermutationTest():
+    def __init__(self, pval_threshold=0.01):
+        self.pval_threshold = pval_threshold
+        
+
+    def __call__(self,
+                 save,
+                 save_path,
+                 y_test,
+                 permuted_y_test,
+                 pred_test,
+                 permuted_pred_test):
+        
+        plot_mse_permuteation_test(y_test=y_test,
+                              permuted_y_test=permuted_y_test,
+                              pred_test=pred_test,
+                              permuted_pred_test=permuted_pred_test,
+                              save=save,
+                              save_path=save_path)
+        
+        plot_pearsonr_permuteation_test(y_test=y_test,
+                                          permuted_y_test=permuted_y_test,
+                                          pred_test=pred_test,
+                                          permuted_pred_test=permuted_pred_test,
+                                          save=save,
+                                          save_path=save_path,
+                                        pval_threshold = self.pval_threshold)
+
+        
+class Report_MSE():
+    
+    def __init__(self):
+        return
+    
+    def __call__(self,
+                 save,
+                 save_path,
+                 y_train,
+                 y_test,
+                 pred_train,
+                 pred_test):
+        
+        plot_mse(save=save,
+                 save_path=save_path,
+                y_train=y_train,
+                y_test=y_test,
+                pred_train=pred_train,
+                pred_test=pred_test)
 
 
 class Report_BrainMap():
