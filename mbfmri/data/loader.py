@@ -50,6 +50,44 @@ class Normalizer():
             normalized = normalized.reshape(original_shape)
         return normalized
 
+class Binarizer():
+    
+    def __init__(self,
+                thresholds=None,
+                ratios=.2):
+        
+        if ratios is not None:
+            if isinstance(ratios,float):
+                self.upper_ratio,self.lower_ratio = ratios,ratios
+            else:
+                assert len(ratios) == 2
+                self.upper_ratio,self.lower_ratio = ratios
+            self.use_ratio = True
+        else:
+            assert thresholds is not None
+            if isinstance(thresholds,float):
+                self.upper_thr = thresholds
+                self.lower_thr = thresholds
+            else:
+                self.upper_thr = thresholds[0]
+                self.lower_thr = thresholds[1]
+            self.use_ratio = False
+            
+    def __call__(self,x):
+        if self.use_ratio:
+            d = x.copy().flatten()
+            d.sort()
+            self.lower_thr = d[int(len(d)*self.lower_ratio)]
+            self.upper_thr = d[-int(len(d)*self.upper_ratio)]
+        is_positive = (x >= self.upper_thr)
+        is_negative = (x < self.lower_thr)
+        is_invalid = ~(is_positive|is_negative)
+        x[is_positive]=1
+        x[is_negative]=0
+        x[is_invalid]=-1
+        return x
+            
+    
 class BIDSDataLoader():
     
     r"""
@@ -113,7 +151,10 @@ class BIDSDataLoader():
                  task_name=None, 
                  process_name="unnamed",
                  feature_name="unnamed",
-                 verbose=1
+                 verbose=1,
+                 logistic=False,
+                 binarizer_thresholds=None,
+                 binarizer_ratios=.2,
                 ):
          
         # set MB-MVPA layout from "layout" argument.
@@ -157,6 +198,14 @@ class BIDSDataLoader():
                                          scale=scale)
         else:
             self.normalizer = normalizer
+        
+        # set binarizer
+        self.logistic = logistic
+        if self.logistic:
+            self.binarizer = Binarizer(thresholds=binarizer_thresholds,
+                                      ratios=binarizer_ratios)
+        else:
+            self.binarizer = None
         
         # common arguments for retrieving data from BIDS layout
         self.X_kwargs = {'suffix':config.DEFAULT_FEATURE_SUFFIX,
@@ -292,7 +341,13 @@ class BIDSDataLoader():
                 
             # maksed y data are concatenated & normalized 
             self.y[subject] = self.normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
-
+            
+            if self.logistic:
+                binarized = self.binarizer(self.y[subject])
+                bm = (binarized != -1)
+                self.X[subject] =self.X[subject][bm.reshape(*self.X[subject].shape[:-1])]
+                self.y[subject] = self.y[subject][bm]
+                
             self.timemask[subject] = masks
         
         self.subjects = valid_subjects

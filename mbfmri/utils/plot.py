@@ -1,5 +1,5 @@
-from scipy.stats import pearsonr
-from sklearn.metrics import mean_squared_error 
+from scipy.stats import spearmanr, pearsonr, linregress
+from sklearn.metrics import mean_squared_error, accuracy_score, roc_curve, auc
 from statsmodels.stats.multitest import fdrcorrection
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -45,6 +45,89 @@ def plot_slice_interactive(img,
         view = plotting.view_img(img) 
         view.save_as_html(Path(save_path) / f"slice_plot_{Path(img).name}.html")
 
+
+    
+def plot_violinwithscatter(dataframe,
+                           score_name,
+                           order,
+                           title,
+                           save,
+                           save_path):
+    
+    plt.figure(figsize=(8, 8))
+    
+    sns.violinplot(x="type", y=score_name, data=dataframe, order=order)
+    sns.stripplot(x="type", y=score_name, data=dataframe, order=order,color='black',alpha=0.5)
+    
+    lss = [ 'dashed', 'dashdot', 'dotted']
+    
+    for type_name,ls in zip(order,lss):
+        mean = dataframe[dataframe['type']==type_name][score_name].array.mean()
+        plt.axhline(mean, ls=ls,label=type_name+"_mean",color='k',alpha=.6)
+        
+    plt.legend()
+    plt.title(title)
+    if save:
+        plt.savefig(Path(save_path)/f'plot_{score_name}.png',bbox_inches='tight')
+    plt.show()
+
+def get_scores_dataframe(y_train,
+                           y_test,
+                           pred_train,
+                           pred_test,
+                           scorer,
+                           score_name):
+    scores_train = []
+
+    for p,y in zip(pred_train,y_train):
+        score = scorer(p.ravel(),y.ravel())
+        scores_train.append(score)
+        
+    scores_test = []
+    for p,y in zip(pred_test,y_test):
+        score = scorer(p.ravel(),y.ravel())
+        scores_test.append(score)
+        
+    data = pd.DataFrame({score_name: scores_train+scores_test,
+                          'type':['train']*len(scores_train)+['test']*len(scores_test)})
+    
+    return data
+
+
+def plot_r(y_train,
+                  y_test,
+                  pred_train,
+                  pred_test,
+                  save,
+                  save_path,
+                  pval_threshold=0.05):
+    
+    
+    def get_corrected_r(arrs1,arrs2):
+        rs = []
+        pvals = []
+        for a1,a2 in zip(arrs1,arrs2):
+            _,_, r, pv,_ = linregress(a1.ravel(),a2.ravel())
+            rs.append(r)
+            pvals.append(pv)
+        corrected = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
+        return corrected 
+    
+    r_train = get_corrected_r(y_train,pred_train)
+    r_test = get_corrected_r(y_test,pred_test)
+    
+    data = pd.DataFrame({'r': r_train+r_test,
+                          'type':['train']*len(r_train)+['test']*len(r_test)})
+    
+    title = f'R. FDR corrected. p<{pval_threshold}'
+    
+    plot_violinwithscatter(data,
+                           'r',
+                           ['train','test'],
+                           title,
+                           save,
+                           save_path)
+    
 def plot_pearsonr(y_train,
                   y_test,
                   pred_train,
@@ -54,44 +137,63 @@ def plot_pearsonr(y_train,
                   pval_threshold=0.05):
     
     
-    rs = []
-    pvals = []
-
-    for p,y in zip(pred_train,y_train):
-        r,pv = pearsonr(p.ravel(),y.ravel())
-        rs.append(r)
-        pvals.append(pv)
-    
-    r_train = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
-            
-    rs = []
-    pvals = []
-    for p,y in zip(pred_test,y_test):
-        r,pv = pearsonr(p.ravel(),y.ravel())
-        rs.append(r)
-        pvals.append(pv)
-    
-    r_test = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
-    
-    r_train_mean = np.array(r_train).mean()
-    r_test_mean = np.array(r_test).mean()
+    def get_corrected_pearsonr(arrs1,arrs2):
+        rs = []
+        pvals = []
+        for a1,a2 in zip(arrs1,arrs2):
+            r,pv = pearsonr(a1.ravel(),a2.ravel())
+            rs.append(r)
+            pvals.append(pv)
+        corrected = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
+        return corrected
+        
+    r_train = get_corrected_pearsonr(y_train,pred_train)
+    r_test = get_corrected_pearsonr(y_test,pred_test)
     
     data = pd.DataFrame({'pearsonr': r_train+r_test,
                           'type':['train']*len(r_train)+['test']*len(r_test)})
-    plt.figure(figsize=(8, 8))
-    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
     
-    sns.violinplot(x="type", y="pearsonr", data=data, order=['train', 'test'])
-    sns.stripplot(x="type", y="pearsonr", data=data, order=['train', 'test'],color='black',alpha=0.5)
+    title = f'Pearson R. FDR corrected. p<{pval_threshold}'
     
-    plt.axhline(r_train_mean, ls='--',label="train_mean",color='k',alpha=.6)
-    plt.axhline(r_test_mean, ls='-.',label="test_mean",color='k',alpha=.6)
-    plt.legend()
-    plt.title(f'Pearson R. FDR corrected. p<{pval_threshold}')
-    if save:
-        plt.savefig(Path(save_path)/f'plot_pearsonr.png',bbox_inches='tight')
-    plt.show()
+    plot_violinwithscatter(data,
+                           'pearsonr',
+                           ['train','test'],
+                           title,
+                           save,
+                           save_path)
+def plot_spearmanr(y_train,
+                  y_test,
+                  pred_train,
+                  pred_test,
+                  save,
+                  save_path,
+                  pval_threshold=0.05):
     
+    
+    def get_corrected_spearmanr(arrs1,arrs2):
+        rs = []
+        pvals = []
+        for a1,a2 in zip(arrs1,arrs2):
+            r,pv = spearmanr(a1.ravel(),a2.ravel())
+            rs.append(r)
+            pvals.append(pv)
+        corrected = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
+        return corrected 
+    
+    r_train = get_corrected_spearmanr(y_train,pred_train)
+    r_test = get_corrected_spearmanr(y_test,pred_test)
+    
+    data = pd.DataFrame({'spearmanr': r_train+r_test,
+                          'type':['train']*len(r_train)+['test']*len(r_test)})
+    
+    title = f'Spearman R. FDR corrected. p<{pval_threshold}'
+    
+    plot_violinwithscatter(data,
+                           'spearmanr',
+                           ['train','test'],
+                           title,
+                           save,
+                           save_path)
 
 def plot_mse(y_train,
               y_test,
@@ -100,133 +202,72 @@ def plot_mse(y_train,
               save,
               save_path):
     
-    mses_train = []
+    data = get_scores_dataframe(y_train,
+                           y_test,
+                           pred_train,
+                           pred_test,
+                           mean_squared_error,
+                           'mse')
+    
+    title = f'Mean Squeared Error (MSE)'
+    plot_violinwithscatter(data,
+                           'mse',
+                           ['train','test'],
+                           title,
+                           save,
+                           save_path)
+    
+def plot_accuracy(y_train,
+              y_test,
+              pred_train,
+              pred_test,
+              save,
+              save_path):
+    
+    pred_train = (pred_train > .5) *1
+    pred_test = (pred_test > .5) *1
+    
+    data = get_scores_dataframe(y_train,
+                           y_test,
+                           pred_train,
+                           pred_test,
+                           accuracy_score,
+                           'accuracy')
+    title = 'Accuracy'
+    plot_violinwithscatter(data,
+                           'accuracy',
+                           ['train','test'],
+                           title,
+                           save,
+                           save_path)
 
-    for p,y in zip(pred_train,y_train):
-        mse = mean_squared_error(p.ravel(),y.ravel())
-        mses_train.append(mse)
-        
-    mses_test = []
-    for p,y in zip(pred_test,y_test):
-        mse = mean_squared_error(p.ravel(),y.ravel())
-        mses_test.append(mse)
+def plot_roc(y_train,
+              y_test,
+              pred_train,
+              pred_test,
+              save,
+              save_path):
     
-    mses_train_mean = np.array(mses_train).mean()
-    mses_test_mean = np.array(mses_test).mean()
+    # copied from 
+    # https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
     
-    data = pd.DataFrame({'mse': mses_train+mses_test,
-                          'type':['train']*len(mses_train)+['test']*len(mses_test)})
+    fpr, tpr, _ = roc_curve(y_test.ravel(), pred_test.ravel())
+    roc_auc = auc(fpr,tpr)
     plt.figure(figsize=(8, 8))
-    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
-    
-    sns.violinplot(x="type", y="mse", data=data, order=['train', 'test'])
-    sns.stripplot(x="type", y="mse", data=data, order=['train', 'test'],color='black',alpha=0.5)
-    
-    plt.axhline(mses_train_mean, ls='--',label="train_mean",color='k',alpha=.6)
-    plt.axhline(mses_test_mean, ls='-.',label="test_mean",color='k',alpha=.6)
-    plt.legend()
-    plt.title(f'Mean Squeared Error (MSE)')
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic (ROC) Curve')
+    plt.legend(loc="lower right")
     if save:
-        plt.savefig(Path(save_path)/f'plot_mse.png',bbox_inches='tight')
+        plt.savefig(Path(save_path)/f'plot_roccurve.png',bbox_inches='tight')
     plt.show()
-    
-def plot_pearsonr_permuteation_test(y_test,
-                              permuted_y_test,
-                              pred_test,
-                              permuted_pred_test,
-                              save,
-                              save_path,
-                              pval_threshold=0.05):
-    
-    
-    rs = []
-    pvals = []
 
-    for p,y in zip(pred_test,y_test):
-        r,pv = pearsonr(p.ravel(),y.ravel())
-        rs.append(r)
-        pvals.append(pv)
-    
-    r_test = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
-            
-    rs = []
-    pvals = []
-    for p,y in zip(permuted_pred_test,permuted_y_test):
-        r,pv = pearsonr(p.ravel(),y.ravel())
-        rs.append(r)
-        pvals.append(pv)
-    
-    r_test_permuted = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
-    
-    r_test_mean = np.array(r_test).mean()
-    r_test_permuted_mean = np.array(r_test_permuted).mean()
-    
-    data = pd.DataFrame({'pearsonr': r_test+r_test_permuted,
-                          'type':['test']*len(r_test)+['test_permuted']*len(r_test_permuted)})
-    plt.figure(figsize=(8, 8))
-    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
-    
-    ax = sns.violinplot(x="type", y="pearsonr", data=data, order=['test', 'test_permuted'])
-    sns.stripplot(x="type", y="pearsonr", data=data, order=['test', 'test_permuted'],color='black',alpha=0.5)
-    
-    add_stat_annotation(ax, data=data, x="type", y="pearsonr", order=['test', 'test_permuted'],
-                    box_pairs=[('test', 'test_permuted')],
-                    test='Mann-Whitney', text_format='star', loc='inside', verbose=0)
-    
-    plt.axhline(r_test_mean, ls='--',label="test_mean",color='k',alpha=.6)
-    plt.axhline(r_test_permuted_mean, ls='-.',label="test_permuted_mean",color='k',alpha=.6)
-    plt.legend()
-    plt.title(f'Pearson R. FDR corrected. p<{pval_threshold}')
-    if save:
-        plt.savefig(Path(save_path)/f'plot_pearsonr_permutation_test.png',bbox_inches='tight')
-    plt.show()
-    
-    
-    
-def plot_mse_permuteation_test(y_test,
-                              permuted_y_test,
-                              pred_test,
-                              permuted_pred_test,
-                              save,
-                              save_path,
-                              pval_threshold=0.05):
-    
-    
-    mses_test = []
-
-    for p,y in zip(pred_test,y_test):
-        mse = mean_squared_error(p.ravel(),y.ravel())
-        mses_test.append(mse)
-        
-    mses_test_permuted = []
-    for p,y in zip(permuted_pred_test,permuted_y_test):
-        mse = mean_squared_error(p.ravel(),y.ravel())
-        mses_test_permuted.append(mse)
-    
-    mses_test_mean = np.array(mses_test).mean()
-    mses_test_permuted_mean = np.array(mses_test).mean()
-    data = pd.DataFrame({'mse': mses_test+mses_test_permuted,
-                          'type':['test']*len(mses_test)+['test_permuted']*len(mses_test_permuted)})
-    plt.figure(figsize=(8, 8))
-    #plt.boxplot([r_train, r_test], labels=['train','test'], widths=0.6)
-    
-    ax = sns.violinplot(x="type", y="mse", data=data, order=['test', 'test_permuted'])
-    sns.stripplot(x="type", y="mse", data=data, order=['test', 'test_permuted'],color='black',alpha=0.5)
-    
-    
-    add_stat_annotation(ax, data=data, x="type", y="mse", order=['test', 'test_permuted'],
-                    box_pairs=[('test', 'test_permuted')],
-                    test='Mann-Whitney', text_format='star', loc='inside', verbose=0)
-
-
-    plt.axhline(mses_test_mean, ls='--',label="test_mean",color='k',alpha=.6)
-    plt.axhline(mses_test_permuted_mean, ls='-.',label="test_permuted_mean",color='k',alpha=.6)
-    plt.legend()
-    plt.title(f'Mean Squeared Error (MSE)')
-    if save:
-        plt.savefig(Path(save_path)/f'plot_mse_permutation_test.png',bbox_inches='tight')
-    plt.show()
-    
 def plot_data(mbmvpa_layout, 
               subject,
               run,

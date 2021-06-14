@@ -8,7 +8,7 @@ from mbfmri.preprocessing.events import LatentProcessGenerator
 from mbfmri.preprocessing.bold import VoxelFeatureGenerator
 from mbfmri.data.loader import BIDSDataLoader
 from mbfmri.models.mvpa_general import MVPA_CV, MVPA_CV_H
-from mbfmri.utils.report import Reporter
+from mbfmri.utils.report import PostReporter,FitReporter
 from mbfmri.core.base import MBFMRI
 import mbfmri.utils.config
 import yaml, importlib, copy
@@ -16,7 +16,6 @@ import yaml, importlib, copy
 # dictionary for module path and class name for implemented model.
 MVPA_MODEL_DICT = {'elasticnet':['mbfmri.models.elasticnet','MVPA_ElasticNet'],
                    'mlp':['mbfmri.models.tf_mlp','MVPA_MLP'],
-                   'mlp_shap':['mbfmri.models.tf_mlp_shap','MVPA_MLP_SHAP'],
                    'cnn':['mbfmri.models.tf_cnn','MVPA_CNN']}
 
 NEED_RECONSTRUCT_MODEL = ['cnn']
@@ -118,12 +117,14 @@ class MBMVPA(MBFMRI):
                  config=None,
                  mvpa_model='elasticnet',
                  report_path='.',
+                 logistic=False,
                  level=None,
                  **kwargs):
         
         # load & set configuration
         self.config = self._load_default_config()
         self._override_config(config)
+        kwargs['logistic']=logistic
         self._add_kwargs_to_config(kwargs)
         self.config['MVPA']['CV']['cv_save_path']=report_path
         
@@ -143,7 +144,7 @@ class MBMVPA(MBFMRI):
                                 self.config['LOADER']['task_name'],
                                 self.config['LOADER']['process_name'],
                                 self.config['LOADER']['feature_name']])
-        self.config['MVPA']['REPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+        self.config['MVPA']['POSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
         self.config['MVPA']['CV']['experiment_name'] = result_name
         
         # initiating internal modules for preprocessing input data
@@ -171,6 +172,7 @@ class MBMVPA(MBFMRI):
             self.model_cv_builder = MVPA_CV_H
         
         self.config['APPENDIX'] = {}
+        self.logistic=logistic
     
     def run(self,
             overwrite=False,
@@ -212,14 +214,21 @@ class MBMVPA(MBFMRI):
         self.config['MVPA']['MODEL'][self.mvpa_model_name]['input_shape'] = input_shape
         self.config['MVPA']['MODEL'][self.mvpa_model_name]['voxel_mask'] = voxel_mask
         self.model = self._mvpa_model_class(**self.config['MVPA']['MODEL'][self.mvpa_model_name])
-        self.reporter = Reporter(voxel_mask=voxel_mask,
-                                 **self.config['MVPA']['REPORT'][self.mvpa_model_name])
+        if self.logistic:
+            self.fit_reporter = FitReporter(**self.config['MVPA']['LOGISTICFITREPORT'])
+            self.post_reporter = PostReporter(voxel_mask=voxel_mask,
+                                 **self.config['MVPA']['LOGISTICPOSTREPORT'][self.mvpa_model_name])
+        else:
+            self.fit_reporter = FitReporter(**self.config['MVPA']['FITREPORT'])
+            self.post_reporter = PostReporter(voxel_mask=voxel_mask,
+                                 **self.config['MVPA']['POSTREPORT'][self.mvpa_model_name])
         
         # set cross-validation module of MVPA (model_cv)
         self.model_cv = self.model_cv_builder(X_dict,
                                                 y_dict,
                                                 self.model,
-                                                reporter=self.reporter,
+                                                post_reporter=self.post_reporter,
+                                                fit_reporter=self.fit_reporter,
                                                 **self.config['MVPA']['CV'])
         
         # run model_cv: fit models & interprete models 

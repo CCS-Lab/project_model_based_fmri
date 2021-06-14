@@ -76,6 +76,9 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'process_name':'unnamed',
         'feature_name':'unnamed',
         'use_absolute_value':False,
+        'logistic':False,
+        'binarizer_thresholds':None,
+        'binarizer_ratios':.2
     },
     'GLM':{
         'task_name': None,
@@ -102,6 +105,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'lambda_search_num': 100,
                 'n_jobs': 16,
                 'n_splits': 5,
+                'logistic': False,
             },
             'mlp':{
                 'layer_dims': [1024, 1024],
@@ -117,7 +121,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'n_batch': 64,
                 'n_sample': 100000,
                 'use_bias': True,
-                'gpu_visible_devices':[0]
+                'gpu_visible_devices':[0],
+                'logistic': False,
             },
             'cnn':{
                 'layer_dims': [8, 16, 32],
@@ -135,26 +140,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'n_batch': 64,
                 'n_sample': 100000,
                 'batch_norm': True,
-                'gpu_visible_devices':[0]
-            },
-            'mlp_shap':{
-                'layer_dims': [512, 512],
-                'activation': 'linear',
-                'activation_output': 'linear',
-                'dropout_rate': 0.5,
-                'val_ratio': 0.2,
-                'optimizer': 'adam',
-                'learning_rate': 0.001,
-                'loss': 'mse',
-                'n_epoch': 50,
-                'n_patience': 10,
-                'n_batch': 32,
-                'n_sample': 100000,
-                'use_bias': True,
                 'gpu_visible_devices':[0],
-                'use_null_background': True,
-                'background_num': 1000,
-                'sample_num' : 100,
+                'logistic': False,
             },
         },
         'CV':{
@@ -162,9 +149,9 @@ DEFAULT_ANALYSIS_CONFIGS = {
             'n_cv_repeat':1,
             'cv_save':True,
         },
-        'REPORT':{
+        'POSTREPORT':{
                 'elasticnet':{
-                    'reports':['brainmap','pearsonr','elasticnet','mse','permutationtest'],
+                    'reports':['brainmap','pearsonr','elasticnet','mse'],
                     'confidence_interval': 0.99,
                     'n_coef_plot': 150,
                     'map_type': 'z',
@@ -172,24 +159,43 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'pval_threshold': 0.05
                 },
                 'mlp':{
-                    'reports':['brainmap','pearsonr','mse','permutationtest'],
+                    'reports':['brainmap','pearsonr','mse'],
                     'map_type': 'z',
                     'sigma': 1,
                     'pval_threshold': 0.05
                 },
                 'cnn':{
-                    'reports':['brainmap','pearsonr','mse','permutationtest'],
-                    'map_type': 'z',
-                    'sigma': 1,
-                    'pval_threshold': 0.05
-                },
-                'mlp_shap':{
-                    'reports':['brainmap','pearsonr','mse','permutationtest'],
+                    'reports':['brainmap','pearsonr','mse'],
                     'map_type': 'z',
                     'sigma': 1,
                     'pval_threshold': 0.05
                 },
             },
+        'LOGISTICPOSTREPORT':{
+                'elasticnet':{
+                    'reports':['brainmap','accuracy','elasticnet'],
+                    'confidence_interval': 0.99,
+                    'n_coef_plot': 150,
+                    'map_type': 'z',
+                    'sigma': 1,
+                },
+                'mlp':{
+                    'reports':['brainmap','accuracy'],
+                    'map_type': 'z',
+                    'sigma': 1,
+                },
+                'cnn':{
+                    'reports':['brainmap','accuracy'],
+                    'map_type': 'z',
+                    'sigma': 1,
+                },
+            },
+        'FITREPORT':{
+            'metrics':['r','mse'],
+        },
+        'LOGISTICFITREPORT':{
+            'metrics':['accuracy','auc'],
+        },
     },
     'DATAPLOT':{
         '_height': 5,

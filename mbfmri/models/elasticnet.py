@@ -4,136 +4,13 @@
 #contact: cjfwndnsl@gmail.com
 #last modification: 2020.03.23
     
-from glmnet import ElasticNet
+from glmnet import ElasticNet,LogitNet
 import numpy as np
 from pathlib import Path
 from mbfmri.models.mvpa_general import MVPA_Base, MVPA_CV
-from mbfmri.utils.report import Reporter
+from mbfmri.utils.report import *
 
-class MVPACV_ElasticNet(MVPA_CV):
-    
-    r"""
-    
-    **MVPACV_ElasticNet** is for providing cross-validation (CV) framework with ElasticNet as an MVPA model.
-    Users can choose the option for CV (e.g. 5-fold or leave-one-subject-out), and the model specification.
-    Also, users can modulate the configuration for reporting function which includes making brain map (nii), 
-    and plots.
-    
-    Parameters
-    ----------
-    
-    X_dict : dict{str : numpy.ndarray}
-        Dictionary for the input voxel feature data which can be indexed by subject IDs.
-        Each voxel feature array should be in shape of [time len, voxel feature name]
-    y_dict : dict{str : numpy.ndarray}
-        Dictionary for the input latent process signals which can be indexed by subject IDs.
-        Each signal should be in sahpe of [time len, ]
-    voxel_mask : nibabel.nifti1.Nifti1Image
-        Brain mask image (nii) used for masking the fMRI images. It will be used to reconstruct a 3D image
-        from flattened array of model weights.
-    method : str, default='5-fold'
-        Name for type of cross-validation to use. 
-        Currently, two options are available.
-            - "N-fold" : *N*-fold cross-valiidation
-            - "N-lnso" : leave-*N*-subjects-out
-            
-        If the "N" should be a positive integer and it will be parsed from the input string. 
-        In the case of lnso, N should be >= 1 and <= total subject # -1.
-    n_cv_repeat : int, default=1
-        Number of repetition of the entire cross-validation.
-        Larger the number, (normally) more stable results and more time required.
-    cv_save : bool, default=True
-        Indictator to save results or not
-    cv_save_path : str or pathlib.PosixPath, default="."
-        Path for saving results
-    experiment_name : str, default="unnamed"
-        Name for a single run of this analysis
-        It will be included in the name of the report folder created.
-    alpha : float, default=0.001
-        Value between 0 and 1, indicating the mixing parameter in ElasticNet.
-        *penalty* = [alpha * L1 + (1-alpha)/2 * L2] * lambda
-    n_sample : int, default=30000
-        Max number of samples used in a single fitting.
-        If the number of data is bigger than *n_sample*, sampling will be done for 
-        each model fitting.
-        This is for preventing memory overload.
-    max_lambda : float, default=10
-        Maximum value of lambda in lambda search space.
-        The ambda search space is used when searching the best lambda value.
-    min_lambda_ratio : float, default=1e-4
-        Ratio of minimum lambda value to maximum value. 
-        With this ratio, a log-linearly scaled lambda space will be created.
-    lambda_search_num : int, default=100
-        Number of points in lambda search space. 
-        Bigger the number, finer will the lambda searching be.
-    n_jobs : int, default=16
-        Number of cores used in fitting ElasticNet
-    n_splits : int, default=5
-        Number of fold used in inner cross-validation,
-        which aims to find the best lambda value.
-    confidence_interval : float, default=.99
-        Confidence level for plotting CV errors in lambda searching.
-    n_coef_plot : int, default=150
-        Number of samples for plotting coefficient values in lambda searching.
-    map_type : str, default="z"
-        Type of making brain map. 
-            - "z" : z-map will be created using all the weights from CV experiment.
-            - "t" : t-map will be created using all the weights from CV experiment.v
-    sigma : float, default=1
-        Sigma value for running Gaussian smoothing on each of reconstructed maps, 
-        before integrating maps to z- or t-map.
-    
-    """
-    
-    def __init__(self,
-                 X_dict,
-                 y_dict,
-                 voxel_mask,
-                 method='5-fold',
-                 n_cv_repeat=1,
-                 cv_save=True,
-                 cv_save_path=".",
-                 experiment_name="unnamed",
-                 alpha=0.001,
-                 n_sample=30000,
-                 max_lambda=10,
-                 min_lambda_ratio=1e-4,
-                 lambda_search_num=100,
-                 n_jobs=16,
-                 n_splits=5,
-                 confidence_interval=.99,
-                 n_coef_plot=150,
-                 map_type='z',
-                 sigma=1):
-    
-        self.model = MVPA_ElasticNet(alpha=alpha,
-                                    n_sample=n_sample,
-                                    shuffle=shuffle,
-                                    max_lambda=max_lambda,
-                                    min_lambda_ratio=min_lambda_ratio,
-                                    lambda_search_num=lambda_search_num,
-                                    n_jobs=n_jobs,
-                                    n_splits=n_splits)
-
-        self.reporter = Reporter(reports=['brainmap','pearsonr','elasticnet'],
-                                             voxel_mask=voxel_mask,
-                                             confidence_interval=confidence_interval,
-                                             n_coef_plot=n_coef_plot,
-                                             experiment_name=experiment_name,
-                                             map_type=map_type,
-                                             sigma=sigma)
-
-        super().__init__(X_dict=X_dict,
-                        y_dict=y_dict,
-                        model=self.model,
-                        method=method,
-                        n_cv_repeat=n_cv_repeat,
-                        cv_save=cv_save,
-                        cv_save_path=cv_save_path,
-                        experiment_name=experiment_name,
-                        reporter=self.reporter)
-    
-    
+        
 class MVPA_ElasticNet(MVPA_Base):
     
     r"""
@@ -201,6 +78,7 @@ class MVPA_ElasticNet(MVPA_Base):
                  lambda_search_num=100,
                  n_jobs=16,
                  n_splits=5,
+                 logistic=False,
                  **kwargs):
         
         # penalty = [alpha * L1 + (1-alpha)/2 * L2] * lambda
@@ -210,16 +88,23 @@ class MVPA_ElasticNet(MVPA_Base):
         self.n_sample = n_sample
         self.alpha = alpha
         self.model = None
+        self.logistic = logistic
         self.lambda_path = np.exp(
                             np.linspace(
                                 np.log(max_lambda),
                                 np.log(max_lambda * min_lambda_ratio),
                                 lambda_search_num))
-        
         self.name = f'ElasticNet_alpha-{self.alpha}'
         
     def reset(self,**kwargs):
-        self.model = ElasticNet(alpha=self.alpha,
+        if self.logistic:
+            self.model = LogitNet(alpha=self.alpha,
+                           n_jobs=self.n_jobs,
+                           scoring='accuracy',
+                           lambda_path=self.lambda_path,
+                           n_splits=self.n_splits)
+        else:
+            self.model = ElasticNet(alpha=self.alpha,
                            n_jobs=self.n_jobs,
                            scoring='mean_squared_error',
                            lambda_path=self.lambda_path,
@@ -235,7 +120,6 @@ class MVPA_ElasticNet(MVPA_Base):
         X_data = X[ids]
         y_data = y[ids]
         self.model = self.model.fit(X_data, y_data)
-            
         return
             
     def predict(self,X,**kwargs):
@@ -243,9 +127,7 @@ class MVPA_ElasticNet(MVPA_Base):
         
     def get_weights(self):
         lambda_best_idx = self.model.cv_mean_score_.argmax()
-        lambda_best = self.lambda_path[lambda_best_idx]
-        coef = self.model.coef_path_[:, lambda_best_idx]
-        
+        coef = self.model.coef_path_.squeeze()[:, lambda_best_idx]
         return coef
     
     def report(self,**kwargs):

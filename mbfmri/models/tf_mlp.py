@@ -14,161 +14,8 @@ import os
 from pathlib import Path
 
 from mbfmri.models.mvpa_general import MVPA_Base, MVPA_CV
-from mbfmri.utils.report import Reporter
+from mbfmri.utils.report import *
 
-
-class MVPACV_MLP(MVPA_CV):
-    
-    r"""
-    
-    **MVPACV_MLP** is for providing cross-validation (CV) framework with Multi-layer Perceptron (MLP) as an MVPA model.
-    The model is implemented upon Tensorflow (>= 2.0.0).
-    Users can choose the option for CV (e.g. 5-fold or leave-one-subject-out), and the model specification.
-    Also, users can modulate the configuration for reporting function which includes making brain map (nii), 
-    and plots.
-    
-    Parameters
-    ----------
-    
-    X_dict : dict{str : numpy.ndarray}
-        Dictionary for the input voxel feature data which can be indexed by subject IDs.
-        Each voxel feature array should be in shape of [time len, voxel feature name]
-    y_dict : dict{str : numpy.ndarray}
-        Dictionary for the input latent process signals which can be indexed by subject IDs.
-        Each signal should be in sahpe of [time len, ]
-    voxel_mask : nibabel.nifti1.Nifti1Image
-        Brain mask image (nii) used for masking the fMRI images. It will be used to reconstruct a 3D image
-        from flattened array of model weights.
-    method : str, default='5-fold'
-        Name for type of cross-validation to use. 
-        Currently, two options are available.
-            - "N-fold" : *N*-fold cross-valiidation
-            - "N-lnso" : leave-*N*-subjects-out
-            
-        If the "N" should be a positive integer and it will be parsed from the input string. 
-        In the case of lnso, N should be >= 1 and <= total subject # -1.
-    n_cv_repeat : int, default=1
-        Number of repetition of the entire cross-validation.
-        Larger the number, (normally) more stable results and more time required.
-    cv_save : bool, default=True
-        Indictator to save results or not
-    cv_save_path : str or pathlib.PosixPath, default="."
-        Path for saving results
-    experiment_name : str, default="unnamed"
-        Name for a single run of this analysis
-        It will be included in the name of the report folder created.
-    layer_dims : list of int, default=[1024, 1024]
-        List of integer specifying the dimensions of each hidden layer.
-        Fully-connected layers will be stacked with the sizes indicated by *layer_dims*.
-        The last layer, *layer_dims[-1]* --> *1*, will be added.
-    activation : str, default="linear"
-        Name of activation function which will be applied to the output of hidden layers.
-    activation_output : str, default="linear"
-        Name of activation function for the final output.
-    dropout_rate : float, default=0.5
-        Rate of drop out, which will be applied after the hidden layers.
-    val_ratio : float, default=0.2
-        Rate for inner cross-validation, which will be used to split input data to 
-        (train[1-val_ratio], valid[val_ratio]). The validation dataset will be used for 
-        determining *early stopping*.
-    optimizer : str, default="adam"
-        Name of optimizer used for fitting model. The default optimizer is **Adam**. (https://arxiv.org/abs/1412.6980)
-        Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
-    loss : str, default="mse"
-        Name of objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
-        Please refer to Keras loss api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/losses)
-    learning_rate : float, default=0.001
-        Tensor, floating point value, or a schedule that is a tf.keras.optimizers.schedules.LearningRateSchedule, or a callable that takes no arguments and returns the actual value to use, The learning rate. Defaults to 0.001.
-        Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
-    n_epoch : int, default=50
-        Number of epochs to train the model. An epoch is an iteration over the entire x and y data provided. Note that in conjunction with initial_epoch, epochs is to be understood as "final epoch". The model is not trained for a number of iterations given by epochs, but merely until the epoch of index epochs is reached.
-    n_patience : int, default=10
-        Number of epochs with no improvement after which training will be stopped.
-        Please refer to https://keras.io/api/callbacks/early_stopping/
-    n_batch : int, default=64
-        Number of samples per gradient update.
-    n_sample : int, default=30000
-        Max number of samples used in a single fitting.
-        If the number of data is bigger than *n_samples*, sampling will be done for 
-        each model fitting.
-        This is for preventing memory overload.
-    use_bias : bool, default=True
-        If True, bias will be used in layers, otherwise bias term will not be considered.
-    gpu_visible_devices : list of str or list of int, default=None
-        Users can indicate a list of GPU resources here. 
-        It would have a same effect as "CUDA_VSIBLE_DEVICES=..."
-    map_type : str, default="z"
-        Type of making brain map. 
-            - "z" : z-map will be created using all the weights from CV experiment.
-            - "t" : t-map will be created using all the weights from CV experiment.
-    sigma : float, default=1
-        Sigma value for running Gaussian smoothing on each of reconstructed maps, 
-        before integrating maps to z- or t-map.
-    
-    """
-    
-    
-    def __init__(self,
-                 X_dict,
-                 y_dict,
-                 voxel_mask,
-                 method='5-fold',
-                 n_cv_repeat=1,
-                 cv_save=True,
-                 cv_save_path=".",
-                 experiment_name="unnamed",
-                 layer_dims=[1024, 1024],
-                 activation="linear",
-                 activation_output="linear",
-                 dropout_rate=0.5,
-                 val_ratio=0.2,
-                 optimizer="adam",
-                 loss="mse",
-                 learning_rate=0.001,
-                 n_epoch = 50,
-                 n_patience = 10,
-                 n_batch = 64,
-                 n_sample = 30000,
-                 use_bias = True,
-                 gpu_visible_devices = None,
-                 map_type='z',
-                 sigma=1):
-    
-        input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
-
-        self.model = MVPA_MLP(input_shape=input_shape,
-                             layer_dims=layer_dims,
-                             activation=activation,
-                             activation_output=activation_output,
-                             dropout_rate=dropout_rate,
-                             val_ratio=val_ratio,
-                             optimizer=optimizer,
-                             loss=loss,
-                             learning_rate=learning_rate,
-                             n_epoch=n_epoch,
-                             n_patience=n_patience,
-                             n_batch=n_batch,
-                             n_sample=n_sample,
-                             use_bias=use_bias,
-                             gpu_visible_devices=gpu_visible_devices)
-
-        self.reporter = Reporter(reports=['brainmap','pearsonr'],
-                                 voxel_mask=voxel_mask,
-                                 experiment_name=experiment_name,
-                                 map_type=map_type,
-                                 sigma=sigma)
-        
-        super().__init__(X_dict=X_dict,
-                        y_dict=y_dict,
-                        model=self.model,
-                        method=method,
-                        n_cv_repeat=n_cv_repeat,
-                        cv_save=cv_save,
-                        cv_save_path=cv_save_path,
-                        experiment_name=experiment_name,
-                        reporter=self.reporter)
-    
-    
 
 class MVPA_MLP(MVPA_Base):
     
@@ -237,11 +84,9 @@ class MVPA_MLP(MVPA_Base):
                  input_shape,
                  layer_dims=[1024, 1024],
                  activation="linear",
-                 activation_output="linear",
                  dropout_rate=0.5,
                  val_ratio=0.2,
                  optimizer="adam",
-                 loss="mse",
                  learning_rate=0.001,
                  n_epoch = 50,
                  n_patience = 10,
@@ -249,6 +94,7 @@ class MVPA_MLP(MVPA_Base):
                  n_sample = 30000,
                  use_bias = True,
                  gpu_visible_devices = None,
+                 logistic = False,
                  **kwargs):
         
         self.name = "MLP_TF"
@@ -257,10 +103,15 @@ class MVPA_MLP(MVPA_Base):
         self.input_shape = input_shape
         self.layer_dims = layer_dims
         self.activation = activation
-        self.activation_output = activation_output
+        self.logistic = logistic
+        if self.logistic:
+            self.activation_output = 'sigmoid'
+            self.loss = 'bce'
+        else:
+            self.activation_output = 'linear'
+            self.loss = 'mse'
         self.dropout_rate = dropout_rate
         self.optimizer = optimizer
-        self.loss = loss
         self.learning_rate = learning_rate
         self.use_bias = use_bias
         self.n_patience = n_patience

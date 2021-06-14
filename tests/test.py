@@ -13,7 +13,7 @@ https://openneuro.org/datasets/ds000005/versions/00001
 
 """
 
-from mbfmri.core.engine import run_mbfmri
+from mbfmri.core.engine import run_mbfmri, run_mbmvpa
 from pathlib import Path
 
 ## GENERAL SETTING
@@ -26,9 +26,9 @@ def test_adjust(row):
     row["gamble"] = 1 if row["respcat"] == 1 else 0
     row["cert"] = 0
     return row
-
-## TEST MVPA BASIC
 '''
+## TEST MVPA BASIC
+
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
                mvpa_model='elasticnet',
@@ -49,10 +49,10 @@ _ = run_mbfmri(bids_layout=bids_layout,
                n_batch=4,
                pval_threshold=5,
               refit_compmodel=True)
-'''
 
+'''
 ## TEST MODELCOMPARISON
-_ = run_mbfmri(bids_layout=bids_layout,
+_ = run_mbmvpa(bids_layout=bids_layout,
                dm_model=['ra_prospect','ra_noRA','ra_noLA'],
                mvpa_model='elasticnet',
                feature_name='zoom2',
@@ -68,6 +68,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                n_thread=4,
                method='5-fold',
                gpu_visible_devices = [2],
+               reports=['pearsonr','r','mse','spearmanr'],
                n_batch=4,
                pval_threshold=5)
 '''
@@ -160,5 +161,45 @@ _ = run_mbfmri(analysis='glm',
               overwrite=False,
               overwrite_latent_process=True,
               refit_compmodel=False)
+
+## TEST MVPA-MLP Logistic
+_ = run_mbfmri(bids_layout=bids_layout,
+               logistic=True,
+               mvpa_model='mlp',
+               feature_name='zoom2',
+               task_name='mixedgamblestask',
+               process_name='gain',
+               skip_compmodel=True,
+               report_path=report_path,
+               adjust_function=test_adjust,
+               n_core=4,
+               nchain=2,
+               nwarmup=50,
+               niter=200,
+               n_thread=4,
+               method='5-fold',
+               gpu_visible_devices = [2],
+               n_batch=4,
+               pval_threshold=5)
 '''
+## TEST ElasticNet Logistic
+_ = run_mbfmri(bids_layout=bids_layout,
+               logistic=True,
+               mvpa_model='elasticnet',
+               feature_name='zoom2',
+               task_name='mixedgamblestask',
+               process_name='gain',
+               skip_compmodel=True,
+               report_path=report_path,
+               adjust_function=test_adjust,
+               n_core=4,
+               nchain=2,
+               nwarmup=50,
+               niter=200,
+               n_thread=4,
+               method='5-fold',
+               gpu_visible_devices = [2],
+               n_batch=4,
+               reports=['brainmap','accuracy','roc'],
+               pval_threshold=5)
 print("TEST PASS!")

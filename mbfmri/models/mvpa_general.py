@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 from bids import BIDSLayout
+import pandas as pd
 import matplotlib.pyplot as plt
 from mbfmri.utils import config
 from mbfmri.utils.plot import plot_pearsonr
@@ -89,7 +90,8 @@ class MVPA_CV_H():
                 cv_save=True,
                 cv_save_path=".",
                 experiment_name="unnamed",
-                reporter=None):
+                post_reporter=None,
+                fit_reporter=None):
     
         assert len(X_dict) == len(y_dict)
         # leave-n-subject-out is not allowed as MVPA is fitted on one subject at a time.
@@ -107,7 +109,8 @@ class MVPA_CV_H():
                                             cv_save=False,
                                             cv_save_path=None,
                                            experiment_name=experiment_name,
-                                           reporter=reporter) for subj_id in X_dict.keys()}
+                                           post_reporter=post_reporter,
+                                           fit_reporter=fit_reporter) for subj_id in X_dict.keys()}
         
         self.experiment_name = experiment_name
         self.cv_save = cv_save
@@ -123,6 +126,33 @@ class MVPA_CV_H():
                 self.mvpa_cv_dict[subj_id].save_root = subj_save_root
                 self.mvpa_cv_dict[subj_id].cv_save = True
     
+    def run_secondlevel(self):
+        second_level_input = [nib.load(nii_file) for nii_file in self.save_root.glob('**/*.nii')]
+        
+        if len(second_level_input) <= 1:
+            print("INFO: only one or zero first-level map is found.")
+            print("      Second-level analysis requires two or more subjects' brain maps.")
+            return
+        else:
+            print(f"INFO: {len(second_level_input)} first-level maps are found.")
+        design_matrix = pd.DataFrame([1] * len(second_level_input),
+                                     columns=['intercept'])
+        
+        second_level_model = SecondLevelModel(mask_img=self.mask, smoothing_fwhm=6.0)
+        second_level_model = second_level_model.fit(second_level_input,
+                                                    design_matrix=design_matrix)
+        
+        z_map = second_level_model.compute_contrast(output_type='z_score')
+        if self.cv_save:
+            img_path = self.save_root/f'{self.experiment_name}_second_t_map.nii'
+            nib.save(z_map, img_path )
+            plot_mosaic(img_path,True,self.save_root)
+            plot_surface_interactive(img_path,True,self.save_root)
+            plot_slice_interactive(img_path,True,self.save_root)
+            print("INFO: second-level map is created and saved.")
+        
+        return z_map
+        
     def run(self,
             pval_threshold_2nd=0.01,
             **kwargs):
@@ -133,32 +163,13 @@ class MVPA_CV_H():
             print(f"INFO: MVPA_CV on subject-{subj_id}")
             output_dict[subj_id] = mvpa_cv.run(**kwargs)
             
-        # get 2nd-level T-map
-        self._make_2nd_t_map()
+        # get 2nd-level Z-map
+        second_z_map = self.run_secondlevel()
         # plot distribution of pearson r value of each subject.
         self._plot_pearsonr(save=self.cv_save,
                             pval_threshold=pval_threshold_2nd)
-        return output_dict
-    
-    def _make_2nd_t_map(self):
-        
-        if self.cv_save:
-            # aggregate first-level brain maps
-            nii_files = [f for f in self.save_root.glob('**/*.nii')]
-            if len(nii_files) != 0:
-                print(f"INFO: {len(nii_files)} first-level brain images is(are) found.")
-                nii_loaded = [nib.load(f) for f in nii_files]
-                activation_maps = np.array([f.get_fdata() for f in nii_loaded])
-                
-                # get (one-sample) T-map from first-level brain maps.
-                t_map_2nd = ttest_1samp(activation_maps, 0).statistic
-                # save
-                nib.Nifti1Image(t_map_2nd,
-                                affine=nii_loaded[0].affine).to_filename(self.save_root/f'{self.experiment_name}_second_t_map.nii')
-                print("INFO: second-level brain map is created.")
-            else:
-                print("INFO: No first-level brain image is found.")
-        
+        report = {'second-level_brainmap':second_z_map}
+        return report
     
     def _plot_pearsonr(self, 
                        save=True,
@@ -264,7 +275,8 @@ class MVPA_CV():
                 cv_save=True,
                 cv_save_path=".",
                 experiment_name="unnamed",
-                reporter=None
+                post_reporter=None,
+                fit_reporter=None
                 ):
         
         self.X_dict = X_dict
@@ -276,15 +288,20 @@ class MVPA_CV():
         self.cv_save = cv_save
         self.cv_save_path = cv_save_path
         self.experiment_name = experiment_name
-        self.reporter = reporter
+        self.post_reporter = post_reporter
+        self.fit_reporter = fit_reporter
         self.output_stats = {}
+        self.fit_stats = None
+        self.fit_reports = None
+        self.n_fold = -1
         
         # set save path with current time
         if self.cv_save:
             now = datetime.datetime.now()
             self.save_root = Path(cv_save_path) / f'report_{self.model.name}_{self.experiment_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir(exist_ok=True)
-            
+            self.report_path = self.save_root/ 'raw_result'
+            self.report_path.mkdir(exist_ok=True)
     
     def _run_singletime(self,
                         X_train,
@@ -335,112 +352,132 @@ class MVPA_CV():
     
         return output
     
-    def _run_single_permuted(self,
-                        X_train,
-                        y_train,
-                        X_test,
-                        y_test,
-                        data_dict={},
-                        **kwargs):
+    def _run_fold(self,X_train,y_train,X_test, y_test,i,j,**kwargs):
+        kwargs['fold']=1
+        kwargs['repeat']=j
+        report_id=f'{j+1}-{i+1}'
+        output=self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
+        fit_report = self.fit_reporter.run(**output)
+        print(f'INFO: fitting result[repeat-{j+1}/{self.n_cv_repeat},fold-{i+1}/{self.n_fold}]:')
+        for k,v in fit_report.items():
+             print(f'         {k}:{v}')
+        fit_report['fold'] = i+1
+        fit_report['repeat'] = j+1
         
-        permuted_y_train = y_train.copy()
-        permuted_y_test = y_test.copy()
-        np.random.shuffle(permuted_y_train)
-        np.random.shuffle(permuted_y_test)
-        output = self._run_singletime(X_train,
-                                    permuted_y_train,
-                                    X_test,
-                                    permuted_y_test,
-                                    **kwargs)
+        for key, data in output.items():
+            if self.cv_save:
+                save_path = str(self.report_path / f'{report_id}_{key}.npy')
+                np.save(save_path, data)
+            if key not in self.output_stats.keys():
+                self.output_stats[key] = 0
+            self.output_stats[key] += 1
         
-        for k, v in output.items():
-            data_dict['permuted_'+k] = v
-        
-        return data_dict
-        
+        return fit_report
     
+    def _run_lnso(self,**kwargs):
+        
+        subject_list = list(self.X_dict.keys())
+        n_val_subj = int(self.method.split('-')[0])
+
+        assert len(subject_list)>n_val_subj, f"The number of subject must be bigger than the leave-out number, {n_val_subj}."
+        
+        self.fit_reports = []
+        #for j in tqdm(range(self.n_cv_repeat),leave=True, desc='cv_repeat'):
+        for j in range(self.n_cv_repeat):
+            random.shuffle(subject_list)
+            subject_ids_list = [subject_list[i:i + n_val_subj]
+                            for i in range(0, len(subject_list), n_val_subj)]
+
+            #inner_iterater = tqdm(subject_ids_list,desc='subject',leave=False)
+            #for i, subject_ids in enumerate(inner_iterater):
+                #inner_iterater.set_description(f"subject_{subject_ids}")
+            self.n_fold = len(subject_ids_list)
+            for i, subject_ids in enumerate(subject_ids_list):
+                X_test = np.concatenate([self.X_dict[subject_id] for subject_id in subject_ids],0)
+                y_test = np.concatenate([self.y_dict[subject_id] for subject_id in subject_ids],0)
+
+                X_train = np.concatenate([self.X_dict[v] for v in subject_list if v not in subject_ids],0)
+                y_train = np.concatenate([self.y_dict[v] for v in subject_list if v not in subject_ids],0)
+                
+                fit_report = self._run_fold(X_train,y_train,X_test, y_test,i,j,**kwargs)
+                self.fit_reports.append(fit_report)
+        self.fit_reports = pd.DataFrame(self.fit_reports)
+            
+    def _run_nfold(self, **kwargs):   
+        
+        self.fit_reports = []
+        n_fold = int(self.method.split('-')[0])
+        self.n_fold = n_fold
+        X = np.concatenate([v for _,v in self.X_dict.items()],0)
+        y = np.concatenate([v for _,v in self.y_dict.items()],0)
+        #for j in tqdm(range(self.n_cv_repeat),leave=True,desc='cv_repeat'):
+        for j in range(self.n_cv_repeat):
+            np.random.seed(42+j)
+            ids = np.arange(X.shape[0])
+            fold_size = X.shape[0]//n_fold
+            #inner_iterater = tqdm(range(n_fold),desc='fold',leave=False)
+            #for i in inner_iterater:
+            for i in range(n_fold):
+                #inner_iterater.set_description(f"fold_{i+1}")
+                test_ids = ids[fold_size*i:fold_size*(i+1)]
+                train_ids = np.concatenate([ids[:fold_size*i],ids[fold_size*(i+1):]],0)
+                X_test = X[test_ids]
+                y_test = y[test_ids]
+                X_train = X[train_ids]
+                y_train = y[train_ids]
+                fit_report = self._run_fold(X_train,y_train,X_test, y_test,i,j,**kwargs)
+                self.fit_reports.append(fit_report)
+        self.fit_reports = pd.DataFrame(self.fit_reports)
+                    
     def run(self,**kwargs):
         
         print(f"INFO: start running the experiment. {self.model.name}")
-        outputs = {}
+        
+        self.output_stats= {}
+        self.fit_stats = {}
         
         if 'lnso' in self.method: #leave-n-subject-out
-            
-            subject_list = list(self.X_dict.keys())
-            n_val_subj = int(self.method.split('-')[0])
-            
-            assert len(subject_list)>n_val_subj, f"The number of subject must be bigger than the leave-out number, {n_val_subj}."
-            
-            for j in tqdm(range(self.n_cv_repeat),leave=True, desc='cv_repeat'):
-                random.shuffle(subject_list)
-                subject_ids_list = [subject_list[i:i + n_val_subj]
-                                for i in range(0, len(subject_list), n_val_subj)]
-            
-                inner_iterater = tqdm(subject_ids_list,desc='subject',leave=False)
-                for i, subject_ids in enumerate(inner_iterater):
-                    inner_iterater.set_description(f"subject_{subject_ids}")
-                    X_test = np.concatenate([self.X_dict[subject_id] for subject_id in subject_ids],0)
-                    y_test = np.concatenate([self.y_dict[subject_id] for subject_id in subject_ids],0)
-                    
-                    X_train = np.concatenate([self.X_dict[v] for v in subject_list if v not in subject_ids],0)
-                    y_train = np.concatenate([self.y_dict[v] for v in subject_list if v not in subject_ids],0)
-                    kwargs['fold']=i
-                    kwargs['repeat']=j
-                    outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
-                    outputs[f'{j}-{i}'] = self._run_single_permuted(X_train, y_train,X_test,
-                                                                    y_test,data_dict=outputs[f'{j}-{i}'],
-                                                                    **kwargs)
+            self._run_lnso(**kwargs)
+                            
         elif 'fold' in self.method: # n-fold cross-validation
-            
-            n_fold = int(self.method.split('-')[0])
-            X = np.concatenate([v for _,v in self.X_dict.items()],0)
-            y = np.concatenate([v for _,v in self.y_dict.items()],0)
-            for j in tqdm(range(self.n_cv_repeat),leave=True,desc='cv_repeat'):
-                np.random.seed(42+j)
-                ids = np.arange(X.shape[0])
-                fold_size = X.shape[0]//n_fold
-                inner_iterater = tqdm(range(n_fold),desc='fold',leave=False)
-                for i in inner_iterater:
-                    inner_iterater.set_description(f"fold_{i+1}")
-                    test_ids = ids[fold_size*i:fold_size*(i+1)]
-                    train_ids = np.concatenate([ids[:fold_size*i],ids[fold_size*(i+1):]],0)
-                    X_test = X[test_ids]
-                    y_test = y[test_ids]
-                    X_train = X[train_ids]
-                    y_train = y[train_ids]
-                    kwargs['fold']=i
-                    kwargs['repeat']=j
-                    outputs[f'{j}-{i}'] = self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
-                    outputs[f'{j}-{i}'] = self._run_single_permuted(X_train,y_train,X_test,
-                                                                    y_test,data_dict=outputs[f'{j}-{i}'],
-                                                                    **kwargs)
+            self._run_nfold(**kwargs)
         
-        # statistics of outputs
-        for _,output in outputs.items():
-            for key in output.keys():
-                if key not in self.output_stats.keys():
-                    self.output_stats[key] = 0
-                self.output_stats[key] += 1
-
         print("INFO: output statistics")
-        for key, count in self.output_stats.items():
-                print(f"      {key:<30}{count}")
+        for key, val in self.output_stats.items():
+            print(f"         {key:<30}{val}")
+                
+        print("INFO: fit statistics")
         
-        # save raw data
-        if self.cv_save:
-            report_path = self.save_root/ 'raw_result'
-            report_path.mkdir(exist_ok=True)
-            for report_id, output in outputs.items():
-                for key, data in output.items():
-                    np.save(str(report_path / f'{report_id}_{key}.npy'), data)
-                    
-            print(f"INFO: results are saved at {str(report_path)}.")
+        for column in self.fit_reports.columns:
+            if column in ['fold','repeat']:
+                continue
+            if 'pvalue' not in column:
+                stats = {column+'_mean' : self.fit_reports[column].array.mean(),
+                         column+'_std' : self.fit_reports[column].array.std()}
+                for key, val in stats.items():
+                    print(f"         {key:<30}{val:.05f}")
+                    self.fit_stats[key]=val
+            else:
+                significance_milestones = [0.001,0.005,0.01]
+                stats = {}
+                for siglev in significance_milestones: 
+                    cnt = (self.fit_reports[column].array <= siglev).sum()
+                    stats[column+f'_<={siglev}'] = 100*cnt/len(self.fit_reports)
+                for key, val in stats.items():
+                    print(f"         {key:<30}{val:.02f}%")
+                    self.fit_stats[key]=val
+            
         
-        if self.reporter is not None:
-            self.reporter.run(search_path=self.save_root,
+        self.fit_reports.to_csv(self.save_root/'fit_reports.tsv',
+                                  sep='\t',index=False)
+        pd.DataFrame([self.fit_stats]).to_csv(self.save_root/'fit_stats.tsv',
+                                  sep='\t',index=False)
+        
+        if self.post_reporter is not None:
+            report = self.post_reporter.run(search_path=self.save_root,
                          save=self.cv_save,
                          save_path=self.save_root)
             
         print(f"INFO: running done.")
-            
-        return outputs
+        
+        return report
