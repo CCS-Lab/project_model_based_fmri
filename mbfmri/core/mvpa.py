@@ -28,7 +28,7 @@ def run_mbmvpa(config=None,
               overwrite=False,
               overwrite_latent_process=True,
               refit_compmodel=False,
-              level=None,
+              hierarchical=False,
               **kwargs):
     
     # callable wrapper of MBMVPA
@@ -71,7 +71,7 @@ def run_mbmvpa(config=None,
     mbmvpa = MBMVPA(config=config,
                      mvpa_model=mvpa_model,
                      report_path=report_path,
-                     level=level,
+                     hierarchical=hierarchical,
                      **kwargs)
 
     return mbmvpa.run(overwrite=overwrite,
@@ -120,7 +120,7 @@ class MBMVPA(MBFMRI):
                  mvpa_model='elasticnet',
                  report_path='.',
                  logistic=False,
-                 level=None,
+                 hierarchical=False,
                  **kwargs):
         
         # load & set configuration
@@ -131,39 +131,9 @@ class MBMVPA(MBFMRI):
         self.config['MVPA']['CV']['cv_save_path']=report_path
         
         # setting name for saving outputs
+        # TODO - move setting 'result_name' while running.
+        
         self.mvpa_model_name = mvpa_model
-        dm_model_name = self.config['LATENTPROCESS']['dm_model']
-        if isinstance(dm_model_name,str):
-            dm_model_name = ''.join(dm_model_name.split('_'))
-        elif isinstance(dm_model_name,list) or \
-            isinstance(dm_model_name,tuple):
-            if len(dm_model_name) ==1 :
-                dm_model_name = ''.join(dm_model_name[0].split('_'))
-            else:
-                dm_model_name = 'modelcomparison'
-            
-        result_name = '-'.join([dm_model_name,
-                                self.config['LOADER']['task_name'],
-                                self.config['LOADER']['process_name'],
-                                self.config['LOADER']['feature_name']])
-        
-        
-        if level.lower() in ['hierarchical','h']:
-            result_name += 'hierarchical'
-            self.hierarchical = True
-        else:
-            self.hierarchical = False
-            
-            
-        self.logistic=logistic
-        
-        if self.logistic:
-            result_name += '-logistic'
-            self.config['MVPA']['LOGISTICPOSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
-        else:
-            self.config['MVPA']['POSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
-            
-        self.config['MVPA']['CV']['experiment_name'] = result_name
         
         # initiating internal modules for preprocessing input data
         self.X_generator = VoxelFeatureGenerator(**self.config['VOXELFEATURE'])
@@ -187,7 +157,8 @@ class MBMVPA(MBFMRI):
         self.model = None
         self.reporter = None
         self.model_cv = None
-        
+        self.hierarchical = hierarchical
+        self.logistic=logistic
         if self.hierarchical:
             self.model_cv_builder = MVPA_CV_H
         else:
@@ -195,6 +166,28 @@ class MBMVPA(MBFMRI):
             
         self.config['APPENDIX'] = {}
     
+    def _set_result_name(self):
+        dm_model_name = self.y_generator.best_model
+        dm_model_name = ''.join(dm_model_name.split('_'))
+        
+        
+        result_name = '-'.join([dm_model_name,
+                                self.loader.task_name,
+                                self.loader.process_name,
+                                self.loader.feature_name])
+        
+        if self.hierarchical:
+            result_name += 'hierarchical'
+        
+        if self.logistic:
+            result_name += '-logistic'
+            self.config['MVPA']['LOGISTICPOSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+        else:
+            self.config['MVPA']['POSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+            
+        self.config['MVPA']['CV']['experiment_name'] = result_name
+        
+        
     def run(self,
             overwrite=False,
             overwrite_latent_process=True,
@@ -231,6 +224,7 @@ class MBMVPA(MBFMRI):
         voxel_mask = self.loader.get_voxel_mask()
         
         # set MVPA model and report function
+        self._set_result_name()
         input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
         self.config['MVPA']['MODEL'][self.mvpa_model_name]['input_shape'] = input_shape
         self.model = self._mvpa_model_class(**self.config['MVPA']['MODEL'][self.mvpa_model_name])

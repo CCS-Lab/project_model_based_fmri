@@ -17,9 +17,10 @@ valid_analysis = ['mbmvpa','mbmvpah','glm']
 def run_mbfmri(analysis='mbmvpa',
               **kwargs):
     if analysis.lower() == 'mbmvpa':
-        run_mbmvpa(**kwargs)
+        run_mbmvpa(hierarchical=False,
+                   **kwargs)
     elif analysis.lower() == 'mbmvpah':
-        run_mbmvpa(level='hierarchical',
+        run_mbmvpa(hierarchical=True,
                    **kwargs)
     elif analysis.lower() == 'glm':
         run_mbglm(**kwargs)

@@ -125,7 +125,8 @@ class MVPA_CV_H():
                 subj_save_root.mkdir(exist_ok=True)
                 self.mvpa_cv_dict[subj_id].save_root = subj_save_root
                 self.mvpa_cv_dict[subj_id].cv_save = True
-    
+                self.mvpa_cv_dict[subj_id]._set_report_path()
+                
     def run_secondlevel(self):
         second_level_input = [nib.load(nii_file) for nii_file in self.save_root.glob('**/*.nii')]
         
@@ -166,57 +167,10 @@ class MVPA_CV_H():
         # get 2nd-level Z-map
         second_z_map = self.run_secondlevel()
         # plot distribution of pearson r value of each subject.
-        self._plot_pearsonr(save=self.cv_save,
-                            pval_threshold=pval_threshold_2nd)
         report = {'second-level_brainmap':second_z_map}
         return report
     
-    def _plot_pearsonr(self, 
-                       save=True,
-                       pval_threshold=0.01):
-        
-        pred_test_list = []
-        y_test_list = []
-        pred_train_list = []
-        y_train_list = []
-        
-        def _get_subjects_pred(subject_id):
-            pred_test_files = [f for f in self.save_root.glob(f'{subject_id}/**/*pred_test.npy')]
-            y_test_files = [f for f in self.save_root.glob(f'{subject_id}/**/*y_test.npy')]
-            pred_train_files = [f for f in self.save_root.glob(f'{subject_id}/**/*pred_train.npy')]
-            y_train_files = [f for f in self.save_root.glob(f'{subject_id}/**/*y_train.npy')]
-            pred_test_files.sort()
-            y_test_files.sort()
-            pred_train_files.sort()
-            y_train_files.sort()
-
-            pred_test = np.concatenate([np.load(f) for f in pred_test_files],0)
-            y_test = np.concatenate([np.load(f) for f in y_test_files],0)
-            pred_train = np.concatenate([np.load(f) for f in pred_train_files],0)
-            y_train = np.concatenate([np.load(f) for f in y_train_files],0)
-
-            return pred_test, y_test, pred_train, y_train
-        
-        for subject_id in self.mvpa_cv_dict.keys():
-            pred_test, y_test,\
-                pred_train, y_train= _get_subjects_pred(subject_id)
-            pred_test_list.append(pred_test)
-            y_test_list.append(y_test)
-            pred_train_list.append(pred_train)
-            y_train_list.append(y_train)
-            
-        save_path = self.save_root / 'second_pearsonr'
-        save_path.mkdir(exist_ok=True)
-        plot_pearsonr(y_train_list,
-                      y_test_list,
-                      pred_train_list,
-                      pred_test_list,
-                      save=save,
-                      save_path=save_path,
-                      pval_threshold=pval_threshold)
-            
-
-        
+     
 class MVPA_CV():
     
     r"""
@@ -300,9 +254,12 @@ class MVPA_CV():
             now = datetime.datetime.now()
             self.save_root = Path(cv_save_path) / f'report_{self.model.name}_{self.experiment_name}_{self.method}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
             self.save_root.mkdir(exist_ok=True)
-            self.report_path = self.save_root/ 'raw_result'
-            self.report_path.mkdir(exist_ok=True)
-    
+            self._set_report_path()
+            
+    def _set_report_path(self):
+        self.report_path = self.save_root/ 'raw_result'
+        self.report_path.mkdir(exist_ok=True)
+        
     def _run_singletime(self,
                         X_train,
                         y_train,
