@@ -7,7 +7,7 @@
 from mbfmri.preprocessing.events import LatentProcessGenerator
 from mbfmri.preprocessing.bold import VoxelFeatureGenerator
 from mbfmri.data.loader import BIDSDataLoader
-from mbfmri.models.mvpa_general import MVPA_CV, MVPA_CV_H
+from mbfmri.models.mvpa_general import MVPA_CV
 from mbfmri.utils.report import PostReporter,FitReporter
 from mbfmri.utils.explainer import Explainer
 from mbfmri.core.base import MBFMRI
@@ -28,7 +28,6 @@ def run_mbmvpa(config=None,
               overwrite=False,
               overwrite_latent_process=True,
               refit_compmodel=False,
-              hierarchical=False,
               **kwargs):
     
     # callable wrapper of MBMVPA
@@ -56,11 +55,6 @@ def run_mbmvpa(config=None,
     report_path : str or pathlib.PosixPath, defualt="."
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
-    level : str, defualt=None
-        if 'hierarchical' or 'H', use MVPA_CV_1stL class instead to run hiearchical version.
-        The hiearchical version of the MB-MVPA analysis is composed of two parts.
-        1) Run individual MB-MVPA on each subject
-        2) creat (one sample) T-map using brain maps from each subject.
     **kwargs : dict
         Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
@@ -71,7 +65,6 @@ def run_mbmvpa(config=None,
     mbmvpa = MBMVPA(config=config,
                      mvpa_model=mvpa_model,
                      report_path=report_path,
-                     hierarchical=hierarchical,
                      **kwargs)
 
     return mbmvpa.run(overwrite=overwrite,
@@ -120,7 +113,6 @@ class MBMVPA(MBFMRI):
                  mvpa_model='elasticnet',
                  report_path='.',
                  logistic=False,
-                 hierarchical=False,
                  **kwargs):
         
         # load & set configuration
@@ -157,33 +149,23 @@ class MBMVPA(MBFMRI):
         self.model = None
         self.reporter = None
         self.model_cv = None
-        self.hierarchical = hierarchical
         self.logistic=logistic
-        if self.hierarchical:
-            self.model_cv_builder = MVPA_CV_H
-        else:
-            self.model_cv_builder = MVPA_CV
-            
         self.config['APPENDIX'] = {}
     
     def _set_result_name(self):
         dm_model_name = self.y_generator.best_model
         dm_model_name = ''.join(dm_model_name.split('_'))
-        
-        
         result_name = '-'.join([dm_model_name,
                                 self.loader.task_name,
                                 self.loader.process_name,
                                 self.loader.feature_name])
-        
-        if self.hierarchical:
-            result_name += 'hierarchical'
-        
         if self.logistic:
             result_name += '-logistic'
-            self.config['MVPA']['LOGISTICPOSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+            self.config['MVPA']['LOGISTICPOSTREPORT']\
+                [self.mvpa_model_name]['experiment_name'] = result_name
         else:
-            self.config['MVPA']['POSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+            self.config['MVPA']['POSTREPORT']\
+                [self.mvpa_model_name]['experiment_name'] = result_name
             
         self.config['MVPA']['CV']['experiment_name'] = result_name
         
@@ -238,12 +220,10 @@ class MBMVPA(MBFMRI):
                                  **self.config['MVPA']['POSTREPORT'][self.mvpa_model_name])
         
         # set cross-validation module of MVPA (model_cv)
-        self.model_cv = self.model_cv_builder(X_dict,
-                                                y_dict,
-                                                self.model,
-                                                post_reporter=self.post_reporter,
-                                                fit_reporter=self.fit_reporter,
-                                                **self.config['MVPA']['CV'])
+        self.model_cv = MVPA_CV(X_dict,y_dict,self.model,
+                                post_reporter=self.post_reporter,
+                                fit_reporter=self.fit_reporter,
+                                **self.config['MVPA']['CV'])
         
         # run model_cv: fit models & interprete models 
         outputs = self.model_cv.run()
