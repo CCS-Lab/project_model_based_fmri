@@ -72,8 +72,11 @@ def get_map(coefs, voxel_mask, task_name,
         
     for coef in coefs:
         # converting flattened coefs to brain image.
-        activation_map = reconstruct(coef, mask)
-        
+        if len(coef.shape) != 3:
+            activation_map = reconstruct(coef.ravel(), mask)
+        else:
+            activation_map = coef
+            
         if sigma > 0:
             activation_map = gaussian_filter(activation_map, sigma)
         activation_maps.append(activation_map)

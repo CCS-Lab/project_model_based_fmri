@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#author: Cheol Jun Cho
+#contact: cjfwndnsl@gmail.com
+#last modification: 2020.06.21
+
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
@@ -16,6 +22,8 @@ from pathlib import Path
 from mbfmri.models.mvpa_general import MVPA_Base, MVPA_CV
 from mbfmri.utils.report import *
 
+import logging
+tf.get_logger().setLevel(logging.ERROR)
 
 class MVPA_MLP(MVPA_Base):
     
@@ -95,6 +103,8 @@ class MVPA_MLP(MVPA_Base):
                  use_bias = True,
                  gpu_visible_devices = None,
                  logistic = False,
+                 explainer = None,
+                 train_verbosity=0,
                  **kwargs):
         
         self.name = "MLP_TF"
@@ -120,6 +130,10 @@ class MVPA_MLP(MVPA_Base):
         self.n_epoch = n_epoch
         self.val_ratio = val_ratio
         self.model = None
+        self.X_train = None
+        self.X_test = None
+        self.explainer = explainer
+        self.train_verbosity = train_verbosity
         if gpu_visible_devices is not None:
             os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
     
@@ -173,7 +187,7 @@ class MVPA_MLP(MVPA_Base):
 
         X_train, X_test = X[train_ids], X[test_ids]
         y_train, y_test = y[train_ids], y[test_ids]
-
+        
         # create helper class for generating data
         # support mini-batch training implemented in Keras
         train_generator = DataGenerator(X_train, y_train, self.n_batch, shuffle=True)
@@ -195,7 +209,8 @@ class MVPA_MLP(MVPA_Base):
         es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
         
         self.model.fit(train_generator, epochs=self.n_epoch,
-                      verbose=0, callbacks=[mc, es],
+                      verbose=self.train_verbosity,
+                       callbacks=[mc, es],
                       validation_data=val_generator,
                       steps_per_epoch=train_steps,
                       validation_steps=val_steps)
@@ -206,20 +221,16 @@ class MVPA_MLP(MVPA_Base):
         os.remove(best_model_filepath+'.data-00000-of-00001')
         os.remove(best_model_filepath+'.index')
         
+        self.X_train, self.X_test = X_train,X_test
+        
         return
     
     def predict(self,X,**kwargs):
         return self.model.predict(X)
     
     def get_weights(self,**kwargs):
-        weights = []
-        for layer in self.model.layers:
-            if "dense" not in layer.name:
-                continue
-            weights.append(layer.get_weights()[0])
-
-        coef = weights[0]
-        for weight in weights[1:]:
-            coef = np.matmul(coef, weight)
-
-        return coef
+        if self.explainer is not None:
+            return self.explainer(self.model,self.X_train,self.X_test)
+        else:
+            return None
+    

@@ -325,7 +325,6 @@ class MVPA_CV():
         pred_test = self.model.predict(X_test)
         
         # 3. report results
-        
         # if weight extraction is offered, get weights from models
         if 'get_weights' in dir(self.model):
             weights = self.model.get_weights() # {weight_name: weight_tensor_value}

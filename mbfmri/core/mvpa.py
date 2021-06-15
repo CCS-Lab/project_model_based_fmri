@@ -9,6 +9,7 @@ from mbfmri.preprocessing.bold import VoxelFeatureGenerator
 from mbfmri.data.loader import BIDSDataLoader
 from mbfmri.models.mvpa_general import MVPA_CV, MVPA_CV_H
 from mbfmri.utils.report import PostReporter,FitReporter
+from mbfmri.utils.explainer import Explainer
 from mbfmri.core.base import MBFMRI
 import mbfmri.utils.config
 import yaml, importlib, copy
@@ -19,6 +20,7 @@ MVPA_MODEL_DICT = {'elasticnet':['mbfmri.models.elasticnet','MVPA_ElasticNet'],
                    'cnn':['mbfmri.models.tf_cnn','MVPA_CNN']}
 
 NEED_RECONSTRUCT_MODEL = ['cnn']
+USE_EXPLAINER = ['mlp','cnn']
 
 def run_mbmvpa(config=None,
               mvpa_model='elasticnet',
@@ -145,13 +147,22 @@ class MBMVPA(MBFMRI):
                                 self.config['LOADER']['process_name'],
                                 self.config['LOADER']['feature_name']])
         
+        
+        if level.lower() in ['hierarchical','h']:
+            result_name += 'hierarchical'
+            self.hierarchical = True
+        else:
+            self.hierarchical = False
+            
+            
         self.logistic=logistic
+        
         if self.logistic:
-            result_name +='-logistic'
+            result_name += '-logistic'
             self.config['MVPA']['LOGISTICPOSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
         else:
-            result_name +='-regression'
             self.config['MVPA']['POSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+            
         self.config['MVPA']['CV']['experiment_name'] = result_name
         
         # initiating internal modules for preprocessing input data
@@ -170,14 +181,18 @@ class MBMVPA(MBFMRI):
         if self.mvpa_model_name in NEED_RECONSTRUCT_MODEL:
             self.config['LOADER']['reconstruct'] = True
             
+        if self.mvpa_model_name in USE_EXPLAINER:
+            self.config['MVPA']['MODEL'][self.mvpa_model_name]['explainer'] = Explainer(**self.config['MVPA']['EXPLAINER'])
+            
         self.model = None
         self.reporter = None
         self.model_cv = None
-        if level is None:
-            self.model_cv_builder = MVPA_CV
-        elif level.lower() in ['hierarchical','h']:
-            self.model_cv_builder = MVPA_CV_H
         
+        if self.hierarchical:
+            self.model_cv_builder = MVPA_CV_H
+        else:
+            self.model_cv_builder = MVPA_CV
+            
         self.config['APPENDIX'] = {}
     
     def run(self,
@@ -218,7 +233,6 @@ class MBMVPA(MBFMRI):
         # set MVPA model and report function
         input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
         self.config['MVPA']['MODEL'][self.mvpa_model_name]['input_shape'] = input_shape
-        self.config['MVPA']['MODEL'][self.mvpa_model_name]['voxel_mask'] = voxel_mask
         self.model = self._mvpa_model_class(**self.config['MVPA']['MODEL'][self.mvpa_model_name])
         if self.logistic:
             self.fit_reporter = FitReporter(**self.config['MVPA']['LOGISTICFITREPORT'])

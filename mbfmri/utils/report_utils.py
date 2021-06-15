@@ -190,7 +190,7 @@ class Report_BrainMap():
         if isinstance(weights, dict):
             coefs = np.array([np.squeeze(data) for _, data in weights.items()]) 
         else:
-            coefs = weights.reshape(-1, weights.shape[-1])
+            coefs = weights 
             
         nii, img = get_map(coefs, self.voxel_mask, self.experiment_name,
                 map_type=self.map_type, save_path=save_path, sigma=self.sigma)

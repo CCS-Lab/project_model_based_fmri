@@ -344,8 +344,8 @@ class BIDSDataLoader():
             
             if self.logistic:
                 binarized = self.binarizer(self.y[subject])
-                bm = (binarized != -1)
-                self.X[subject] =self.X[subject][bm.reshape(*self.X[subject].shape[:-1])]
+                bm = (binarized != -1).flatten()
+                self.X[subject] =self.X[subject][bm]
                 self.y[subject] = self.y[subject][bm]
                 
             self.timemask[subject] = masks

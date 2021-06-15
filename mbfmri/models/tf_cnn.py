@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#author: Cheol Jun Cho
+#contact: cjfwndnsl@gmail.com
+#last modification: 2020.06.21
+
+
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
@@ -12,9 +19,13 @@ import tempfile
 import random
 import os
 from pathlib import Path
+import shap
 
 from mbfmri.models.mvpa_general import MVPA_Base, MVPA_CV
 from mbfmri.utils.report import *
+
+import logging
+tf.get_logger().setLevel(logging.ERROR)
 
 class MVPA_CNN(MVPA_Base):
     
@@ -35,9 +46,6 @@ class MVPA_CNN(MVPA_Base):
     input_shape : tuple of int
         Dimension of input data, which will be fed as X. 
         It should be same as the shape of voxel mask image.
-    voxel_mask : nibabel.nifti1.Nifti1Image
-        Brain mask image (nii) used for masking the fMRI images. It will be used to reconstruct a 3D image
-        from flattened array of model weights.
     method : str, default='5-fold'
         Name for type of cross-validation to use. 
         Currently, two options are available.
@@ -104,7 +112,6 @@ class MVPA_CNN(MVPA_Base):
     
     def __init__(self, 
                  input_shape,
-                 voxel_mask,
                  layer_dims=[8,16,32],
                  kernel_size=[3,3,3],
                  logit_layer_dim=256,
@@ -117,9 +124,11 @@ class MVPA_CNN(MVPA_Base):
                  n_patience = 10,
                  n_batch = 64,
                  n_sample = 30000,
-                 batch_norm=True,
+                 batch_norm=False,
                  gpu_visible_devices = None,
                  logistic=False,
+                 explainer=None,
+                 train_verbosity=0,
                  **kwargs):
         
         self.name = "CNN_TF"
@@ -128,6 +137,7 @@ class MVPA_CNN(MVPA_Base):
         self.kernel_size = kernel_size
         self.logit_layer_dim = logit_layer_dim
         self.activation = activation
+        self.logistic = logistic
         if self.logistic:
             self.activation_output = 'sigmoid'
             self.loss = 'bce'
@@ -144,9 +154,10 @@ class MVPA_CNN(MVPA_Base):
         self.n_epoch = n_epoch
         self.val_ratio = val_ratio
         self.model = None
-        self.voxel_mask = voxel_mask
-        if not isinstance(voxel_mask, np.ndarray):
-            self.voxel_mask = voxel_mask.get_fdata()
+        self.X_train = None
+        self.X_test = None
+        self.explainer = explainer
+        self.train_verbosity = train_verbosity
         if gpu_visible_devices is not None:
             os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
     
@@ -232,7 +243,8 @@ class MVPA_CNN(MVPA_Base):
         es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
         
         self.model.fit(train_generator, epochs=self.n_epoch,
-                      verbose=0, callbacks=[mc, es],
+                      verbose=self.train_verbosity,
+                       callbacks=[mc, es],
                       validation_data=val_generator,
                       steps_per_epoch=train_steps,
                       validation_steps=val_steps)
@@ -243,36 +255,15 @@ class MVPA_CNN(MVPA_Base):
         os.remove(best_model_filepath+'.data-00000-of-00001')
         os.remove(best_model_filepath+'.index')
         
+        self.X_train, self.X_test = X_train,X_test
+        
         return
     
     def predict(self,X,**kwargs):
         return self.model.predict(X)
     
-    def get_weights(self,voxel_mask=None,**kwargs):
-        
-        outputs_pool = []
-        
-        if voxel_mask is None:
-            voxel_mask = self.voxel_mask
-        
-        assert voxel_mask is not None, "voxel mask should be given."
-        
-        sample = []
-        for x,y,z in zip(*np.nonzero(self.voxel_mask)):
-            temp = np.zeros(self.input_shape) 
-            temp[x,y,z] = 1
-            sample.append(temp)
-        sample = np.array(sample)
-        sample_size = (self.voxel_mask == 1).sum()
-            
-        n_step = int(np.ceil((sample_size+0.0)/self.n_batch))
-
-        outputs = []
-        for i in range(n_step):
-            output = self.model.predict(sample[i*self.n_batch:(i+1)*self.n_batch])
-            output = list(output.flatten())
-            outputs += output
-
-        weights = np.array(outputs).ravel()
-        
-        return weights
+    def get_weights(self,**kwargs):
+        if self.explainer is not None:
+            return self.explainer(self.model,self.X_train,self.X_test)
+        else:
+            return None

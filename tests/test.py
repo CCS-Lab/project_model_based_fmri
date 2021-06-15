@@ -50,7 +50,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                pval_threshold=5,
               refit_compmodel=True)
 
-'''
+
 ## TEST MODELCOMPARISON
 _ = run_mbmvpa(bids_layout=bids_layout,
                dm_model=['ra_prospect','ra_noRA','ra_noLA'],
@@ -71,7 +71,7 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                reports=['pearsonr','r','mse','spearmanr'],
                n_batch=4,
                pval_threshold=5)
-'''
+
 ## TEST PRECALCULATED PROCESS
 _ = run_mbfmri(bids_layout=bids_layout,
                mvpa_model='elasticnet',
@@ -182,7 +182,31 @@ _ = run_mbfmri(bids_layout=bids_layout,
                n_batch=4,
                pval_threshold=5)
 '''
+
+## TEST MVPA-CNN Logistic
+_ = run_mbfmri(bids_layout=bids_layout,
+               logistic=True,
+               mvpa_model='cnn',
+               feature_name='zoom2',
+               task_name='mixedgamblestask',
+               process_name='gain',
+               skip_compmodel=True,
+               report_path=report_path,
+               adjust_function=test_adjust,
+               n_core=4,
+               nchain=2,
+               nwarmup=50,
+               niter=200,
+               n_thread=4,
+               method='5-fold',
+               gpu_visible_devices = [2],
+               n_batch=4,
+               pval_threshold=5,
+               shap_explainer='perturbation')
+
 ## TEST ElasticNet Logistic
+
+'''
 _ = run_mbfmri(bids_layout=bids_layout,
                logistic=True,
                mvpa_model='elasticnet',
@@ -203,4 +227,5 @@ _ = run_mbfmri(bids_layout=bids_layout,
                n_batch=4,
                reports=['brainmap','accuracy','roc'],
                pval_threshold=5)
+'''
 print("TEST PASS!")

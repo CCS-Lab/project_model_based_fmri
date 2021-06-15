@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from nilearn import plotting
-from statannot import add_stat_annotation
 from mbfmri.utils.config import DEFAULT_MODULATION_SUFFIX, DEFAULT_FEATURE_SUFFIX, \
                     DEFAULT_TIMEMASK_SUFFIX, DEFAULT_SIGNAL_SUFFIX 
 

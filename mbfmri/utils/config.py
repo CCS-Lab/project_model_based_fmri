@@ -123,6 +123,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'use_bias': True,
                 'gpu_visible_devices':[0],
                 'logistic': False,
+                'explainer': None,
+                'train_verbosity': 0,
             },
             'cnn':{
                 'layer_dims': [8, 16, 32],
@@ -139,10 +141,18 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'n_patience': 10,
                 'n_batch': 64,
                 'n_sample': 100000,
-                'batch_norm': True,
+                'batch_norm': False,
                 'gpu_visible_devices':[0],
                 'logistic': False,
+                'explainer': None,
+                'train_verbosity': 0,
             },
+        },
+        'EXPLAINER':{
+            'shap_explainer':'deep',
+            'shap_null_background': False,
+            'shap_n_background': 100,
+            'shap_n_sample': 100,
         },
         'CV':{
             'method':'5-fold',
