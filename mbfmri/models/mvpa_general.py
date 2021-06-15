@@ -183,8 +183,8 @@ class MVPA_CV():
         output=self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)
         fit_report = self.fit_reporter.run(**output)
         print(f'INFO: fitting result[repeat-{j+1}/{self.n_cv_repeat},fold-{i+1}/{self.n_fold}]:')
-        for k,v in fit_report.items():
-             print(f'         {k}:{v}')
+        for key,val in fit_report.items():
+             print(f"         {key:<30}{val:.05f}")
         fit_report['fold'] = i+1
         fit_report['repeat'] = j+1
         
