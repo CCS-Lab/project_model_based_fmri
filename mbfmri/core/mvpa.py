@@ -144,7 +144,14 @@ class MBMVPA(MBFMRI):
                                 self.config['LOADER']['task_name'],
                                 self.config['LOADER']['process_name'],
                                 self.config['LOADER']['feature_name']])
-        self.config['MVPA']['POSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+        
+        self.logistic=logistic
+        if self.logistic:
+            result_name +='-logistic'
+            self.config['MVPA']['LOGISTICPOSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
+        else:
+            result_name +='-regression'
+            self.config['MVPA']['POSTREPORT'][self.mvpa_model_name]['experiment_name'] = result_name
         self.config['MVPA']['CV']['experiment_name'] = result_name
         
         # initiating internal modules for preprocessing input data
@@ -172,7 +179,6 @@ class MBMVPA(MBFMRI):
             self.model_cv_builder = MVPA_CV_H
         
         self.config['APPENDIX'] = {}
-        self.logistic=logistic
     
     def run(self,
             overwrite=False,

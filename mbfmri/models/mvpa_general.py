@@ -462,9 +462,9 @@ class MVPA_CV():
                 stats = {}
                 for siglev in significance_milestones: 
                     cnt = (self.fit_reports[column].array <= siglev).sum()
-                    stats[column+f'_<={siglev}'] = 100*cnt/len(self.fit_reports)
+                    stats[column+f'_<={siglev}'] = cnt/len(self.fit_reports)
                 for key, val in stats.items():
-                    print(f"         {key:<30}{val:.02f}%")
+                    print(f"         {key:<30}{val*100:.02f}%")
                     self.fit_stats[key]=val
             
         

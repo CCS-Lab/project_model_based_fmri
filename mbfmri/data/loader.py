@@ -359,7 +359,7 @@ class BIDSDataLoader():
             for subject in self.subjects:
                 X_shape = str(self.X[subject].shape)
                 y_shape = str(self.y[subject].shape)
-                print(f'      subject_{subject}: X{X_shape}, y{y_shape}')
+                print(f'         subject_{subject}: X{X_shape}, y{y_shape}')
         
         print(f'INFO: loaded voxel mask{str(self.voxel_mask.get_fdata().shape)}')
         print('INFO: loading data done')

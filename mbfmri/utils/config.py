@@ -78,7 +78,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'use_absolute_value':False,
         'logistic':False,
         'binarizer_thresholds':None,
-        'binarizer_ratios':.2
+        'binarizer_ratios':.25,
     },
     'GLM':{
         'task_name': None,
@@ -173,19 +173,19 @@ DEFAULT_ANALYSIS_CONFIGS = {
             },
         'LOGISTICPOSTREPORT':{
                 'elasticnet':{
-                    'reports':['brainmap','accuracy','elasticnet'],
+                    'reports':['brainmap','accuracy','roc','elasticnet'],
                     'confidence_interval': 0.99,
                     'n_coef_plot': 150,
                     'map_type': 'z',
                     'sigma': 1,
                 },
                 'mlp':{
-                    'reports':['brainmap','accuracy'],
+                    'reports':['brainmap','accuracy','roc'],
                     'map_type': 'z',
                     'sigma': 1,
                 },
                 'cnn':{
-                    'reports':['brainmap','accuracy'],
+                    'reports':['brainmap','accuracy','roc'],
                     'map_type': 'z',
                     'sigma': 1,
                 },
