@@ -252,20 +252,8 @@ class MVPA_CV():
                 fit_report = self._run_fold(X_train,y_train,X_test, y_test,i,j,**kwargs)
                 self.fit_reports.append(fit_report)
         self.fit_reports = pd.DataFrame(self.fit_reports)
-                    
-    def run(self,**kwargs):
         
-        print(f"INFO: start running the experiment. {self.model.name}")
-        
-        self.output_stats= {}
-        self.fit_stats = {}
-        
-        if 'lnso' in self.method: #leave-n-subject-out
-            self._run_lnso(**kwargs)
-                            
-        elif 'fold' in self.method: # n-fold cross-validation
-            self._run_nfold(**kwargs)
-        
+    def _print_result(self):
         print("INFO: output statistics")
         for key, val in self.output_stats.items():
             print(f"         {key:<30}{val}")
@@ -290,12 +278,39 @@ class MVPA_CV():
                 for key, val in stats.items():
                     print(f"         {key:<30}{val*100:.02f}%")
                     self.fit_stats[key]=val
-            
+    
+    def _save_fitstats(self):
+        dataframe = {'name':list(self.fit_stats.keys())}
+        dataframe['value'] = [self.fit_stats[key] for key in dataframe['name']]
+        dataframe = pd.DataFrame(dataframe)
+        dataframe.to_csv(self.save_root/'fit_stats.tsv',
+                                  sep='\t',index=False)
         
+    def _save_fitreports(self):
+        reindex=['repeat','fold']
+        reindex += [c for c in self.fit_reports.columns if c not in reindex]
+        self.fit_reports = self.fit_reports.reindex(columns=reindex)
         self.fit_reports.to_csv(self.save_root/'fit_reports.tsv',
                                   sep='\t',index=False)
-        pd.DataFrame([self.fit_stats]).to_csv(self.save_root/'fit_stats.tsv',
-                                  sep='\t',index=False)
+        
+    def run(self,**kwargs):
+        
+        print(f"INFO: start running the experiment. {self.model.name}")
+        
+        self.output_stats= {}
+        self.fit_stats = {}
+        
+        if 'lnso' in self.method: #leave-n-subject-out
+            self._run_lnso(**kwargs)
+                            
+        elif 'fold' in self.method: # n-fold cross-validation
+            self._run_nfold(**kwargs)
+            
+        self._print_result()
+        
+        if self.cv_save:
+            self._save_fitreports()
+            self._save_fitstats()
         
         if self.post_reporter is not None:
             report = self.post_reporter.run(search_path=self.save_root,
