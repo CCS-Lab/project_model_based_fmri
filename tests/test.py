@@ -26,7 +26,7 @@ def test_adjust(row):
     row["gamble"] = 1 if row["respcat"] == 1 else 0
     row["cert"] = 0
     return row
-'''
+
 ## TEST MVPA BASIC
 
 _ = run_mbfmri(bids_layout=bids_layout,
@@ -50,7 +50,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                pval_threshold=5,
               refit_compmodel=True)
 
-
+'''
 ## TEST MODELCOMPARISON
 _ = run_mbmvpa(bids_layout=bids_layout,
                dm_model=['ra_prospect','ra_noRA','ra_noLA'],
@@ -181,7 +181,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                gpu_visible_devices = [2],
                n_batch=4,
                pval_threshold=5)
-'''
+
 
 ## TEST MVPA-CNN Logistic
 _ = run_mbfmri(bids_layout=bids_layout,
@@ -206,7 +206,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
 
 ## TEST ElasticNet Logistic
 
-'''
+
 _ = run_mbfmri(bids_layout=bids_layout,
                logistic=True,
                mvpa_model='elasticnet',

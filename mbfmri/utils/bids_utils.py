@@ -233,7 +233,7 @@ class BIDSController():
                     return_type="file",
                     suffix=self.bold_suffix,
                     task=entities['task'],
-                    extension="json")[0]))
+                    extension=config.SPECEXT)[0]))
             
             if "root" in json_data.keys():
                 t_r = json_data["root"]["RepetitionTime"]
@@ -406,20 +406,20 @@ class BIDSController():
                         subject=sub_id, session=ses_id,
                         task=task_name,
                         run=run_id,
-                        suffix='events',
-                        extension="tsv")
+                        suffix=self.event_suffix,
+                        extension=config.EVENTEXT)
     
     def get_event_all(self):
         return self.layout.get(task=self.task_name,
-                                suffix='events',
-                                extension="tsv")
+                                suffix=self.event_suffix,
+                                extension=config.EVENTEXT)
         
     def get_confound(self, sub_id=None, task_name=None, run_id=None, ses_id=None):
         return self.fmriprep_layout.get(
                     subject=sub_id, session=ses_id,
                     task=task_name,
                     run=run_id,suffix=self.confound_suffix,
-                    extension="tsv")
+                    extension=config.CONFOUNDEXT)
            
     def get_bold_all(self):
         return self.fmriprep_layout.get(suffix=self.bold_suffix,
@@ -430,7 +430,7 @@ class BIDSController():
     def get_confound_all(self):
         return self.fmriprep_layout.get(suffix=self.confound_suffix,
                                         task=self.task_name,
-                                        extension="tsv")
+                                        extension=config.CONFOUNDEXT)
         
     def save_voxelmask(self, voxel_mask):
         nib.save(voxel_mask, self.voxelmask_path)

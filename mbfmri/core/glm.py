@@ -113,8 +113,11 @@ class GLM():
                  hrf_model='glover',
                  drift_model='cosine',
                  high_pass=1/128,
+                 n_jobs=4,
                  n_core=4,
-                ):
+                 bold_suffix='bold',
+                 confound_suffix='regressors',
+                 subjects='all'):
         
         # TODO
         # add multi-processing
@@ -128,7 +131,6 @@ class GLM():
             self.layout = BIDSLayout(root=Path(bids_layout),derivatives=True)
         else:
             self.layout = bids_layout
-        self.confounds = confounds
         if space_name is not None:
             self.space_name = space_name
         else:
@@ -160,57 +162,39 @@ class GLM():
         self.high_pass=high_pass=.01
         self.mask =_build_mask(self.mask_path, self.mask_threshold, (1,1,1), verbose=1)
         self.n_core = n_core
+        self.subjects= subjects
+        self.bold_suffix = bold_suffix
+        self.confound_suffix=confound_suffix
+        self.subjects=subjects
+        self.confounds = confounds
+        self.n_jobs=n_jobs
+        
         
     def run_firstlevel(self):
         
-        models, models_run_imgs, \
-            models_events, models_confounds = first_level_from_bids(self.layout.root,
+        models, models_bold_imgs, \
+            models_modulations, models_confounds = first_level_from_bids(self.layout,
                                                                     self.task_name,
+                                                                    self.process_name,
                                                                     self.space_name,
                                                                     hrf_model=self.hrf_model,
                                                                     drift_model=self.drift_model,
                                                                     high_pass=self.high_pass,
                                                                     smoothing_fwhm=self.smoothing_fwhm,
                                                                     mask_img = self.mask,
-                                                                    derivatives_folder=self.fmriprep_layout.root,
+                                                                    bold_suffix=self.bold_suffix,
+                                                                    modulation_suffix=config.DEFAULT_MODULATION_SUFFIX,
+                                                                    confound_suffix=self.confound_suffix,
+                                                                    confound_names=self.confounds,
+                                                                    subjects=self.subjects,
+                                                                    n_jobs=self.n_jobs
                                                                     #minimize_memory=False,
                                                                     )
         
-        for i in range(len(models_confounds)):
-            for j in range(len(models_confounds[i])):
-                mc = models_confounds[i][j]
-                mc = mc[self.confounds]
-                models_confounds[i][j] = mc
-                
-        def get_entity(img_path):
-            filename = Path(img_path).stem
-            entity = {}
-            for z in filename.split('_'):
-                if '-' in z:
-                    key,val = z.split('-')
-                    entity[key] = val
-            return entity
         
-        for i in range(len(models_run_imgs)):
-            for j in range(len(models_run_imgs[i])):
-                entity = get_entity(models_run_imgs[i][j])
-                kwargs = {}
-                if 'ses' in entity.keys():
-                    kwargs['session'] = entity['ses']
-                if 'run' in entity.keys():
-                    kwargs['run'] = entity['run']
-                kwargs['subject'] = entity['sub']
-                kwargs['task'] = self.task_name
-                kwargs['desc'] = self.process_name
-                kwargs['suffix'] = config.DEFAULT_MODULATION_SUFFIX #'modulation'
-                md =self.mbmvpa_layout.get(**kwargs)[0]
-                md = pd.read_table(md)
-                md['trial_type'] = [self.process_name]*len(md)
-                models_events[i][j] = md
-                
         params_chunks = [[[models[i],
-                          models_run_imgs[i],
-                          models_events[i],
+                          models_bold_imgs[i],
+                          models_modulations[i],
                           models_confounds[i],
                           self.process_name,
                           self.save_path_first] for i in range(j,min(len(models),j+self.n_core))]

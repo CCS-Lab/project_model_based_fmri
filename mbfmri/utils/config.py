@@ -14,7 +14,14 @@ DEFAULT_TIMEMASK_SUFFIX = "timemask"
 DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME = "individual_params.tsv"
 IGNORE_INDIV_PARAM = 'ignored'
 DEFAULT_MODELCOMPARISON_FILENAME = 'model_comparison.tsv'
+CONFOUNDEXT='tsv'
 NIIEXT = 'nii.gz'
+MODULATIONEXT ='tsv'
+SPECEXT='json'
+EVENTEXT='tsv'
+VOXELFTEXT='npy'
+MODSIGEXT='npy'
+TIMEMASKEXT='npy'
 # default configuration for running MBMVPA
 DEFAULT_ANALYSIS_CONFIGS = {
     'VOXELFEATURE': {
@@ -94,6 +101,10 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'high_pass': 1/128,
         'n_core': 4,
         'smoothing_fwhm': 6,
+        'bold_suffix': 'bold',
+        'confound_suffix': 'regressors',
+        'subjects': 'all',
+        'n_jobs':4
     },
     'MVPA':{
         'MODEL':{

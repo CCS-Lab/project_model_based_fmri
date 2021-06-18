@@ -514,9 +514,9 @@ class LatentProcessGenerator():
             prefix += f"_desc-{trimmed_process_name}"
             save_path = self.bids_controller.set_path(sub_id=sub_id, ses_id=ses_id)
             
-            timemask_path = save_path/(prefix+f'_{config.DEFAULT_TIMEMASK_SUFFIX}.npy')
-            modulation_df_path = save_path/(prefix+f'_{config.DEFAULT_MODULATION_SUFFIX}.tsv')
-            signal_path = save_path/(prefix+f'_{config.DEFAULT_SIGNAL_SUFFIX}.npy')
+            timemask_path = save_path/(prefix+f'_{config.DEFAULT_TIMEMASK_SUFFIX}.{config.TIMEMASKEXT}')
+            modulation_df_path = save_path/(prefix+f'_{config.DEFAULT_MODULATION_SUFFIX}.{config.MODULATIONEXT}')
+            signal_path = save_path/(prefix+f'_{config.DEFAULT_SIGNAL_SUFFIX}.{config.MODSIGEXT}')
             
             # get dataframe with onset, duration and modulation
             # these 3 columns are required to make HRF convoluted signals

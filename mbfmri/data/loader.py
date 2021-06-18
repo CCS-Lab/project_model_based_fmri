@@ -209,11 +209,11 @@ class BIDSDataLoader():
         
         # common arguments for retrieving data from BIDS layout
         self.X_kwargs = {'suffix':config.DEFAULT_FEATURE_SUFFIX,
-                     'extension':'npy'}
+                     'extension':config.VOXELFTEXT}
         self.y_kwargs = {'suffix':config.DEFAULT_SIGNAL_SUFFIX,
-                    'extension':'npy'}
+                    'extension':config.MODSIGEXT}
         self.timemask_kwargs = {'suffix':config.DEFAULT_TIMEMASK_SUFFIX,
-                            'extension':'npy'}
+                            'extension':config.TIMEMASKEXT}
         
         # add names in arguments.
         # Names which are not given will be ignored.
@@ -277,7 +277,7 @@ class BIDSDataLoader():
                             task=entities['task'],
                             **self.timemask_kwargs
                            )
-
+            
             if len(subject_y) < 1 or len(timemask) < 1:
                 # not found. skipped.
                 continue
