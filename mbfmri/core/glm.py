@@ -28,6 +28,7 @@ from mbfmri.utils.bold_utils import _build_mask
 from mbfmri.preprocessing.events import LatentProcessGenerator
 from mbfmri.core.base import MBFMRI
 import mbfmri.utils.config
+from mbfmri.utils.plot import *
 import yaml, importlib, copy, datetime
 from bids import BIDSLayout
 from tqdm import tqdm
@@ -259,7 +260,11 @@ class GLM():
                                                     design_matrix=design_matrix)
         
         z_map = second_level_model.compute_contrast(output_type='z_score')
-        nib.save(z_map, self.save_path_second / f'secondlevel_z_map.nii')
+        img_path = self.save_path_second / f'secondlevel_z_map.nii'
+        nib.save(z_map, img_path)
+        plot_mosaic(img_path,True, self.save_path_second)
+        plot_surface_interactive(img_path,True, self.save_path_second)
+        plot_slice_interactive(img_path,True, self.save_path_second)
         print("INFO: second-level map is created and saved.")
         
     def run(self):

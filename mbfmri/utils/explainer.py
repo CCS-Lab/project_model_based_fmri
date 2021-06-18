@@ -8,6 +8,7 @@
 
 import numpy as np
 import shap
+import warnings
 
 class Explainer():
     
@@ -52,12 +53,13 @@ class Explainer():
                  model,
                 X_train=None,
                 X_test=None):
-        
-        if self.shap_explainer.lower() =='deep':
-            return self._gradientexplainer(model,X_train,X_test)
-        elif self.shap_explainer.lower() =='perturbation':
-            return self._deepexplainer(model,X_train,X_test)
-        else:
-            return self._gradientexplainer(model,X_train,X_test)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=Warning)
+            if self.shap_explainer.lower() =='deep':
+                return self._gradientexplainer(model,X_train,X_test)
+            elif self.shap_explainer.lower() =='perturbation':
+                return self._deepexplainer(model,X_train,X_test)
+            else:
+                return self._gradientexplainer(model,X_train,X_test)
     
     

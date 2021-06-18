@@ -22,8 +22,7 @@ from pathlib import Path
 from mbfmri.models.mvpa_general import MVPA_Base, MVPA_CV
 from mbfmri.utils.report import *
 
-import logging
-tf.get_logger().setLevel(logging.ERROR)
+tf.get_logger().setLevel("ERROR")
 
 class MVPA_MLP(MVPA_Base):
     
@@ -106,6 +105,7 @@ class MVPA_MLP(MVPA_Base):
                  explainer = None,
                  train_verbosity=0,
                  **kwargs):
+        
         
         self.name = "MLP_TF"
         if isinstance(input_shape, int):

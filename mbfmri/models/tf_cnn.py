@@ -4,7 +4,6 @@
 #contact: cjfwndnsl@gmail.com
 #last modification: 2020.06.21
 
-
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
@@ -24,8 +23,7 @@ import shap
 from mbfmri.models.mvpa_general import MVPA_Base, MVPA_CV
 from mbfmri.utils.report import *
 
-import logging
-tf.get_logger().setLevel(logging.ERROR)
+tf.get_logger().setLevel("ERROR")
 
 class MVPA_CNN(MVPA_Base):
     
@@ -130,6 +128,7 @@ class MVPA_CNN(MVPA_Base):
                  explainer=None,
                  train_verbosity=0,
                  **kwargs):
+        
         
         self.name = "CNN_TF"
         self.input_shape = input_shape
