@@ -192,13 +192,12 @@ class Report_BrainMap():
         else:
             coefs = weights 
             
-        nii, img = get_map(coefs, self.voxel_mask, self.experiment_name,
+        nii, img_path = get_map(coefs, self.voxel_mask, self.experiment_name,
                 map_type=self.map_type, save_path=save_path, sigma=self.sigma)
         
-        img = str(img)
-        plot_mosaic(img,save,save_path)
-        plot_surface_interactive(img,save,save_path)
-        plot_slice_interactive(img,save,save_path)
+        plot_mosaic(img_path,save,save_path)
+        plot_surface_interactive(img_path,save,save_path)
+        plot_slice_interactive(img_path,save,save_path)
         return nii
 
 class Plot_ElasticNet():

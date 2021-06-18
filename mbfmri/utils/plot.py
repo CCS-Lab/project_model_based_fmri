@@ -12,37 +12,38 @@ from mbfmri.utils.config import DEFAULT_MODULATION_SUFFIX, DEFAULT_FEATURE_SUFFI
 
 
 
-def plot_mosaic(img,
+def plot_mosaic(img_path,
                 save,
                save_path,
                coord_num=7):
     
+    img_path = str(img_path)
     plt.figure(figsize=(3*coord_num,9))
-    plotting.plot_stat_map(img, display_mode='x',cut_coords=coord_num,axes=plt.subplot(3, 1,1))
-    plotting.plot_stat_map(img, display_mode='y',cut_coords=coord_num,axes=plt.subplot(3, 1,2))
-    plotting.plot_stat_map(img, display_mode='z',cut_coords=coord_num,axes=plt.subplot(3, 1,3))
+    plotting.plot_stat_map(img_path, display_mode='x',cut_coords=coord_num,axes=plt.subplot(3, 1,1))
+    plotting.plot_stat_map(img_path, display_mode='y',cut_coords=coord_num,axes=plt.subplot(3, 1,2))
+    plotting.plot_stat_map(img_path, display_mode='z',cut_coords=coord_num,axes=plt.subplot(3, 1,3))
     if save:
-        plt.savefig(Path(save_path) / f"mosaic_plot_{Path(img).name}.png",bbox_inches='tight')
+        plt.savefig(Path(save_path) / f"mosaic_plot_{Path(img_path).name}.png",bbox_inches='tight')
     plt.show()
 
-def plot_surface_interactive(img,
+def plot_surface_interactive(img_path,
                              save,
                              save_path):
-    
+    img_path = str(img_path)
     if save:
-        view = plotting.view_img_on_surf(img, 
+        view = plotting.view_img_on_surf(img_path, 
                                      threshold='90%',
                                      surf_mesh='fsaverage') 
-        view.save_as_html(Path(save_path) / f"surface_plot_{Path(img).name}.html")
+        view.save_as_html(Path(save_path) / f"surface_plot_{Path(img_path).name}.html")
         
     
-def plot_slice_interactive(img,
+def plot_slice_interactive(img_path,
                            save,
                           save_path):
-    
+    img_path = str(img_path)
     if save:
-        view = plotting.view_img(img) 
-        view.save_as_html(Path(save_path) / f"slice_plot_{Path(img).name}.html")
+        view = plotting.view_img(img_path) 
+        view.save_as_html(Path(save_path) / f"slice_plot_{Path(img_path).name}.html")
 
 
     
