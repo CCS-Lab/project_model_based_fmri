@@ -123,7 +123,6 @@ class MVPA_CNN(MVPA_Base):
                  n_batch = 64,
                  n_sample = 30000,
                  batch_norm=False,
-                 gpu_visible_devices = None,
                  logistic=False,
                  explainer=None,
                  train_verbosity=0,
@@ -157,9 +156,7 @@ class MVPA_CNN(MVPA_Base):
         self.X_test = None
         self.explainer = explainer
         self.train_verbosity = train_verbosity
-        if gpu_visible_devices is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
-    
+
     
     def reset(self,**kwargs):
         self.model = Sequential()

@@ -90,7 +90,7 @@ class MVPA_MLP(MVPA_Base):
     def __init__(self, 
                  input_shape,
                  layer_dims=[1024, 1024],
-                 activation="linear",
+                 activation="sigmoid",
                  dropout_rate=0.5,
                  val_ratio=0.2,
                  optimizer="adam",
@@ -100,7 +100,6 @@ class MVPA_MLP(MVPA_Base):
                  n_batch = 64,
                  n_sample = 30000,
                  use_bias = True,
-                 gpu_visible_devices = None,
                  logistic = False,
                  explainer = None,
                  train_verbosity=0,
@@ -134,9 +133,7 @@ class MVPA_MLP(MVPA_Base):
         self.X_test = None
         self.explainer = explainer
         self.train_verbosity = train_verbosity
-        if gpu_visible_devices is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"]=",".join([str(v) for v in gpu_visible_devices])
-    
+        
     
     def reset(self,**kwargs):
         

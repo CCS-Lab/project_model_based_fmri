@@ -14,11 +14,10 @@ from skimage.measure import block_reduce
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
-from nilearn.image.resampling import resample_img
 from nilearn.datasets import load_mni152_brain_mask
 import nibabel as nib
-import pdb
 
+        
 def _zoom_affine(affine, zoom):
     affine = affine.copy()
     affine[0,:3] *= zoom[0]

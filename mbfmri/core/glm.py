@@ -105,25 +105,20 @@ class GLM():
                  fmriprep_layout=None,
                  mbmvpa_layout=None,
                  space_name=None,
-                 smoothing_fwhm=6,
                  mask_path=None,
                  mask_threshold=2.58,
-                 confounds=['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z'],
                  glm_save_path='.',
-                 hrf_model='glover',
-                 drift_model='cosine',
-                 high_pass=1/128,
-                 n_jobs=4,
                  n_core=4,
                  bold_suffix='bold',
                  confound_suffix='regressors',
-                 subjects='all'):
+                 subjects='all',
+                 zoom=(1,1,1),
+                **glm_kwargs):
         
         # TODO
         # add multi-processing
         # add reporting
         
-        self.smoothing_fwhm = smoothing_fwhm
         self.task_name = task_name
         self.process_name = process_name
         if isinstance(bids_layout,str) or isinstance(bids_layout,Path): 
@@ -157,18 +152,14 @@ class GLM():
         else:
             self.mask_path = mask_path
         self.mask_threshold = mask_threshold
-        self.hrf_model=hrf_model
-        self.drift_model=drift_model
-        self.high_pass=high_pass=.01
-        self.mask =_build_mask(self.mask_path, self.mask_threshold, (1,1,1), verbose=1)
+        self.mask =_build_mask(self.mask_path, self.mask_threshold,zoom=zoom, verbose=1)
         self.n_core = n_core
         self.subjects= subjects
         self.bold_suffix = bold_suffix
         self.confound_suffix=confound_suffix
         self.subjects=subjects
-        self.confounds = confounds
-        self.n_jobs=n_jobs
-        
+        self.glm_kwargs=glm_kwargs
+        self.smoothing_fwhm  = glm_kwargs['smoothing_fwhm']
         
     def run_firstlevel(self):
         
@@ -177,18 +168,12 @@ class GLM():
                                                                     self.task_name,
                                                                     self.process_name,
                                                                     self.space_name,
-                                                                    hrf_model=self.hrf_model,
-                                                                    drift_model=self.drift_model,
-                                                                    high_pass=self.high_pass,
-                                                                    smoothing_fwhm=self.smoothing_fwhm,
                                                                     mask_img = self.mask,
                                                                     bold_suffix=self.bold_suffix,
                                                                     modulation_suffix=config.DEFAULT_MODULATION_SUFFIX,
                                                                     confound_suffix=self.confound_suffix,
-                                                                    confound_names=self.confounds,
                                                                     subjects=self.subjects,
-                                                                    n_jobs=self.n_jobs
-                                                                    #minimize_memory=False,
+                                                                    **self.glm_kwargs
                                                                     )
         
         
@@ -239,7 +224,7 @@ class GLM():
         design_matrix = pd.DataFrame([1] * len(second_level_input),
                                      columns=['intercept'])
         
-        second_level_model = SecondLevelModel(mask_img=self.mask, smoothing_fwhm=6.0)
+        second_level_model = SecondLevelModel(mask_img=self.mask, smoothing_fwhm=self.smoothing_fwhm)
         second_level_model = second_level_model.fit(second_level_input,
                                                     design_matrix=design_matrix)
         

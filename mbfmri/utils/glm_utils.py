@@ -52,22 +52,22 @@ def _fit_firstlevel_model(params):
             
             
             
-def first_level_from_bids(bids_layout, task_name, process_name, space_name="MNI152NLin2009cAsym",
+def first_level_from_bids(bids_layout, task_name, process_name, 
+                          space_name="MNI152NLin2009cAsym",
+                          subjects='all',bold_suffix="bold",
+                          modulation_suffix="modulation",
+                          confound_suffix="regressors",
                           img_filters=None, t_r=None, slice_time_ref=0.,
                           hrf_model='glover', drift_model='cosine',
-                          high_pass=.01, drift_order=1, fir_delays=[0],
+                          high_pass=1/128, drift_order=1, fir_delays=[0],
                           min_onset=-24, mask_img=None,
                           target_affine=None, target_shape=None,
                           smoothing_fwhm=None, memory=Memory(None),
-                          memory_level=1, standardize=False,
+                          memory_level=1, standardize=True,
                           signal_scaling=0, noise_model='ar1',
                           verbose=0, n_jobs=1,
                           minimize_memory=True,
-                          bold_suffix="bold",
-                          modulation_suffix="modulation",
-                          confound_suffix="regressors",
-                          confound_names=[],
-                          subjects='all'):
+                          confound_names=['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z']):
     
     if not isinstance(bids_layout,BIDSLayout):
         bids_layout =  BIDSLayout(root=bids_layout,derivatives=True)
