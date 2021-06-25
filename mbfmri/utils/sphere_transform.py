@@ -2,7 +2,7 @@ import numpy as np
 import nibabel as nib
 from nilearn import surface
 from nilearn import datasets
-import cv2
+from scipy.interpolate import griddata
 
 class ToFlattenedSphere():
     def __init__(self,shape=(180,180)):
@@ -40,18 +40,19 @@ class ToFlattenedSphere():
         return mapping
     
     def _make2dmap(self,texture,mapping,shape):
-        bg = np.zeros(shape)
-        bg_cnt = np.zeros(shape)
-        for (e,a),v in zip(mapping,texture):
-            bg[e,a] += v
-            bg_cnt[e,a] += 1
-        bg_cnt[bg_cnt==0] = 1
-        flatmap = bg/bg_cnt
+        
+        grid_x, grid_y = np.mgrid[0:shape[0], 0:shape[1]]
+        flatmap = griddata(mapping, texture, (grid_x, grid_y), method='nearest')
+        
         return flatmap
+    
     
     def _realign_flatmap(self,flatmap,mapping):
         
         return np.array([flatmap[e,a] for e,a in mapping])
+        
+    def _make_map(self,texture):
+        grid_x, grid_y = np.mgrid[0:180, 0:180]
         
     def flatten(self,img):
         
@@ -71,8 +72,9 @@ class ToFlattenedSphere():
         texture_right = self._realign_flatmap(flatmaps[:,0])
         texture_left = self._realign_flatmap(flatmaps[:,1])
         
+        
         # affine??
+        # revisit definition of affine
+        # maybe the mesh file has it
 
-# add interpolation 
-# https://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html#multivariate-data-interpolation-griddata
 # the cnn should have a large receptive field... (with dilated one?)

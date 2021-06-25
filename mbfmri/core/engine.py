@@ -12,11 +12,11 @@ MBMVPA = MBMVPA
 run_mbglm = run_mbglm
 run_mbmvpa = run_mbmvpa
 
-valid_analysis = ['mbmvpa','mbmvpah','glm']
+valid_analysis = ['mvpa','glm']
 
-def run_mbfmri(analysis='mbmvpa',
+def run_mbfmri(analysis='mvpa',
               **kwargs):
-    if analysis.lower() == 'mbmvpa':
+    if analysis.lower() == 'mvpa':
         run_mbmvpa(**kwargs)
     elif analysis.lower() == 'glm':
         run_mbglm(**kwargs)

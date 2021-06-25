@@ -85,7 +85,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'use_absolute_value':False,
         'logistic':False,
         'binarizer_thresholds':None,
-        'binarizer_ratios':.25,
+        'binarizer_ratios':.20,
     },
     'GLM':{
         'task_name': None,

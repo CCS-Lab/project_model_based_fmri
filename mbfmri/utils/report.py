@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-import re
+import functools
 
 report_function_dict = {'brainmap':{'module':Report_BrainMap,
                                    'data':['weights'],
@@ -153,9 +153,17 @@ def aggregate(search_path,
     
     data = {name:[f for f in search_path.glob(f'**/*{name}*') if checker(f)] for name in names }
     
+    def cmp(v1,v2):
+        fv1,bv1 = v1.name.split('_')[0].split('-')
+        fv2,bv2 = v2.name.split('_')[0].split('-')
+        fdiff = int(fv1)-int(fv2)
+        bdiff = int(bv1)-int(bv2)
+        return fdiff if fdiff !=0 else bdiff
+    
+        
     # sort
     for _, files in data.items():
-        files.sort(key=lambda v :int(re.sub("[^0-9]", "", v.stem)))
+        files.sort(key=functools.cmp_to_key(cmp))
     return data
     
 
@@ -196,7 +204,7 @@ class PostReporter():
         loaded = {}
         data = aggregate(search_path,names,invalid_ids)
         for name, files in data.items():
-            loaded[name] = np.array([np.load(f,allow_pickle=True) for f in files])
+            loaded[name] = [np.load(f,allow_pickle=True) for f in files]
             
         return loaded
     

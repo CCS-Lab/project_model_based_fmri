@@ -13,7 +13,7 @@ https://openneuro.org/datasets/ds000005/versions/00001
 
 """
 
-from mbfmri.core.engine import run_mbfmri, run_mbmvpa
+from mbfmri.core import run_mbfmri, run_mbmvpa
 from pathlib import Path
 
 ## GENERAL SETTING

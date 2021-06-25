@@ -224,8 +224,8 @@ def plot_accuracy(y_train,
               save,
               save_path):
     
-    pred_train = (pred_train > .5) *1
-    pred_test = (pred_test > .5) *1
+    pred_train = [(v > .5) *1 for v in pred_train]
+    pred_test = [(v > .5) *1 for v in pred_test]
     
     data = get_scores_dataframe(y_train,
                            y_test,
@@ -251,6 +251,8 @@ def plot_roc(y_train,
     # copied from 
     # https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
     
+    y_test= np.concatenate(y_test,0)
+    pred_test = np.concatenate(pred_test,0)
     fpr, tpr, _ = roc_curve(y_test.ravel(), pred_test.ravel())
     roc_auc = auc(fpr,tpr)
     plt.figure(figsize=(8, 8))
