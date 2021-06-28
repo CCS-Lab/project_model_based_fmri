@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 from mbfmri.utils.events_utils import _process_indiv_params, _add_event_info, _make_function_dfwise, \
                                 _make_single_time_mask, _get_individual_param_dict, _boldify, \
-                                _get_looic, _update_modelcomparison_table, _fit_dm_model
+                                _get_looic, _update_modelcomparison_table, _fit_dm_model, \
+                                _update_individual_params, _save_fitplots
 from mbfmri.utils.bids_utils import BIDSController
 from bids import BIDSLayout
 from tqdm import tqdm
@@ -165,6 +166,7 @@ class LatentProcessGenerator():
         else:
             self.bids_controller = bids_controller
         
+        self.subjects = list(self.bids_controller.meta_infos['subject'])
         self.task_name = self.bids_controller.task_name
         self.process_name = process_name
         self.dm_model = dm_model
@@ -367,25 +369,48 @@ class LatentProcessGenerator():
         self._trained_dm_model[dm_model] ={'model':model,
                                               self.criterion:value,
                                               'individual_params':individual_params}
-
-        individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
-        f"task-{self.bids_controller.task_name}_model-{dm_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
-
+        individual_params_path = self._get_indivparams_path(dm_model)
+        fitplot_path = self._get_fitplot_path(dm_model)
+        _save_fitplots(model,fitplot_path)
+        # update indiv params
+        _update_individual_params(individual_params_path,individual_params)
         # save indiv params
         individual_params.to_csv(individual_params_path,
-                                 sep="\t", index=False)
+                                 sep="\t", index=False,quotechar="'")
     
- 
+    def _get_indivparams_path(self,dm_model):
+        individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
+        f"task-{self.bids_controller.task_name}_model-{dm_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
+        return individual_params_path
+    
+    def _get_fitplot_path(self,dm_model):
+        fitplot_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
+        f"task-{self.bids_controller.task_name}_model-{dm_model}")
+        fitplot_path.mkdir(exist_ok=True)
+        return fitplot_path
+    
+    def _check_indivparams(self,dm_model):
+        individual_params_path = self._get_indivparams_path(dm_model)
+        if Path(individual_params_path).exists():
+            old_params= pd.read_table(individual_params_path, converters={'subjID': str})
+            return set(self.subjects) == set(old_params['subjID'])
+        else:
+            return False
+        
     def _model_comparison(self,
                          df_events,
                          dm_models,
                          overwrite=False,
                          **kwargs):
         
+        
+        
         for dm_model in dm_models:
+        
             if overwrite or \
                 dm_model not in self._trained_dm_model.keys() or \
-                self.criterion not in self._trained_dm_model[dm_model].keys() :
+                self.criterion not in self._trained_dm_model[dm_model].keys() or \
+                not self._check_indivparams(dm_model):
                 self._fit_update_dm_model(df_events,dm_model,**kwargs)
             
         models_criterion = [(dm_model,info[self.criterion]) for dm_model, info in self._trained_dm_model.items()]
@@ -393,8 +418,7 @@ class LatentProcessGenerator():
         best_model = models_criterion[0][0]
         
         if 'individual_params' not in self._trained_dm_model[best_model]:
-            individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
-        f"task-{self.bids_controller.task_name}_model-{best_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
+            individual_params_path = self._get_indivparams_path(best_model)
             individual_params = _process_indiv_params(individual_params_path)
             if individual_params is None:
                 _, individual_params= _fit_dm_model(df_events,best_model,**kwargs)

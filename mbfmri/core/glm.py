@@ -163,11 +163,17 @@ class GLM():
         
     def run_firstlevel(self):
         
+        try: 
+            t_r = self.layout.get_tr()
+        except:
+            t_r = None
+            
         models, models_bold_imgs, \
             models_modulations, models_confounds = first_level_from_bids(self.layout,
                                                                     self.task_name,
                                                                     self.process_name,
                                                                     self.space_name,
+                                                                    t_r = t_r,
                                                                     mask_img = self.mask,
                                                                     bold_suffix=self.bold_suffix,
                                                                     modulation_suffix=config.DEFAULT_MODULATION_SUFFIX,

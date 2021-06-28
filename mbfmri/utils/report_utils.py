@@ -308,6 +308,11 @@ def plot_elasticnet_result(save_root,
     
     # make dictionary as reportable array.
     
+    cv_mean_score = np.array(cv_mean_score)
+    cv_standard_error = np.array(cv_standard_error)
+    coef_path = np.array(coef_path)
+    lambda_path = np.array(lambda_path)
+    lambda_val = np.array(lambda_val)
     lambda_path = lambda_path[0]
     cv_mean_score = cv_mean_score.reshape(-1, len(lambda_path))
     cv_mean_score = cv_mean_score.mean(0)

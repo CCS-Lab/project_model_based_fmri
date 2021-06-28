@@ -163,10 +163,31 @@ class BIDSController():
     
     def _set_voxelmask_path(self,feature_name="unnamed"):
         self.voxelmask_path = Path(self.mbmvpa_layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.{self.nii_ext}"
+    
+    def _get_general_tr(self):
+        def _tr(layout):
+            try:
+                return layout.get_tr()
+            except:
+                return None
+        t_rs = [_tr(l) for l in [self.layout,self.fmriprep_layout]]
+        _t_rs= []
+        for t_r in t_rs:
+            if t_r is not None:
+                _t_rs.append(t_r)
+        
+        if len(_t_rs) == 0:
+            print(f'INFO: No general TR is found. it will be searched for each run by json file.')
+            return None
+        else:
+            return _t_rs[0]
+        
             
     def _set_metainfo(self):
         
         print(f'INFO: target subjects-{self.subjects}')
+        
+        general_t_r = self._get_general_tr()
         
         # set meta info for each run data in DataFrame format
         meta_infos = {'subject':[],        # subejct ID
@@ -227,18 +248,22 @@ class BIDSController():
             bold_path = bold_file[0].path if len(bold_file) >=1 else None
             reg_path = reg_file[0].path if len(reg_file) >=1 else None
             event_path = event_file[0].path if len(event_file) >=1 else None
-            # get t_r
-            json_data = json.load(open(
-                    self.fmriprep_layout.get(
-                    return_type="file",
-                    suffix=self.bold_suffix,
-                    task=entities['task'],
-                    extension=config.SPECEXT)[0]))
             
-            if "root" in json_data.keys():
-                t_r = json_data["root"]["RepetitionTime"]
+            if general_t_r is None:
+                # get t_r
+                json_data = json.load(open(
+                        self.fmriprep_layout.get(
+                        return_type="file",
+                        suffix=self.bold_suffix,
+                        task=entities['task'],
+                        extension=config.SPECEXT)[0]))
+
+                if "root" in json_data.keys():
+                    t_r = json_data["root"]["RepetitionTime"]
+                else:
+                    t_r = json_data["RepetitionTime"]
             else:
-                t_r = json_data["RepetitionTime"]
+                t_r = general_t_r
             
             # get n_scans
             n_scans = nib.load(bold_file[0].path).shape[-1]

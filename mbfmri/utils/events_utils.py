@@ -18,9 +18,39 @@ from nilearn.glm.first_level.hemodynamic_models import compute_regressor
 from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
 import arviz as az
+import matplotlib.pyplot as plt
 
 from mbfmri.utils import config # configuration for default names used in the package
 
+def _save_fitplots(model,
+                    save_path,
+                     credible_interval = 0.94,
+                     point_estimate= 'mean',
+                     bins = 'auto',
+                     round_to = 2):
+            
+            # retrieved from https://github.com/CCS-Lab/hBayesDM/blob/develop/Python/hbayesdm/base.py
+
+            if model.model_type == 'single':
+                var_names = list(model.parameters_desc)
+            else:
+                var_names = ['mu_' + p for p in model.parameters_desc]
+
+            axes = az.plot_posterior(model.fit,
+                                     kind='hist',
+                                     var_names=var_names,
+                                     credible_interval=credible_interval,
+                                     point_estimate=point_estimate,
+                                     bins=bins,
+                                     round_to=round_to,
+                                     color='black')
+            
+            plt.savefig(Path(save_path)/f'plot_dist.png',bbox_inches='tight')
+            for ax, (p, desc) in zip(axes, model.parameters_desc.items()):
+                ax.set_title('{} ({})'.format(p, desc))
+                
+            az.plot_trace(model.fit, var_names=var_names)
+            plt.savefig(Path(save_path)/f'plot_trace.png',bbox_inches='tight')
 
 def _fit_dm_model(df_events,
                      dm_model,
@@ -33,7 +63,13 @@ def _fit_dm_model(df_events,
                         data=df_events,
                         ncore=n_core,
                         **kwargs)
+        
+        
+            
+            
+        var_names = ['mu_' + p for p in model.parameters_desc]
                 
+            
         individual_params = pd.DataFrame(model.all_ind_pars)
         individual_params.index.name = "subjID"
         individual_params = individual_params.reset_index()
@@ -58,12 +94,24 @@ def _update_modelcomparison_table(table_path, model_name, value, criterion):
     else:
         table = pd.DataFrame({'model':[model_name],'value':[value], 'criterion':[criterion]})
     table.to_csv(table_path,sep="\t", index=False)
+    
+
+def _update_individual_params(individual_params_path,individual_params):
+    if Path(individual_params_path).exists():
+        old_params= pd.read_table(individual_params_path, converters={'subjID': str})
+        if set(old_params.columns)==set(individual_params.columns):
+            for subjID in list(individual_params['subjID']):
+                old_params = old_params[~(old_params['subjID']==subjID)]
+            individual_params = pd.concat([old_params,individual_params])
+    individual_params.sort_values(by="subjID",inplace=True)
+    return individual_params
+
 
 def _process_indiv_params(individual_params):
     if type(individual_params) == str\
         or type(individual_params) == type(Path()):
         try:
-            individual_params = pd.read_table(individual_params)
+            individual_params = pd.read_table(individual_params, converters={'subjID': str})
             print("INFO: individual parameters are loaded")
         except:
             individual_params = None

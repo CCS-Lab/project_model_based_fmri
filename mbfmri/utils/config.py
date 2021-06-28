@@ -169,7 +169,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         },
         'EXPLAINER':{
             'shap_explainer':'deep',
-            'shap_null_background': False,
+            'shap_background_type': 'null',
             'shap_n_background': 100,
             'shap_n_sample': 100,
         },
@@ -234,7 +234,11 @@ DEFAULT_ANALYSIS_CONFIGS = {
 }
 
 
+
+
 # dict[hbayesdm model name] = list of pair(latent process, explanation) 
 AVAILABLE_LATENT_PROCESS = {'bandit2arm_delta':[('EVchosen', 'expected value of chosen option'),
                                                 ('PEchosen', 'prediction error of chosen option')],
                            }
+
+

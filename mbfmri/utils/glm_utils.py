@@ -131,6 +131,7 @@ def first_level_from_bids(bids_layout, task_name, process_name,
                                          run=run_id,
                                          session=ses_id,
                                          **spec_kwargs)
+            
             if len(modulation) ==0 or len(confound)==0 or len(spec)==0:
                 continue
                 
@@ -144,25 +145,23 @@ def first_level_from_bids(bids_layout, task_name, process_name,
             confounds.append(confound)
         
         
-        specs = json.load(open(spec[0], 'r'))
+        if len(specs) != 0:
+            specs = json.load(open(spec[0], 'r'))
+        else:
+            specs = {}
+            
         if 'RepetitionTime' in specs:
-            t_r = float(specs['RepetitionTime'])
+            _t_r = float(specs['RepetitionTime'])
         else:
-            warn('RepetitionTime not found in file %s. t_r can not be '
-                 'inferred and will need to be set manually in the '
-                 'list of models. Otherwise their fit will throw an '
-                 ' exception' % spec[0])
+            _t_r = t_r
+            
         if 'SliceTimingRef' in specs:
-            slice_time_ref = float(specs['SliceTimingRef'])
+            _slice_time_ref = float(specs['SliceTimingRef'])
         else:
-            warn('SliceTimingRef not found in file %s. It will be assumed'
-                 ' that the slice timing reference is 0.0 percent of the '
-                 'repetition time. If it is not the case it will need to '
-                 'be set manually in the generated list of models' %
-                 spec[0])
+            _slice_time_ref = slice_time_ref
             
         model = FirstLevelModel(
-            t_r=t_r, slice_time_ref=slice_time_ref, hrf_model=hrf_model,
+            t_r=_t_r, slice_time_ref=_slice_time_ref, hrf_model=hrf_model,
             drift_model=drift_model, high_pass=high_pass,
             drift_order=drift_order, fir_delays=fir_delays,
             min_onset=min_onset, mask_img=mask_img,
@@ -172,7 +171,13 @@ def first_level_from_bids(bids_layout, task_name, process_name,
             signal_scaling=signal_scaling, noise_model=noise_model,
             verbose=verbose, n_jobs=n_jobs,
             minimize_memory=minimize_memory, subject_label=subject)
-                
+        
+        assert len(bold_imgs)==len(modulations)
+        assert len(bold_imgs)==len(confounds)
+        
+        if len(bold_imgs) == 0:
+            continue
+            
         models.append(model)
         models_bold_imgs.append(bold_imgs)
         models_modulations.append(modulations)
