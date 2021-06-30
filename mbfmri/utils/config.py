@@ -1,4 +1,5 @@
 # default configuration for default names used in the package
+# TODO change names
 ANAL_NAME = "MB-MVPA - Model based MVPA"
 MBMVPA_PIPELINE_NAME = "MB-MVPA"
 FMRIPREP_PIPELINE_NAME = "fMRIPrep"
@@ -6,6 +7,8 @@ TEMPLATE_SPACE = "MNI152NLin2009cAsym"
 MAX_FMRIPREP_CHUNK_SIZE = 32
 DEFAULT_DERIV_ROOT_DIR = "mbmvpa"
 DEFAULT_ROI_MASK_DIR = "masks"
+DEFAULT_MASK_EXCLUDE_DIR = "exclude"
+DEFAULT_MASK_INCLUDE_DIR = "include"
 DEFAULT_VOXEL_MASK_FILENAME = "voxel_mask"
 DEFAULT_FEATURE_SUFFIX = "voxelfeature"
 DEFAULT_MODULATION_SUFFIX = "modulation"
@@ -31,10 +34,11 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'fmriprep_name': 'fMRIPrep',
         'bold_suffix': 'bold',
         'confound_suffix': 'regressors',
-        'mask_threshold': 2.58,
+        'mask_threshold': 1.65, # 2.33
         'zoom': (2, 2, 2),
         'confounds': None,
         'smoothing_fwhm': 6,
+        'mask_smoothing_fwhm':6,
         'standardize': True,
         'high_pass': 0.0078, # ~= 1/128
         'detrend': False,
@@ -139,9 +143,12 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'learning_rate': 0.001,
                 'loss': 'mse',
                 'n_epoch': 50,
+                'n_warmup': 10,
                 'n_patience': 10,
                 'n_batch': 64,
                 'n_sample': 100000,
+                'l1_regularize':1e-5,
+                'l2_regularize':1e-4,
                 'use_bias': True,
                 'logistic': False,
                 'explainer': None,
@@ -158,9 +165,12 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'loss': 'mse',
                 'learning_rate': 0.001,
                 'n_epoch': 50,
+                'n_warmup': 10,
                 'n_patience': 10,
                 'n_batch': 64,
                 'n_sample': 100000,
+                'l1_regularize':1e-5,
+                'l2_regularize':1e-4,
                 'batch_norm': False,
                 'logistic': False,
                 'explainer': None,
@@ -169,7 +179,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         },
         'EXPLAINER':{
             'shap_explainer':'deep',
-            'shap_background_type': 'null',
+            'shap_background_type': 'sample',
             'shap_n_background': 100,
             'shap_n_sample': 100,
         },
@@ -234,7 +244,60 @@ DEFAULT_ANALYSIS_CONFIGS = {
 }
 
 
+dict_list = [DEFAULT_ANALYSIS_CONFIGS['VOXELFEATURE'],
+             DEFAULT_ANALYSIS_CONFIGS['LATENTPROCESS'],
+             DEFAULT_ANALYSIS_CONFIGS['HBAYESDM'],
+             DEFAULT_ANALYSIS_CONFIGS['LOADER'],
+             DEFAULT_ANALYSIS_CONFIGS['GLM'],
+             DEFAULT_ANALYSIS_CONFIGS['MVPA']['MODEL']['elasticnet'],
+             DEFAULT_ANALYSIS_CONFIGS['MVPA']['MODEL']['mlp'],
+             DEFAULT_ANALYSIS_CONFIGS['MVPA']['MODEL']['cnn'],
+             DEFAULT_ANALYSIS_CONFIGS['MVPA']['EXPLAINER'],
+             DEFAULT_ANALYSIS_CONFIGS['MVPA']['CV'],
+             DEFAULT_ANALYSIS_CONFIGS['MVPA']['FITREPORT'],
+             DEFAULT_ANALYSIS_CONFIGS['MVPA']['LOGISTICFITREPORT'],
+             DEFAULT_ANALYSIS_CONFIGS['DATAPLOT']]
 
+import argparse
+
+parser = argparse.ArgumentParser()
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1',''):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+        
+        
+argument_list = []
+for _dict in dict_list:
+    for k,d in _dict.items():
+        if isinstance(d,bool):
+                parser_type = str2bool
+        else:
+            parser_type = type(d)
+
+        if isinstance(d,list):
+            nargs="+"
+            if len(d) != 0:
+                parser_type = type(d[0])
+        else:
+            nargs="?"
+        if k not in argument_list:
+            parser.add_argument(f'--{k}', type=parser_type, default=None, nargs=nargs)
+            argument_list.append(k)
+        else:
+            continue
+                
+parser.add_argument(f'--mvpa_model', type=str, default='elasticnet')
+parser.add_argument(f'--report_path', type=str, default='.')
+parser.add_argument(f'--analysis', type=str, default='mvpa')
+parser.add_argument(f'--refit_compmodel', type=str2bool, default=False, nargs='?', const='')
+parser.add_argument(f'--overwrite', type=str2bool, default=False, nargs='?', const='')
 
 # dict[hbayesdm model name] = list of pair(latent process, explanation) 
 AVAILABLE_LATENT_PROCESS = {'bandit2arm_delta':[('EVchosen', 'expected value of chosen option'),

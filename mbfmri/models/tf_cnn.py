@@ -119,9 +119,12 @@ class MVPA_CNN(MVPA_Base):
                  optimizer="adam",
                  learning_rate=0.001,
                  n_epoch = 50,
+                 n_warmup = 5,
                  n_patience = 10,
                  n_batch = 64,
                  n_sample = 30000,
+                 l1_regularize=1e-5,
+                 l2_regularize=1e-4,
                  batch_norm=False,
                  logistic=False,
                  explainer=None,
@@ -146,6 +149,7 @@ class MVPA_CNN(MVPA_Base):
         self.batch_norm = batch_norm
         self.optimizer = optimizer
         self.learning_rate = learning_rate
+        self.n_warmup = n_warmup
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.n_sample = n_sample
@@ -156,6 +160,10 @@ class MVPA_CNN(MVPA_Base):
         self.X_test = None
         self.explainer = explainer
         self.train_verbosity = train_verbosity
+        self.conv_kwargs = {'kernel_regularizer': l1_l2(l1=l1_regularize, 
+                                                        l2=l2_regularize),
+                            'bias_regularizer': l1_l2(l1=l1_regularize, 
+                                                      l2=l2_regularize)}
 
     
     def reset(self,**kwargs):
@@ -164,7 +172,8 @@ class MVPA_CNN(MVPA_Base):
                     (self.kernel_size[0],self.kernel_size[0]),
                     activation=self.activation,
                     padding='same',
-                    input_shape=self.input_shape,))
+                    input_shape=self.input_shape,
+                             **self.conv_kwargs))
         
         self.model.add(AveragePooling2D(pool_size=(2,2)))
     
@@ -173,7 +182,8 @@ class MVPA_CNN(MVPA_Base):
             self.model.add(Conv2D(dim,
                         (kernel,kernel),
                         activation=self.activation,
-                        padding='same'))
+                        padding='same'
+                                 **self.conv_kwargs))
             self.model.add(AveragePooling2D(pool_size=(2,2)))
             
             if self.batch_norm:
@@ -238,7 +248,13 @@ class MVPA_CNN(MVPA_Base):
         # the training will stop
         es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
         
-        self.model.fit(train_generator, epochs=self.n_epoch,
+        self.model.fit(train_generator, epochs=self.n_warmup,
+                      verbose=self.train_verbosity,
+                      validation_data=val_generator,
+                      steps_per_epoch=train_steps,
+                      validation_steps=val_steps)
+        
+        self.model.fit(train_generator, epochs=self.n_epoch-self.n_warmup,
                       verbose=self.train_verbosity,
                        callbacks=[mc, es],
                       validation_data=val_generator,

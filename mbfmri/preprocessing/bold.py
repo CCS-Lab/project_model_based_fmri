@@ -110,9 +110,10 @@ class VoxelFeatureGenerator():
                   mask_path=None,
                   bold_suffix='bold',
                   confound_suffix='regressors',
-                  mask_threshold=2.58,
+                  mask_threshold=1.65, # for 99.9 two-tailed confidence : 3.29, # for 99 % two-tailed confidence : 2.58,
                   zoom=(2, 2, 2),
-                  smoothing_fwhm=None,
+                  smoothing_fwhm=6,
+                  mask_smoothing_fwhm=6,
                   standardize=True,
                   confounds=[],
                   high_pass=1/128,
@@ -138,7 +139,7 @@ class VoxelFeatureGenerator():
         self.bids_controller._set_voxelmask_path(feature_name=feature_name)
         
         if mask_path is None:
-            self.mask_path = Path(self.bids_controller.fmriprep_layout.root)/ config.DEFAULT_ROI_MASK_DIR
+            self.mask_path = Path(self.bids_controller.layout.root)/ config.DEFAULT_ROI_MASK_DIR
         elif mask_path is False:
             self.mask_path = None
         else:
@@ -149,6 +150,7 @@ class VoxelFeatureGenerator():
         self.mask_threshold = mask_threshold
         self.zoom = zoom
         self.smoothing_fwhm = smoothing_fwhm
+        self.mask_smoothing_fwhm = mask_smoothing_fwhm
         self.standardize = standardize
         self.high_pass = high_pass
         self.detrend = detrend
@@ -172,7 +174,8 @@ class VoxelFeatureGenerator():
             print('INFO: existing voxel mask is loaded.'+f': {survived}/{total}')
         else:
             # integrate mask files in mask_path. 
-            self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom, verbose=1)
+            self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom,
+                                          self.mask_smoothing_fwhm, verbose=1)
         # save voxel mask
         self.bids_controller.save_voxelmask(self.voxel_mask)    
         

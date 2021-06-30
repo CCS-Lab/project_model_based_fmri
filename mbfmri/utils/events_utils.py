@@ -19,6 +19,7 @@ from scipy.stats import zscore
 from sklearn.preprocessing import minmax_scale
 import arviz as az
 import matplotlib.pyplot as plt
+import pickle
 
 from mbfmri.utils import config # configuration for default names used in the package
 
@@ -28,29 +29,37 @@ def _save_fitplots(model,
                      point_estimate= 'mean',
                      bins = 'auto',
                      round_to = 2):
-            
-            # retrieved from https://github.com/CCS-Lab/hBayesDM/blob/develop/Python/hbayesdm/base.py
+    # retrieved from https://github.com/CCS-Lab/hBayesDM/blob/develop/Python/hbayesdm/base.py
 
-            if model.model_type == 'single':
-                var_names = list(model.parameters_desc)
-            else:
-                var_names = ['mu_' + p for p in model.parameters_desc]
+    if model.model_type == 'single':
+        var_names = list(model.parameters_desc)
+    else:
+        var_names = ['mu_' + p for p in model.parameters_desc]
 
-            axes = az.plot_posterior(model.fit,
-                                     kind='hist',
-                                     var_names=var_names,
-                                     credible_interval=credible_interval,
-                                     point_estimate=point_estimate,
-                                     bins=bins,
-                                     round_to=round_to,
-                                     color='black')
-            
-            plt.savefig(Path(save_path)/f'plot_dist.png',bbox_inches='tight')
-            for ax, (p, desc) in zip(axes, model.parameters_desc.items()):
-                ax.set_title('{} ({})'.format(p, desc))
+    axes = az.plot_posterior(model.fit,
+                             kind='hist',
+                             var_names=var_names,
+                             credible_interval=credible_interval,
+                             point_estimate=point_estimate,
+                             bins=bins,
+                             round_to=round_to,
+                             color='black')
+
+    plt.savefig(Path(save_path)/f'plot_dist.png',bbox_inches='tight')
+    az.plot_trace(model.fit, var_names=var_names)
+    plt.savefig(Path(save_path)/f'plot_trace.png',bbox_inches='tight')
+
                 
-            az.plot_trace(model.fit, var_names=var_names)
-            plt.savefig(Path(save_path)/f'plot_trace.png',bbox_inches='tight')
+def _save_fit(model,
+             save_path):
+    with open(Path(save_path)/"model_fit.pkl", "wb") as f:
+         pickle.dump({'model' : model, 'fit' : model.fit}, f, protocol=-1)
+    
+def _load_fit(save_path):
+    with open(Path(save_path)/"model_fit.pkl", "rb") as f:
+        data_dict = pickle.load(f)
+    fit = data_dict['fit']
+    return fit
 
 def _fit_dm_model(df_events,
                      dm_model,

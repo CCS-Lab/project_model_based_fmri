@@ -13,7 +13,7 @@ import pandas as pd
 from mbfmri.utils.events_utils import _process_indiv_params, _add_event_info, _make_function_dfwise, \
                                 _make_single_time_mask, _get_individual_param_dict, _boldify, \
                                 _get_looic, _update_modelcomparison_table, _fit_dm_model, \
-                                _update_individual_params, _save_fitplots
+                                _update_individual_params, _save_fitplots, _save_fit
 from mbfmri.utils.bids_utils import BIDSController
 from bids import BIDSLayout
 from tqdm import tqdm
@@ -372,6 +372,7 @@ class LatentProcessGenerator():
         individual_params_path = self._get_indivparams_path(dm_model)
         fitplot_path = self._get_fitplot_path(dm_model)
         _save_fitplots(model,fitplot_path)
+        _save_fit(model,fitplot_path)
         # update indiv params
         _update_individual_params(individual_params_path,individual_params)
         # save indiv params

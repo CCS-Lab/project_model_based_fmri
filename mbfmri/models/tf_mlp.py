@@ -96,6 +96,7 @@ class MVPA_MLP(MVPA_Base):
                  optimizer="adam",
                  learning_rate=0.001,
                  n_epoch = 50,
+                 n_warmup = 5,
                  n_patience = 10,
                  n_batch = 64,
                  n_sample = 30000,
@@ -103,6 +104,9 @@ class MVPA_MLP(MVPA_Base):
                  logistic = False,
                  explainer = None,
                  train_verbosity=0,
+                 model_save_path=None,
+                 l1_regularize=1e-5,
+                 l2_regularize=1e-4,
                  **kwargs):
         
         
@@ -123,6 +127,7 @@ class MVPA_MLP(MVPA_Base):
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.use_bias = use_bias
+        self.n_warmup = n_warmup
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.n_sample = n_sample
@@ -133,7 +138,12 @@ class MVPA_MLP(MVPA_Base):
         self.X_test = None
         self.explainer = explainer
         self.train_verbosity = train_verbosity
-        
+        self.dense_kwargs = {'use_bias': use_bias,
+                            'kernel_regularizer': l1_l2(l1=l1_regularize, 
+                                                        l2=l2_regularize)}
+        if use_bias:
+            self.dense_kwargs['bias_regularizer']=l1_l2(l1=l1_regularize,
+                                                        l2=l2_regularize)
     
     def reset(self,**kwargs):
         
@@ -141,15 +151,15 @@ class MVPA_MLP(MVPA_Base):
         self.model.add(Dense(self.layer_dims[0],
                         activation=self.activation,
                         input_shape=self.input_shape,
-                        use_bias=self.use_bias))
+                        **self.dense_kwargs))
         self.model.add(Dropout(self.dropout_rate))
 
         # add layers
         for dim in self.layer_dims[1:]:
-            self.model.add(Dense(dim, activation=self.activation, use_bias=self.use_bias))
+            self.model.add(Dense(dim, activation=self.activation, **self.dense_kwargs))
             self.model.add(Dropout(self.dropout_rate))
 
-        self.model.add(Dense(1, activation=self.activation_output, use_bias=self.use_bias))
+        self.model.add(Dense(1, activation=self.activation_output, **self.dense_kwargs))
         
         # set optimizer
         if self.optimizer == "adam":
@@ -192,10 +202,17 @@ class MVPA_MLP(MVPA_Base):
         
         
         #best_model_filepath = tempdir + f"/{self.name}_best_{int(random.random()*100000)}.ckpt"
-        
-        temp = tempfile.NamedTemporaryFile()
-        best_model_filepath = temp.name
-        
+        if 'model_save_path' in kwargs.keys() and kwargs['model_save_path'] is None:
+            use_tempfile = True
+            temp = tempfile.NamedTemporaryFile()
+            best_model_filepath = temp.name
+        else:
+            use_tempfile = False
+            if 'repeat' in kwargs.keys() and 'fold' in kwargs.keys():
+                best_model_filepath = str(kwargs['model_save_path'])+ f"/{kwargs['repeat']}-{kwargs['fold']}_best"
+            else:
+                best_model_filepath = str(kwargs['model_save_path'])+ f"/{int(random.random()*100000)}-{int(random.random()*100000)}_best"
+    
         mc = ModelCheckpoint(
             best_model_filepath,
             save_best_only=True, save_weights_only=True,
@@ -205,7 +222,13 @@ class MVPA_MLP(MVPA_Base):
         # the training will stop
         es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
         
-        self.model.fit(train_generator, epochs=self.n_epoch,
+        self.model.fit(train_generator, epochs=self.n_warmup,
+                      verbose=self.train_verbosity,
+                      validation_data=val_generator,
+                      steps_per_epoch=train_steps,
+                      validation_steps=val_steps)
+        
+        self.model.fit(train_generator, epochs=self.n_epoch-self.n_warmup,
                       verbose=self.train_verbosity,
                        callbacks=[mc, es],
                       validation_data=val_generator,
@@ -215,8 +238,9 @@ class MVPA_MLP(MVPA_Base):
         # load best model
         self.model.load_weights(best_model_filepath)
         
-        os.remove(best_model_filepath+'.data-00000-of-00001')
-        os.remove(best_model_filepath+'.index')
+        if use_tempfile:
+            os.remove(best_model_filepath+'.data-00000-of-00001')
+            os.remove(best_model_filepath+'.index')
         
         self.X_train, self.X_test = X_train,X_test
         

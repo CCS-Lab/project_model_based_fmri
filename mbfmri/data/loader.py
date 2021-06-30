@@ -78,7 +78,7 @@ class Binarizer():
             d = x.copy().flatten()
             d.sort()
             self.lower_thr = d[int(len(d)*self.lower_ratio)]
-            self.upper_thr = d[-int(len(d)*self.upper_ratio)]
+            self.upper_thr = d[int(len(d)*(1-self.upper_ratio))]
         is_positive = (x >= self.upper_thr)
         is_negative = (x < self.lower_thr)
         is_invalid = ~(is_positive|is_negative)

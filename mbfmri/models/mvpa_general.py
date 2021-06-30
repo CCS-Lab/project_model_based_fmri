@@ -177,7 +177,7 @@ class MVPA_CV():
         return output
     
     def _run_fold(self,X_train,y_train,X_test, y_test,i,j,**kwargs):
-        kwargs['fold']=1
+        kwargs['fold']=i
         kwargs['repeat']=j
         report_id=f'{j+1}-{i+1}'
         output=self._run_singletime(X_train, y_train, X_test, y_test, **kwargs)

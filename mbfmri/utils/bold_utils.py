@@ -16,7 +16,8 @@ from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
 from nilearn.datasets import load_mni152_brain_mask
 import nibabel as nib
-
+from mbfmri.utils import config
+from scipy import ndimage
         
 def _zoom_affine(affine, zoom):
     affine = affine.copy()
@@ -36,57 +37,85 @@ def _zoom_img(img_array, original_affine, zoom, binarize=False, threshold=.5):
                            affine=_zoom_affine(original_affine, precise_zoom))
     
 
-def _build_mask(mask_path, threshold, zoom, verbose=0):
+
+from scipy import ndimage
+
+def _integrate_mask(mask_files,template,threshold,smoothing_fwhm,verbose=0):
+    m = np.zeros(template.shape).astype(bool)
+    for i in range(len(mask_files)):
+        # binarize and stack
+        mask_loaded = resample_to_img(str(mask_files[i]), template)
+        assert (mask_loaded.affine==template.affine).all()
+        mask = mask_loaded.get_fdata()
+        affine = mask_loaded.affine
+        
+        # retrieved from nilearn.image._smooth_array
+        if smoothing_fwhm is not None  and smoothing_fwhm > 0:
+            smoothing_fwhm = np.asarray([smoothing_fwhm]).ravel()
+            smoothing_fwhm = np.asarray([0. if elem is None else elem for elem in smoothing_fwhm])
+            affine = affine[:3, :3]  # Keep only the scale part.
+            fwhm_over_sigma_ratio = np.sqrt(8 * np.log(2))  # FWHM to sigma.
+            vox_size = np.sqrt(np.sum(affine ** 2, axis=0))
+            sigma = smoothing_fwhm / (fwhm_over_sigma_ratio * vox_size)
+            for n, s in enumerate(sigma):
+                if s > 0.0:
+                    ndimage.gaussian_filter1d(mask, s, output=mask, axis=n)
+                
+        binarized_mask = mask >= threshold
+        m |= binarized_mask
+        if verbose > 0:
+            survived = int(binarized_mask.sum())
+            total = np.prod(binarized_mask.shape)
+            print('      '+str(mask_files[i].stem)+f': {survived}/{total}')
+    return m
+
+def _build_mask(mask_path, threshold, zoom,smoothing_fwhm, verbose=0):
     # list up mask image file
     if mask_path is None:
-        mask_files = []
+        include_mask_files = []
+        exclude_mask_files = []
     else:
         if type(mask_path) is not type(Path()):
             mask_path = Path(mask_path)
-        mask_files = [file for file in mask_path.glob("*.nii*")]
-
+        include_mask_path = mask_path/config.DEFAULT_MASK_INCLUDE_DIR
+        exclude_mask_path = mask_path/config.DEFAULT_MASK_EXCLUDE_DIR
+        if include_mask_path.exists():
+            include_mask_files = [file for file in include_mask_path.glob("*.nii*")]
+        else:
+            include_mask_files = []
+        if exclude_mask_path.exists():
+            exclude_mask_files = [file for file in exclude_mask_path.glob("*.nii*")]
+        else:
+            exclude_mask_files = []
+            
+        if not exclude_mask_path.exists() and \
+            not include_mask_path.exists():
+            include_mask_files = [file for file in mask_path.glob("*.nii*")]
+            exclude_mask_files = []
     mni_mask = load_mni152_brain_mask()
     
     # integrate binary mask data
     report_dict = {}
-    print('INFO: start loading & intergrating ROI masks')
-    if len(mask_files) > 0 :
-        # binarize
-        mask_loaded = resample_to_img(str(mask_files[0]), mni_mask)
-        assert (mask_loaded.affine==mni_mask.affine).all()
-        binarized_mask = abs(mask_loaded.get_fdata()) >= threshold
-        m = binarized_mask
-        
-        if verbose > 0:
-            survived = int(binarized_mask.sum())
-            total = np.prod(binarized_mask.shape)
-            print('      '+str(mask_files[0].stem)+f': {survived}/{total}')
-        for i in range(len(mask_files)-1):
-            # binarize and stack
-            mask_loaded = resample_to_img(str(mask_files[i]), mni_mask)
-            assert (mask_loaded.affine==mni_mask.affine).all()
-            binarized_mask = abs(mask_loaded.get_fdata()) >= threshold
-            m |= binarized_mask
-            if verbose > 0:
-                survived = int(binarized_mask.sum())
-                total = np.prod(binarized_mask.shape)
-                print('      '+str(mask_files[i].stem)+f': {survived}/{total}')
-        if verbose > 0:
-            survived = int(m.sum())
-            total = np.prod(m.shape)
-            print('      integrated mask'+f': {survived}/{total}')
-    else:
-        # if not provided, use mni152 mask instead.
-        
-        m = mni_mask.get_fdata() 
+    print('INFO: start loading & intergrating masks to include')
+    include_mask = _integrate_mask(include_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
+    if verbose > 0:
+        survived = int(include_mask.sum())
+        total = np.prod(include_mask.shape)
+        print('INFO: integrated mask to include'+f': {survived}/{total}')
+    print('INFO: start loading & intergrating masks to exclude')
+    exclude_mask = _integrate_mask(exclude_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
+    if verbose > 0:
+        survived = int(exclude_mask.sum())
+        total = np.prod(exclude_mask.shape)
+        print('INFO: integrated mask to exclude'+f': {survived}/{total}')
+    
+    m = (mni_mask.get_fdata()>0) & include_mask  & (~exclude_mask)
+    
+    if verbose > 0:
         survived = int(m.sum())
         total = np.prod(m.shape)
-        if verbose > 0:
-            print('      masks are not specified.')
-            print('      default mni152 mask'+f': {survived}/{total}')
-        
+        print('      final mask'+f': {survived}/{total}')
     # reduce dimension by averaging zoom window
-    
     affine = mni_mask.affine.copy()
     
     if zoom != (1, 1, 1):

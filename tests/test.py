@@ -72,7 +72,7 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                n_thread=4,
                method='5-fold',
                gpu_visible_devices = [2],
-               reports=['pearsonr','r','mse','spearmanr'],
+               reports=['brainmap','pearsonr','r','mse','spearmanr'],
                n_batch=4,
                pval_threshold=5)
 '''

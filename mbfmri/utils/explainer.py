@@ -55,9 +55,14 @@ class Explainer():
         X_pool = np.concatenate([X_train,X_test])
         background = self._make_background(X_pool)
         sample = X_pool[np.random.choice(X_pool.shape[0], min(X_pool.shape[0],self.shap_n_sample), replace=True)]
-        e = shap.GradientExplainer(model,background)
+        e = shap.GradientExplainer(model, background)
         shap_values = e.shap_values(sample)[0]
         return shap_values.mean(0)
+    
+    def _fastexplainer(self,model,X_train,X_test):
+        # TODO 
+        # input Eye
+        pass
     
     def __call__(self,
                  model,
@@ -65,9 +70,9 @@ class Explainer():
                 X_test=None):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=Warning)
-            if self.shap_explainer.lower() =='deep':
+            if self.shap_explainer.lower() =='gradient':
                 return self._gradientexplainer(model,X_train,X_test)
-            elif self.shap_explainer.lower() =='perturbation':
+            elif self.shap_explainer.lower() =='deep':
                 return self._deepexplainer(model,X_train,X_test)
             else:
                 return self._gradientexplainer(model,X_train,X_test)

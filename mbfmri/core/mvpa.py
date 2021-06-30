@@ -226,7 +226,8 @@ class MBMVPA(MBFMRI):
                                 **self.config['MVPA']['CV'])
         
         # run model_cv: fit models & interprete models 
-        outputs = self.model_cv.run()
+        model_save_path = self.model_cv.save_root / 'best_model'
+        outputs = self.model_cv.run(model_save_path=model_save_path)
         
         # save configuration
         save_config_path = str(self.model_cv.save_root / 'config.yaml')
