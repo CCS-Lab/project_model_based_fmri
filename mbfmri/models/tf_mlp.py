@@ -7,7 +7,7 @@
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1_l2
 import numpy as np
@@ -92,11 +92,12 @@ class MVPA_MLP(MVPA_Base):
                  layer_dims=[1024, 1024],
                  activation="sigmoid",
                  dropout_rate=0.5,
+                 batch_norm=False,
                  val_ratio=0.2,
                  optimizer="adam",
                  learning_rate=0.001,
                  n_epoch = 50,
-                 n_warmup = 5,
+                 n_min_epoch = 5,
                  n_patience = 10,
                  n_batch = 64,
                  n_sample = 30000,
@@ -123,11 +124,10 @@ class MVPA_MLP(MVPA_Base):
         else:
             self.activation_output = 'linear'
             self.loss = 'mse'
-        self.dropout_rate = dropout_rate
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.use_bias = use_bias
-        self.n_warmup = n_warmup
+        self.n_min_epoch = n_min_epoch
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.n_sample = n_sample
@@ -138,13 +138,21 @@ class MVPA_MLP(MVPA_Base):
         self.X_test = None
         self.explainer = explainer
         self.train_verbosity = train_verbosity
+        if batch_norm:
+            l1_regularize=0
+            l2_regularize=0
+            dropout_rate=0
+        
+        self.batch_norm = batch_norm
+        
         self.dense_kwargs = {'use_bias': use_bias,
                             'kernel_regularizer': l1_l2(l1=l1_regularize, 
                                                         l2=l2_regularize)}
         if use_bias:
             self.dense_kwargs['bias_regularizer']=l1_l2(l1=l1_regularize,
                                                         l2=l2_regularize)
-    
+        self.dropout_rate = dropout_rate
+        
     def reset(self,**kwargs):
         
         self.model = Sequential()
@@ -152,12 +160,19 @@ class MVPA_MLP(MVPA_Base):
                         activation=self.activation,
                         input_shape=self.input_shape,
                         **self.dense_kwargs))
-        self.model.add(Dropout(self.dropout_rate))
+    
+        if self.batch_norm:
+            self.model.add(BatchNormalization())
+        if self.dropout_rate > 0:
+            self.model.add(Dropout(self.dropout_rate))
 
         # add layers
         for dim in self.layer_dims[1:]:
             self.model.add(Dense(dim, activation=self.activation, **self.dense_kwargs))
-            self.model.add(Dropout(self.dropout_rate))
+            if self.batch_norm:
+                self.model.add(BatchNormalization())
+            if self.dropout_rate > 0:
+                self.model.add(Dropout(self.dropout_rate))
 
         self.model.add(Dense(1, activation=self.activation_output, **self.dense_kwargs))
         
@@ -222,13 +237,13 @@ class MVPA_MLP(MVPA_Base):
         # the training will stop
         es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
         
-        self.model.fit(train_generator, epochs=self.n_warmup,
+        self.model.fit(train_generator, epochs=self.n_min_epoch,
                       verbose=self.train_verbosity,
                       validation_data=val_generator,
                       steps_per_epoch=train_steps,
                       validation_steps=val_steps)
         
-        self.model.fit(train_generator, epochs=self.n_epoch-self.n_warmup,
+        self.model.fit(train_generator, epochs=self.n_epoch-self.n_min_epoch,
                       verbose=self.train_verbosity,
                        callbacks=[mc, es],
                       validation_data=val_generator,

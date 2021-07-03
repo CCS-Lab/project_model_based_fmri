@@ -53,34 +53,42 @@ class Normalizer():
 class Binarizer():
     
     def __init__(self,
-                thresholds=None,
-                ratios=.2):
+                positive_range,
+                negative_range,
+                use_ratio=True):
         
-        if ratios is not None:
-            if isinstance(ratios,float):
-                self.upper_ratio,self.lower_ratio = ratios,ratios
+        self.use_ratio = use_ratio
+        
+        if isinstance(positive_range,float):
+            if self.use_ratio:
+                self.positive_range =[positive_range,1.0]
             else:
-                assert len(ratios) == 2
-                self.upper_ratio,self.lower_ratio = ratios
-            self.use_ratio = True
+                self.positive_range =[positive_range,99999]
         else:
-            assert thresholds is not None
-            if isinstance(thresholds,float):
-                self.upper_thr = thresholds
-                self.lower_thr = thresholds
+            assert len(positive_range) == 2
+            self.positive_range =positive_range
+        if isinstance(negative_range,float):
+            if self.use_ratio:
+                self.negative_range =[0,negative_range]
             else:
-                self.upper_thr = thresholds[0]
-                self.lower_thr = thresholds[1]
-            self.use_ratio = False
+                self.negative_range =[-99999,negative_range]
+        else:
+            assert len(negative_range) == 2
+            self.negative_range =negative_range
             
     def __call__(self,x):
         if self.use_ratio:
             d = x.copy().flatten()
             d.sort()
-            self.lower_thr = d[int(len(d)*self.lower_ratio)]
-            self.upper_thr = d[int(len(d)*(1-self.upper_ratio))]
-        is_positive = (x >= self.upper_thr)
-        is_negative = (x < self.lower_thr)
+            positive_range = [d[int(len(d)*self.positive_range[0])],
+                              d[min(len(d)-1,int(len(d)*self.positive_range[1]))]]
+            negative_range = [d[max(0,int(len(d)*self.negative_range[0]))],
+                              d[int(len(d)*self.negative_range[1])]]
+        else:
+            positive_range = self.positive_range
+            negative_range = self.negative_range
+        is_positive = (x >= positive_range[0]) & (x <= positive_range[1])
+        is_negative = (x >= negative_range[0]) & (x <= negative_range[1])
         is_invalid = ~(is_positive|is_negative)
         x[is_positive]=1
         x[is_negative]=0
@@ -153,8 +161,9 @@ class BIDSDataLoader():
                  feature_name="unnamed",
                  verbose=1,
                  logistic=False,
-                 binarizer_thresholds=None,
-                 binarizer_ratios=.2,
+                 binarizer_positive_range=None,
+                 binarizer_negative_range=None,
+                 binarizer_use_ratio=True,
                 ):
          
         # set MB-MVPA layout from "layout" argument.
@@ -202,8 +211,9 @@ class BIDSDataLoader():
         # set binarizer
         self.logistic = logistic
         if self.logistic:
-            self.binarizer = Binarizer(thresholds=binarizer_thresholds,
-                                      ratios=binarizer_ratios)
+            self.binarizer = Binarizer(positive_range=binarizer_positive_range,
+                                       negative_range=binarizer_negative_range,
+                                       use_ratio=binarizer_use_ratio)
         else:
             self.binarizer = None
         

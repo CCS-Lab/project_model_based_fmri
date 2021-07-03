@@ -32,6 +32,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'subjects':'all',
         'task_name':None,
         'fmriprep_name': 'fMRIPrep',
+        'mask_path': None,
         'bold_suffix': 'bold',
         'confound_suffix': 'regressors',
         'mask_threshold': 1.65, # 2.33
@@ -41,11 +42,12 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'mask_smoothing_fwhm':6,
         'standardize': True,
         'high_pass': 0.0078, # ~= 1/128
-        'detrend': False,
+        'detrend': True,
         'n_thread': 1,
         'feature_name':'unnamed',
         'ignore_original':False,
         'space_name': None,
+        'gm_only': False,
     },
     'LATENTPROCESS': {
         'bids_layout':'.',
@@ -88,8 +90,9 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'feature_name':'unnamed',
         'use_absolute_value':False,
         'logistic':False,
-        'binarizer_thresholds':None,
-        'binarizer_ratios':.20,
+        'binarizer_positive_range': [.8,1.0],
+        'binarizer_negative_range': [.0, .2],
+        'binarizer_use_ratio':True,
     },
     'GLM':{
         'task_name': None,
@@ -143,7 +146,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'learning_rate': 0.001,
                 'loss': 'mse',
                 'n_epoch': 50,
-                'n_warmup': 10,
+                'n_min_epoch': 10,
                 'n_patience': 10,
                 'n_batch': 64,
                 'n_sample': 100000,
@@ -153,6 +156,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'logistic': False,
                 'explainer': None,
                 'train_verbosity': 0,
+                'batch_norm':False
             },
             'cnn':{
                 'layer_dims': [8, 16, 32],
@@ -165,7 +169,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'loss': 'mse',
                 'learning_rate': 0.001,
                 'n_epoch': 50,
-                'n_warmup': 10,
+                'n_min_epoch': 10,
                 'n_patience': 10,
                 'n_batch': 64,
                 'n_sample': 100000,
@@ -178,7 +182,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
             },
         },
         'EXPLAINER':{
-            'shap_explainer':'deep',
+            'shap_explainer':'gradient',
             'shap_background_type': 'sample',
             'shap_n_background': 100,
             'shap_n_sample': 100,
@@ -194,19 +198,19 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'confidence_interval': 0.99,
                     'n_coef_plot': 150,
                     'map_type': 'z',
-                    'sigma': 1,
+                    'map_smoothing_fwhm': 6,
                     'pval_threshold': 0.05
                 },
                 'mlp':{
                     'reports':['brainmap','pearsonr','mse'],
                     'map_type': 'z',
-                    'sigma': 1,
+                    'map_smoothing_fwhm': 6,
                     'pval_threshold': 0.05
                 },
                 'cnn':{
                     'reports':['brainmap','pearsonr','mse'],
                     'map_type': 'z',
-                    'sigma': 1,
+                    'map_smoothing_fwhm': 6,
                     'pval_threshold': 0.05
                 },
             },
@@ -216,17 +220,17 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'confidence_interval': 0.99,
                     'n_coef_plot': 150,
                     'map_type': 'z',
-                    'sigma': 1,
+                    'map_smoothing_fwhm': 6,
                 },
                 'mlp':{
                     'reports':['brainmap','accuracy','roc'],
                     'map_type': 'z',
-                    'sigma': 1,
+                    'map_smoothing_fwhm': 6,
                 },
                 'cnn':{
                     'reports':['brainmap','accuracy','roc'],
                     'map_type': 'z',
-                    'sigma': 1,
+                    'map_smoothing_fwhm': 6,
                 },
             },
         'FITREPORT':{
@@ -272,7 +276,15 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
         
-        
+def str2intlist(v):
+    return [int(s) for s in v.split(",")]
+
+def str2floatlist(v):
+    return [float(s) for s in v.split(",")]
+
+def str2list(v):
+    return v.split(",")
+
 argument_list = []
 for _dict in dict_list:
     for k,d in _dict.items():
@@ -282,9 +294,13 @@ for _dict in dict_list:
             parser_type = type(d)
 
         if isinstance(d,list):
-            nargs="+"
             if len(d) != 0:
-                parser_type = type(d[0])
+                if isinstance(d[0],int):
+                    parser_type = str2intlist
+                elif isinstance(d[0],float):
+                    parser_type = str2floatlist
+                else:
+                    parser_type = str2list
         else:
             nargs="?"
         if k not in argument_list:

@@ -173,12 +173,12 @@ class Report_BrainMap():
                 voxel_mask,
                 experiment_name='unnamed',
                 map_type='z',
-                sigma=1):
+                map_smoothing_fwhm=6):
         
         self.voxel_mask = voxel_mask
         self.experiment_name = experiment_name
         self.map_type = map_type
-        self.sigma = sigma
+        self.smoothing_fwhm = map_smoothing_fwhm
         
     def __call__(self,
                  save,
@@ -193,7 +193,7 @@ class Report_BrainMap():
             coefs = weights 
             
         nii, img_path = get_map(coefs, self.voxel_mask, self.experiment_name,
-                map_type=self.map_type, save_path=save_path, sigma=self.sigma)
+                map_type=self.map_type, save_path=save_path, smoothing_fwhm=self.smoothing_fwhm)
         
         plot_mosaic(img_path,save,save_path)
         plot_surface_interactive(img_path,save,save_path)

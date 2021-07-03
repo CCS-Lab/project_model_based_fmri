@@ -117,9 +117,10 @@ class VoxelFeatureGenerator():
                   standardize=True,
                   confounds=[],
                   high_pass=1/128,
-                  detrend=False,
+                  detrend=True,
                   n_thread=4,
                   ignore_original=True,
+                  gm_only=False,
                   **kwargs):
         
         # set path informations and load layout
@@ -158,6 +159,7 @@ class VoxelFeatureGenerator():
         self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
         self.voxel_mask = None
         self.masker = None
+        self.gm_only = gm_only
         
     def summary(self):
         self.bids_controller.summary()
@@ -175,7 +177,7 @@ class VoxelFeatureGenerator():
         else:
             # integrate mask files in mask_path. 
             self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom,
-                                          self.mask_smoothing_fwhm, verbose=1)
+                                          self.mask_smoothing_fwhm, verbose=1,gm_only=self.gm_only)
         # save voxel mask
         self.bids_controller.save_voxelmask(self.voxel_mask)    
         
@@ -200,8 +202,6 @@ class VoxelFeatureGenerator():
         # but we recommend less than 4 because it consumes more memory.
         # TODO: We can specify only the number of threads at this time,
         #       but we must specify only the number of cores or both late
-        
-        
         
         self._load_voxel_mask(overwrite=overwrite)
         

@@ -9,6 +9,11 @@
 import numpy as np
 import shap
 import warnings
+from tensorflow.compat.v1.keras.backend import get_session
+import tensorflow as tf
+tf.compat.v1.disable_v2_behavior()
+#shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
+
 
 class Explainer():
     

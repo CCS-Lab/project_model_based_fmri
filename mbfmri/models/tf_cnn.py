@@ -119,7 +119,7 @@ class MVPA_CNN(MVPA_Base):
                  optimizer="adam",
                  learning_rate=0.001,
                  n_epoch = 50,
-                 n_warmup = 5,
+                 n_min_epoch = 5,
                  n_patience = 10,
                  n_batch = 64,
                  n_sample = 30000,
@@ -149,7 +149,7 @@ class MVPA_CNN(MVPA_Base):
         self.batch_norm = batch_norm
         self.optimizer = optimizer
         self.learning_rate = learning_rate
-        self.n_warmup = n_warmup
+        self.n_min_epoch = n_min_epoch
         self.n_patience = n_patience
         self.n_batch = n_batch
         self.n_sample = n_sample
@@ -182,7 +182,7 @@ class MVPA_CNN(MVPA_Base):
             self.model.add(Conv2D(dim,
                         (kernel,kernel),
                         activation=self.activation,
-                        padding='same'
+                        padding='same',
                                  **self.conv_kwargs))
             self.model.add(AveragePooling2D(pool_size=(2,2)))
             
@@ -248,13 +248,13 @@ class MVPA_CNN(MVPA_Base):
         # the training will stop
         es = EarlyStopping(monitor="val_loss", patience=self.n_patience)
         
-        self.model.fit(train_generator, epochs=self.n_warmup,
+        self.model.fit(train_generator, epochs=self.n_min_epoch,
                       verbose=self.train_verbosity,
                       validation_data=val_generator,
                       steps_per_epoch=train_steps,
                       validation_steps=val_steps)
         
-        self.model.fit(train_generator, epochs=self.n_epoch-self.n_warmup,
+        self.model.fit(train_generator, epochs=self.n_epoch-self.n_min_epoch,
                       verbose=self.train_verbosity,
                        callbacks=[mc, es],
                       validation_data=val_generator,

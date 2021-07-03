@@ -18,7 +18,13 @@ from nilearn.datasets import load_mni152_brain_mask
 import nibabel as nib
 from mbfmri.utils import config
 from scipy import ndimage
-        
+
+
+PATH_ROOT = Path(__file__).absolute().parent
+PATH_EXTDATA = (PATH_ROOT/'extdata').resolve()
+GM_PATH = PATH_EXTDATA/ 'gray_matter.nii.gz'
+# downloaded from https://github.com/Jfortin1/MNITemplate
+
 def _zoom_affine(affine, zoom):
     affine = affine.copy()
     affine[0,:3] *= zoom[0]
@@ -69,11 +75,17 @@ def _integrate_mask(mask_files,template,threshold,smoothing_fwhm,verbose=0):
             print('      '+str(mask_files[i].stem)+f': {survived}/{total}')
     return m
 
-def _build_mask(mask_path, threshold, zoom,smoothing_fwhm, verbose=0):
+def _build_mask(mask_path, threshold, zoom,smoothing_fwhm, verbose=0, gm_only=False):
+    
     # list up mask image file
+    if gm_only:
+        mni_mask = nib.load(str(GM_PATH))
+    else:
+        mni_mask = load_mni152_brain_mask()
     if mask_path is None:
         include_mask_files = []
         exclude_mask_files = []
+        m = (mni_mask.get_fdata()>0)
     else:
         if type(mask_path) is not type(Path()):
             mask_path = Path(mask_path)
@@ -92,25 +104,24 @@ def _build_mask(mask_path, threshold, zoom,smoothing_fwhm, verbose=0):
             not include_mask_path.exists():
             include_mask_files = [file for file in mask_path.glob("*.nii*")]
             exclude_mask_files = []
-    mni_mask = load_mni152_brain_mask()
     
-    # integrate binary mask data
-    report_dict = {}
-    print('INFO: start loading & intergrating masks to include')
-    include_mask = _integrate_mask(include_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
-    if verbose > 0:
-        survived = int(include_mask.sum())
-        total = np.prod(include_mask.shape)
-        print('INFO: integrated mask to include'+f': {survived}/{total}')
-    print('INFO: start loading & intergrating masks to exclude')
-    exclude_mask = _integrate_mask(exclude_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
-    if verbose > 0:
-        survived = int(exclude_mask.sum())
-        total = np.prod(exclude_mask.shape)
-        print('INFO: integrated mask to exclude'+f': {survived}/{total}')
-    
-    m = (mni_mask.get_fdata()>0) & include_mask  & (~exclude_mask)
-    
+        # integrate binary mask data
+        report_dict = {}
+        print('INFO: start loading & intergrating masks to include')
+        include_mask = _integrate_mask(include_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
+        if verbose > 0:
+            survived = int(include_mask.sum())
+            total = np.prod(include_mask.shape)
+            print('INFO: integrated mask to include'+f': {survived}/{total}')
+        print('INFO: start loading & intergrating masks to exclude')
+        exclude_mask = _integrate_mask(exclude_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
+        if verbose > 0:
+            survived = int(exclude_mask.sum())
+            total = np.prod(exclude_mask.shape)
+            print('INFO: integrated mask to exclude'+f': {survived}/{total}')
+
+        m = (mni_mask.get_fdata()>0) & include_mask  & (~exclude_mask)
+
     if verbose > 0:
         survived = int(m.sum())
         total = np.prod(m.shape)
@@ -195,6 +206,7 @@ def _image_preprocess(params):
         if isinstance(confound_names,list) and len(confound_names) > 0:
             confounds = confounds[confound_names]
             confounds = confounds.to_numpy()
+            confounds[np.isnan(confounds)] = 0
             std = confounds.std(0)
             mean = confounds.mean(0)
             confounds = (confounds-mean)/std
@@ -202,6 +214,7 @@ def _image_preprocess(params):
         elif confound_names == 'all':
             confounds = confounds
             confounds = confounds.to_numpy()
+            confounds[np.isnan(confounds)] = 0
             std = confounds.std(0)
             mean = confounds.mean(0)
             confounds = (confounds-mean)/std

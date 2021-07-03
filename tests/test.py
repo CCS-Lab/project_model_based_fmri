@@ -32,7 +32,7 @@ def test_adjust(row):
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
                mvpa_model='mlp',
-               feature_name='zoom2v3',
+               feature_name='zoom2gm',
                task_name='mixedgamblestask',
                process_name='SUgamble',
                skip_compmodel=False,
@@ -44,17 +44,22 @@ _ = run_mbfmri(bids_layout=bids_layout,
                niter=200,
                n_thread=4,
                method='5-fold',
-               overwrite=True,
+               logistic=True,
+               overwrite=False,
                detrend=False,
                high_pass=None,
                smoothing_fwhm=None,
-               gpu_visible_devices = [2],
+               gpu_visible_devices = [0],
                n_batch=4,
                pval_threshold=5,
-              refit_compmodel=True,
+               mask_path=False,
+               batch_norm=True,
+                gm_only=True,
+               shap_explainer='deep'
+              #refit_compmodel=True,
               )
 
-
+'''
 ## TEST MODELCOMPARISON
 _ = run_mbmvpa(bids_layout=bids_layout,
                dm_model=['ra_prospect','ra_noRA','ra_noLA'],
@@ -75,7 +80,7 @@ _ = run_mbmvpa(bids_layout=bids_layout,
                reports=['brainmap','pearsonr','r','mse','spearmanr'],
                n_batch=4,
                pval_threshold=5)
-'''
+
 ## TEST PRECALCULATED PROCESS
 _ = run_mbfmri(bids_layout=bids_layout,
                mvpa_model='elasticnet',

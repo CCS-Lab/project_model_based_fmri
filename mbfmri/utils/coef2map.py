@@ -9,7 +9,7 @@ from pathlib import Path
 
 import nibabel as nib
 import numpy as np
-from scipy.ndimage import gaussian_filter
+from scipy.ndimage import gaussian_filter1d
 from scipy.stats import ttest_1samp, zscore
 
 
@@ -17,14 +17,15 @@ def reconstruct(array, mask):
     
     if array.shape[-1] == 1:
         array = array.squeeze(-1)
-    blackboard = np.zeros(list(mask.shape))
+    
+    blackboard = np.zeros(mask.shape)
     blackboard[mask.nonzero()] = array
     
     return blackboard
     
     
 def get_map(coefs, voxel_mask, task_name,
-            map_type="z", save_path=".", sigma=1):
+            map_type="z", save_path=".", smoothing_fwhm=6):
     """
     make nii image file from coefficients of model using masking info.
     """
@@ -59,17 +60,12 @@ def get_map(coefs, voxel_mask, task_name,
     assert isinstance(map_type, str)
     assert (isinstance(save_path, str)
         or isinstance(save_path, Path))
-    assert isinstance(sigma, int)
     ###########################################################################
     # make result map
 
     activation_maps = []
+    mask = voxel_mask.get_fdata()
     
-    if not isinstance(voxel_mask,np.ndarray):
-        mask = voxel_mask.get_fdata()
-    else:
-        mask = voxel_mask
-        
     for coef in coefs:
         # converting flattened coefs to brain image.
         if len(coef.shape) != 3:
@@ -77,8 +73,18 @@ def get_map(coefs, voxel_mask, task_name,
         else:
             activation_map = coef
             
-        if sigma > 0:
-            activation_map = gaussian_filter(activation_map, sigma)
+        # retrieved from nilearn.image._smooth_array
+        if smoothing_fwhm is not None  and smoothing_fwhm > 0:
+            smoothing_fwhm = np.asarray([smoothing_fwhm]).ravel()
+            smoothing_fwhm = np.asarray([0. if elem is None else elem for elem in smoothing_fwhm])
+            affine = voxel_mask.affine[:3, :3]  # Keep only the scale part.
+            fwhm_over_sigma_ratio = np.sqrt(8 * np.log(2))  # FWHM to sigma.
+            vox_size = np.sqrt(np.sum(affine ** 2, axis=0))
+            sigma = smoothing_fwhm / (fwhm_over_sigma_ratio * vox_size)
+            for n, s in enumerate(sigma):
+                if s > 0.0:
+                    gaussian_filter1d(activation_map, s, output=activation_map, axis=n)
+                
         activation_maps.append(activation_map)
 
     activation_maps = np.array(activation_maps)
