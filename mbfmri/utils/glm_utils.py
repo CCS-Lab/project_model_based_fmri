@@ -39,7 +39,6 @@ def _fit_firstlevel_model(params):
             models.fit([nib.load(run_img) for run_img in models_run_imgs],
                       events=models_events,
                       confounds=models_confounds)
-            
             contrast_def = [np.zeros( len(dm.columns)) for dm in models.design_matrices_]
             for i, dm in enumerate(models.design_matrices_):
                 contrast_def[i][dm.columns.get_loc(process_name)] = 1
@@ -118,6 +117,7 @@ def first_level_from_bids(bids_layout, task_name, process_name,
         bold_imgs = []
         modulations = []
         confounds = []
+        specs = []
         for bold_img in candidate_bold_imgs:
             entities = bold_img.get_entities()
             if 'session' in entities.keys(): 
@@ -157,6 +157,7 @@ def first_level_from_bids(bids_layout, task_name, process_name,
             bold_imgs.append(bold_img)
             modulations.append(modulation)
             confounds.append(confound)
+            specs.append(spec)
         
         
         if len(specs) != 0:

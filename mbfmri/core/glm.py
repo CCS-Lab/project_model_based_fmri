@@ -107,6 +107,8 @@ class GLM():
                  space_name=None,
                  mask_path=None,
                  mask_threshold=2.58,
+                 mask_smoothing_fwhm=6,
+                 gm_only=False,
                  glm_save_path='.',
                  n_core=4,
                  bold_suffix='bold',
@@ -153,7 +155,11 @@ class GLM():
         else:
             self.mask_path = mask_path
         self.mask_threshold = mask_threshold
-        self.mask =_build_mask(self.mask_path, self.mask_threshold,zoom=zoom, verbose=1)
+        self.mask_smoothing_fwhm = mask_smoothing_fwhm
+        self.gm_only = gm_only
+        self.zoom = zoom
+        self.mask =_build_mask(self.mask_path, self.mask_threshold, self.zoom,
+                                          self.mask_smoothing_fwhm, verbose=1,gm_only=self.gm_only)
         self.n_core = n_core
         self.subjects= subjects
         self.bold_suffix = bold_suffix
@@ -204,6 +210,7 @@ class GLM():
             # parallel computing using multiple threads.
             # please refer to "concurrent" api of Python.
             # it might require basic knowledge in multiprocessing.
+            
             with ProcessPoolExecutor(max_workers=self.n_core) as executor:
                 future_result = {executor.submit(
                     _fit_firstlevel_model, params): params for params in params_chunk

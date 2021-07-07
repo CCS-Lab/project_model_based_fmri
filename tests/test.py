@@ -28,7 +28,7 @@ def test_adjust(row):
     return row
 
 ## TEST MVPA BASIC
-
+'''
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
                mvpa_model='mlp',
@@ -45,7 +45,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                n_thread=4,
                method='5-fold',
                logistic=True,
-               overwrite=True,
+               overwrite=False,
                detrend=False,
                high_pass=None,
                smoothing_fwhm=None,
@@ -54,12 +54,12 @@ _ = run_mbfmri(bids_layout=bids_layout,
                pval_threshold=5,
                mask_path=False,
                batch_norm=True,
-                gm_only=True,
+               gm_only=True,
                shap_explainer='deep'
               #refit_compmodel=True,
               )
 
-'''
+
 ## TEST MODELCOMPARISON
 _ = run_mbmvpa(bids_layout=bids_layout,
                dm_model=['ra_prospect','ra_noRA','ra_noLA'],
@@ -158,7 +158,7 @@ _ = run_mbfmri(analysis='mbmvpah',
                gpu_visible_devices = [2],
                n_batch=4,
                pval_threshold=5)
-
+'''
 ## TEST GLM
 _ = run_mbfmri(analysis='glm',
               report_path=report_path,
@@ -170,7 +170,7 @@ _ = run_mbfmri(analysis='glm',
               overwrite=False,
               overwrite_latent_process=True,
               refit_compmodel=False)
-
+'''
 ## TEST MVPA-MLP Logistic
 _ = run_mbfmri(bids_layout=bids_layout,
                logistic=True,
