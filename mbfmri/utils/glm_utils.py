@@ -54,7 +54,7 @@ def _fit_firstlevel_model(params):
             
 def first_level_from_bids(bids_layout, task_name, process_name, 
                           space_name="MNI152NLin2009cAsym",
-                          subjects='all',bold_suffix="bold",
+                          subjects='all',sessions='all',bold_suffix="bold",
                           modulation_suffix="modulation",
                           confound_suffix="regressors",
                           img_filters=None, t_r=None, slice_time_ref=0.,
@@ -94,6 +94,20 @@ def first_level_from_bids(bids_layout, task_name, process_name,
     else:
         subjects = subjects
     
+    if sessions =='all':
+        sessions = bids_layout.get_sessions()
+        if len(sessions) ==0:
+            has_session = False
+        else:
+            has_session = True
+    else:
+        sessions = sessions
+        assert len(sessions) > 0
+        has_session = True
+    
+    if has_session:
+        bold_kwargs['session'] = sessions
+        
     models = []
     models_bold_imgs = []
     models_modulations = []

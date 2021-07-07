@@ -112,6 +112,7 @@ class GLM():
                  bold_suffix='bold',
                  confound_suffix='regressors',
                  subjects='all',
+                 sessions='all',
                  zoom=(1,1,1),
                 **glm_kwargs):
         
@@ -158,6 +159,7 @@ class GLM():
         self.bold_suffix = bold_suffix
         self.confound_suffix=confound_suffix
         self.subjects=subjects
+        self.sessions=sessions
         self.glm_kwargs=glm_kwargs
         self.smoothing_fwhm  = glm_kwargs['smoothing_fwhm']
         
@@ -179,6 +181,7 @@ class GLM():
                                                                     modulation_suffix=config.DEFAULT_MODULATION_SUFFIX,
                                                                     confound_suffix=self.confound_suffix,
                                                                     subjects=self.subjects,
+                                                                    sessions=self.sessions,
                                                                     **self.glm_kwargs
                                                                     )
         

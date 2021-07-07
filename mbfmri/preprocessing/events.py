@@ -128,6 +128,7 @@ class LatentProcessGenerator():
     def __init__(self, 
                   bids_layout,
                   subjects="all",
+                  sessions="all",
                   bids_controller=None,
                   save_path=None,
                   task_name=None,
@@ -160,6 +161,7 @@ class LatentProcessGenerator():
         if bids_controller is None:
             self.bids_controller = BIDSController(bids_layout,
                                             subjects=subjects,
+                                            sessions=sessions,
                                             save_path=save_path,
                                             task_name=task_name,
                                             ignore_original=ignore_original)

@@ -109,6 +109,7 @@ class BIDSController():
     def __init__(self,
                 bids_layout,
                 subjects='all',
+                sessions='all',
                 save_path=None,
                 fmriprep_name="fMRIPrep",
                 task_name=None,
@@ -136,6 +137,7 @@ class BIDSController():
         self.save_path = save_path
         self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
         self.subjects=subjects
+        self.sessions=sessions
         self._set_fmriprep_layout()
         self._set_task_name()
         self._set_save_path()
@@ -206,6 +208,11 @@ class BIDSController():
             entities = file.get_entities()
             
             if self.subjects != 'all' and entities['subject'] not in self.subjects:
+                continue
+                
+            if self.sessions != 'all' and \
+                'session' in entities.keys() and\
+                entities['session'] not in self.sessions:
                 continue
                 
             if 'session' in entities.keys(): 

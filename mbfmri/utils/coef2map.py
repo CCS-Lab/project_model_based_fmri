@@ -24,8 +24,7 @@ def reconstruct(array, mask):
     return blackboard
     
     
-def get_map(coefs, voxel_mask, task_name,
-            map_type="z", save_path=".", smoothing_fwhm=6):
+def get_map(coefs, voxel_mask, experiment_name, standardize=True, save_path=".", smoothing_fwhm=6):
     """
     make nii image file from coefficients of model using masking info.
     """
@@ -56,8 +55,7 @@ def get_map(coefs, voxel_mask, task_name,
     assert (isinstance(coefs, list)
         or isinstance(coefs, np.ndarray))
     assert isinstance(voxel_mask, nib.nifti1.Nifti1Image)
-    assert isinstance(task_name, str)
-    assert isinstance(map_type, str)
+    assert isinstance(experiment_name, str)
     assert (isinstance(save_path, str)
         or isinstance(save_path, Path))
     ###########################################################################
@@ -67,6 +65,8 @@ def get_map(coefs, voxel_mask, task_name,
     mask = voxel_mask.get_fdata()
     
     for coef in coefs:
+        if standardize:
+            coef = zscore(coef,axis=None)
         # converting flattened coefs to brain image.
         if len(coef.shape) != 3:
             activation_map = reconstruct(coef.ravel(), mask)
@@ -90,12 +90,8 @@ def get_map(coefs, voxel_mask, task_name,
     activation_maps = np.array(activation_maps)
     activation_maps[np.isnan(activation_maps)] = 0
 
-    if map_type == "t":
-        # voxel-wise one sample ttest
-        m = ttest_1samp(activation_maps, 0).statistic
-    else:
-        # averaging z_score of each voxel
-        m = zscore(activation_maps, axis=None).mean(0)
+    # voxel-wise one sample ttest
+    m = ttest_1samp(activation_maps, 0).statistic
 
     m[np.isnan(m)] = 0
     m *= mask
@@ -105,7 +101,7 @@ def get_map(coefs, voxel_mask, task_name,
     
     save_path = Path(save_path)
     save_path.mkdir(exist_ok=True)
-    file_path = save_path / f"{task_name}_{map_type}_map.nii"
+    file_path = save_path / f"{experiment_name}_attribution_map.nii"
     result_map.to_filename(file_path)
 
     return result_map, file_path

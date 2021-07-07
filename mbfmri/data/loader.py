@@ -18,7 +18,7 @@ from mbfmri.utils import config
 from mbfmri.utils.coef2map import reconstruct
 from tqdm import tqdm
 
-
+    
 class Normalizer():
     r"""
     A callable class for normalizing bold-signals of the latent process. 
@@ -28,11 +28,15 @@ class Normalizer():
     
     def __init__(self, 
                  use_absolute_value=False,
-                 normalizer_name="minmax",
-                 scale=(-1,1)):
+                 normalizer_name="rescale",
+                 std_threshold=2.58,
+                 clip=True,
+                 scale=[0,1]):
         self.use_absolute_value = use_absolute_value
         self.name = normalizer_name
         self.scale = scale
+        self.std_threshold = std_threshold
+        self.clip = clip
         
     def __call__(self,x):
         if self.use_absolute_value:
@@ -41,13 +45,22 @@ class Normalizer():
             normalized = zscore(x, axis=None)
         elif self.name == "none":
             normalized = x
+        elif self.name == "rescale":
+            temp =x.copy().flatten()
+            temp.sort()
+            std,mean = temp.std(),temp.mean()
+            ub1,lb1 = mean+self.std_threshold*std,mean-self.std_threshold*std
+            lb2,ub2 = self.scale
+            normalized = ((x-lb1)*ub2+lb2*(ub1-x))/(ub1-lb1)
+            if self.clip:
+                normalized=np.clip(normalized, 
+                                   a_min=lb2,
+                                   a_max=ub2)
         else:
-            # default is using minmax
-            original_shape = x.shape
-            normalized = minmax_scale(
-                x.flatten(),
-                feature_range=self.scale, axis=0)
-            normalized = normalized.reshape(original_shape)
+            temp =x.copy().flatten()
+            ub1,lb1 = temp.max(),temp.min()
+            lb2,ub2 = self.scale
+            normalized = ((x-lb1)*ub2+lb2*(ub1-x))/(ub1-lb1)
         return normalized
 
 class Binarizer():
@@ -151,11 +164,19 @@ class BIDSDataLoader():
     def __init__(self,
                  layout,
                  subjects='all',
+                 sessions='all',
                  voxel_mask_path=None,
                  reconstruct=False,
-                 normalizer="none",
-                 use_absolute_value=False,
-                 scale=(-1,1),
+                 y_normalizer="rescale",
+                 y_use_absolute_value=False,
+                 y_scale=[0,1],
+                 y_std_threshold=2.58,
+                 y_clip=False,
+                 X_normalizer="rescale",
+                 X_use_absolute_value=False,
+                 X_scale=[0,1],
+                 X_std_threshold=2.58,
+                 X_clip=False,
                  task_name=None, 
                  process_name="unnamed",
                  feature_name="unnamed",
@@ -201,12 +222,23 @@ class BIDSDataLoader():
         self.voxel_mask = nib.load(voxel_mask_path)
         
         # initiate normalizer function
-        if isinstance(normalizer,str):
-            self.normalizer = Normalizer(normalizer_name=normalizer,
-                                         use_absolute_value=use_absolute_value,
-                                         scale=scale)
+        if isinstance(y_normalizer,str):
+            self.y_normalizer = Normalizer(normalizer_name=y_normalizer,
+                                         use_absolute_value=y_use_absolute_value,
+                                         std_threshold=y_std_threshold,
+                                         scale=y_scale,
+                                          clip=y_clip)
         else:
-            self.normalizer = normalizer
+            self.y_normalizer = y_normalizer
+            
+        if isinstance(X_normalizer,str):
+            self.X_normalizer = Normalizer(normalizer_name=X_normalizer,
+                                         use_absolute_value=X_use_absolute_value,
+                                         std_threshold=X_std_threshold,
+                                         scale=X_scale,
+                                          clip=X_clip)
+        else:
+            self.X_normalizer = X_normalizer
         
         # set binarizer
         self.logistic = logistic
@@ -242,6 +274,19 @@ class BIDSDataLoader():
         else:
             self.subjects = subjects
         
+        if sessions =='all':
+            sessions = self.layout.get_sessions()
+            if len(sessions) ==0:
+                has_session = False
+            else:
+                has_session = True
+        else:
+            sessions = sessions
+            assert len(sessions) > 0
+            has_session = True
+        if has_session:
+            X_kwargs['session'] = sessions
+            
         self.X = {}
         self.y = {}
         self.timemask = {}
@@ -341,7 +386,7 @@ class BIDSDataLoader():
             X_subject = [np.load(f) for f in self.X[subject]]
             
             # masked X data are concatenated
-            self.X[subject] = np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0)
+            self.X[subject] = self.X_normalizer(np.concatenate([data[mask] for mask,data in zip(masks,X_subject)],0))
             
             if reconstruct:
                 mask = self.voxel_mask.get_fdata()
@@ -350,7 +395,8 @@ class BIDSDataLoader():
                 self.X[subject] = blackboard.T
                 
             # maksed y data are concatenated & normalized 
-            self.y[subject] = self.normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
+            self.y[subject] = self.y_normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
+            
             
             if self.logistic:
                 binarized = self.binarizer(self.y[subject])

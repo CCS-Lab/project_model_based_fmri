@@ -229,8 +229,8 @@ class MBMVPA(MBFMRI):
         model_save_path = self.model_cv.save_root / 'best_model'
         outputs = self.model_cv.run(model_save_path=model_save_path)
         
-        # save configuration
-        save_config_path = str(self.model_cv.save_root / 'config.yaml')
-        yaml.dump(self._copy_config(),open(save_config_path,'w'),indent=4, sort_keys=False)
+        # save updated configuration
+        self.save_config_path = str(self.model_cv.save_root / 'config.yaml')
+        yaml.dump(self._copy_config(),open(self.save_config_path,'w'),indent=4, sort_keys=False)
         
         return outputs
