@@ -34,21 +34,22 @@ from mbfmri.utils import config
 
 def _fit_firstlevel_model(params):
             
-            models, models_run_imgs, models_events, \
-                models_confounds, process_name, save_path_first = params
-            models.fit([nib.load(run_img) for run_img in models_run_imgs],
-                      events=models_events,
-                      confounds=models_confounds)
-            contrast_def = [np.zeros( len(dm.columns)) for dm in models.design_matrices_]
-            for i, dm in enumerate(models.design_matrices_):
-                contrast_def[i][dm.columns.get_loc(process_name)] = 1
-                
-            z_map = models.compute_contrast(contrast_def=contrast_def,
-                                                       output_type='z_score')
-            subject_id = models.subject_label
-            nib.save(z_map, save_path_first / f'sub-{subject_id}_map.nii')
-            #nib.save(models.r_square[0], save_path_first / f'sub-{subject_id}_rsquare.nii')
-            
+    models, models_run_imgs, models_events, \
+        models_confounds, process_name, save_path_first = params
+    
+    models.fit([nib.load(run_img) for run_img in models_run_imgs],
+              events=models_events,
+              confounds=models_confounds)
+    contrast_def = [np.zeros( len(dm.columns)) for dm in models.design_matrices_]
+    for i, dm in enumerate(models.design_matrices_):
+        contrast_def[i][dm.columns.get_loc(process_name)] = 1
+
+    z_map = models.compute_contrast(contrast_def=contrast_def,
+                                               output_type='z_score')
+    subject_id = models.subject_label
+    nib.save(z_map, save_path_first / f'sub-{subject_id}_map.nii')
+    #nib.save(models.r_square[0], save_path_first / f'sub-{subject_id}_rsquare.nii')
+
             
             
 def first_level_from_bids(bids_layout, task_name, process_name, 

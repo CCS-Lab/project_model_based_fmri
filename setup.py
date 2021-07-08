@@ -81,5 +81,5 @@ setup(
     zip_safe=False,
     include_package_data=True,
     package_data={
-    'mbfmri.utils.extdata': ['*.nii.gz'],}
+    'mbfmri.utils.extdata': ['*.nii.gz','*.json'],}
 )

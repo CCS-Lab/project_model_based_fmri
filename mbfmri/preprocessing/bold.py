@@ -115,13 +115,16 @@ class VoxelFeatureGenerator():
                   zoom=(2, 2, 2),
                   smoothing_fwhm=6,
                   mask_smoothing_fwhm=6,
+                  include_default_mask=True,
+                  atlas=None,
+                  rois=[],
+                  gm_only=False,
                   standardize=True,
                   confounds=[],
                   high_pass=1/128,
                   detrend=True,
                   n_thread=4,
                   ignore_original=True,
-                  gm_only=False,
                   **kwargs):
         
         # set path informations and load layout
@@ -161,6 +164,9 @@ class VoxelFeatureGenerator():
         self.mbmvpa_X_suffix = config.DEFAULT_FEATURE_SUFFIX
         self.voxel_mask = None
         self.masker = None
+        self.include_default_mask = include_default_mask
+        self.atlas = atlas
+        self.rois = rois
         self.gm_only = gm_only
         
     def summary(self):
@@ -178,8 +184,15 @@ class VoxelFeatureGenerator():
             print('INFO: existing voxel mask is loaded.'+f': {survived}/{total}')
         else:
             # integrate mask files in mask_path. 
-            self.voxel_mask = _build_mask(self.mask_path, self.mask_threshold, self.zoom,
-                                          self.mask_smoothing_fwhm, verbose=1,gm_only=self.gm_only)
+            self.voxel_mask = _build_mask(mask_path=self.mask_path,
+                                          threshold=self.mask_threshold,
+                                          zoom=self.zoom,
+                                          smoothing_fwhm=self.mask_smoothing_fwhm,
+                                          include_default_mask=self.include_default_mask,
+                                          atlas = self.atlas,
+                                          rois=self.rois,
+                                          gm_only=self.gm_only,
+                                          verbose=1)
         # save voxel mask
         self.bids_controller.save_voxelmask(self.voxel_mask)    
         
@@ -206,8 +219,8 @@ class VoxelFeatureGenerator():
         #       but we must specify only the number of cores or both late
         
         self._load_voxel_mask(overwrite=overwrite)
-        
         t_r = self.bids_controller.meta_infos['t_r'].unique()
+        
         if len(t_r) != 1:
             # check if all the time resolution are same.
             assert False, "not consistent time resolution"

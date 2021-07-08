@@ -14,16 +14,12 @@ from skimage.measure import block_reduce
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from nilearn.input_data import NiftiMasker
 from nilearn.image import resample_to_img
-from nilearn.datasets import load_mni152_brain_mask
+from nilearn.datasets import load_mni152_brain_mask, fetch_icbm152_brain_gm_mask
+import importlib
 import nibabel as nib
 from mbfmri.utils import config
+from mbfmri.utils.atlas import get_roi_mask
 from scipy import ndimage
-
-
-PATH_ROOT = Path(__file__).absolute().parent
-PATH_EXTDATA = (PATH_ROOT/'extdata').resolve()
-GM_PATH = PATH_EXTDATA/ 'gray_matter.nii.gz'
-# downloaded from https://github.com/Jfortin1/MNITemplate
 
 def _zoom_affine(affine, zoom):
     affine = affine.copy()
@@ -42,9 +38,6 @@ def _zoom_img(img_array, original_affine, zoom, binarize=False, threshold=.5):
     return nib.Nifti1Image(new_img_array, 
                            affine=_zoom_affine(original_affine, precise_zoom))
     
-
-
-from scipy import ndimage
 
 def _integrate_mask(mask_files,template,threshold,smoothing_fwhm,verbose=0):
     m = np.zeros(template.shape).astype(bool)
@@ -75,17 +68,32 @@ def _integrate_mask(mask_files,template,threshold,smoothing_fwhm,verbose=0):
             print('      '+str(mask_files[i].stem)+f': {survived}/{total}')
     return m
 
-def _build_mask(mask_path, threshold, zoom,smoothing_fwhm, verbose=0, gm_only=False):
+def _build_mask(mask_path, threshold, zoom,smoothing_fwhm,include_default_mask=True,
+                atlas=None,rois=[],gm_only=False,verbose=1):
+    
+    
     
     # list up mask image file
+    
+    default_mask = load_mni152_brain_mask()
+    if not include_default_mask:
+        default_mask = nib.Nifti1Image(np.ones(default_mask.shape),
+                                   affine=default_mask.affine)
+        
     if gm_only:
-        mni_mask = nib.load(str(GM_PATH))
-    else:
-        mni_mask = load_mni152_brain_mask()
+        gm = fetch_icbm152_brain_gm_mask()
+        gm = resample_to_img(gm, default_mask)
+        default_mask = gm
+        
+    if atlas is not None:
+        roi_mask = get_roi_mask(atlas, rois)
+        roi_mask = resample_to_img(roi_mask, default_mask )
+        default_mask = roi_mask
+        
     if mask_path is None:
         include_mask_files = []
         exclude_mask_files = []
-        m = (mni_mask.get_fdata()>0)
+        m = (default_mask.get_fdata().round() >0)
     else:
         if type(mask_path) is not type(Path()):
             mask_path = Path(mask_path)
@@ -108,26 +116,26 @@ def _build_mask(mask_path, threshold, zoom,smoothing_fwhm, verbose=0, gm_only=Fa
         # integrate binary mask data
         report_dict = {}
         print('INFO: start loading & intergrating masks to include')
-        include_mask = _integrate_mask(include_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
+        include_mask = _integrate_mask(include_mask_files,default_mask,threshold,smoothing_fwhm, verbose)
         if verbose > 0:
             survived = int(include_mask.sum())
             total = np.prod(include_mask.shape)
             print('INFO: integrated mask to include'+f': {survived}/{total}')
         print('INFO: start loading & intergrating masks to exclude')
-        exclude_mask = _integrate_mask(exclude_mask_files,mni_mask,threshold,smoothing_fwhm, verbose)
+        exclude_mask = _integrate_mask(exclude_mask_files,default_mask,threshold,smoothing_fwhm, verbose)
         if verbose > 0:
             survived = int(exclude_mask.sum())
             total = np.prod(exclude_mask.shape)
             print('INFO: integrated mask to exclude'+f': {survived}/{total}')
 
-        m = (mni_mask.get_fdata()>0) & include_mask  & (~exclude_mask)
+        m = (default_mask.get_fdata().round() > 0) & include_mask  & (~exclude_mask)
 
     if verbose > 0:
         survived = int(m.sum())
         total = np.prod(m.shape)
         print('      final mask'+f': {survived}/{total}')
     # reduce dimension by averaging zoom window
-    affine = mni_mask.affine.copy()
+    affine = default_mask.affine.copy()
     
     if zoom != (1, 1, 1):
         voxel_mask = _zoom_img(m, affine, zoom, binarize=True)

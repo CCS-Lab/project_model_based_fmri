@@ -108,6 +108,9 @@ class GLM():
                  mask_path=None,
                  mask_threshold=2.58,
                  mask_smoothing_fwhm=6,
+                 include_default_mask=True,
+                 atlas=None,
+                 rois=[],
                  gm_only=False,
                  glm_save_path='.',
                  n_core=4,
@@ -151,15 +154,25 @@ class GLM():
         self.save_path_second.mkdir(exist_ok=True)
         self.firstlevel_done = False
         if mask_path is None:
-            self.mask_path = Path(self.fmriprep_layout.root)/'masks'
+            self.mask_path = Path(self.layout.root)/'masks'
         else:
             self.mask_path = mask_path
         self.mask_threshold = mask_threshold
         self.mask_smoothing_fwhm = mask_smoothing_fwhm
+        self.include_default_mask = include_default_mask
+        self.atlas = atlas
+        self.rois = rois
         self.gm_only = gm_only
         self.zoom = zoom
-        self.mask =_build_mask(self.mask_path, self.mask_threshold, self.zoom,
-                                          self.mask_smoothing_fwhm, verbose=1,gm_only=self.gm_only)
+        self.mask = _build_mask(mask_path=self.mask_path,
+                              threshold=self.mask_threshold,
+                              zoom=self.zoom,
+                              smoothing_fwhm=self.mask_smoothing_fwhm,
+                              include_default_mask=self.include_default_mask,
+                              atlas = self.atlas,
+                              rois=self.rois,
+                              gm_only=self.gm_only,
+                              verbose=1)
         self.n_core = n_core
         self.subjects= subjects
         self.bold_suffix = bold_suffix
@@ -210,6 +223,7 @@ class GLM():
             # parallel computing using multiple threads.
             # please refer to "concurrent" api of Python.
             # it might require basic knowledge in multiprocessing.
+            #_fit_firstlevel_model(params_chunk[0])
             
             with ProcessPoolExecutor(max_workers=self.n_core) as executor:
                 future_result = {executor.submit(
@@ -219,6 +233,7 @@ class GLM():
             for result in future_result.keys():
                 if isinstance(result.exception(),Exception):
                     raise result.exception()
+            
                     
             
         self.firstlevel_done = True

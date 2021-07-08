@@ -54,6 +54,8 @@ _ = run_mbfmri(bids_layout=bids_layout,
                pval_threshold=5,
                mask_path=False,
                batch_norm=True,
+               atlas='aal',
+               rois=["Precentral_L","Precentral_R"],
                gm_only=True,
                shap_explainer='deep'
               #refit_compmodel=True,
@@ -163,13 +165,16 @@ _ = run_mbfmri(analysis='mbmvpah',
 _ = run_mbfmri(analysis='glm',
               report_path=report_path,
               bids_layout=bids_layout,
+              feature_name='zoom2roi',
               dm_model='ra_prospect',
               task_name='mixedgamblestask',
               process_name='SUgamble',
               adjust_function=test_adjust,
-              overwrite=False,
               overwrite_latent_process=True,
-              refit_compmodel=False)
+              refit_compmodel=False,
+              overwrite=True,
+              atlas='aal',
+              rois=["Precentral_L","Precentral_R"],)
 '''
 ## TEST MVPA-MLP Logistic
 _ = run_mbfmri(bids_layout=bids_layout,
