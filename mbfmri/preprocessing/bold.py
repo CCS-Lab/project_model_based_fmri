@@ -125,6 +125,8 @@ class VoxelFeatureGenerator():
                   detrend=True,
                   n_thread=4,
                   ignore_original=True,
+                  t_r=None,
+                  slice_time_ref=.5,
                   **kwargs):
         
         # set path informations and load layout
@@ -138,7 +140,9 @@ class VoxelFeatureGenerator():
                                             space_name=space_name,      
                                             bold_suffix=bold_suffix,
                                             confound_suffix=confound_suffix,
-                                            ignore_original=ignore_original)
+                                            ignore_original=ignore_original,
+                                            t_r=t_r,
+                                            slice_time_ref=slice_time_ref,)
         else:
             self.bids_controller = bids_controller
             

@@ -2,6 +2,7 @@ import nibabel as nib
 import numpy as np
 import nilearn.datasets
 from pathlib import Path
+from nilearn.image import resample_to_img
 import json
 
 FETCH_ATLAS_MODULES = { m.split('fetch_atlas_')[-1]:m for m in dir(nilearn.datasets) if 'fetch_atlas' in m}
@@ -176,7 +177,6 @@ def get_atlas(atlas):
 
 #AVAILABLE_ATLAS_LABELS = {atlas:list(get_atlas(atlas)[1].keys()) for atlas in AVAILABLE_ATLASES}
                      
-                     
 
 def get_roi_mask(atlas, rois):
     assert len(rois) > 0
@@ -187,4 +187,63 @@ def get_roi_mask(atlas, rois):
     atlas_roi_masked = atlas_roi_masked.sum(0)
     atlas_roi_masked = nib.Nifti1Image(atlas_roi_masked,affine=atlas_map.affine)
     return atlas_roi_masked
+
+def get_roi_masks(atlas_map, atlas_label_mapping):
+    arr = atlas_map.get_fdata()
+    arr = arr.astype(int)
+    roi_masks = {}
+    for label, index in atlas_label_mapping.items():
+        index = int(index)
+        mask_arr = (arr==index) *1.0
+        roi_masks[label]= nib.Nifti1Image(mask_arr,affine=atlas_map.affine)
+        
+    return roi_masks
     
+    
+def get_roi_mean_activation_from_atlas(nii_img, atlas):
+    atlas_map, atlas_label_mapping = get_atlas(atlas)
+    nii_img = resample_to_img(nii_img, atlas_map)
+    atlas_map_data = atlas_map.get_fdata()
+    nii_data = nii_img.get_fdata()
+    mean_activation = {}
+    for roi, index in atlas_label_mapping.items():
+        mask = (atlas_map_data.astype(int)==int(index))
+        roi_acts = nii_data[np.nonzero(mask)]
+        mean_activation[roi] = roi_acts.mean()
+    return mean_activation
+
+def get_roi_mean_activation(nii_img, roi_masks):
+    nii_img = resample_to_img(nii_img, roi_masks[list(roi_masks.keys())[0]])
+    
+    nii_data = nii_img.get_fdata()
+    mean_activation = {}
+    
+    for roi, mask in roi_masks.items():
+        mask = mask.get_fdata().astype(int)
+        roi_acts = nii_data[np.nonzero(mask)]
+        mean_activation[roi] = roi_acts.mean()
+    return mean_activation
+
+def get_roi_masked_img(nii_img, roi_masks):
+    temp = roi_masks[list(roi_masks.keys())[0]]
+    nii_img = resample_to_img(nii_img,temp)
+    nii_data = nii_img.get_fdata()
+    roi_masked = {}
+    for roi, mask in roi_masks.items():
+        mask = mask.get_fdata().astype(int)
+        masked_img = nii_data[mask==1]
+        roi_masked[roi] = nib.Nifti1Image(masked_img,affine=temp.affine)
+    return roi_masked
+
+def get_roi_masked_img_from_atlas(nii_img, atlas):
+    atlas_map, atlas_label_mapping = get_atlas(atlas)
+    roi_masks = get_roi_masks(atlas_map, atlas_label_mapping)
+    temp = roi_masks[list(roi_masks.keys())[0]]
+    nii_img = resample_to_img(nii_img,temp)
+    nii_data = nii_img.get_fdata()
+    roi_masked = {}
+    for roi, mask in roi_masks.items():
+        mask = mask.get_fdata().astype(int)
+        masked_img = nii_data[mask==1]
+        roi_masked[roi] = nib.Nifti1Image(masked_img,affine=temp.affine)
+    return roi_masked

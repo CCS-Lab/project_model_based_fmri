@@ -28,7 +28,7 @@ def test_adjust(row):
     return row
 
 ## TEST MVPA BASIC
-'''
+
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
                mvpa_model='mlp',
@@ -45,7 +45,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                n_thread=4,
                method='5-fold',
                logistic=True,
-               overwrite=False,
+               overwrite=True,
                detrend=False,
                high_pass=None,
                smoothing_fwhm=None,
@@ -61,7 +61,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
               #refit_compmodel=True,
               )
 
-
+'''
 ## TEST MODELCOMPARISON
 _ = run_mbmvpa(bids_layout=bids_layout,
                dm_model=['ra_prospect','ra_noRA','ra_noLA'],

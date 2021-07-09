@@ -52,6 +52,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'feature_name':'unnamed',
         'ignore_original':False,
         'space_name': None,
+        't_r':None,
+        'slice_time_ref':.5
     },
     'LATENTPROCESS': {
         'bids_layout':'.',
@@ -80,6 +82,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'ignore_fmriprep': False,
         'criterion': 'looic',
         'lower_better': True,
+        't_r':None,
+        'slice_time_ref':.5
     },
     'HBAYESDM': {
         },
@@ -142,6 +146,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'verbose': 0, 
         'n_jobs': 1,
         'confound_names':['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z'],
+        'slice_time_ref':.5,
     },
     'MVPA':{
         'MODEL':{

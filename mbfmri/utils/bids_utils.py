@@ -119,6 +119,8 @@ class BIDSController():
                 confound_suffix="regressors", 
                 ignore_original=False,
                 ignore_fmriprep=False,
+                t_r=None,
+                slice_time_ref=.5,
                 ):
         
         self.layout = self.get_base_layout(bids_layout)
@@ -138,6 +140,8 @@ class BIDSController():
         self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
         self.subjects=subjects
         self.sessions=sessions
+        self.t_r = t_r
+        self.slice_time_ref =.5
         self._set_fmriprep_layout()
         self._set_task_name()
         self._set_save_path()
@@ -167,22 +171,25 @@ class BIDSController():
         self.voxelmask_path = Path(self.mbmvpa_layout.root)/ f"{config.DEFAULT_VOXEL_MASK_FILENAME}-{feature_name}.{self.nii_ext}"
     
     def _get_general_tr(self):
-        def _tr(layout):
-            try:
-                return layout.get_tr()
-            except:
+        if self.t_r is None:
+            def _tr(layout):
+                try:
+                    return layout.get_tr()
+                except:
+                    return None
+            t_rs = [_tr(l) for l in [self.layout,self.fmriprep_layout]]
+            _t_rs= []
+            for t_r in t_rs:
+                if t_r is not None:
+                    _t_rs.append(t_r)
+
+            if len(_t_rs) == 0:
+                print(f'INFO: No general TR is found. it will be searched for each run by json file.')
                 return None
-        t_rs = [_tr(l) for l in [self.layout,self.fmriprep_layout]]
-        _t_rs= []
-        for t_r in t_rs:
-            if t_r is not None:
-                _t_rs.append(t_r)
-        
-        if len(_t_rs) == 0:
-            print(f'INFO: No general TR is found. it will be searched for each run by json file.')
-            return None
+            else:
+                return _t_rs[0]
         else:
-            return _t_rs[0]
+            return self.t_r
         
             
     def _set_metainfo(self):
@@ -190,6 +197,7 @@ class BIDSController():
         print(f'INFO: target subjects-{self.subjects}')
         
         general_t_r = self._get_general_tr()
+        general_slice_time_ref = self.slice_time_ref
         
         # set meta info for each run data in DataFrame format
         meta_infos = {'subject':[],        # subejct ID
@@ -200,7 +208,8 @@ class BIDSController():
                       'confound_path':[],  # regressor file path
                       'event_path':[],     # events file path
                       't_r':[],            # time resolution (sec)
-                      'n_scans':[]         # number of scan (time dimension)
+                      'n_scans':[],        # number of scan (time dimension)
+                      'slice_time_ref':[], # reference timing as rate of TR
                      }
         
         for file in self.get_bold_all():
@@ -256,22 +265,37 @@ class BIDSController():
             reg_path = reg_file[0].path if len(reg_file) >=1 else None
             event_path = event_file[0].path if len(event_file) >=1 else None
             
-            if general_t_r is None:
-                # get t_r
-                json_data = json.load(open(
-                        self.fmriprep_layout.get(
+            img_specs = self.fmriprep_layout.get(
                         return_type="file",
                         suffix=self.bold_suffix,
                         task=entities['task'],
-                        extension=config.SPECEXT)[0]))
-
-                if "root" in json_data.keys():
-                    t_r = json_data["root"]["RepetitionTime"]
+                        extension=config.SPECEXT)
+            if len(img_specs) > 0:
+                img_spec = json.load(open( img_specs[0]))
+                
+                def _findany(d,key):
+                    if key in d.keys():
+                        return d[key]
+                    else:
+                        for _, inner_d in d.items():
+                            if isinstance(inner_d,dict):
+                                return _findany(inner_d,key)
+                    return None
+                
+                spec_tr = _findany(img_spec,"RepetitionTime")
+                spec_str = _findany(img_spec,"SliceTimingRef")
+                if spec_tr is not None:
+                    t_r = spec_tr
                 else:
-                    t_r = json_data["RepetitionTime"]
+                    t_r = general_t_r
+                if spec_str is not None:
+                    slice_time_ref = spec_str
+                else:
+                    slice_time_ref = general_slice_time_ref
             else:
                 t_r = general_t_r
-            
+                slice_time_ref = general_slice_time_ref
+                
             # get n_scans
             n_scans = nib.load(bold_file[0].path).shape[-1]
             
@@ -284,6 +308,7 @@ class BIDSController():
             meta_infos['event_path'].append(event_path)
             meta_infos['t_r'].append(t_r)
             meta_infos['n_scans'].append(n_scans)
+            meta_infos['slice_time_ref'].append(slice_time_ref)
         
         self.meta_infos = pd.DataFrame(meta_infos)
         

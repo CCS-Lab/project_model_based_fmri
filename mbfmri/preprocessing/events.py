@@ -155,6 +155,8 @@ class LatentProcessGenerator():
                   separate_run=False,
                   criterion='looic',
                   lower_better=True,
+                  t_r=None,
+                 slice_time_ref=.5,
                   **kwargs):
 
         # set path informations and load layout
@@ -164,7 +166,9 @@ class LatentProcessGenerator():
                                             sessions=sessions,
                                             save_path=save_path,
                                             task_name=task_name,
-                                            ignore_original=ignore_original)
+                                            ignore_original=ignore_original,
+                                            t_r=t_r,
+                                            slice_time_ref=slice_time_ref,)
         else:
             self.bids_controller = bids_controller
         
@@ -396,7 +400,7 @@ class LatentProcessGenerator():
         individual_params_path = self._get_indivparams_path(dm_model)
         if Path(individual_params_path).exists():
             old_params= pd.read_table(individual_params_path, converters={'subjID': str})
-            return set(self.subjects) == set(old_params['subjID'])
+            return set(self.subjects).issubset(set(old_params['subjID']))
         else:
             return False
         
@@ -588,7 +592,7 @@ class LatentProcessGenerator():
                 # assume slice time correction at mid. points of scans.
                 frame_times =  event_infos['t_r'] * \
                         np.arange(event_infos['n_scans']) + \
-                          event_infos['t_r'] / 2.
+                          event_infos['t_r'] * event_infos['slice_time_ref']
                 signal, _ = _boldify(
                     modulation_df.to_numpy(dtype=float).T, self.hrf_model, frame_times)
             

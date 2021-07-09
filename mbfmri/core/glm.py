@@ -119,6 +119,7 @@ class GLM():
                  subjects='all',
                  sessions='all',
                  zoom=(1,1,1),
+                 slice_time_ref=.5,
                 **glm_kwargs):
         
         # TODO
@@ -181,6 +182,7 @@ class GLM():
         self.sessions=sessions
         self.glm_kwargs=glm_kwargs
         self.smoothing_fwhm  = glm_kwargs['smoothing_fwhm']
+        self.slice_time_ref = slice_time_ref
         
     def run_firstlevel(self):
         
@@ -201,6 +203,7 @@ class GLM():
                                                                     confound_suffix=self.confound_suffix,
                                                                     subjects=self.subjects,
                                                                     sessions=self.sessions,
+                                                                    slice_time_ref=self.slice_time_ref,
                                                                     **self.glm_kwargs
                                                                     )
         
