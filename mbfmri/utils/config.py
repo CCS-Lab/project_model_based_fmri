@@ -209,11 +209,9 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'EXPLAINER':{
             'shap_explainer':'deep',
             'shap_n_background': 100,
-            'shap_n_sample': 100,
-            'shap_bg_range': [0,.2],
-            'shap_samp_range': [.8,1],
-            'shap_use_ratio': True,
-            'include_trainset':False,
+            'shap_n_sample': 1000,
+            'pval_threshold': .05,
+            'include_trainset':True,
         },
         'CV':{
             'method':'5-fold',

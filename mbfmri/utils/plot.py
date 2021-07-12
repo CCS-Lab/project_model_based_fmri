@@ -110,13 +110,12 @@ def plot_r(y_train,
             _,_, r, pv,_ = linregress(a1.ravel(),a2.ravel())
             rs.append(r)
             pvals.append(pv)
-        corrected = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
-        return corrected 
+        return np.array(rs)[fdrcorrection(pvals, alpha=pval_threshold)[0]]
     
     r_train = get_corrected_r(y_train,pred_train)
     r_test = get_corrected_r(y_test,pred_test)
     
-    data = pd.DataFrame({'r': r_train+r_test,
+    data = pd.DataFrame({'r': np.concatenate([r_train,r_test]),
                           'type':['train']*len(r_train)+['test']*len(r_test)})
     
     title = f'R. FDR corrected. p<{pval_threshold}'
@@ -144,13 +143,12 @@ def plot_pearsonr(y_train,
             r,pv = pearsonr(a1.ravel(),a2.ravel())
             rs.append(r)
             pvals.append(pv)
-        corrected = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
-        return corrected
+        return np.array(rs)[fdrcorrection(pvals, alpha=pval_threshold)[0]]
         
     r_train = get_corrected_pearsonr(y_train,pred_train)
     r_test = get_corrected_pearsonr(y_test,pred_test)
     
-    data = pd.DataFrame({'pearsonr': r_train+r_test,
+    data = pd.DataFrame({'pearsonr': np.concatenate([r_train,r_test]),
                           'type':['train']*len(r_train)+['test']*len(r_test)})
     
     title = f'Pearson R. FDR corrected. p<{pval_threshold}'
@@ -177,13 +175,12 @@ def plot_spearmanr(y_train,
             r,pv = spearmanr(a1.ravel(),a2.ravel())
             rs.append(r)
             pvals.append(pv)
-        corrected = [r for r, v in zip(rs, fdrcorrection(pvals, alpha=pval_threshold)[0]) if v]
-        return corrected 
+        return np.array(rs)[fdrcorrection(pvals, alpha=pval_threshold)[0]] 
     
     r_train = get_corrected_spearmanr(y_train,pred_train)
     r_test = get_corrected_spearmanr(y_test,pred_test)
     
-    data = pd.DataFrame({'spearmanr': r_train+r_test,
+    data = pd.DataFrame({'spearmanr': np.concatenate([r_train,r_test]),
                           'type':['train']*len(r_train)+['test']*len(r_test)})
     
     title = f'Spearman R. FDR corrected. p<{pval_threshold}'

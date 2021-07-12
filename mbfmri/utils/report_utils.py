@@ -199,6 +199,41 @@ class Report_BrainMap():
         plot_surface_interactive(img_path,save,save_path)
         plot_slice_interactive(img_path,save,save_path)
         return nii
+    
+class Report_BrainMapSHAP():
+    
+    def __init__(self,
+                voxel_mask,
+                experiment_name='unnamed',
+                standardize=True,
+                map_smoothing_fwhm=6):
+        
+        self.voxel_mask = voxel_mask
+        self.experiment_name = experiment_name
+        self.standardize = standardize
+        self.smoothing_fwhm = map_smoothing_fwhm
+        
+    def __call__(self,
+                 save,
+                 save_path,
+                 shap_pred,
+                 shap_value,
+                ):
+        
+        
+        if isinstance(weights, dict):
+            coefs = np.array([np.squeeze(data) for _, data in weights.items()]) 
+        else:
+            coefs = weights 
+            
+        nii, img_path = get_map(coefs, self.voxel_mask, self.experiment_name,
+                standardize=self.standardize, save_path=save_path, smoothing_fwhm=self.smoothing_fwhm)
+        
+        plot_mosaic(img_path,save,save_path)
+        plot_surface_interactive(img_path,save,save_path)
+        plot_slice_interactive(img_path,save,save_path)
+        return nii
+    
 
 class Plot_ElasticNet():
     
