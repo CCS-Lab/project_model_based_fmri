@@ -68,7 +68,7 @@ class Explainer():
         #sample_idxs =  self._balanced_sample(preds,self.n_bin,self.shap_n_sample)
         sample_idxs = np.random.choice(len(X_samp),self.shap_n_sample)
         sample = X_samp[sample_idxs]
-        
+        # sample : (n_sample, *X_shape)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=Warning)
             if self.shap_explainer.lower() =='gradient':
@@ -77,7 +77,14 @@ class Explainer():
                 e = shap.DeepExplainer(model, background)
             shap_values = e.shap_values(sample)[0]
         
+        #shap_values : (n_sample, *X_shape)
         
+        weights = np.nanmean((shap_values/sample/2),axis=0)
+        weights[np.isnan(weights)] = 0
+        
+        return weights
+    
+        '''
         # get r for
         rvalue = []
         pvalue = []
@@ -96,4 +103,4 @@ class Explainer():
         rvalue[~rejected] = 0
         
         return rvalue
-    
+        '''
