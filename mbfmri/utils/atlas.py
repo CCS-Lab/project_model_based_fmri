@@ -143,8 +143,6 @@ def _load_yeo_2011(name='thin_7'):
     return atlas_map, atlas_label_mapping
                         
     
-   
-
 ATLAS_LOADER = {'aal':_load_aal,
                  'destrieux_2009':_load_destrieux_2009,
                  'harvard_oxford':_load_harvard_oxford,
@@ -209,7 +207,12 @@ def get_roi_mean_activation_from_atlas(nii_img, atlas):
     for roi, index in atlas_label_mapping.items():
         mask = (atlas_map_data.astype(int)==int(index))
         roi_acts = nii_data[np.nonzero(mask)]
-        mean_activation[roi] = roi_acts.mean()
+        roi_acts = roi_acts[~np.isnan(roi_acts)]
+        if len(roi_acts.ravel()) != 0:
+            mean_activation[roi] = roi_acts.mean()
+        else:
+            # TODO add warning
+            mean_activation[roi] = 0
     return mean_activation
 
 def get_roi_mean_activation(nii_img, roi_masks):
@@ -221,7 +224,12 @@ def get_roi_mean_activation(nii_img, roi_masks):
     for roi, mask in roi_masks.items():
         mask = mask.get_fdata().astype(int)
         roi_acts = nii_data[np.nonzero(mask)]
-        mean_activation[roi] = roi_acts.mean()
+        roi_acts = roi_acts[~np.isnan(roi_acts)]
+        if len(roi_acts.ravel()) != 0:
+            mean_activation[roi] = roi_acts.mean()
+        else:
+            # TODO add warning
+            mean_activation[roi] = 0
     return mean_activation
 
 def get_roi_masked_img(nii_img, roi_masks):
