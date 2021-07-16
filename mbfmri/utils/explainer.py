@@ -33,29 +33,6 @@ class Explainer():
         self.include_trainset = include_trainset
         self.pval_threshold = pval_threshold
         self.n_bin = n_bin
-    '''
-    def _balanced_sample(self, arr,n_bin,n_sample):
-        std = arr.std()
-        mean = arr.mean()
-        ub = min(mean+ 3*std,arr.max())
-        lb = max(mean- 3*std,arr.min())
-        temp = arr.copy()
-        temp[temp>=ub] = ub
-        temp[temp<=lb] = lb
-        bin_size = (ub-lb)/n_bin
-        bin_arr = temp//bin_size
-        bin_arr[bin_arr==(ub//bin_size)] = (ub//bin_size)-1
-        bin_labels = np.arange(lb//bin_size,ub//bin_size)
-        bin_pools = {l:np.nonzero(bin_arr==l)[0] for l in bin_labels}
-        sample = []
-        for i in range(n_sample):
-            pool = bin_pools[bin_labels[i%n_bin]]
-            if len(pool) == 0:
-                continue
-            sample.append(np.random.choice(pool))
-        return np.array(sample)
-    '''
-    
     
     def __call__(self,model,X_test,X_train):
         if self.include_trainset:
@@ -76,31 +53,20 @@ class Explainer():
             elif self.shap_explainer.lower() =='deep':
                 e = shap.DeepExplainer(model, background)
             shap_values = e.shap_values(sample)[0]
+            
+        non_zero_mask = (abs(sample.mean(0)) > 1e-8)
+        original_shape = shap_values.shape[1:]
+        transpose_index = list(range(len(shap_values.shape)))
+        transpose_index = transpose_index[1:] + transpose_index[:1]
+        shap_values=shap_values.transpose(*transpose_index)[non_zero_mask].T
+        sample=sample.transpose(*transpose_index)[non_zero_mask].T
+        regs = [linregress(sample[:,i],shap_values[:,i]) for i in range(sample.shape[1])]
+        pvalue = [reg.pvalue for reg in regs]
+        valid,_ = fdrcorrection(pvalue, alpha=self.pval_threshold)
+        slopes = np.array([reg.slope for reg in regs])
+        slopes[~valid] = 0
+        blackboard = np.zeros(original_shape)
+        blackboard[non_zero_mask] = slopes
+        slopes = blackboard
         
-        #shap_values : (n_sample, *X_shape)
-        
-        weights = np.nanmean((shap_values/sample/2),axis=0)
-        weights[np.isnan(weights)] = 0
-        
-        return weights
-    
-        '''
-        # get r for
-        rvalue = []
-        pvalue = []
-        
-        shap_preds = preds[sample_idxs]
-        for i in range(shap_values.shape[1]):
-            reg = linregress(shap_values[:,i],shap_preds)
-            rvalue.append(reg.rvalue)
-            pvalue.append(reg.pvalue)
-        
-        rvalue = np.array(rvalue)
-        pvalue = np.array(pvalue)
-        
-        # fdr correction
-        rejected,corrected = fdrcorrection(pvalue, alpha=self.pval_threshold)
-        rvalue[~rejected] = 0
-        
-        return rvalue
-        '''
+        return slopes

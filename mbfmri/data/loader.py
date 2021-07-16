@@ -43,7 +43,7 @@ class Normalizer():
             x = abs(x)
         if self.name == "standard":
             normalized = zscore(x, axis=None)
-        elif self.name == "none":
+        elif self.name is None or self.name == "none":
             normalized = x
         elif self.name == "rescale":
             temp =x.copy().flatten()
@@ -167,12 +167,12 @@ class BIDSDataLoader():
                  sessions='all',
                  voxel_mask_path=None,
                  reconstruct=False,
-                 y_normalizer="rescale",
+                 y_normalizer="none",
                  y_use_absolute_value=False,
                  y_scale=[0,1],
                  y_std_threshold=2.58,
                  y_clip=False,
-                 X_normalizer="rescale",
+                 X_normalizer="none",
                  X_use_absolute_value=False,
                  X_scale=[0,1],
                  X_std_threshold=2.58,
