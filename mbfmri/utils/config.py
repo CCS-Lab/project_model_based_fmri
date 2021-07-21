@@ -82,7 +82,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'ignore_original':False,
         'space_name': None,
         't_r':None,
-        'slice_time_ref':.5
+        'slice_time_ref':.5,
         'bold_suffix': 'bold',
         'confound_suffix': 'regressors',
     },
