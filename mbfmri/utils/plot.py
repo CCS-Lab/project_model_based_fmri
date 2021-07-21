@@ -23,7 +23,7 @@ def plot_mosaic(img_path,
     plotting.plot_stat_map(img_path, display_mode='y',cut_coords=coord_num,axes=plt.subplot(3, 1,2))
     plotting.plot_stat_map(img_path, display_mode='z',cut_coords=coord_num,axes=plt.subplot(3, 1,3))
     if save:
-        plt.savefig(Path(save_path) / f"mosaic_plot_{Path(img_path).name}.png",bbox_inches='tight')
+        plt.savefig(Path(save_path) / f"mosaic_plot_{Path(img_path).name.split('.')[0]}.png",bbox_inches='tight')
     plt.show()
 
 def plot_surface_interactive(img_path,
@@ -34,7 +34,7 @@ def plot_surface_interactive(img_path,
         view = plotting.view_img_on_surf(img_path, 
                                      threshold='90%',
                                      surf_mesh='fsaverage') 
-        view.save_as_html(Path(save_path) / f"surface_plot_{Path(img_path).name}.html")
+        view.save_as_html(Path(save_path) / f"surface_plot_{Path(img_path).name.split('.')[0]}.html")
         
     
 def plot_slice_interactive(img_path,
@@ -43,7 +43,7 @@ def plot_slice_interactive(img_path,
     img_path = str(img_path)
     if save:
         view = plotting.view_img(img_path) 
-        view.save_as_html(Path(save_path) / f"slice_plot_{Path(img_path).name}.html")
+        view.save_as_html(Path(save_path) / f"slice_plot_{Path(img_path).name.split('.')[0]}.html")
 
 
     
@@ -68,6 +68,7 @@ def plot_violinwithscatter(dataframe,
     plt.legend()
     plt.title(title)
     if save:
+        dataframe.to_csv(Path(save_path)/'data.csv',sep='\t')
         plt.savefig(Path(save_path)/f'plot_{score_name}.png',bbox_inches='tight')
     plt.show()
 
@@ -76,7 +77,9 @@ def get_scores_dataframe(y_train,
                            pred_train,
                            pred_test,
                            scorer,
-                           score_name):
+                           score_name,
+                           save='False',
+                           save_path='.'):
     scores_train = []
 
     for p,y in zip(pred_train,y_train):
@@ -91,6 +94,9 @@ def get_scores_dataframe(y_train,
     data = pd.DataFrame({score_name: scores_train+scores_test,
                           'type':['train']*len(scores_train)+['test']*len(scores_test)})
     
+    if save:
+        data.to_csv(Path(save_path)/'data.csv',sep='\t')
+        
     return data
 
 
@@ -229,7 +235,11 @@ def plot_accuracy(y_train,
                            pred_train,
                            pred_test,
                            accuracy_score,
-                           'accuracy')
+                           'accuracy',
+                           save,
+                           save_path)
+    
+    
     title = 'Accuracy'
     plot_violinwithscatter(data,
                            'accuracy',

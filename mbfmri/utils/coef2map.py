@@ -24,7 +24,7 @@ def reconstruct(array, mask):
     return blackboard
     
     
-def get_map(coefs, voxel_mask, experiment_name, standardize=True, save_path=".", smoothing_fwhm=6):
+def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path=".", smoothing_fwhm=6):
     """
     make nii image file from coefficients of model using masking info.
     """

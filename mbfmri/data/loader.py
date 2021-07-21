@@ -391,8 +391,8 @@ class BIDSDataLoader():
             if reconstruct:
                 mask = self.voxel_mask.get_fdata()
                 blackboard = np.zeros(list(mask.shape)+[self.X[subject].shape[0]])
-                blackboard[mask.nonzero()] = self.X[subject].T
-                self.X[subject] = blackboard.T
+                blackboard[mask.nonzero()] = self.X[subject].transpose(1,0)
+                self.X[subject] = blackboard.transpose(3,0,1,2)
                 
             # maksed y data are concatenated & normalized 
             self.y[subject] = self.y_normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))

@@ -138,9 +138,8 @@ class MVPA_TF(MVPA_Base):
     def predict(self,X,**kwargs):
         return self.model.predict(X)
     
-    def get_weights(self,**kwargs):
+    def report(self,**kwargs):
         if self.explainer is not None:
             return self.explainer(self.model,self.X_test,self.X_train)
         else:
             return None
-    

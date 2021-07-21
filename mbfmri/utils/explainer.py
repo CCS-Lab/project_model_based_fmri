@@ -54,6 +54,13 @@ class Explainer():
                 e = shap.DeepExplainer(model, background)
             shap_values = e.shap_values(sample)[0]
             
+        output = {'shap_values':shap_values,
+                 'shap_sample':sample,
+                 'shap_pred':preds[sample_idxs]}
+        
+        return output
+    
+        '''
         non_zero_mask = (abs(sample.mean(0)) > 1e-8)
         original_shape = shap_values.shape[1:]
         transpose_index = list(range(len(shap_values.shape)))
@@ -68,5 +75,7 @@ class Explainer():
         blackboard = np.zeros(original_shape)
         blackboard[non_zero_mask] = slopes
         slopes = blackboard
-        
+
         return slopes
+        '''
+        

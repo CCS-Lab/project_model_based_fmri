@@ -31,7 +31,7 @@ def test_adjust(row):
 
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
-               mvpa_model='mlp',
+               mvpa_model='cnn',
                feature_name='zoom2gm',
                task_name='mixedgamblestask',
                process_name='SUgamble',
@@ -43,7 +43,7 @@ _ = run_mbfmri(bids_layout=bids_layout,
                nwarmup=50,
                niter=200,
                n_thread=4,
-               method='5-fold',
+               method='2-fold',
                logistic=False,
                overwrite=True,
                detrend=False,
@@ -160,7 +160,7 @@ _ = run_mbfmri(analysis='mbmvpah',
                gpu_visible_devices = [2],
                n_batch=4,
                pval_threshold=5)
-'''
+
 ## TEST GLM
 _ = run_mbfmri(analysis='glm',
               report_path=report_path,
@@ -175,7 +175,7 @@ _ = run_mbfmri(analysis='glm',
               overwrite=True,
               atlas='aal',
               rois=["Precentral_L","Precentral_R"],)
-'''
+
 ## TEST MVPA-MLP Logistic
 _ = run_mbfmri(bids_layout=bids_layout,
                logistic=True,
