@@ -51,7 +51,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'use_1sec_duration': True,
         'mask_duration': False,
         't_r':None,
-        'slice_time_ref':.5
+        'slice_time_ref':.5,
         'n_core': 1,
         'ignore_original': False,
         'ignore_fmriprep': False,
