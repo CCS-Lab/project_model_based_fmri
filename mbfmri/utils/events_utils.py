@@ -131,19 +131,13 @@ def _process_indiv_params(individual_params):
     else:
         return None
     
-def _add_event_info(df_events, event_infos,separate_run=False):
+def _add_event_info(df_events, event_infos):
 
     new_df = []
 
     def _add(i, row, info):
         row["trial"] = i 
-        if separate_run:
-            if "session" in info.keys():
-                row["subjID"] = info["subject"]+str(info["session"])+str(info["run"])
-            else:
-                row["subjID"] = info["subject"]+str(info["run"])
-        else:
-            row["subjID"] = info["subject"]
+        row["subjID"] = info["subject"]
         row["run"] = info["run"]
         if "session" in info.keys():
             row["session"] = info["session"]  # if applicable
@@ -186,11 +180,11 @@ def _make_function_dfwise(function):
     return dfwise_function
 
 def _make_single_time_mask(df_events, time_length, t_r,
-                           use_duration):
+                           mask_duration):
     
     df_events = df_events.sort_values(by="onset")
     onsets = df_events["onset"].to_numpy()
-    if use_duration:
+    if mask_duration:
         durations = df_events["duration"].to_numpy()
     else:
         durations = np.array(
@@ -203,9 +197,7 @@ def _make_single_time_mask(df_events, time_length, t_r,
 
     return time_mask
 
-def _get_individual_param_dict(subject_id, ses_id,run_id, individual_params, separate_run):
-    if separate_run:
-        subject_id=str(subject_id)+str(ses_id)+str(run_id)
+def _get_individual_param_dict(subject_id, ses_id,run_id, individual_params):
     idp = individual_params[individual_params["subjID"] == subject_id]
     if len(idp) == 0:
         idp = individual_params[individual_params["subjID"] == int(subject_id)]

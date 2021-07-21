@@ -20,7 +20,7 @@ from tqdm import tqdm
 from scipy.io import loadmat
 import importlib
 
-from mbfmri.utils import config # configuration for default names used in the package
+from mbfmri.utils import config 
 
 
 class LatentProcessGenerator():
@@ -36,103 +36,133 @@ class LatentProcessGenerator():
     Parameters
     ----------
     
-    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
-        (Original) BIDSLayout of input data. It should follow **BIDS** convention.
-        The main data used from this layout is behaviroal data,``events.tsv``.
-    subjects : list of str or "all",default="all"
-        List of subject IDs to load. 
-        If "all", all the subjects found in the layout will be loaded.
-    bids_controller : mbmvpa.utils.bids_utils.BIDSController, default=None
-        BIDSController instance for controlling BIDS layout for preprocessing.
-        If not given, then initiates the controller.
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
+
+    subjects : list of str or "all", default="all"
+        List of valid subject IDs. If "all", all the subjects found in the layout will be loaded.
+
     save_path : str or pathlib.PosixPath, default=None
-        Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
-        If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
+        Path for saving preprocessed results. If not given, the derivatives directory will be used.
+
     task_name : str, default=None
         Name of the task. If not given, the most common task name will be automatically selected.
+
     process_name : str, default="unnamed"
         Name of the target latent process.
         It should be match with the name defined in computational modeling
+
+    dm_model : str, default="unnamed"
+        Name for computational modeling by **hBayesDM**. 
+        You can still use this parameter to assign the name of the model, 
+        even you would not choose to emloy hBayesDM.
+
     adjust_function : function(pandas.Series, dict)-> pandas.Series, default=lambda x \: x
         User-defined row-wise function for modifying each row of behavioral data.
         *adjust_function* (a row of DataFrame) \: a row of DataFrame with modified behavior data
+
     filter_function : function(pandas.Series, dict)-> boolean, default=lambda \_ \: True
         User-defined row-wise function for filtering each row of behavioral data.
         *filter_function* (a row of DataFrame) \: True or False
+
     latent_function : function(pandas.Series, dict)-> pandas.Series, default=None
         User-defined row wise function for calculating latent process.
         The values will be indexed by 'modulation' column name.
         *latent_function* (a row of DataFrame)-> a row of DataFrame with modulation
+    
     adjust_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
         User-defined dataframe-wise function for modifying each row of behavioral data.
         If not given, it will be made by using *adjust_function*.
         If given, it will override *adjust_function*.
+    
     filter_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
         User-defined dataframe-wise function for filtering each row of behavioral data.
         If not given, it will be made by using *filter_function*.
         If given, it will override *filter_function*.
+    
     latent_function_dfwise : function(pandas.DataFrame, dict)-> pandas.DataFrame, default=None
         User-defined dataframe-wise function for calculating latent process.
         If not given, it will be made by using *latent_function*.
         If given, it will override *latent_function*.
-    computational_model : Object, default=None
-        User-defined comutational model, which should include two callable methods.
-        - fit : computational_model.fit(df_events) will conduct model fitting
-        - get_parameters : computational_model.get_parameters() will get a Dataframe containing individual parameters.
-    dm_model : str, default="unnamed"
-        Name for computational modeling by **hBayesDM**. 
-        You can still use this parameter to assign the name of the model, 
-        even you would not choose to depend on hBayesDM.
+    
     individual_params : str or pathlib.PosixPath or pandas.DataFrame, default=None
         Path or loaded DataFrame for tsv file with individual parameter values.
         If not given, find the file from the default path
         ``MB-MVPA_root/task-*task_name*_model-*model_name*_individual_params.tsv``
         If the path is empty, it will remain ``None`` indicating a need for running hBayesDM.
         So, it will be set after runniing hBayesDM package.
+    
+    skip_compmodel : boolean, default=False
+        Indicate if computational modeling should be skipped, which means 
+        the user provided precalculated latent process.
+    
+    criterion : str, default='looic'
+        Criterion for model comparison. Currently, LOOIC is avaliable.
+
     hrf_model : str, default="glover"
-        Name for hemodynamic response function, which will be convoluted with event data to make BOLD-like signal.
-        The below notes are retrieved from the code of "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
+        Name for hemodynamic response function, which will be convoluted 
+        with event data to make BOLD-like signal.
+        The below notes are retrieved from the code of 
+        "nilearn.glm.first_level.hemodynamic_models.compute_regressor"
         (https://github.com/nilearn/nilearn/blob/master/nilearn/glm/first_level/hemodynamic_models.py)
 
         The different hemodynamic models can be understood as follows:
              - "spm": this is the hrf model used in SPM.
              - "glover": this one corresponds to the Glover hrf.
-    use_duration : boolean, default=False
-        If True use "duration" column to make a time mask, 
-        if False all the gaps following trials after valid trials would be included in the time mask.
-    n_core : int, default=4
-        Number of core in **hBayesDM**.
-    ignore_original : boolean, default=False
-        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout ``layout``.
-        If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
-        And it means that the LatentProcessGenerator would not use events data in BIDSLayout, 
-        rather it would use the list of files input by user.
-        It will be used for initiating BIDSController.
+
     onset_name : str, default="onset"
         Column name indicating  *onset* values.
+
     duration_name : str, default="duration"
         Column name indicating *duration* values.
+
     end_name : str, default=None
         Column name indicating end of valid time.
         If given, *end*-*onset* will be used as *duration* and override *duration_name*.
         If ``None``, it would be ignored and *duration_name* will be used.
+
     use_1sec_duration : bool, default=True
         If True, *duration* will be fixed as 1 second.
         This parameter will override *duration_name* and *end_name*.
-    kwargs : dict
-        Dictionary for arguments for indicating additional parameters for running **hBayesDM**.
-        
-        
+    
+    mask_duration : boolean, default=False
+        If True use "duration" column to make a time mask, 
+        if False all the gaps following trials after valid trials 
+        would be included in the time mask.
+
+    t_r : float, default=None
+        Time resolution in second. 
+        It will be overrided by value from input data if applicable.
+    
+    slice_time_ref: float, default=.5
+        Slice time reference in ratio in 0,1].
+        It will be overrided by value from input data if applicable.
+
+    n_core : int, default=4
+        Number of core in **hBayesDM**.
+
+    ignore_fmriprep : boolean, default=False
+        Indicate whether it can ignore fMRIPrep layout. 
+        It should be True if users don't have fMRIPrep, but still 
+        want to run computational modeling.
+    
+    fmriprep_name : str, default='fMRIPrep'
+        Name of derivative layout for preprocessed fMRI.
+
+    event_suffix : str, default='events'
+        Suffix name for behavioral data file.
+
+
     """
     
     def __init__(self, 
                   bids_layout,
                   subjects="all",
                   sessions="all",
-                  bids_controller=None,
                   save_path=None,
                   task_name=None,
                   process_name="unnamed",
+                  dm_model="unnamed",
                   adjust_function=lambda x: x,
                   filter_function=lambda _: True,
                   latent_function=None,
@@ -140,37 +170,38 @@ class LatentProcessGenerator():
                   filter_function_dfwise=None,
                   latent_function_dfwise=None,
                   computational_model=None,
-                  dm_model="unnamed",
                   individual_params=None,
+                  skip_compmodel=False,
+                  criterion='looic',
                   hrf_model="glover",
-                  use_duration=False,
-                  n_core=4,
-                  ignore_original=False,
-                  ignore_fmriprep=False,
                   onset_name="onset",
                   duration_name="duration",
                   end_name=None,
                   use_1sec_duration=True,
-                  skip_compmodel=False,
-                  separate_run=False,
-                  criterion='looic',
-                  lower_better=True,
+                  mask_duration=False,
                   t_r=None,
-                 slice_time_ref=.5,
+                  slice_time_ref=.5,
+                  n_core=4,
+                  ignore_fmriprep=False,
+                  fmriprep_name="fMRIPrep",
+                  event_suffix="events",
                   **kwargs):
 
         # set path informations and load layout
-        if bids_controller is None:
+        if isinstance(bids_layout,BIDSController):
+            self.bids_controller = bids_controller
+        else:
             self.bids_controller = BIDSController(bids_layout,
                                             subjects=subjects,
                                             sessions=sessions,
                                             save_path=save_path,
                                             task_name=task_name,
-                                            ignore_original=ignore_original,
+                                            ignore_original=False,
+                                            ignore_fmriprep=ignore_fmriprep,
                                             t_r=t_r,
-                                            slice_time_ref=slice_time_ref,)
-        else:
-            self.bids_controller = bids_controller
+                                            slice_time_ref=slice_time_ref,
+                                            fmriprep_name=fmriprep_name,
+                                            event_suffix=event_suffix,)
         
         self.subjects = list(self.bids_controller.meta_infos['subject'])
         self.task_name = self.bids_controller.task_name
@@ -228,15 +259,12 @@ class LatentProcessGenerator():
 
         # setting BOLD-like signal generating specification
         self.hrf_model = hrf_model
-        self.use_duration = use_duration
+        self.mask_duration = mask_duration
         self.n_core=n_core
         self.duration_name=duration_name
         self.end_name=end_name
         self.use_1sec_duration = use_1sec_duration
-        self.computational_model = computational_model
-        self.separate_run = separate_run
         self.criterion = criterion
-        self.lower_better = lower_better
         
     def _set_trained_dm_model(self):
         if self.model_comparison_table_path.exists():
@@ -309,54 +337,10 @@ class LatentProcessGenerator():
         
         # add meta info to events data
         df_events_list = [
-            _add_event_info(df_events, event_infos,self.separate_run)
-            for df_events, event_infos in zip(df_events_list, event_infos_list)
-        ]
-        
-        return df_events_list, event_infos_list
-    
-    def _init_df_events_from_files(self, files, suffix="tsv",column_names=None):
-        
-        # aggregate events dataframe from input files
-        event_infos_list = []
-        df_events_list = []
-        for file in files:
-            if suffix not in file:
-                continue
-            file = Path(file)
-            
-            # parse file name and make meta-info
-            # assume BIDS format like 'key1-name1_key2-name2_...'
-            event_info = {}
-            for chunk in file.stem.split('_'):
-                splits = chunk.split('-')
-                if len(splits) == 2:
-                    event_info[splits[0]] = splits[1]
-            
-            # load events data according to file type
-            suffix = file.suffix
-            if suffix == '.mat':
-                df_events = loadmat(file)
-                if column_names == None:
-                    df_events = {key:data for key,data in df_events.items() if '__' not in key}
-                else:
-                    df_events = {key:df_events[key] for key in column_names}
-                df_events = pd.Dataframe(df_events)
-            elif suffix == '.tsv' or suffix =='.csv':
-                df_events = df.read_table(file, sep='\t')
-                if column_names is not None:
-                    df_events = df_events[column_names]
-            else:
-                continue
-                
-            event_infos_list.append(info)
-            df_events_list.append(df_events_list)
-            
-        # add meta info to events datav
-        df_events_list = [
             _add_event_info(df_events, event_infos)
             for df_events, event_infos in zip(df_events_list, event_infos_list)
         ]
+        
         return df_events_list, event_infos_list
     
     def _fit_update_dm_model(self,
@@ -421,7 +405,13 @@ class LatentProcessGenerator():
                 self._fit_update_dm_model(df_events,dm_model,**kwargs)
             
         models_criterion = [(dm_model,info[self.criterion]) for dm_model, info in self._trained_dm_model.items()]
-        models_criterion.sort(key=lambda v :v[-1],reverse=self.lower_better)
+        if self.criterion == 'looic':
+            lower_better = True
+        else:
+            # not implemented for other criterion
+            lower_better = True
+
+        models_criterion.sort(key=lambda v :v[-1],reverse=lower_better)
         best_model = models_criterion[0][0]
         
         if 'individual_params' not in self._trained_dm_model[best_model]:
@@ -443,9 +433,18 @@ class LatentProcessGenerator():
                                 adjust_function_dfwise=None, 
                                 filter_function_dfwise=None,
                                 n_core=None,
-                                computational_model=None,
                                 **kwargs):
-            
+        
+        """Set computationl model for latent process extraction 
+        (model fitting & selection).
+
+        Parameters
+        ----------
+        refit_compmodel : bool, default=False
+            Indicate if re-fitting computational models is required.
+
+        """
+
         if n_core is None:
             n_core = self.n_core
             
@@ -453,9 +452,6 @@ class LatentProcessGenerator():
         
         if individual_params is None:
             individual_params = self.individual_params
-        
-        if computational_model is None:
-            computational_model = self.computational_model
             
         dm_model = self.dm_model
         
@@ -479,29 +475,33 @@ class LatentProcessGenerator():
                 df_events_list = [df_events.sort_values(by=self.onset_name) for df_events in df_events_list]
                 df_events= pd.concat(df_events_list)
             
-            if computational_model is not None:
-                print("INFO: running computational model [user-defined]")
-                model.fit(df_events)
-                self.individual_params = model.get_parameters()
-            else:
-                print(f"INFO: start model comparison-{self.candidate_dm_models}")
-                self._model_comparison(df_events,
-                                       self.candidate_dm_models,
-                                       overwrite=refit_compmodel,
-                                       **kwargs)
-                if self.latent_function_dfwise is None:
-                    self._find_latent_function(self.best_model,self.process_name)
-                print(f"INFO: model comparison done")
-                table = pd.read_table(self.model_comparison_table_path)
-                table = pd.concat([table[table['model']==m] for m in self.candidate_dm_models])
-                print(table)
-                print(f"INFO: the best model is {self.best_model}")
-                
+            print(f"INFO: start model comparison-{self.candidate_dm_models}")
+            self._model_comparison(df_events,
+                                   self.candidate_dm_models,
+                                   overwrite=refit_compmodel,
+                                   **kwargs)
+            if self.latent_function_dfwise is None:
+                self._find_latent_function(self.best_model,self.process_name)
+            print(f"INFO: model comparison done")
+            table = pd.read_table(self.model_comparison_table_path)
+            table = pd.concat([table[table['model']==m] for m in self.candidate_dm_models])
+            print(table)
+            print(f"INFO: the best model is {self.best_model}")
+            
                         
     def run(self,
             overwrite=True,
             process_name=None,
             modeling_kwargs={}):
+
+        """Generate latent process signal by computational modeling.
+
+        Parameters
+        ----------
+        overwrite : bool, default=False
+            Indicate if overwriting processed outputs is required.
+
+        """
         
         if process_name is None:
             process_name = self.process_name
@@ -565,7 +565,7 @@ class LatentProcessGenerator():
                 timemask = _make_single_time_mask(df_events, 
                                               event_infos['n_scans'], 
                                               event_infos['t_r'],
-                                              use_duration=self.use_duration)
+                                              mask_duration=self.mask_duration)
                 np.save(timemask_path, timemask)
             
             # get & save latent process (modulation) dataframe
@@ -576,7 +576,7 @@ class LatentProcessGenerator():
                     df_events['modulation'] = df_events[process_name]
                     modulation_df = df_events
                 else:
-                    param_dict = _get_individual_param_dict(sub_id,ses_id,run_id, self.individual_params,self.separate_run)
+                    param_dict = _get_individual_param_dict(sub_id,ses_id,run_id, self.individual_params)
                     if param_dict is None:
                         continue
                     modulation_df = self.latent_function_dfwise(df_events,param_dict=param_dict)

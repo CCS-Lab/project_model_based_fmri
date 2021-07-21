@@ -133,17 +133,16 @@ class BIDSController():
         self.fmriprep_name = fmriprep_name
         self.task_name = task_name
         self.nii_ext = config.NIIEXT
-        if space_name is None:
-            space_name = config.TEMPLATE_SPACE
         self.space_name = space_name
         self.save_path = save_path
         self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
         self.subjects=subjects
         self.sessions=sessions
         self.t_r = t_r
-        self.slice_time_ref =.5
+        self.slice_time_ref =slice_time_ref
         self._set_fmriprep_layout()
         self._set_task_name()
+        self._set_space_name()
         self._set_save_path()
         self._set_mbmvpa_layout()
         self._set_metainfo()
@@ -353,6 +352,19 @@ class BIDSController():
                 self.task_name = task_names[np.array(task_name_lens).argmax()]
             
             print('INFO: selected task_name is '+self.task_name)
+
+    def _set_space_name(self):
+        # if space_name is not given, find the most common space name in the layout
+        if self.space_name is None:
+            print('INFO: template space is not designated. find most common space')
+            
+            space_names = self.fmriprep_layout.get_space()
+            space_name_lens = [len(self.fmriprep_layout.get(space=space_name,
+                                                           suffix=self.bold_suffix)) for space_name in space_names]
+            self.space_name = space_names[np.array(space_name_lens).argmax()]
+            
+            print('INFO: selected space_name is '+self.space_name)
+
         
     def _set_fmriprep_layout(self):
         if self.ignore_fmriprep:
