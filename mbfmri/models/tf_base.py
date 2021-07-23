@@ -23,17 +23,54 @@ tf.get_logger().setLevel("ERROR")
 class MVPA_TF(MVPA_Base):
     
     r"""
+    General MVPA base for Tensorflow Keras models. It includes model fitting and interpreting.
+    The model fitting will be done by  Mini-batch gradient descent with earlystopping.
     
+    Model interpretation will be done by Explainer module, 
+    a module for extracting SHAP values from trained models and input data. 
+
+    Parameters
+    ----------
+
+    val_ratio : float, default=0.2
+        Rate for inner cross-validation, which will be used to split input data to 
+        (train[1-val_ratio], valid[val_ratio]). The validation dataset will be used for 
+        determining *early stopping*.
+    
+    n_batch : int, default=64
+        Number of samples per gradient update.
+
+    n_epoch : int, default=50
+        Number of epochs to train the model. An epoch is an iteration over the entire x and y data provided. Note that in conjunction with initial_epoch, epochs is to be understood as "final epoch". The model is not trained for a number of iterations given by epochs, but merely until the epoch of index epochs is reached.
+    
+    n_min_epoch : int, default=50
+        Number of minimum epochs to train the model before applying early stopping.
+
+    n_patience : int, default=10
+        Number of epochs with no improvement after which training will be stopped.
+        Please refer to https://keras.io/api/callbacks/early_stopping/
+
+    n_sample : int, default=30000
+        Max number of samples used in a single fitting.
+        If the number of data is bigger than *n_samples*, sampling will be done for 
+        each model fitting.
+        This is for preventing memory overload.
+
+    train_verbosity : int, default=0
+        Level of verbosity for model fitting. If it is 1, the reports from
+        keras model fitting will be printed.
+
+    model_save_path : str or pathlib.PosixPath, default=None
+        Path for saving best models. If not given, trained models will not be saved.
+
     """
     
     def __init__(self,
                  val_ratio=0.2,
-                 optimizer="adam",
-                 learning_rate=0.001,
+                 n_batch = 64,
                  n_epoch = 50,
                  n_min_epoch = 5,
                  n_patience = 10,
-                 n_batch = 64,
                  n_sample = 30000,
                  explainer = None,
                  train_verbosity=0,
@@ -42,8 +79,6 @@ class MVPA_TF(MVPA_Base):
         
         
         self.name = None
-        self.optimizer = optimizer
-        self.learning_rate = learning_rate
         self.n_min_epoch = n_min_epoch
         self.n_patience = n_patience
         self.n_batch = n_batch

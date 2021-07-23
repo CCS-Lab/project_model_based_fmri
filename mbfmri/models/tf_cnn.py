@@ -43,69 +43,99 @@ class MVPA_CNN(MVPA_TF):
     
     input_shape : tuple of int
         Dimension of input data, which will be fed as X. 
-        It should be same as the shape of voxel mask image.
-    method : str, default='5-fold'
-        Name for type of cross-validation to use. 
-        Currently, two options are available.
-            - "N-fold" : *N*-fold cross-valiidation
-            - "N-lnso" : leave-*N*-subjects-out
-            
-        If the "N" should be a positive integer and it will be parsed from the input string. 
-        In the case of lnso, N should be >= 1 and <= total subject # -1.
-    n_cv_repeat : int, default=1
-        Number of repetition of the entire cross-validation.
-        Larger the number, (normally) more stable results and more time required.
-    cv_save : bool, default=True
-        indictates save results or not
-    cv_save_path : str or pathlib.PosixPath, default="."
-        Path for saving results
-    experiment_name : str, default="unnamed"
-        Name for a single run of this analysis
-        It will be included in the name of the report folder created.
+
     layer_dims : list of int, default=[8, 16, 32]
         List of integer specifying the dimensions (channels) of each hidden layer.
         Convolutional layers will be stacked with the channel sizes indicated by *layer_dims*.
+    
     kernel_size : list of int, default=[3, 3, 3]
         List of integer specifying the kernel size  of each convolutional layer.
+    
     logit_layer_dim : int, default=256
         Size of a Fully-connected layer, which will be added on convolutional layers.
         The last layer, *logit_layer_dim* --> *1*, will be added for regression.
+    
     activation : str, default="linear"
         Name of activation function which will be applied to the output of hidden layers.
-    activation_output : str, default="linear"
+    
+    activation_output : str, default=None
         Name of activation function for the final output.
+        If None (default), it will be automatically determined as 
+        "linear" for linear regression and
+        "sigmoid" for logistic regression.
+
+    use_bias : bool, default=True
+        Indicate if bias is required. 
+        If True, bias will be used in layers, otherwise bias term will not be considered.
+    
     dropout_rate : float, default=0.5
-        Rate of drop out, which will be applied after the hidden layers.
+        Rate of drop out, which will be applied after the last logit layers.
+
+    batch_norm : bool, default=False
+        Indicate if batch normalization (BN) is applied.
+        If True, BN will be done after each layer before the dropout layer.
+
+    logistic : bool, default=False
+        Indicate if logistic regression is required.
+        If True, the input should be binary and binary classification model
+        will be trained.
+
+    l1_regularize : float, default=0
+        Value for L1 penalty of all the weights in the model.
+
+    l2_regularize : float, default=0
+        Value for L2 penalty of all the weights in the model.
+
     val_ratio : float, default=0.2
         Rate for inner cross-validation, which will be used to split input data to 
         (train[1-val_ratio], valid[val_ratio]). The validation dataset will be used for 
         determining *early stopping*.
+
     optimizer : str, default="adam"
-        Name of optimizer used for fitting model
+        Name of optimizer used for fitting model. The default optimizer is **Adam**. (https://arxiv.org/abs/1412.6980)
         Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
-    loss : str, default="mse"
-        Name of objective function to minimize in training. as it is a regression, default is 'mse' (Mean Squared Error)
+    
+    loss : str, default=None,
+        Name of objective function to minimize in training. 
+        If None (default), it will be automatically determined as 
+        "mse" (mean squared error) for linear regression and
+        "bce" (binary cross entropy) for logistic regression.
         Please refer to Keras loss api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/losses)
+
     learning_rate : float, default=0.001
         Tensor, floating point value, or a schedule that is a tf.keras.optimizers.schedules.LearningRateSchedule, or a callable that takes no arguments and returns the actual value to use, The learning rate. Defaults to 0.001.
         Please refer to Keras optimizer api to use another. (https://www.tensorflow.org/api_docs/python/tf/keras/optimizers)
+    
+    n_batch : int, default=64
+        Number of samples per gradient update.
+
     n_epoch : int, default=50
         Number of epochs to train the model. An epoch is an iteration over the entire x and y data provided. Note that in conjunction with initial_epoch, epochs is to be understood as "final epoch". The model is not trained for a number of iterations given by epochs, but merely until the epoch of index epochs is reached.
+    
+    n_min_epoch : int, default=50
+        Number of minimum epochs to train the model before applying early stopping.
+
     n_patience : int, default=10
         Number of epochs with no improvement after which training will be stopped.
         Please refer to https://keras.io/api/callbacks/early_stopping/
-    n_batch : int, default=64
-        Number of samples per gradient update.
+
     n_sample : int, default=30000
         Max number of samples used in a single fitting.
         If the number of data is bigger than *n_samples*, sampling will be done for 
         each model fitting.
         This is for preventing memory overload.
-    batch_norm : bool, default=True
-        If True, BatchNormalization layer will follow each convolutional layer.
-    gpu_visible_devices : list of str or list of int, default=None
-        Users can indicate a list of GPU resources here. 
-        It would have a same effect as "CUDA_VSIBLE_DEVICES=..."
+
+    train_verbosity : int, default=0
+        Level of verbosity for model fitting. If it is 1, the reports from
+        keras model fitting will be printed.
+
+    model_save_path : str or pathlib.PosixPath, default=None
+        Path for saving best models. If not given, trained models will not be saved.
+
+    explainer : utils.explain.Explainer
+        Explainer object for interpeting the trained models.
+        Please refer to the ``explainer`` module.
+
     """
     
     def __init__(self, 
@@ -116,21 +146,22 @@ class MVPA_CNN(MVPA_TF):
                  activation="relu",
                  activation_output=None,
                  dropout_rate=0.2,
+                 batch_norm=True,
+                 logistic=False,
+                 l1_regularize=0,
+                 l2_regularize=0,
                  val_ratio=0.2,
                  optimizer="adam",
+                 loss=None,
                  learning_rate=0.001,
+                 n_batch = 64,
                  n_epoch = 50,
                  n_min_epoch = 5,
                  n_patience = 10,
-                 n_batch = 64,
                  n_sample = 30000,
-                 l1_regularize=0,
-                 l2_regularize=0,
-                 batch_norm=False,
-                 logistic=False,
-                 explainer=None,
                  train_verbosity=0,
                  model_save_path=None,
+                 explainer=None,
                  **kwargs):
         
         super().__init__(val_ratio=val_ratio,
@@ -159,8 +190,14 @@ class MVPA_CNN(MVPA_TF):
         else:
             self.activation_output = 'linear'
             self.loss = 'mse'
+
+        # overrided by user input.
         if activation_output is not None:
             self.activation_output = activation_output
+
+        if loss is not None:
+            self.loss = loss
+
         self.dropout_rate = dropout_rate
         self.batch_norm = batch_norm
         self.optimizer = optimizer
