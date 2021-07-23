@@ -47,26 +47,37 @@ class MVPA_ElasticNet(MVPA_Base):
     alpha : float, default=0.001
         Value between 0 and 1, indicating the mixing parameter in ElasticNet.
         *penalty* = [alpha * L1 + (1-alpha)/2 * L2] * lambda
+
     n_sample : int, default=30000
         Max number of samples used in a single fitting.
         If the number of data is bigger than *n_sample*, sampling will be done for 
         each model fitting.
         This is for preventing memory overload.
+
     max_lambda : float, default=10
         Maximum value of lambda in lambda search space.
         The lambda search space is used when searching the best lambda value.
+
     min_lambda_ratio : float, default=1e-4
         Ratio of minimum lambda value to maximum value. 
         With this ratio, a log-linearly scaled lambda space will be created.
+
     lambda_search_num : int, default=100
         Number of points in lambda search space. 
         Bigger the number, finer will the lambda searching be.
+
     n_jobs : int, default=16
         Number of cores used in fitting ElasticNet
+
     n_splits : int, default=5
         Number of fold used in inner cross-validation,
         which aims to find the best lambda value.
     
+    logistic : bool, default=False
+        Indicate if logistic regression is required.
+        If True, LogitNet will be used instead, which optimizes
+        logistic regression with the same penalties.
+        
     """
     
     

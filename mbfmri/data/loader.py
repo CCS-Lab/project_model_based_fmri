@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-## author: Yedarm Seong, Cheoljun cho
-## contact: mybirth0407@gmail.com, cjfwndnsl@gmail.com
-## last modification: 2020.12.17
+## author: heoljun cho
+## contact: cjfwndnsl@gmail.com
+## last modification: 2021.07.23
 
 
 from pathlib import Path
@@ -12,7 +12,6 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
-from sklearn.preprocessing import minmax_scale
 from bids import BIDSLayout
 from mbfmri.utils import config
 from mbfmri.utils.coef2map import reconstruct
@@ -21,17 +20,47 @@ from tqdm import tqdm
     
 class Normalizer():
     r"""
-    A callable class for normalizing bold-signals of the latent process. 
-    Standardization or Min-Max scaling can be done here for improving 
-    stability of MVPA optimization.
+    Callable class for normalizing bold-signals or latent process signals. 
+    Standardization, Rescaling, or Min-Max scaling can be done here for improving 
+    stability of MVPA model optimization.
+    
+    Parameters
+    ---------
+
+    normalizer_name : str, default="none"
+        Name for the method of normalizaion
+        - "none" : do nothing. 
+        - "standard" : standardize the data
+        - "rescale" : rescale values in to the given scale.
+                      the data ranged in [MEAN-std_threshold*STD, MEAN+``std_threshold``*STD] will be
+                      resacled to ``scale``. 
+        - "minmax" : rescale values in to the given scale (``scale``), so that
+                     the entire value range will fit in the scale.
+    
+    std_threshold : float, default=2.58
+        Z-score value for thresholding valid range of data.
+        used in "rescale" normalization
+
+    clip : bool, default=True
+        Indicate if clip the value range, used in "rescale" normalization.
+    
+    scale : [float,float], default=[0,1]
+        Tuple or list indicating the range, [lower bound, upper bound], for
+        the data to be rescaled or fit in.
+
+    use_absolute_value : bool, default=False
+        Indicate if use absolute value, use abs(x) instead of input x.
+
+
     """
     
     def __init__(self, 
-                 use_absolute_value=False,
-                 normalizer_name="rescale",
+                 normalizer_name="none",
                  std_threshold=2.58,
                  clip=True,
-                 scale=[0,1]):
+                 scale=[0,1],
+                 use_absolute_value=False):
+
         self.use_absolute_value = use_absolute_value
         self.name = normalizer_name
         self.scale = scale
@@ -46,9 +75,7 @@ class Normalizer():
         elif self.name is None or self.name == "none":
             normalized = x
         elif self.name == "rescale":
-            temp =x.copy().flatten()
-            temp.sort()
-            std,mean = temp.std(),temp.mean()
+            std,mean = x.std(),x.mean()
             ub1,lb1 = mean+self.std_threshold*std,mean-self.std_threshold*std
             lb2,ub2 = self.scale
             normalized = ((x-lb1)*ub2+lb2*(ub1-x))/(ub1-lb1)
@@ -56,15 +83,49 @@ class Normalizer():
                 normalized=np.clip(normalized, 
                                    a_min=lb2,
                                    a_max=ub2)
-        else:
-            temp =x.copy().flatten()
-            ub1,lb1 = temp.max(),temp.min()
+        elif self.name == "minmax":
+            ub1,lb1 = x.max(), x.min()
             lb2,ub2 = self.scale
             normalized = ((x-lb1)*ub2+lb2*(ub1-x))/(ub1-lb1)
+            if self.clip:
+                normalized=np.clip(normalized, 
+                                   a_min=lb2,
+                                   a_max=ub2)
+        else:
+            normalized = x
+
         return normalized
 
 class Binarizer():
-    
+
+    r"""
+    Callable class for binarizing latent process signals.
+    Users can indicate each range for positive (1) or negative (0).
+    The datapoints in signals in the positive range will be "1", and
+    those in the negative range will be "0." 
+    This function is applied for processing target dat for Logistic models. 
+    Any siganls with values out of both ranges will be marked as "-1," which
+    will be ignored in training the models. 
+
+    Parameters
+    ----------
+
+    positive_range : [float,float] or float
+        Range, [lower bound, upper bound], for positive logistic value ("1").
+        if ``use_ratio`` is True, the bounds in the given range will indicate
+        the rates which should be fall into [0,1]. 
+        If only one given, [positive_range, 1 or Inf] will be used.
+
+    negative_range : [float,float] or float
+        Range, [lower bound, upper bound], for negative logistic value ("0").
+        if ``use_ratio`` is True, the bounds in the given range will indicate
+        the rates which should be fall into [0,1]. 
+        If only one given, [0 or -Inf, negative_range] will be used.
+
+    use_ratio : bool, default=True
+        Indicate if boundary values in ranges are in percentage scale.
+
+    """    
     def __init__(self,
                 positive_range,
                 negative_range,
@@ -80,6 +141,7 @@ class Binarizer():
         else:
             assert len(positive_range) == 2
             self.positive_range =positive_range
+
         if isinstance(negative_range,float):
             if self.use_ratio:
                 self.negative_range =[0,negative_range]
@@ -106,6 +168,7 @@ class Binarizer():
         x[is_positive]=1
         x[is_negative]=0
         x[is_invalid]=-1
+
         return x
             
     
@@ -125,36 +188,98 @@ class BIDSDataLoader():
     
     Parameters
     ----------
+
     layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
         BIDS layout for retrieving MB-MVPA preprocessed data files.
         Users can input the root for entire BIDS layout with original data,
         or the root for MB-MVPA derivative layout.
+
     subjects : list of str or "all",default="all"
         List of subject IDs to load. 
         If "all", all the subjects found in the layout will be loaded.
+    
+    task_name : str, default=None
+        Name of the task. 
+        If not given, ignored in searching through BIDS layout.
+
+    process_name : str, default="unnamed"
+        Name of the target latent process.
+        If not given, ignored in searching through BIDS layout.
+
+    feature_name : str, default="unnamed"
+        Name for indicating preprocessed feature.
+        If not given, ignored in searching through BIDS layout.
+
     voxel_mask_path : str or pathlib.PosixPath, default=None
         Path for voxel mask file. If None, then find it from default path,
         "MB-MVPA_ROOT/voxelmask_{feature_name}.nii.gz"
+
     reconstruct : boolean, default=False
         Flag for indicating whether reshape flattened voxel features to
         4D images.
         Normally, it needs to be done for running CNNs.
-    normalizer : str, default="none"
-        Type of subject-wise normalizaion of bold-like signals of the latent process.
-        "none" - do noting.
-        "standard" - Gaussian normalization
-        "minmax" - Min-Max scaling. linearly rescale to fit in *scale* range.
-    scale : tuple[float,float], default=(-1,1)
-        Range for "minmax" *normalizer*, otherwise ignored.
-    task_name : str, default=None
-        Name of the task. 
-        If not given, ignored in searching through BIDS layout.
-    process_name : str, default="unnamed"
-        Name of the target latent process.
-        If not given, ignored in searching through BIDS layout.
-    feature_name : str, default="unnamed"
-        Name for indicating preprocessed feature.
-        If not given, ignored in searching through BIDS layout.
+
+    y_normalizer : str, default="none"
+        Name for the method of normalizaion of latent process signals (y).
+        - "none" : do nothing. 
+        - "standard" : standardize the data
+        - "rescale" : rescale values in to the given scale.
+                      the data ranged in [MEAN-std_threshold*STD, MEAN+``std_threshold``*STD] will be
+                      resacled to ``scale``. 
+        - "minmax" : rescale values in to the given scale (``scale``), so that
+                     the entire value range will fit in the scale.
+    
+    y_std_threshold : float, default=2.58
+        Z-score value for thresholding valid range of latent process signals (y).
+        used in "rescale" normalization
+
+    y_clip : bool, default=True
+        Indicate if clip the value range, used in "rescale" normalization.
+    
+    y_scale : [float,float], default=[0,1]
+        Tuple or list indicating the range, [lower bound, upper bound], for
+        the data to be rescaled or fit in.
+
+    y_use_absolute_value : bool, default=False
+        Indicate if use absolute value.
+
+    X_normalizer : str, default="none"
+        ``normalizer`` for voxel signals (X).
+    
+    X_std_threshold : float, default=2.58
+        ``std_threshold`` for voxel signals (X).
+
+    X_clip : bool, default=True
+        ``clip`` for voxel signals (X).
+    
+    X_scale : [float,float], default=[0,1]
+        ``scale`` for voxel signals (X).
+
+    X_use_absolute_value : bool, default=False
+        ``use_absolute_value`` for voxel signals (X).
+
+    logistc : bool, default=False
+        Indicate if the data (X,y) is required to be logistic value.
+        True when a logistic model is used.
+
+    binarizer_positive_range : [float,float] or float
+        Range, [lower bound, upper bound], for positive logistic value ("1").
+        if ``use_ratio`` is True, the bounds in the given range will indicate
+        the rates which should be fall into [0,1]. 
+        If only one given, [positive_range, 1 or Inf] will be used.
+        It is valid when ``logistic`` is True.
+
+    binarizer_negative_range : [float,float] or float
+        Range, [lower bound, upper bound], for negative logistic value ("0").
+        if ``use_ratio`` is True, the bounds in the given range will indicate
+        the rates which should be fall into [0,1]. 
+        If only one given, [0 or -Inf, negative_range] will be used.
+        It is valid when ``logistic`` is True.
+
+    binarizer_use_ratio : bool, default=True
+        Indicate if boundary values in ranges are in percentage scale.
+        It is valid when ``logistic`` is True.
+    
     verbose : int, default=1
         Level of verbosity. 
         Currently, if verbose > 0, print all the info. while loading.
@@ -165,26 +290,26 @@ class BIDSDataLoader():
                  layout,
                  subjects='all',
                  sessions='all',
+                 task_name=None, 
+                 process_name="unnamed",
+                 feature_name="unnamed",
                  voxel_mask_path=None,
                  reconstruct=False,
                  y_normalizer="none",
-                 y_use_absolute_value=False,
                  y_scale=[0,1],
                  y_std_threshold=2.58,
                  y_clip=False,
+                 y_use_absolute_value=False,
                  X_normalizer="none",
                  X_use_absolute_value=False,
                  X_scale=[0,1],
                  X_std_threshold=2.58,
                  X_clip=False,
-                 task_name=None, 
-                 process_name="unnamed",
-                 feature_name="unnamed",
-                 verbose=1,
                  logistic=False,
                  binarizer_positive_range=None,
                  binarizer_negative_range=None,
                  binarizer_use_ratio=True,
+                 verbose=1,
                 ):
          
         # set MB-MVPA layout from "layout" argument.
@@ -421,7 +546,17 @@ class BIDSDataLoader():
         print('INFO: loading data done')
         
     def get_data(self, subject_wise=True):
-        
+        r"""Get loaded data. 
+
+        Parameters
+        ----------
+
+        subject_wise : bool, default=True
+            Indicate if the data dictionary indexed by the subject ID 
+            is required. If not, a single concatenated array for each will be
+            returned.
+
+        """
         if subject_wise:
             # return dictionaries of X, y indexed by subject IDs
             return self.X, self.y
@@ -432,4 +567,6 @@ class BIDSDataLoader():
             return X, y
                 
     def get_voxel_mask(self):
+        r"""Get loaded voxel mask
+        """
         return self.voxel_mask
