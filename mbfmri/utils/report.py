@@ -168,9 +168,24 @@ def aggregate(search_path,
     
 
 class PostReporter():
-    
+    r"""
+    PostReporter aggregates fitting results by name and makes reports. 
+    Several helpful reports are implemented and users can input which
+    kinds of reports should be made for their purposes.
+
+    Parameters
+    ----------
+
+    reports : list of str, default=["brainmap"]
+        List of name for reporting function. "brainmap", "r", "pearsonr", 
+        "spearmanr", "mse", "accuracy", "roc", "elasticnet" are available
+
+        Some of them require additional arguments like "voxel_mask" in "brainmap."
+        Please refer to the document.
+
+    """
     def __init__(self,
-                reports=['metric_mse','metric_pearsonr'],
+                reports=["brainmap"],
                 **kwargs):
         
         self.function_dict = report_function_dict 
@@ -233,8 +248,24 @@ class PostReporter():
         return outputs
 
 class FitReporter():
+
+    r"""
+    FitReporter calculates metrics for the fitted result in each fold of 
+    cross-validation.  
+    Several metrics are implemented and users can input which
+    kinds of reports should be made for their purposes.
+
+    Parameters
+    ----------
+
+    metrics : list of str, default=[]
+        List of name for metric function. "r", "pearsonr", 
+        "spearmanr", "mse", "accuracy", "auc" are available
+
+    """
+
     def __init__(self,
-                metrics=['mse','r'],
+                metrics=[],
                 **kwargs):
         self.function_dict = metric_function_dict
         self.reports = {report:self._init_report(report,**kwargs) for report in metrics}
