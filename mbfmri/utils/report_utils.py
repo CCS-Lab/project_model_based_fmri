@@ -200,61 +200,31 @@ class Report_BrainMap():
         plot_slice_interactive(img_path,save,save_path)
         return nii
     
-class Report_BrainMapDNN():
     
-    def __init__(self,
-                voxel_mask,
-                experiment_name='unnamed',
-                standardize=True,
-                map_smoothing_fwhm=6,
-                degree=2):
-        
-        self.voxel_mask = voxel_mask
-        self.experiment_name = experiment_name
-        self.standardize = standardize
-        self.smoothing_fwhm = map_smoothing_fwhm
-        self.degree = 2
-        
-    def __call__(self,
-                 save,
-                 save_path,
-                 shap_values,
-                 shap_sample
-                ):
-        
-        
-        
-        shap_values = np.array(shap_values)
-        shap_sample = np.array(shap_sample)
-        
-        if len(shap_values[0].shape) >=4:
-            
-            mask = self.voxel_mask.get_fdata() >0
-            shap_values = shap_values.transpose(2,3,4,0,1)[mask].transpose(1,2,0) 
-            shap_sample = shap_sample.transpose(2,3,4,0,1)[mask].transpose(1,2,0) 
-            
-            
-            
-        
-        coefs_by_degree = get_weight_dnn(shap_values,
-                                 shap_sample,
-                                 degree=self.degree)
-        
-        niis = []
-        
-        for i, coefs in enumerate(coefs_by_degree):
+def _smooth(preds,shap_values,n_bin=10,sigma_scale=.3):
+        xub = preds.std()*1.96 + preds.mean()
+        prm = preds.mean()
+        prs = preds.std()
+        sigma = prs * sigma_scale
+        x = np.linspace(prm-1.96*prs,prm+1.96*prs,n_bin)
 
-            nii, img_path = get_map(coefs, self.voxel_mask, self.experiment_name+f'_degree-{self.degree-i}',
-                    standardize=self.standardize, save_path=save_path, smoothing_fwhm=self.smoothing_fwhm)
+        def gk(x,m,s):
+            return 1/s/(2*np.pi)**.5*np.exp(-(x-m)**2/2/s**2)
 
-            plot_mosaic(img_path,save,save_path)
-            plot_surface_interactive(img_path,save,save_path)
-            plot_slice_interactive(img_path,save,save_path)
-            niis.append(nii)
-            
-        return niis
+
+        shap_values_smthed = None
+
+        for v in x:
+            weights= gk(preds,v,sigma)
+            smthed = weights.dot(shap_values)/weights.sum()
+            smthed = np.expand_dims(smthed,0)
+            if shap_values_smthed is None:
+                shap_values_smthed=smthed
+            else:
+                shap_values_smthed  = np.vstack((shap_values_smthed,smthed))
+
+        return shap_values_smthed
     
-
 
 class Plot_ElasticNet():
     
@@ -349,18 +319,6 @@ class Plot_SpearmanR():
                      pval_threshold=self.pval_threshold)
         
         
-def get_weight_dnn(shap_values,
-                 shap_sample,
-                 degree=2):
-    
-    polyfits = np.zeros((shap_sample.shape[0],shap_sample.shape[2],degree+1))
-    for i in range(shap_sample.shape[0]):
-        for j in range(shap_sample.shape[2]):
-            
-            polyfits[i,j] = np.polyfit(shap_sample[i,:,j],shap_values[i,:,j],degree)
-                                       
-    polyfits = polyfits.transpose(2,0,1)
-    return polyfits
         
 def plot_elasticnet_result(save_root, 
                            save,

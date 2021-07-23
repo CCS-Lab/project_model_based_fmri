@@ -210,9 +210,11 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'EXPLAINER':{
             'shap_explainer':'deep',
             'shap_n_background': 100,
-            'shap_n_sample': 1000,
+            'shap_n_sample': 100,
             'pval_threshold': .05,
             'include_trainset':True,
+            'voxel_mask': None,
+            'shap_save': True,
         },
         'CV':{
             'method':'5-fold',
@@ -229,13 +231,13 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'pval_threshold': 0.05
                 },
                 'mlp':{
-                    'reports':['brainmap_dnn','pearsonr','mse'],
+                    'reports':['brainmap','pearsonr','mse'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
                     'pval_threshold': 0.05
                 },
                 'cnn':{
-                    'reports':['brainmap_dnn','pearsonr','mse'],
+                    'reports':['brainmap','pearsonr','mse'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
                     'pval_threshold': 0.05
@@ -250,12 +252,12 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'map_smoothing_fwhm': 0,
                 },
                 'mlp':{
-                    'reports':['brainmap_dnn','accuracy','roc'],
+                    'reports':['brainmap','accuracy','roc'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
                 },
                 'cnn':{
-                    'reports':['brainmap_dnn','accuracy','roc'],
+                    'reports':['brainmap','accuracy','roc'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
                 },

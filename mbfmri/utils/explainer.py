@@ -17,6 +17,9 @@ tf.compat.v1.disable_v2_behavior()
 #shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
 
 
+
+
+
 class Explainer():
     
     def __init__(self,
@@ -25,15 +28,20 @@ class Explainer():
                  shap_n_sample = 100,
                  include_trainset=True,
                  pval_threshold=0.05,
-                 n_bin=10):
+                 voxel_mask=None,
+                 shap_save=False):
     
         self.shap_explainer = shap_explainer
         self.shap_n_background = shap_n_background
         self.shap_n_sample = shap_n_sample
         self.include_trainset = include_trainset
         self.pval_threshold = pval_threshold
-        self.n_bin = n_bin
+        self.shap_save = shap_save
+        self.voxel_mask = voxel_mask
+        
     
+    
+
     def __call__(self,model,X_test,X_train):
         if self.include_trainset:
             X_test = np.concatenate([X_test,X_train])
@@ -42,7 +50,6 @@ class Explainer():
         X_bg = X_test
         X_samp = X_test
         background =  X_bg[np.random.choice(len(X_bg),self.shap_n_background)]
-        #sample_idxs =  self._balanced_sample(preds,self.n_bin,self.shap_n_sample)
         sample_idxs = np.random.choice(len(X_samp),self.shap_n_sample)
         sample = X_samp[sample_idxs]
         # sample : (n_sample, *X_shape)
@@ -54,28 +61,23 @@ class Explainer():
                 e = shap.DeepExplainer(model, background)
             shap_values = e.shap_values(sample)[0]
             
-        output = {'shap_values':shap_values,
-                 'shap_sample':sample,
-                 'shap_pred':preds[sample_idxs]}
         
-        return output
-    
-        '''
-        non_zero_mask = (abs(sample.mean(0)) > 1e-8)
-        original_shape = shap_values.shape[1:]
-        transpose_index = list(range(len(shap_values.shape)))
-        transpose_index = transpose_index[1:] + transpose_index[:1]
-        shap_values=shap_values.transpose(*transpose_index)[non_zero_mask].T
-        sample=sample.transpose(*transpose_index)[non_zero_mask].T
+        if len(sample.shape )>= 4:
+            mask = self.voxel_mask.get_fdata() > 0
+            sample = sample.transpose(1,2,3,0)[mask].transpose(1,0)
+            shap_values = shap_values.transpose(1,2,3,0)[mask].transpose(1,0)
+            
         regs = [linregress(sample[:,i],shap_values[:,i]) for i in range(sample.shape[1])]
         pvalue = [reg.pvalue for reg in regs]
         valid,_ = fdrcorrection(pvalue, alpha=self.pval_threshold)
         slopes = np.array([reg.slope for reg in regs])
         slopes[~valid] = 0
-        blackboard = np.zeros(original_shape)
-        blackboard[non_zero_mask] = slopes
-        slopes = blackboard
-
-        return slopes
-        '''
+        
+        output = {}
+        output['weights'] = slopes
+        output['shap_values']=shap_values
+        output['shap_sample']=sample
+        output['shap_pred'] = preds[sample_idxs]
+            
+        return output
         

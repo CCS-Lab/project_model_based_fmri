@@ -65,8 +65,8 @@ def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path="."
     mask = voxel_mask.get_fdata()
     
     for coef in coefs:
-        if standardize:
-            coef = zscore(coef,axis=None)
+        #if standardize:
+            #coef = zscore(coef,axis=None)
         # converting flattened coefs to brain image.
         if len(coef.shape) != 3:
             activation_map = reconstruct(coef.ravel(), mask)
@@ -91,9 +91,17 @@ def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path="."
     activation_maps[np.isnan(activation_maps)] = 0
 
     # voxel-wise one sample ttest
-    m = ttest_1samp(activation_maps, 0).statistic
-
+    #m = ttest_1samp(activation_maps, 0).statistic
+    m = activation_maps.mean(0)
+        
     m[np.isnan(m)] = 0
+    
+    if standardize:
+        m_m = m[mask]
+        m_mean = m_m.mean()
+        m_std = m_m.std()
+        m = (m-m_mean)/m_std
+        
     m *= mask
     result_map = nib.Nifti1Image(m, affine=voxel_mask.affine)
     ###########################################################################
@@ -101,7 +109,7 @@ def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path="."
     
     save_path = Path(save_path)
     save_path.mkdir(exist_ok=True)
-    file_path = save_path / f"{experiment_name}_attribution_map.nii"
+    file_path = save_path / f"{experiment_name}_map.nii"
     result_map.to_filename(file_path)
 
     return result_map, file_path

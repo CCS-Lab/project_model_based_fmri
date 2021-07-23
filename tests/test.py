@@ -31,7 +31,7 @@ def test_adjust(row):
 
 _ = run_mbfmri(bids_layout=bids_layout,
                dm_model='ra_prospect',
-               mvpa_model='cnn',
+               mvpa_model='mlp',
                feature_name='zoom2gm',
                task_name='mixedgamblestask',
                process_name='SUgamble',

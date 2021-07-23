@@ -143,9 +143,6 @@ class MBMVPA(MBFMRI):
         if self.mvpa_model_name in NEED_RECONSTRUCT_MODEL:
             self.config['LOADER']['reconstruct'] = True
             
-        if self.mvpa_model_name in USE_EXPLAINER:
-            self.config['MVPA']['MODEL'][self.mvpa_model_name]['explainer'] = Explainer(**self.config['MVPA']['EXPLAINER'])
-            
         self.model = None
         self.reporter = None
         self.model_cv = None
@@ -209,6 +206,11 @@ class MBMVPA(MBFMRI):
         self._set_result_name()
         input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
         self.config['MVPA']['MODEL'][self.mvpa_model_name]['input_shape'] = input_shape
+        if self.mvpa_model_name in USE_EXPLAINER:
+            self.config['MVPA']['EXPLAINER']['voxel_mask']=voxel_mask
+            self.config['MVPA']['MODEL'][self.mvpa_model_name]['explainer'] = Explainer(**self.config['MVPA']['EXPLAINER'])
+            
+            
         self.model = self._mvpa_model_class(**self.config['MVPA']['MODEL'][self.mvpa_model_name])
         if self.logistic:
             self.fit_reporter = FitReporter(**self.config['MVPA']['LOGISTICFITREPORT'])
@@ -218,6 +220,7 @@ class MBMVPA(MBFMRI):
             self.fit_reporter = FitReporter(**self.config['MVPA']['FITREPORT'])
             self.post_reporter = PostReporter(voxel_mask=voxel_mask,
                                  **self.config['MVPA']['POSTREPORT'][self.mvpa_model_name])
+        
         
         # set cross-validation module of MVPA (model_cv)
         self.model_cv = MVPA_CV(X_dict,y_dict,self.model,
