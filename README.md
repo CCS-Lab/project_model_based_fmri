@@ -16,4 +16,5 @@ python setup.py install
 
 # Tutorial
 
-Download the example data from [here](https://drive.google.com/file/d/1nmHwyxgrCfMQ3EhDhdFb3BwToEzMArqN/view?usp=sharing).
+Download the example data from [here](https://drive.google.com/file/d/1nmHwyxgrCfMQ3EhDhdFb3BwToEzMArqN/view?usp=sharing). Place it under *tutorials*.<br>
+See the [tutorial](https://github.com/CCS-Lab/project_model_based_fmri/blob/main/tutorials/tutorial.ipynb).
