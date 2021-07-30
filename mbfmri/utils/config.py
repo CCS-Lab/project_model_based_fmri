@@ -290,6 +290,32 @@ dict_list = [DEFAULT_ANALYSIS_CONFIGS['VOXELFEATURE'],
              DEFAULT_ANALYSIS_CONFIGS['MVPA']['LOGISTICFITREPORT'],
              DEFAULT_ANALYSIS_CONFIGS['DATAPLOT']]
 
+def add_wo_rep(l1,l2):
+    for k in l2:
+        if k not in l1:
+            l1.append(k)
+    return l1
+
+def add_recur(config_dict):
+    cl = []
+    for k, d in config_dict.items():
+        if isinstance(d,dict):
+            add_wo_rep(cl, add_recur(d))
+        else:
+            add_wo_rep(cl,[k])
+    return cl
+
+CONFIG_LIST = ['analysis',
+               'config',
+                'mvpa_model',
+                'report_path',
+                'overwrite',
+                'overwrite_latent_process',
+                'refit_compmodel']
+
+CONFIG_LIST = add_wo_rep(CONFIG_LIST,add_recur(DEFAULT_ANALYSIS_CONFIGS))
+                   
+
 import argparse
 
 parser = argparse.ArgumentParser()

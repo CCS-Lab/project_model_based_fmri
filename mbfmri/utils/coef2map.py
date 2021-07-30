@@ -26,6 +26,8 @@ def reconstruct(array, mask):
     
 def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path=".", smoothing_fwhm=6):
     """
+    TODO : zeroing out value threshold.
+    
     make nii image file from coefficients of model using masking info.
     """
     """
