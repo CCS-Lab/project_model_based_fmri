@@ -173,12 +173,16 @@ class Report_BrainMap():
                 voxel_mask,
                 experiment_name='unnamed',
                 standardize=True,
-                map_smoothing_fwhm=6):
+                map_smoothing_fwhm=6,
+                map_threshold=0,
+                cluster_threshold=0):
         
         self.voxel_mask = voxel_mask
         self.experiment_name = experiment_name
         self.standardize = standardize
         self.smoothing_fwhm = map_smoothing_fwhm
+        self.threshold = map_threshold
+        self.cluster_threshold = cluster_threshold
         
     def __call__(self,
                  save,
@@ -193,7 +197,8 @@ class Report_BrainMap():
             coefs = weights 
             
         nii, img_path = get_map(coefs, self.voxel_mask, self.experiment_name,
-                standardize=self.standardize, save_path=save_path, smoothing_fwhm=self.smoothing_fwhm)
+                standardize=self.standardize, save_path=save_path, smoothing_fwhm=self.smoothing_fwhm,
+                               threshold=self.threshold,cluster_threshold=self.cluster_threshold)
         
         plot_mosaic(img_path,save,save_path)
         plot_surface_interactive(img_path,save,save_path)

@@ -190,18 +190,24 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'n_coef_plot': 150,
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
+                    'map_threshold':0,
+                    'cluster_threshold':0,
                     'pval_threshold': 0.05
                 },
                 'mlp':{
                     'reports':['brainmap','pearsonr','mse'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
+                    'map_threshold':0,
+                    'cluster_threshold':0,
                     'pval_threshold': 0.05
                 },
                 'cnn':{
                     'reports':['brainmap','pearsonr','mse'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
+                    'map_threshold':0,
+                    'cluster_threshold':0,
                     'pval_threshold': 0.05
                 },
             },
@@ -212,16 +218,22 @@ DEFAULT_ANALYSIS_CONFIGS = {
                     'n_coef_plot': 150,
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
+                    'map_threshold':0,
+                    'cluster_threshold':0,
                 },
                 'mlp':{
                     'reports':['brainmap','accuracy','roc'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
+                    'map_threshold':0,
+                    'cluster_threshold':0,
                 },
                 'cnn':{
                     'reports':['brainmap','accuracy','roc'],
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
+                    'map_threshold':0,
+                    'cluster_threshold':0,
                 },
             },
         'FITREPORT':{

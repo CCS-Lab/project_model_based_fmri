@@ -23,8 +23,24 @@ def reconstruct(array, mask):
     
     return blackboard
     
+def cluster_level_correction(brainmap, threshold, cluster_threshold):
+    stat_map = brainmap
+    affine = stat_map.affine
+    stat_map = stat_map.get_fdata()
+    if cluster_threshold > 0:
+        label_map, n_labels = label(np.abs(stat_map) > threshold)
+
+        for label_ in range(1, n_labels + 1):
+            if np.sum(label_map == label_) < cluster_threshold:
+                stat_map[label_map == label_] = 0
     
-def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path=".", smoothing_fwhm=6):
+    stat_map[np.abs(stat_map) <= threshold] = 0
+    stat_map = nib.Nifti1Image(stat_map,affine)
+    
+    return stat_map
+
+def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path=".", smoothing_fwhm=6,
+            threshold=0, cluster_threshold=0):
     """
     TODO : zeroing out value threshold.
     
@@ -99,13 +115,15 @@ def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path="."
     m[np.isnan(m)] = 0
     
     if standardize:
-        m_m = m[mask]
+        m_m = m[mask.nonzero()]
         m_mean = m_m.mean()
         m_std = m_m.std()
         m = (m-m_mean)/m_std
         
     m *= mask
+    
     result_map = nib.Nifti1Image(m, affine=voxel_mask.affine)
+    result_map = cluster_level_correction(result_map,threshold, cluster_threshold)
     ###########################################################################
     # saving
     
