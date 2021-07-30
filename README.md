@@ -8,6 +8,7 @@
 
 ```
 git clone https://github.com/CCS-Lab/project_model_based_fmri.git
+cd project_model_based_fmri
 poetry install
 poetry shell
 python setup.py install
