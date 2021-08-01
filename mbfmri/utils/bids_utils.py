@@ -5,9 +5,6 @@
 ## contact: cjfwndnsl@gmail.com
 ## last modification: 2021.04.29
 
-"""
-"""
-
 from pathlib import Path
 import numpy as np
 import nibabel as nib
@@ -27,33 +24,56 @@ class BIDSController():
     Parameters
     ----------
     
-    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout
-        (Original) BIDSLayout of input data. It should follow **BIDS** convention.
-        The main data used from this layout is behaviroal data,``events.tsv``.
-    subjects : list of str or "all",default="all"
-        List of subject IDs to load. 
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
+        
+    subjects : list of str or "all", default="all"
+        List of valid subject IDs. 
         If "all", all the subjects found in the layout will be loaded.
+        
+    sessions : list of str or "all", default="all"
+        List of valid session IDs. 
+        If "all", all the sessions found in the layout will be loaded.
+            
     save_path : str or pathlib.PosixPath, default=None
         Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
         If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
+    
     fmriprep_name : str, default="fMRIPrep"
         Name of the derivative layout of fMRI preprocessed data.
+    
     task_name : str, default=None
         Name of the task. If not given, the most common task name will be automatically selected.
-    bold_suffix : str, default="bold"
-        Suffix of filename indicating bold image data. Please refer to file naming convention in **BIDS** convention.
-        ``sub-{}_task-{}_ses-{}_run-{}_space-{}_desc-preproc_bold.nii.gz`` is a typical bold image file.
-    event_suffix : str, default,"events"
-        Suffix of filename indicating behavioral data. Please refer to file naming convention in **BIDS** convention.
-        ``sub-{}_task-{}_ses-{}_run-{}_events.tsv`` is a typical event file.
-    confound_suffix : str, default="regressors"
-        Suffix of filename indicating confounds or regressors data. Please refer to file naming convention in **BIDS** convention.
-        Also refer to **fMRIPrep**.
-        ``sub-{}_task-{}_ses-{}_run-{}_desc-confounds_regressors.tsv`` is a typical confounds file.
-    ignore_original : boolean, default=False
-        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout ``layout``.
-        If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
+    
+    space_name : str, default=None
+        Name of template space. If not given, the most common space in 
+        input layout will be selected. 
         
+    bold_suffix : str, default='regressors'
+        Name of suffix indicating preprocessed fMRI file
+        
+    event_suffix : str, default='events'
+        Suffix name for behavioral data file.
+
+    confound_suffix : str, default='regressors'
+        Name of suffix indicating confounds file
+    
+    ignore_original : boolean, default=True
+        Indicate whether it would cover behaviroal data in the original BIDSLayout.
+        If True, it will only consider data in the derivative layout for fMRI preprocessed data.
+    
+    ignore_fmriprep : boolean, default=False
+        Indicate whether it can ignore fMRIPrep layout. 
+        It should be True if users don't have fMRIPrep, but still 
+        want to run computational modeling.
+        
+    t_r : float, default=None
+        Time resolution in second. 
+        It will be overrided by value from input data if applicable.
+    
+    slice_time_ref: float, default=.5
+        Slice time reference in ratio in 0,1].
+        It will be overrided by value from input data if applicable.
         
     Attributes
     ----------
@@ -61,48 +81,24 @@ class BIDSController():
     layout : bids.layout.layout.BIDSLayout
         (Original) BIDSLayout of input data. It should follow **BIDS** convention.
         The main data used from this layout is behaviroal data,``events.tsv``.
-    subjects : list of str or "all",default="all"
-        List of subject IDs to load. 
-        If "all", all the subjects found in the layout will be loaded.
+        
     fmriprep_layout : bids.layout.layout.BIDSLayout
         Derivative layout for fMRI preprocessed data. 
         ``fmriprep_layout`` is holding primarily preprocessed fMRI images (e.g. motion corrrected, registrated,...) 
         This package is built upon **fMRIPrep** by *Poldrack lab at Stanford University*. 
+        
     mbmvpa_layout : ids.layout.layout.BIDSLayout
         Derivative layout for MB-MVPA. 
         The preprocessed voxel features and modeled latent process will be organized within this layout.
-    root : str
-        Root path of layout.
-    save_path : pathlib.PosixPath
-        Path for saving preprocessed results. The MB-MVPA BIDS-like derivative layout will be created under the given path.
-        If not input by the user, it will use "BIDSLayout_ROOT/derivatives/."
-    ignore_original : boolean
-        Indicator to tell whether it would cover behaviroal data in the original BIDSLayout ``layout``.
-        If ``True``, it will only consider data in the derivative layout for fMRI preprocessed data,``fmriprep_layout``.
-    bold_suffix : str, default="bold"
-        Suffix of filename indicating bold image data. Please refer to file naming convention in **BIDS** convention.
-        ``sub-{}_task-{}_ses-{}_run-{}_space-{}_desc-preproc_bold.nii.gz`` is a typical bold image file.
-    event_suuffix : str, default="events"
-        Suffix of filename indicating behavioral data. Please refer to file naming convention in **BIDS** convention.
-        ``sub-{}_task-{}_ses-{}_run-{}_events.tsv`` is a typical event file.
-    confound_suffix : str, default="regressors"
-        Suffix of filename indicating confounds or regressors data. Please refer to file naming convention in **BIDS** convention.
-        Also refer to **fMRIPrep**.
-        ``sub-{}_task-{}_ses-{}_run-{}_desc-confounds_regressors.tsv`` is a typical confounds file.
-    fmriprep_name : str, default="fMRIPrep"
-        Name of the derivative layout of fMRI preprocessed data. 
-    mbmvpa_name : str, default="MB-MVPA"
-        Name of the derivative layout of MB-MVPA data.
-    task_name : str
-        Name of the task. If not given, the most common task name will be automatically selected.
+        
     voxelmask_path : pathlib.PosixPath
         Path for saving and locating integrated ROI mask. 
+        
     meta_infos : pandas.DataFrame
         Dataframe of meta information of each run. 
         Following columns are included.
-        ['subject', 'session', 'run', 'task', 'bold_path', 'confound_path', 'event_path', 't_r', 'n_scans']
+        ['subject', 'session', 'run', 'task', 'bold_path', 'confound_path', 'event_path', 't_r', 'n_scans','slice_time_ref']
     
-        
     """
     
     
@@ -120,8 +116,7 @@ class BIDSController():
                 ignore_original=False,
                 ignore_fmriprep=False,
                 t_r=None,
-                slice_time_ref=.5,
-                ):
+                slice_time_ref=.5,):
         
         self.layout = self.get_base_layout(bids_layout)
         self.root = self.layout.root
@@ -400,7 +395,8 @@ class BIDSController():
         print(summary_report)
     
     def reload(self):
-        # reload MB-MVPA layout
+        '''reload MB-MVPA layout
+        '''
         self.layout = BIDSLayout(root=self.root,derivatives=True)
             
         if not self.mbmvpa_name in self.layout.derivatives.keys():
@@ -408,7 +404,8 @@ class BIDSController():
         self.mbmvpa_layout = self.layout.derivatives[self.mbmvpa_name]
         
     def make_mbmvpa(self,mbmvpa_root):
-        # make MB-MVPA base layout if not exists
+        '''make MB-MVPA base layout if not exists
+        '''
         mbmvpa_root = Path(mbmvpa_root)
         
         if not mbmvpa_root.exists():
@@ -430,10 +427,11 @@ class BIDSController():
         return True
             
     def set_path(self, sub_id, ses_id=None):
-        # set & return path for saving MB-MVPA data
-        # path is defined as BIDS convention
-        # make directory if not exists
-        
+        '''
+        set & return path for saving MB-MVPA data
+        path is defined as BIDS convention
+        make directory if not exists
+        '''
         sub_path = Path(self.mbmvpa_layout.root) / f'sub-{sub_id}'
         if not sub_path.exists():
             sub_path.mkdir()
@@ -451,7 +449,8 @@ class BIDSController():
         return func_path
         
     def get_path(self, sub_id, ses_id=None):
-        # get path for saving directory of MB-MVPA of a single session
+        '''get path for saving directory of MB-MVPA of a single session
+        '''
         if ses_id is not None:
             return Path(self.mbmvpa_layout.root)/f'sub-{sub_id}'/f'ses-{ses_id}'/'func'
         else:
@@ -459,9 +458,13 @@ class BIDSController():
     
     
     def get_subjects(self):
+        '''get subject ID list from BIDS
+        '''
         return self.fmriprep_layout.get_subjects(task=self.task_name)
     
     def get_bold(self, sub_id=None, task_name=None, run_id=None, ses_id=None):
+        '''get BOLD images from fMRIPrep BIDS
+        '''
         return self.fmriprep_layout.get(
                         subject=sub_id, session=ses_id,
                         task=task_name,
@@ -471,6 +474,8 @@ class BIDSController():
                         extension=self.nii_ext)
         
     def get_event(self, sub_id=None, task_name=None, run_id=None, ses_id=None):
+        '''get event files from BIDS
+        '''
         return self.layout.get(
                         subject=sub_id, session=ses_id,
                         task=task_name,
@@ -479,11 +484,15 @@ class BIDSController():
                         extension=config.EVENTEXT)
     
     def get_event_all(self):
+        '''get all of the event files from BIDS
+        '''
         return self.layout.get(task=self.task_name,
                                 suffix=self.event_suffix,
                                 extension=config.EVENTEXT)
         
     def get_confound(self, sub_id=None, task_name=None, run_id=None, ses_id=None):
+        '''get confound files from fMRIPrep BIDS
+        '''
         return self.fmriprep_layout.get(
                     subject=sub_id, session=ses_id,
                     task=task_name,
@@ -491,17 +500,23 @@ class BIDSController():
                     extension=config.CONFOUNDEXT)
            
     def get_bold_all(self):
+        '''get all of the BOLD images from fMRIPrep BIDS
+        '''
         return self.fmriprep_layout.get(suffix=self.bold_suffix,
                                         space=self.space_name,
                                         task=self.task_name,
                                         extension=self.nii_ext)
     
     def get_confound_all(self):
+        '''get all of the confound files from fMRIPrep BIDS
+        '''
         return self.fmriprep_layout.get(suffix=self.confound_suffix,
                                         task=self.task_name,
                                         extension=config.CONFOUNDEXT)
         
     def save_voxelmask(self, voxel_mask):
+        '''save voxel mask at voxel mask path.
+        '''
         nib.save(voxel_mask, self.voxelmask_path)
         
         
@@ -511,7 +526,9 @@ class BIDSController():
                             h=10,
                             w=5,
                             fontsize=12):
-        
+        '''make and save plots of processed multi-voxel signals and latent process signals
+        from MB-MVPA BIDS.
+        '''
         process_name = ''.join(process_name.split('_'))
         save_path = Path(self.mbmvpa_layout.root)/f'plot_feature-{feature_name}_process-{process_name}'
         save_path.mkdir(exist_ok=True)
@@ -540,73 +557,4 @@ class BIDSController():
                 
         print(f'INFO: processed data [{n_plot}/{n_try}] are plotted for quality check.')
         
-        
-
-class BIDSConEventsOnly(BIDSController):
-    
-    def __init__(self,
-                bids_layout,
-                subjects='all',
-                save_path=None,
-                task_name=None,
-                event_suffix="events",
-                ):
-        
-        self.layout = self.get_base_layout(bids_layout)
-        self.root = self.layout.root
-        self.ignore_original = False
-        self.event_suffix = event_suffix
-        self.task_name = task_name
-        self.save_path = save_path
-        self.mbmvpa_name = config.MBMVPA_PIPELINE_NAME
-        self.subjects=subjects
-        self._set_task_name()
-        self._set_save_path()
-        self._set_mbmvpa_layout()
-        self._set_metainfo()
-        
-        
-    def _set_metainfo(self):
-        
-        print(f'INFO: target subjects-{self.subjects}')
-        
-        # set meta info for each run data in DataFrame format
-        meta_infos = {'subject':[],        # subejct ID
-                      'session':[],        # session ID
-                      'run':[],            # run ID 
-                      'task':[],           # task name
-                      'event_path':[],     # events file path
-                     }
-        
-        for event_file in self.get_event_all():
-            
-            entities = event_file.get_entities()
-            
-            if self.subjects != 'all' and entities['subject'] not in self.subjects:
-                continue
-                
-            if 'session' in entities.keys(): 
-                # if session is included in BIDS
-                # old version of BIDS doesn't have it
-                ses_id = entities['session']
-            else:
-                ses_id = None
-                
-            if 'run' in entities.keys(): 
-                # if session is included in BIDS
-                # old version of BIDS doesn't have it
-                run_id = entities['run']
-            else:
-                run_id = None
-                
-            
-            meta_infos['subject'].append(entities['subject'])
-            meta_infos['session'].append(ses_id)
-            meta_infos['run'].append(run_id)
-            meta_infos['task'].append(entities['task'])
-            meta_infos['event_path'].append(event_file.path)
-        
-        self.meta_infos = pd.DataFrame(meta_infos)
-        
-        print(f'INFO: {len(self.meta_infos)} file(s) in Original')
         

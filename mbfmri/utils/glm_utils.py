@@ -1,35 +1,23 @@
-import glob
-import json
-import os
-import sys
-import time
-from warnings import warn
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+## author: Cheoljun cho
+## contact: cjfwndnsl@gmail.com
+
+r'''
+referenece - https://github.com/nilearn/nilearn/blob/297b1509/nilearn/glm/first_level/first_level.py#L803
+
+'''
+
+import glob, json, os, sys, time
+from warnings import warn
 import numpy as np
 import pandas as pd
 from joblib import Memory, Parallel, delayed
 from nibabel import Nifti1Image
-from nibabel.onetime import auto_attr
-from sklearn.base import clone
-
-from nilearn._utils.glm import (_check_events_file_uses_tab_separators,
-                                _check_run_tables, get_bids_files,
-                                parse_bids_filename)
-from nilearn._utils.niimg_conversions import check_niimg
-from nilearn.glm.contrasts import (_compute_fixed_effect_contrast,
-                                   expression_to_contrast_vector)
-from nilearn.glm.first_level.design_matrix import \
-    make_first_level_design_matrix
-from nilearn.image import get_data
-from nilearn.glm.regression import (ARModel, OLSModel, RegressionResults,
-                                    SimpleRegressionResults)
-from nilearn.glm._base import BaseGLM
-
 from nilearn.glm.first_level import *
-
 import nibabel as nib
 from bids import BIDSLayout
-
 from mbfmri.utils import config
 
 def _fit_firstlevel_model(params):
@@ -48,7 +36,6 @@ def _fit_firstlevel_model(params):
                                                output_type='z_score')
     subject_id = models.subject_label
     nib.save(z_map, save_path_first / f'sub-{subject_id}_map.nii')
-    #nib.save(models.r_square[0], save_path_first / f'sub-{subject_id}_rsquare.nii')
 
             
             
@@ -69,6 +56,9 @@ def first_level_from_bids(bids_layout, task_name, process_name,
                           minimize_memory=True,
                           confound_names=['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z']):
     
+    """Create FirstLevelModel objects and fit arguments from a BIDS dataset.
+    """
+    
     if not isinstance(bids_layout,BIDSLayout):
         bids_layout =  BIDSLayout(root=bids_layout,derivatives=True)
         
@@ -76,6 +66,7 @@ def first_level_from_bids(bids_layout, task_name, process_name,
                    'suffix':bold_suffix,
                      'extension':config.NIIEXT,
                   'space':space_name}
+    
     confound_kwargs = {'task':task_name,
                        'suffix':confound_suffix,
                       'extension':config.CONFOUNDEXT}
@@ -84,6 +75,7 @@ def first_level_from_bids(bids_layout, task_name, process_name,
                          'suffix':modulation_suffix,
                         'extension':config.MODULATIONEXT,
                         'desc':process_name}
+    
     spec_kwargs = {'task':task_name,
                    'suffix':bold_suffix,
                      'extension':config.SPECEXT,

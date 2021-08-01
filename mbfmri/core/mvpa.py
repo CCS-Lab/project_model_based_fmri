@@ -30,16 +30,14 @@ def run_mbmvpa(config=None,
               refit_compmodel=False,
               **kwargs):
     
-    # callable wrapper of MBMVPA
-    
     r"""
     
-    Callable function of MB-MVPA package to enable a single line usage.
+    Callable function of the package to enable a single line usage.
     The following procedures are done by MBMVPA class.
 
-    1. preprocess fMRI & behavioral data
-    2. load preprocessed data
-    3. fit MVPA models and interprete the models
+    1. process fMRI & behavioral data to generate multi-voxel bold signals and latent process signals
+    2. load processed signals.
+    3. fit MVPA models and interprete the models to make a brain map.
 
     By running this code, users can expect to get a brain activation pattern attributed to
     the target latent process defined in the computational model. 
@@ -50,11 +48,26 @@ def run_mbmvpa(config=None,
     config : dict or str or pathlib.PosixPath, default=None
         Dictionary for keyworded configuration, or path for yaml file.
         The configuration input will override the default configuration.
+    
     mvpa_model : str, default="elasticnet"
         Name for MVPA model. Currently, "elasticnet," "mlp" and "cnn" are allowed.
+    
     report_path : str or pathlib.PosixPath, defualt="."
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
+    
+    overwrite : bool, default=False
+        Indicate if processing multi-voxel signals is required
+        though the files exist.
+    
+    overwrite_latent : bool, default=False
+        Indicate if generating latent process signals is required
+        though the files exist.
+        
+    refit_compmodel : bool, default=False
+        Indicate if fitting computational model is required
+        though the fitted results (indiv. params. and LOOIC) exist.
+        
     **kwargs : dict
         Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
@@ -76,12 +89,12 @@ class MBMVPA(MBFMRI):
     
     r"""
     
-    Wrapper of functions in MB-MVPA package to enable a single line usage.
+    Wrapper of functions in the package to enable a single line usage.
     The following procedures are done by MBMVPA class.
 
-    1. preprocess fMRI & behavioral data
-    2. load preprocessed data
-    3. fit MVPA models and interprete the models
+    1. process fMRI & behavioral data to generate multi-voxel bold signals and latent process signals
+    2. load processed signals.
+    3. fit MVPA models and interprete the models to make a brain map.
 
     By running this code, users can expect to get a brain activation pattern attributed to
     the target latent process defined in the computational model. 
@@ -92,16 +105,14 @@ class MBMVPA(MBFMRI):
     config : dict or str or pathlib.PosixPath, default=None
         Dictionary for keyworded configuration, or path for yaml file.
         The configuration input will override the default configuration.
+    
     mvpa_model : str, default="elasticnet"
         Name for MVPA model. Currently, "elasticnet," "mlp" and "cnn" are allowed.
+    
     report_path : str or pathlib.PosixPath, defualt="."
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
-    level : str, defualt=None
-        if 'hierarchical' or 'H', use MVPA_CV_H class instead to run hiearchical version.
-        The hiearchical version of the MB-MVPA analysis is composed of two parts.
-        1) Run individual MB-MVPA on each subject
-        2) creat (one sample) T-map using brain maps from each subject.
+        
     **kwargs : dict
         Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
@@ -177,6 +188,21 @@ class MBMVPA(MBFMRI):
         1. preprocess fMRI & behavioral data
         2. load preprocessed data
         3. fit MVPA models and interprete the models
+        
+        Parameters
+        ----------
+
+        overwrite : bool, default=False
+            Indicate if processing multi-voxel signals is required
+            though the files exist.
+
+        overwrite_latent : bool, default=False
+            Indicate if generating latent process signals is required
+            though the files exist.
+
+        refit_compmodel : bool, default=False
+            Indicate if fitting computational model is required
+            though the fitted results (indiv. params. and LOOIC) exist.
         """
         
         # X (fMRI): masking & zooming

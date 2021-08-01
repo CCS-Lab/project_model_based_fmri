@@ -42,6 +42,42 @@ def run_mbglm(config=None,
               refit_compmodel=False,
               **kwargs):
     
+    r"""
+    Callable function of GLM approach of model-based fMRI to enable a single line usage.
+
+    1. preprocess behavioral data to generate latent process signals.
+    2. load fMRI images and latent process signals.
+    3. run first-level and second-level GLM.
+
+    Parameters
+    ----------
+    
+    config : dict or str or pathlib.PosixPath, default=None
+        Dictionary for keyworded configuration, or path for yaml file.
+        The configuration input will override the default configuration.
+    
+    report_path : str or pathlib.PosixPath, defualt="."
+        Path for saving outputs.
+    
+    overwrite : bool, default=False
+        Indicate if processing multi-voxel signals is required
+        though the files exist.
+    
+    overwrite_latent : bool, default=False
+        Indicate if generating latent process signals is required
+        though the files exist.
+        
+    refit_compmodel : bool, default=False
+        Indicate if fitting computational model is required
+        though the fitted results (indiv. params. and LOOIC) exist.
+        
+    **kwargs : dict
+        Dictionary for keywarded arguments.
+        This allows users to override default configuration and *config* input.
+        Argument names are same as those of wrapped modules.
+        
+    """
+    
     mbglm = MBGLM(config=config,report_path=report_path,**kwargs)
     mbglm.run(overwrite=overwrite,
              overwrite_latent_process=overwrite_latent_process,
@@ -50,7 +86,27 @@ def run_mbglm(config=None,
 class MBGLM(MBFMRI):
     
     r"""
-        
+    Class for GLM approach of model-based fMRI to enable a single line usage.
+
+    1. preprocess behavioral data to generate latent process signals.
+    2. load fMRI images and latent process signals.
+    3. run first-level and second-level GLM.
+
+    Parameters
+    ----------
+    
+    config : dict or str or pathlib.PosixPath, default=None
+        Dictionary for keyworded configuration, or path for yaml file.
+        The configuration input will override the default configuration.
+    
+    report_path : str or pathlib.PosixPath, defualt="."
+        Path for saving outputs.
+    
+    **kwargs : dict
+        Dictionary for keywarded arguments.
+        This allows users to override default configuration and *config* input.
+        Argument names are same as those of wrapped modules.
+    
     """
     def __init__(self,
                  config=None,
@@ -72,7 +128,23 @@ class MBGLM(MBFMRI):
             overwrite=False,
             overwrite_latent_process=True,
             refit_compmodel=False):
-        """
+        """run model-based fMRI 
+        
+        Parameters
+        ----------
+
+        overwrite : bool, default=False
+            Indicate if processing multi-voxel signals is required
+            though the files exist.
+
+        overwrite_latent : bool, default=False
+            Indicate if generating latent process signals is required
+            though the files exist.
+
+        refit_compmodel : bool, default=False
+            Indicate if fitting computational model is required
+            though the fitted results (indiv. params. and LOOIC) exist.
+
         """
         
         # y (latent process): comp. model. & hrf convolution
@@ -98,10 +170,118 @@ class MBGLM(MBFMRI):
 
 class GLM():
     
+    """Class for model-based fMRI analysis using GLM approach.
+    
+    Parameters
+    ----------
+    
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
+    
+    task_name : str, default=None
+        Name of the task. If not given, the most common task name will be automatically selected.
+    
+    process_name : str, default="unnamed"
+        Name of the target latent process.
+        It should be match the name defined in computational modeling
+        
+    fmriprep_name : str, default="fMRIPrep"
+        Name of the derivative layout of fMRI preprocessed data.
+    
+    fmriprep_layout : bids.layout.layout.BIDSLayout, default=None
+        Derivative layout for fMRI preprocessed data. 
+        ``fmriprep_layout`` is holding primarily preprocessed fMRI images (e.g. motion corrrected, registrated,...) 
+        This package is built upon **fMRIPrep** by *Poldrack lab at Stanford University*. 
+        If None, bids_layout.derivatives[fmriprep_name] will be used.
+        
+    mbmvpa_layout : ids.layout.layout.BIDSLayout, default=None
+        Derivative layout for MB-MVPA. 
+        The preprocessed voxel features and modeled latent process will be organized within this layout.
+        If None, bids_layout.derivatives['MB-MVPA'] will be used.
+        
+    space_name : str, default=None
+        Name of template space. If not given, the most common space in 
+        input layout will be selected. 
+       
+    mask_path : str or pathlib.PosixPath, default=None
+        Path for directory containing mask files. 
+        If None, the default mask_path is 'BIDS_ROOT/masks.'
+        Then, images in mask_path/include will be used to create a mask to include and 
+        images in mask_path/exclude will be used to create a mask to exclude
+        Mask files are nii files recommended to be downloaded from **Neurosynth**.
+        (https://neurosynth.org/)
+        As default, each of the nii files is regarded as a probablistic map, and
+        the *mask_trheshold* will be used as the cut-off value for binarizing.
+        The absolute values are used for thresholding.
+        The binarized maps will be integrated by union operation to be a single binary image.
+   
+    mask_threshold : float, default=1.65
+        Cut-off value for thresholding mask images. 
+        The default value (=1.65) means the boundary of 
+        upper 90% in normal distribution.
+
+    mask_smoothing_fwhm : float, default=6
+        Size in millimeters of the spatial smoothing of mask images.
+        If None, smoothing is skipped.
+
+    include_default_mask : bool, default=True
+        Indicate if the default mask (mni space) should be applied.
+
+    gm_only : bool, default=False
+        Indicate if gray matter mask should be applied
+
+    atlas : str, default=None
+        Name of atlas when masking by ROIs.
+        #TODO add link for list 
+
+    rois : list of str, default=[]
+        Names or ROI when masking by ROI.
+        #TODO add link for list 
+
+    zoom : (int,int,int),  default=(1,1,1)
+        Window size for zooming fMRI images. Each of three components means x, y ,z axis respectively.
+        The size of voxels will be enlarged by the factor of corresponding component value.
+        Ex. zoom = (2,2,2) means the original 2 mm^3 voxels will be 4mm^3, so reducing the total number of
+        voxels in a single image.
+    
+    glm_save_path : str or pathlib.PosixPath, defualt="."
+        Path for saving outputs.
+    
+    n_core : int, default=4
+        Number of core.
+    
+    bold_suffix : str, default='regressors'
+        Name of suffix indicating preprocessed fMRI file
+        
+    confound_suffix : str, default='regressors'
+        Name of suffix indicating confounds file
+    
+    subjects : list of str or "all", default="all"
+        List of valid subject IDs. 
+        If "all", all the subjects found in the layout will be loaded.
+        
+    sessions : list of str or "all", default="all"
+        List of valid session IDs. 
+        If "all", all the sessions found in the layout will be loaded.
+        
+    t_r : float, default=None
+        Time resolution in second. 
+        It will be overrided by value from input data if applicable.
+    
+    slice_time_ref: float, default=.5
+        Slice time reference in ratio in 0,1].
+        It will be overrided by value from input data if applicable.
+
+    **glm_kwargs : dict
+        Dictionary for keywarded arguments for calling *first_level_from_bids* function.
+        
+    """
+    
     def __init__(self,
                  bids_layout,
                  task_name,
                  process_name,
+                 fmriprep_name='fMRIPrep',
                  fmriprep_layout=None,
                  mbmvpa_layout=None,
                  space_name=None,
@@ -119,12 +299,10 @@ class GLM():
                  subjects='all',
                  sessions='all',
                  zoom=(1,1,1),
+                 t_r = None,
                  slice_time_ref=.5,
-                **glm_kwargs):
+                 **glm_kwargs):
         
-        # TODO
-        # add multi-processing
-        # add reporting
         
         self.task_name = task_name
         self.process_name = process_name
@@ -143,7 +321,7 @@ class GLM():
         else:
             self.mbmvpa_layout = mbmvpa_layout
         if fmriprep_layout is None:
-            self.fmriprep_layout = self.layout.derivatives['fMRIPrep']
+            self.fmriprep_layout = self.layout.derivatives[fmriprep_name]
         else:
             self.fmriprep_layout = fmriprep_layout
         now = datetime.datetime.now()
@@ -183,13 +361,15 @@ class GLM():
         self.glm_kwargs=glm_kwargs
         self.smoothing_fwhm  = glm_kwargs['smoothing_fwhm']
         self.slice_time_ref = slice_time_ref
+        self.t_r = t_r
         
     def run_firstlevel(self):
-        
+        '''run first-level glm
+        '''
         try: 
             t_r = self.layout.get_tr()
         except:
-            t_r = None
+            t_r = self.t_r
             
         models, models_bold_imgs, \
             models_modulations, models_confounds = first_level_from_bids(self.layout,
@@ -237,13 +417,12 @@ class GLM():
                 if isinstance(result.exception(),Exception):
                     raise result.exception()
             
-                    
-            
         self.firstlevel_done = True
         print(f'INFO: first-level analysis is done.')
         
     def run_secondlevel(self):
-        
+        '''run second-level glm
+        '''
         if not self.firstlevel_done:
             self.run_firstlevel()
         
@@ -271,5 +450,7 @@ class GLM():
         print("INFO: second-level map is created and saved.")
         
     def run(self):
+        '''run glm
+        '''
         self.run_firstlevel()
         self.run_secondlevel()

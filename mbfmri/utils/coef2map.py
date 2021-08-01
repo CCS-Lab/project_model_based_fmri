@@ -14,6 +14,23 @@ from scipy.stats import ttest_1samp, zscore
 
 
 def reconstruct(array, mask):
+    '''reconstruct flattened array to 3D with the given mask.
+    
+    Parameters
+    ----------
+    
+    array : numpy.ndarray
+        array with shape of (N,) or (N,1)
+    mask : numpy.ndarray
+        3D binary mask where sum(mask)==N
+        
+    Returns
+    -------
+    
+    numpy.ndarray
+        Reconstructed 3D array
+    
+    '''
     
     if array.shape[-1] == 1:
         array = array.squeeze(-1)
@@ -24,47 +41,91 @@ def reconstruct(array, mask):
     return blackboard
     
 def cluster_level_correction(brainmap, threshold, cluster_threshold):
+    '''thresholding and cluster-level correction
+    
+    Parameters
+    ----------
+    
+    brainmap : nibabel.nifti1.Nifti1Image
+        Nii image to be thresholded and cluster-level corrected.
+        
+    threshold : float
+        Threshold value to cutoff the image
+        Both negative and positie values will be zero if abs(v) <= threshold
+        
+    cluster_threshold : int
+        Threshold for the number of points in a cluster to be cutoff
+        
+    Returns
+    -------
+    
+    nibabel.nifti1.Nifti1Image
+        Thresholded and cluster-level corrected nii image.
+    
+    '''
     stat_map = brainmap
     affine = stat_map.affine
     stat_map = stat_map.get_fdata()
     if cluster_threshold > 0:
-        label_map, n_labels = label(np.abs(stat_map) > threshold)
+        label_map, n_labels = label(stat_map > threshold)
 
         for label_ in range(1, n_labels + 1):
             if np.sum(label_map == label_) < cluster_threshold:
                 stat_map[label_map == label_] = 0
+    
+    if cluster_threshold > 0:
+        label_map, n_labels = label(stat_map < -threshold)
+
+        for label_ in range(1, n_labels + 1):
+            if np.sum(label_map == label_) < cluster_threshold:
+                stat_map[label_map == label_] = 0
+    
     
     stat_map[np.abs(stat_map) <= threshold] = 0
     stat_map = nib.Nifti1Image(stat_map,affine)
     
     return stat_map
 
-def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path=".", smoothing_fwhm=6,
+def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path=".", smoothing_fwhm=0,
             threshold=0, cluster_threshold=0):
-    """
-    TODO : zeroing out value threshold.
     
-    make nii image file from coefficients of model using masking info.
-    """
-    """
-    Arguments:
-        coefs (list or numpy.array): extracted coefs by fitting model.
-            shape: N x voxel #
-        voxel_mask (nibabel.nifti1.Nifti1Image):
-            a binary nii image of masking info.
-            should be same shape with the original fMRI image data
-        task_name (str): if provided, the saved nii file will be named after this
-        map_type (str): the type of making map. ("z" or "t")
-            "z": default type. z_map by mean z_score among N mapped images.
-            "t": t_map by voxel-wise one sample t-test among N mapped images.
-        save_path (str or pathlib.Path): path to save file. if None, then will be saved in "results" directory fo current working directory
-            the result_map nii image file will be saved in "save_path/{task_name}_{map_type}_map.nii"
-        sigma (int): the sigma value for spatial gaussian smoothing for each converted map.  
-               if 0, there will be no spatial smoothing of extracted coefficients.
-               higher the value, more smoother the final map will be 
-
-    Return:
-        result_map (nibabel.nifti1.Nifti1Image): a nii image of brain activation map.
+    """make nii image file from coefficients of model.
+    
+    Parameters
+    ----------
+    
+        coefs : list of numpy.array or numpy.array
+            List of coefficients extracted from MVPA models
+            
+        voxel_mask : nibabel.nifti1.Nifti1Image
+            Nii image of mask
+            
+        experiment_name : str
+            Name of experiment. It will be used to name the resulting image.
+            
+        standardize : bool, default=False
+            Indicate if resulting brain map is required to be standardized.
+        
+        save_path : str or pathlib.PosixPath
+            Path to save created map.
+        
+        smoothing_fwhm : float, default=0
+            Size in millimeters of the spatial smoothing of each reconstructed map.
+        
+        threshold : float, default=0
+            Threshold value for thresholding resulting image.
+        
+        cluster_threshold : int, default=0
+            Threshold for the number of points in a cluster to be cutoff resulting image.
+    
+    Returns
+    -------
+        nibabel.nifti1.Nifti1Image
+            Nii file for resulting brain map.
+            
+        pathlib.PosixPath
+            Path where the resulting image is saved.
+            
     """
 
     ###########################################################################

@@ -187,7 +187,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'elasticnet':{
                     'reports':['brainmap','pearsonr','elasticnet','mse'],
                     'confidence_interval': 0.99,
-                    'n_coef_plot': 150,
+                    'n_coef_plot': 'all',
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
                     'map_threshold':0,
@@ -215,7 +215,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
                 'elasticnet':{
                     'reports':['brainmap','accuracy','roc','elasticnet'],
                     'confidence_interval': 0.99,
-                    'n_coef_plot': 150,
+                    'n_coef_plot': 'all',
                     'standardize': False,
                     'map_smoothing_fwhm': 0,
                     'map_threshold':0,
@@ -253,7 +253,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'process_name': None,
         'space_name': None,
         'mask_path': None,
-        'mask_threshold': 2.58,
+        'mask_threshold': 1.65,
         'mask_smoothing_fwhm':6,
         'include_default_mask': True,
         'atlas': None,
@@ -273,7 +273,7 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'high_pass': 1/128,
         'drift_order': 1,
         'fir_delays': [0],
-        'min_onset': -24,
+        'min_onset': 0,
         'target_affine': None,
         'target_shape': None,
         'smoothing_fwhm': 6, 
@@ -319,11 +319,11 @@ def add_recur(config_dict):
 
 CONFIG_LIST = ['analysis',
                'config',
-                'mvpa_model',
-                'report_path',
-                'overwrite',
-                'overwrite_latent_process',
-                'refit_compmodel']
+               'mvpa_model',
+               'report_path',
+               'overwrite',
+               'overwrite_latent_process',
+               'refit_compmodel']
 
 CONFIG_LIST = add_wo_rep(CONFIG_LIST,add_recur(DEFAULT_ANALYSIS_CONFIGS))
                    

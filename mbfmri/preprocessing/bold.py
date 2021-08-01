@@ -38,10 +38,13 @@ class VoxelFeatureGenerator():
     subjects : list of str or "all",default="all"
         List of subject IDs to load. 
         If "all", all the subjects found in the layout will be loaded.
-
+    
+    sessions : list of str or "all", default="all"
+        List of valid session IDs. 
+        If "all", all the sessions found in the layout will be loaded.
+        
     save_path : str or pathlib.PosixPath, default=None
         Path for saving preprocessed results. If not given, the derivatives directory will be used.
-
 
     task_name : str, default=None
         Name of the task. If not given, the most common task name will be automatically selected.
@@ -109,10 +112,6 @@ class VoxelFeatureGenerator():
     detrend : boolean, default=False
         If True, remove a global linear trend in data.
 
-    bold_suffix : str, default='bold'
-        Name of suffix indicating 'bold' image.
-        It will be used for searching image files through BIDS layout.
-    
     confounds : list of str, default=[]
         Names of confound factors to be regressed out.
         Each should be in the columns of confound files.

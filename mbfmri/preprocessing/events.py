@@ -40,8 +40,13 @@ class LatentProcessGenerator():
         Root for input data. It should follow **BIDS** convention.
 
     subjects : list of str or "all", default="all"
-        List of valid subject IDs. If "all", all the subjects found in the layout will be loaded.
-
+        List of valid subject IDs. 
+        If "all", all the subjects found in the layout will be loaded.
+        
+    sessions : list of str or "all", default="all"
+        List of valid session IDs. 
+        If "all", all the sessions found in the layout will be loaded.
+        
     save_path : str or pathlib.PosixPath, default=None
         Path for saving preprocessed results. If not given, the derivatives directory will be used.
 
@@ -50,7 +55,7 @@ class LatentProcessGenerator():
 
     process_name : str, default="unnamed"
         Name of the target latent process.
-        It should be match with the name defined in computational modeling
+        It should be match the name defined in computational modeling
 
     dm_model : str, default="unnamed"
         Name for computational modeling by **hBayesDM**. 

@@ -1,4 +1,4 @@
-from scipy.stats import spearmanr, pearsonr, linregress
+from scipy.stats import spearmanr, pearsonr, linregress, norm
 from sklearn.metrics import mean_squared_error, accuracy_score, roc_curve, auc
 from statsmodels.stats.multitest import fdrcorrection
 import matplotlib.pyplot as plt
@@ -437,4 +437,69 @@ def add_latent_process_subplot(modulation_file,
     ax_signal.set_xlim([xticks[0],xticks[-1]])
     ax_signal.legend(loc='upper right')
     
+
+
+        
+def plot_elasticnet_result(save_root, 
+                           save,
+                           cv_mean_score, 
+                           cv_standard_error,
+                           lambda_path,
+                           lambda_val,
+                           coef_path,
+                           confidence_interval=.99,
+                           n_coef_plot='all'):
+    
+    if save:
+        save_root = Path(save_root) /'plot'
+        save_root.mkdir(exist_ok = True)
+    
+    # make dictionary as reportable array.
+    
+    cv_mean_score = np.array(cv_mean_score)
+    cv_standard_error = np.array(cv_standard_error)
+    coef_path = np.array(coef_path)
+    lambda_path = np.array(lambda_path)
+    lambda_val = np.array(lambda_val)
+    lambda_path = lambda_path[0]
+    cv_mean_score = cv_mean_score.reshape(-1, len(lambda_path))
+    cv_mean_score = cv_mean_score.mean(0)
+    cv_standard_error = cv_standard_error.reshape(-1, len(lambda_path))
+    cv_standard_error = cv_standard_error.mean(0)
+    coef_path = coef_path.reshape(-1, coef_path.shape[-2], coef_path.shape[-1])
+    coef_path = coef_path.mean(0)
+    
+    plt.figure(figsize=(8, 6))
+    plt.errorbar(np.log(lambda_path), cv_mean_score,
+                 yerr=cv_standard_error* norm.ppf(1-(1-confidence_interval)/2), 
+                 color='k', alpha=.5, elinewidth=1, capsize=2)
+    # plot confidence interval
+    plt.plot(np.log(lambda_path), cv_mean_score, color='k', alpha=0.9)
+    plt.axvspan(np.log(lambda_val.min()), np.log(lambda_val.max()),
+                color='skyblue', alpha=.75, lw=1)
+    plt.xlabel('log(lambda)', fontsize=20)
+    plt.ylabel('cv average MSE', fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.title('MSE on validation set in lambda sweep',fontsize=20)
+    if save:
+        plt.savefig(save_root/'plot1.png',bbox_inches='tight')
+    plt.show()
+    if n_coef_plot == 'all':
+        coef_path_ = coef_path.T
+    else:
+        coef_path_ = coef_path[
+             np.random.choice(np.arange(coef_path.shape[0]), n_coef_plot), :].T
+    plt.figure(figsize=(8, 6))
+    plt.plot(np.log(lambda_path), coef_path_)
+    plt.axvspan(np.log(lambda_val.min()), np.log(lambda_val.max()),
+                color='skyblue', alpha=.75, lw=1)
+    plt.xlabel('log(lambda)', fontsize=20)
+    plt.ylabel('coefficients', fontsize=20)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.title('Coefficient values in lambda sweep',fontsize=20)
+    if save:
+        plt.savefig(save_root/'plot2.png',bbox_inches='tight')
+    plt.show()
     

@@ -80,7 +80,7 @@ report_function_dict = {'brainmap':{'module':Report_BrainMap,
                                       'parameter':['confidence_interval',
                                                    'n_coef_plot'],
                                       'default':{'confidence_interval':.99,
-                                                'n_coef_plot':150
+                                                'n_coef_plot':'all'
                                                 },
                                      },
                         }
