@@ -263,6 +263,10 @@ class GLM():
     sessions : list of str or "all", default="all"
         List of valid session IDs. 
         If "all", all the sessions found in the layout will be loaded.
+    
+    confounds : list of str, default=[]
+        Names of confound factors to be regressed out.
+        Each should be in the columns of confound files.
         
     t_r : float, default=None
         Time resolution in second. 
@@ -299,6 +303,7 @@ class GLM():
                  subjects='all',
                  sessions='all',
                  zoom=(1,1,1),
+                 confounds=[],
                  t_r = None,
                  slice_time_ref=.5,
                  **glm_kwargs):
@@ -360,6 +365,7 @@ class GLM():
         self.sessions=sessions
         self.glm_kwargs=glm_kwargs
         self.smoothing_fwhm  = glm_kwargs['smoothing_fwhm']
+        self.confounds = confounds
         self.slice_time_ref = slice_time_ref
         self.t_r = t_r
         
@@ -384,6 +390,7 @@ class GLM():
                                                                     subjects=self.subjects,
                                                                     sessions=self.sessions,
                                                                     slice_time_ref=self.slice_time_ref,
+                                                                    confound_names=self.confounds,
                                                                     **self.glm_kwargs
                                                                     )
         

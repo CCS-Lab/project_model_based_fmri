@@ -282,7 +282,8 @@ DEFAULT_ANALYSIS_CONFIGS = {
         'noise_model': 'ar1',
         'verbose': 0, 
         'n_jobs': 1,
-        'confound_names':['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z'],
+        'confounds':['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z'],
+        't_r':None,
         'slice_time_ref':.5,
     },
 }
