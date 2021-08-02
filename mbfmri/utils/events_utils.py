@@ -25,7 +25,6 @@ from mbfmri.utils import config # configuration for default names used in the pa
 
 def _save_fitplots(model,
                     save_path,
-                     credible_interval = 0.94,
                      point_estimate= 'mean',
                      bins = 'auto',
                      round_to = 2):
@@ -39,7 +38,6 @@ def _save_fitplots(model,
     axes = az.plot_posterior(model.fit,
                              kind='hist',
                              var_names=var_names,
-                             credible_interval=credible_interval,
                              point_estimate=point_estimate,
                              bins=bins,
                              round_to=round_to,
