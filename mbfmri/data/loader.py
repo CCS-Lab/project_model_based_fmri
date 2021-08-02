@@ -522,6 +522,9 @@ class BIDSDataLoader():
             # maksed y data are concatenated & normalized 
             self.y[subject] = self.y_normalizer(np.concatenate([np.load(f)[masks[i]] for i,f in enumerate(self.y[subject])],0))
             
+            # replace NaN with 0
+            self.X[subject][np.isnan(self.X[subject])] = 0
+            self.y[subject][np.isnan(self.y[subject])] = 0
             
             if self.logistic:
                 binarized = self.binarizer(self.y[subject])
