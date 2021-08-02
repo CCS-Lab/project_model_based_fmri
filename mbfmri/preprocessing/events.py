@@ -289,7 +289,7 @@ class LatentProcessGenerator():
         find the function for calculating the target latent process
         if the function is not given, then it will find from implemented models
         '''
-        modelling_module = f'mbmvpa.preprocessing.computational_modeling.{dm_model}'
+        modelling_module = f'mbfmri.preprocessing.computational_modeling.{dm_model}'
         modelling_module = importlib.import_module(modelling_module)
         self.latent_function_dfwise = modelling_module.ComputationalModel(process_name)
         if process_name in modelling_module.latent_process_onset.keys():

@@ -185,7 +185,8 @@ class MVPA_MLP(MVPA_TF):
 
         if loss is not None:
             self.loss = loss
-
+        self.optimizer= optimizer
+        self.learning_rate = learning_rate
         self.use_bias = use_bias
         self.model = None
         self.X_train = None

@@ -17,7 +17,7 @@ from mbfmri.core import run_mbfmri, run_mbmvpa
 from pathlib import Path
 
 ## GENERAL SETTING
-bids_layout = "tests/test_example"
+bids_layout = "../../project_model_based_fmri/tests/test_example"
 report_path = "tests/test_report"
 Path(report_path).mkdir(exist_ok=True)
 

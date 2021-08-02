@@ -197,7 +197,7 @@ class MVPA_CNN(MVPA_TF):
 
         if loss is not None:
             self.loss = loss
-
+        
         self.dropout_rate = dropout_rate
         self.batch_norm = batch_norm
         self.optimizer = optimizer

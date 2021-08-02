@@ -55,7 +55,11 @@ class MVPA_TF(MVPA_Base):
         If the number of data is bigger than *n_samples*, sampling will be done for 
         each model fitting.
         This is for preventing memory overload.
-
+    
+    explainer : Explainer object, default=None
+        Explainer object to extract feature attribution by SHAP and calculate betas.
+        If None, skip the process
+    
     train_verbosity : int, default=0
         Level of verbosity for model fitting. If it is 1, the reports from
         keras model fitting will be printed.

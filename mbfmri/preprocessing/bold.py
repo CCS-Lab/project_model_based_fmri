@@ -15,7 +15,7 @@ from mbfmri.utils.bold_utils import _build_mask, _custom_masking, _image_preproc
 from mbfmri.utils.bids_utils import BIDSController
 import nibabel as nib
 
-from mbmvpa.utils import config # configuration used in the package
+from mbfmri.utils import config # configuration used in the package
 
 
 bids.config.set_option("extension_initial_dot", True)
