@@ -25,9 +25,10 @@ from mbfmri.utils import config # configuration for default names used in the pa
 
 def _save_fitplots(model,
                     save_path,
-                    point_estimate= 'mean',
-                    bins = 'auto',
-                    round_to = 2):
+                     point_estimate= 'mean',
+                     bins = 'auto',
+                     round_to = 2):
+    
     # retrieved from https://github.com/CCS-Lab/hBayesDM/blob/develop/Python/hbayesdm/base.py
 
     if model.model_type == 'single':
