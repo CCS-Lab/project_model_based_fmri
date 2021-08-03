@@ -148,7 +148,7 @@ dmypy.json
 # test & tutorial data
 tests/test_example
 tests/test_report
-tutorials/tutorial_data
+tutorials/mini_bornstein2017 #tutorial_data
 tutorials/tutorial_report
 .DS_Store
 docs/.DS_Store
