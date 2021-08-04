@@ -5,18 +5,15 @@ mbfmri.models package
 Cross-validation
 ----------------
 
-mbfmri.models.mvpa\_general module
-----------------------------------
-
 .. automodule:: mbfmri.models.mvpa_general
    :members:
    :undoc-members:
    :show-inheritance:
 
 Models
-----------
+------
 
-mbfmri.models.elasticnet module
+ElasticNet
 -------------------------------
 
 .. automodule:: mbfmri.models.elasticnet
@@ -24,18 +21,18 @@ mbfmri.models.elasticnet module
    :undoc-members:
    :show-inheritance:
    
-mbfmri.models.tf\_cnn module
-----------------------------
+Multi-layer Perceptron
+----------------------
 
-.. automodule:: mbfmri.models.tf_cnn
+.. automodule:: mbfmri.models.tf_mlp
    :members:
    :undoc-members:
    :show-inheritance:
 
-mbfmri.models.tf\_mlp module
+Convolutional Neural Network
 ----------------------------
 
-.. automodule:: mbfmri.models.tf_mlp
+.. automodule:: mbfmri.models.tf_cnn
    :members:
    :undoc-members:
    :show-inheritance:

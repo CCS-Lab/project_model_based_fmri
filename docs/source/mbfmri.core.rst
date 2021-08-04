@@ -4,28 +4,39 @@ mbfmri.core package
 Submodules
 ----------
 
-mbfmri.core.engine module
+General model-based fMRI
 -------------------------
 
-.. automodule:: mbfmri.core.engine
+.. automodule:: mbfmri.core.engine.run_mbfmri
    :members:
    :undoc-members:
    :show-inheritance:
+   
 
 
-mbfmri.core.mvpa module
+MVPA approach
 -----------------------
 
-.. automodule:: mbfmri.core.mvpa
+.. automodule:: mbfmri.core.mvpa.run_mbmvpa
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
+.. automodule:: mbfmri.core.mvpa.MBMVPA
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-mbfmri.core.glm module
+GLM approach
 ----------------------
 
-.. automodule:: mbfmri.core.glm
+.. automodule:: mbfmri.core.glm.run_mbglm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
+.. automodule:: mbfmri.core.glm.MBGLM
    :members:
    :undoc-members:
    :show-inheritance:

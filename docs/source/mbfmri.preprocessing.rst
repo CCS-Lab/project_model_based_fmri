@@ -5,7 +5,7 @@ mbfmri.preprocessing package
 Submodules
 ----------
 
-mbfmri.preprocessing.bold module
+Generating multi-voxel signals
 --------------------------------
 
 .. automodule:: mbfmri.preprocessing.bold
@@ -13,7 +13,7 @@ mbfmri.preprocessing.bold module
    :undoc-members:
    :show-inheritance:
 
-mbfmri.preprocessing.events module
+Generating latent process signals
 ----------------------------------
 
 .. automodule:: mbfmri.preprocessing.events

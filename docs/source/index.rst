@@ -55,6 +55,7 @@ Content
 
    
    mbfmri.core.rst
+   mbfmri.core.glm.rst
    mbfmri.preprocessing.rst
    mbfmri.data.rst
    mbfmri.models.rst
