@@ -1,11 +1,17 @@
 mbfmri.preprocessing package
 ============================
 
+Subpackages
+-----------
+
+.. toctree::
+
+   mbfmri.preprocessing.computational_modeling
 
 Submodules
 ----------
 
-Generating multi-voxel signals
+mbfmri.preprocessing.bold module
 --------------------------------
 
 .. automodule:: mbfmri.preprocessing.bold
@@ -13,10 +19,19 @@ Generating multi-voxel signals
    :undoc-members:
    :show-inheritance:
 
-Generating latent process signals
+mbfmri.preprocessing.events module
 ----------------------------------
 
 .. automodule:: mbfmri.preprocessing.events
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: mbfmri.preprocessing
    :members:
    :undoc-members:
    :show-inheritance:

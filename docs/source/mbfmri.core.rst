@@ -1,45 +1,27 @@
 mbfmri.core package
 ===================
 
-Submodules
-----------
-
-General model-based fMRI
--------------------------
-
-.. automodule:: mbfmri.core.engine.run_mbfmri
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   
 
 
-MVPA approach
------------------------
 
-.. automodule:: mbfmri.core.mvpa.run_mbmvpa
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   
-.. automodule:: mbfmri.core.mvpa.MBMVPA
+
+Top wrapping function to run general model-based fMRI analysis
+---------------------------------------------------------------
+
+.. automodule:: mbfmri.core.engine
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-GLM approach
-----------------------
 
-.. automodule:: mbfmri.core.glm.run_mbglm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   
-.. automodule:: mbfmri.core.glm.MBGLM
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 1
+   :glob:
+   :caption: By approach
+
+   mbfmri.core.glm.rst
+   mbfmri.core.mvpa.rst
    
 Module contents
 ---------------
