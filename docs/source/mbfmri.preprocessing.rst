@@ -1,12 +1,6 @@
 mbfmri.preprocessing package
 ============================
 
-Subpackages
------------
-
-.. toctree::
-
-   mbfmri.preprocessing.computational_modeling
 
 Submodules
 ----------
@@ -23,15 +17,6 @@ mbfmri.preprocessing.events module
 ----------------------------------
 
 .. automodule:: mbfmri.preprocessing.events
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: mbfmri.preprocessing
    :members:
    :undoc-members:
    :show-inheritance:
