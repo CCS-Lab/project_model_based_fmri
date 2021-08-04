@@ -416,7 +416,7 @@ class LatentProcessGenerator():
             # not implemented for other criterion
             lower_better = True
 
-        models_criterion.sort(key=lambda v :v[-1],reverse=lower_better)
+        models_criterion.sort(key=lambda v :v[-1],reverse=not lower_better)
         best_model = models_criterion[0][0]
         
         if 'individual_params' not in self._trained_dm_model[best_model]:
