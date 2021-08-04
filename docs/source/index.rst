@@ -6,7 +6,7 @@
 Home
 ====
 
-.. image::https://github.com/CCS-Lab/project_model_based_fmri/blob/main/images/flowchart_temp.png
+.. image:: https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri/main/images/flowchart_temp.png
    :alt: flowchart
    :align: center
 
