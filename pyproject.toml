@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "model_based_fmri"
-version = "0.0.3"
+name = "mbfmri"
+version = "0.0.0"
 description = "Python library for general model-based fMRI analysis"
 license = "GPL-3.0"
 authors = [
