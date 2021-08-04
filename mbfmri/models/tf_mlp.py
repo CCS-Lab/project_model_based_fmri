@@ -122,7 +122,7 @@ class MVPA_MLP(MVPA_TF):
 
     explainer : utils.explain.Explainer
         Explainer object for interpeting the trained models.
-        Please refer to the ``explainer`` module.
+        Please refer to the ``explainer`` module `documentation <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.utils.html#module-mbfmri.utils.explainer>`_.
 
     """
     

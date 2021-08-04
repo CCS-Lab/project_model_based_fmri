@@ -4,14 +4,6 @@ mbfmri.core package
 Submodules
 ----------
 
-mbfmri.core.base module
------------------------
-
-.. automodule:: mbfmri.core.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 mbfmri.core.engine module
 -------------------------
 
@@ -20,13 +12,6 @@ mbfmri.core.engine module
    :undoc-members:
    :show-inheritance:
 
-mbfmri.core.glm module
-----------------------
-
-.. automodule:: mbfmri.core.glm
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 mbfmri.core.mvpa module
 -----------------------
@@ -37,6 +22,14 @@ mbfmri.core.mvpa module
    :show-inheritance:
 
 
+mbfmri.core.glm module
+----------------------
+
+.. automodule:: mbfmri.core.glm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
 Module contents
 ---------------
 

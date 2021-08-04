@@ -11,7 +11,8 @@ Home
    :align: center
 
 .. centered:: |version|
-   
+----
+
 **MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to find a brain implementation of a latent behavioral state.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MBfMRI provides simple executable functions to conduct 
 computational modeling (supported by *hBayesDM*[1]), and run model-based fMRI analysis using MVPA. To [install](#Installation).
@@ -26,7 +27,7 @@ Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends
 
 **MBfMRI** supports Python 3.6 or above and relies on [NiLearn](https://github.com/nilearn/nilearn), [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python), [py-glmnet](https://github.com/civisanalytics/python-glmnet), and [tensorflow](https://www.tensorflow.org/api_docs/python/tf/keras?hl=ko)(tested on v2.4.0).
 
-### Features of model-based MVPA
+Features of model-based MVPA
 
 - Model-based MVPA is based on MVPA regression model.
 - Model-based MVPA is flexible as it allows various MVPA models plugged in.

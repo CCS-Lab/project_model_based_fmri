@@ -1,3 +1,5 @@
+# TODO add reporting configuration
+
 from mbfmri.utils.coef2map import get_map
 from mbfmri.utils.plot import plot_pearsonr
 from mbfmri.utils.report_utils import *

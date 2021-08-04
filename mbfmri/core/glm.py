@@ -76,6 +76,16 @@ def run_mbglm(config=None,
         This allows users to override default configuration and *config* input.
         Argument names are same as those of wrapped modules.
         
+        `Generating multi-voxel signals document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#mbfmri.preprocessing.bold>`_
+        
+        `Generating latent process signals document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#mbfmri.preprocessing.events>`_
+        
+        `Data loading document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.data.html#mbfmri.data.loader.BIDSDataLoader>`_
+        
+        `GLM document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#mbfmri.core.glm.GLM>`_ 
+        
+         Parameters of the above modules can be controlled by input paramter by keywords.
+         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
     """
     
     mbglm = MBGLM(config=config,report_path=report_path,**kwargs)
@@ -106,6 +116,17 @@ class MBGLM(MBFMRI):
         Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
         Argument names are same as those of wrapped modules.
+        
+        `Generating multi-voxel signals document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#mbfmri.preprocessing.bold>`_
+        
+        `Generating latent process signals document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#mbfmri.preprocessing.events>`_
+        
+        `Data loading document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.data.html#mbfmri.data.loader.BIDSDataLoader>`_
+        
+        `GLM document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#mbfmri.core.glm.GLM>`_ 
+        
+         Parameters of the above modules can be controlled by input paramter by keywords.
+         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)v
     
     """
     def __init__(self,
