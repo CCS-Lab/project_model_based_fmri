@@ -32,11 +32,6 @@ class MVPA_CNN(MVPA_TF):
     **MVPA_CNN** is an MVPA model implementation of Covolutional Neural Network (CNN).
     The model is implemented upon Tensorflow (>= 2.0.0).
     
-    Coefficient extraction is done by reading outputs when feeding identity matrix with size of input dimension. 
-    This is upon a rough assumption that the model is linear, so that each row of identity matrix can serve as a probe.
-    As the implemented CNN model is non-linear, but the trend might be consistent.
-    The activation function is assumed to be linear.
-    Repeat several times (=N) and return N coefficients.
     
     Parameters
     ----------
