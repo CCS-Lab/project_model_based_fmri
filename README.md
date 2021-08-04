@@ -41,3 +41,10 @@ python setup.py install
 
 Download the example data from [here](https://drive.google.com/file/d/1nmHwyxgrCfMQ3EhDhdFb3BwToEzMArqN/view?usp=sharing). Download it and unzip it under *tutorials*.<br>
 See the [tutorial](https://github.com/CCS-Lab/project_model_based_fmri/blob/main/tutorials/tutorial.ipynb).
+
+## References
+[1] Ahn, W.-Y., Haines, N., & Zhang, L. (2017). Revealing Neurocomputational Mechanisms of Reinforcement Learning and Decision-Making With the hBayesDM Package. Computational Psychiatry, 1(Figure 1), 24–57. https://doi.org/10.1162/cpsy_a_00002
+
+[2] O’Doherty, J. P., Hampton, A., & Kim, H. (2007). Model-based fMRI and its application to reward learning and decision making. Annals of the New York Academy of Sciences, 1104, 35–53. https://doi.org/10.1196/annals.1390.022
+
+[3] Poldrack, R. A. (2006). Can cognitive processes be inferred from neuroimaging data? Trends in Cognitive Sciences, 10(2), 59–63. https://doi.org/10.1016/j.tics.2005.12.004
