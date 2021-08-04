@@ -81,10 +81,34 @@ def run_mbmvpa(config=None,
         
         `MVPA model document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html>`_ (Please refer to the corresponding model according to *mvpa_model*.)
         
-         Parameters of the above modules can be controlled by input paramter by keywords.
-         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
+        Parameters of the above modules can be controlled by input paramter by keywords.
+        (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
         
-        
+    Examples
+    --------
+    .. code:: python
+    
+        from mbfmri.core.mvpa import run_mbmvpa
+        import hbayesdm
+
+        _ = run_mbmvpa(analysis='mvpa',                     # name of analysis, "mvpa" or "glm"
+                       bids_layout='mini_bornstein2017',    # data
+                       mvpa_model='elasticnet',             # MVPA model, "mlp" or "cnn" for DNN
+                       dm_model= 'banditNarm_lapse_decay',  # computational model
+                       feature_name='zoom2rgrout',          # indentifier for processed fMRI data
+                       task_name='multiarmedbandit',        # identifier for task
+                       process_name='PEchosen',             # identifier for target latent process
+                       subjects='all',                      # list of subjects to include
+                       method='5-fold',                     # type of cross-validation
+                       report_path=report_path,             # save path for reporting results
+                       confounds=["trans_x", "trans_y",     # list of confounds to regress out
+                                  "trans_z", "rot_x",
+                                  "rot_y", "rot_z"],
+                       n_core=4,                            # number of core for multi-processing in hBayesDM
+                       n_thread=4,                          # number of thread for multi-threading in generating voxel features
+                       overwrite=True,                      # indicate if re-run and overwriting are required
+                       refit_compmodel=True,                # indicate if refitting comp. model is required
+                      )
         
     """
     
@@ -139,8 +163,8 @@ class MBMVPA(MBFMRI):
         
         `MVPA model document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html>`_ (Please refer to the corresponding model according to *mvpa_model*.)
         
-         Parameters of the above modules can be controlled by input paramter by keywords.
-         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
+        Parameters of the above modules can be controlled by input paramter by keywords.
+        (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
          
     """
     def __init__(self,
