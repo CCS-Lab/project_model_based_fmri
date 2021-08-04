@@ -30,7 +30,7 @@ class MVPA_CNN(MVPA_TF):
     r"""
     
     **MVPA_CNN** is an MVPA model implementation of Covolutional Neural Network (CNN).
-    The model is implemented upon Tensorflow (>= 2.0.0).
+    The model is implemented upon Tensorflow Kerase (v.2.4.0).
     
     
     Parameters

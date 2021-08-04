@@ -29,7 +29,7 @@ class MVPA_MLP(MVPA_TF):
     r"""
     
     **MVPA_MLP** is an MVPA model implementation of Multi-layer Perceptron (MLP).
-    The model is implemented upon Tensorflow (>= 2.0.0).
+    The model is implemented upon Tensorflow Keras (>= 2.4.0).
     
     Parameters
     ----------
