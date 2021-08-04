@@ -1,3 +1,4 @@
+nbsphinx
 hbayesdm==1.0.1
 nibabel
 nilearn 
