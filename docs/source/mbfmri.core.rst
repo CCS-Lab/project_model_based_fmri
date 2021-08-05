@@ -98,7 +98,7 @@ Full list of configuration
     },
     'HBAYESDM': {
         },
-    'LOADER':{
+    'LOADER':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.data.html#mbfmri.data.loader.BIDSDataLoader
         'layout':'.',
         'subjects':'all',
         'sessions': 'all',
@@ -122,8 +122,8 @@ Full list of configuration
         'binarizer_use_ratio':True,
         'verbose': 1,
     },
-    'MVPA':{
-        'MODEL':{
+    'MVPA':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html#mbfmri.models.mvpa_general.MVPA_CV 
+        'MODEL':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html#models
             'elasticnet':{
                 'alpha': 0.001,
                 'n_sample': 100000,
@@ -258,7 +258,7 @@ Full list of configuration
         '_width': 10,
         '_fontsize': 12
     },
-    'GLM':{
+    'GLM':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.glm.html#mbfmri.core.glm.GLM
         'task_name': None,
         'process_name': None,
         'space_name': None,
