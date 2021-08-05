@@ -86,6 +86,7 @@ def run_mbglm(config=None,
         
         Parameters of the above modules can be controlled by input paramter by keywords.
         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
+        Please check `full list of configuration parameters<https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#full-list-of-configuration>_`.
         
     Examples
     --------
@@ -109,83 +110,6 @@ def run_mbglm(config=None,
                        overwrite=True,                      # indicate if re-run and overwriting are required
                        refit_compmodel=True,                # indicate if refitting comp. model is required
                       )
-    Full list of configuration
-    --------------------------
-    .. code:: python
-
-        # located in mbfmri.utils.config.py
-        'LATENTPROCESS': {
-            'bids_layout':'.',
-            'subjects':'all',
-            'sessions': 'all',
-            'save_path': None,
-            'task_name':None,
-            'process_name':'unnamed',
-            'dm_model':'unnamed',
-            'adjust_function': lambda v: v,
-            'filter_function': lambda _: True,
-            'latent_function': None,
-            'adjust_function_dfwise': None,
-            'filter_function_dfwise': None,
-            'latent_function_dfwise': None,
-            'individual_params': None,
-            'skip_compmodel': False,
-            'criterion': 'looic',
-            'hrf_model': 'glover',
-            'onset_name': 'onset',
-            'duration_name': 'duration',
-            'end_name': None,
-            'use_1sec_duration': True,
-            'mask_duration': False,
-            't_r':None,
-            'slice_time_ref':.5,
-            'n_core': 1,
-            'ignore_original': False,
-            'ignore_fmriprep': False,
-            'fmriprep_name': 'fMRIPrep',
-            'event_suffix': 'events',
-        },
-        'HBAYESDM': {
-            },
-        'GLM':{
-            'task_name': None,
-            'process_name': None,
-            'space_name': None,
-            'mask_path': None,
-            'mask_threshold': 1.65,
-            'mask_smoothing_fwhm':6,
-            'include_default_mask': True,
-            'atlas': None,
-            'rois': [],
-            'gm_only': False,
-            'glm_save_path': '.',
-            'n_core': 4,
-            'bold_suffix': 'bold',
-            'confound_suffix': 'regressors',
-            'subjects': 'all',
-            'sessions': 'all',
-            'zoom': (1,1,1),
-            'img_filters': None,
-            'slice_time_ref': 0.,
-            'hrf_model': 'glover',
-            'drift_model': 'cosine',
-            'high_pass': 1/128,
-            'drift_order': 1,
-            'fir_delays': [0],
-            'min_onset': 0,
-            'target_affine': None,
-            'target_shape': None,
-            'smoothing_fwhm': 6, 
-            'standardize': True,
-            'signal_scaling': 0, 
-            'noise_model': 'ar1',
-            'verbose': 0, 
-            'n_jobs': 1,
-            'confounds':['trans_x','trans_y','trans_z','rot_x', 'rot_y', 'rot_z'],
-            't_r':None,
-            'slice_time_ref':.5,
-        },
-    }
     
     """
     
@@ -227,7 +151,8 @@ class MBGLM(MBFMRI):
         `GLM document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#mbfmri.core.glm.GLM>`_ 
         
         Parameters of the above modules can be controlled by input paramter by keywords.
-        (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)v
+        (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
+        Please check `full list of configuration parameters<https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#full-list-of-configuration>_`.
     
     """
     def __init__(self,

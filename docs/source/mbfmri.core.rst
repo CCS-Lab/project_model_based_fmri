@@ -295,4 +295,3 @@ Full list of configuration
         't_r':None,
         'slice_time_ref':.5,
     },
-}
