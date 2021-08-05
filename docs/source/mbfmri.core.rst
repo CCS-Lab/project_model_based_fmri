@@ -48,14 +48,15 @@ Check the corresponding documentation for the details.
 
 `GLM <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.glm.html#mbfmri.core.glm.GLM>`_
 
-`POSTREPORT <>`_
+`POSTREPORT <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.utils.report.html#report-function-dict>`_
 
-`FITREPORT <>`_
+`FITREPORT <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.utils.report.html#metric-function-dict>`_
 
 
-.. code-block:: json
+.. jsonschema::
 
     # located in mbfmri.utils.config.py
+    {
     'LATENTPROCESS': { 
         'bids_layout':'.',
         'subjects':'all',
@@ -64,8 +65,8 @@ Check the corresponding documentation for the details.
         'task_name':None,
         'process_name':'unnamed',
         'dm_model':'unnamed',
-        'adjust_function': lambda v: v,
-        'filter_function': lambda _: True,
+        'adjust_function': None,
+        'filter_function': None,
         'latent_function': None,
         'adjust_function_dfwise': None,
         'filter_function_dfwise': None,
@@ -315,3 +316,4 @@ Check the corresponding documentation for the details.
         't_r':None,
         'slice_time_ref':.5,
     },
+    }

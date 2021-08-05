@@ -19,7 +19,7 @@ report_function_dict = {'brainmap':{'module':Report_BrainMap,
                                                 'map_threshold',
                                                 'cluster_threshold'],
                                    'default':{'experiment_name':'unnamed',
-                                              'standardize':True,
+                                              'standardize':False,
                                               'map_smoothing_fwhm':6,
                                               'map_threshold':0,
                                               'cluster_threshold':0

@@ -29,138 +29,164 @@ routed in the process of *run_mbfmri*.
     
 report_function_dict
 --------------------
+
+`module` means class implementing the reporting function in `mbfmri.utils.report_utils`.
+`data` means list of names of data required for the function. '{repetition}-{fold}_{data}' found in
+REPORT_ROOT/raw_data aggregated by fold-by-fold and run the function (this is done by `aggregate` function).
+`parameter` means list of names of configuring of metainfo parameter.
+`default` means dictionary of default value of each parameter if applicable.
+
 .. code-block:: json
 
-    'brainmap':{'module':Report_BrainMap,
-                                   'data':['weights'],
-                                   'parameter':['voxel_mask',
-                                                'experiment_name',
-                                                'standardize',
-                                                'map_smoothing_fwhm',
-                                                'map_threshold',
-                                                'cluster_threshold'],
-                                   'default':{'experiment_name':'unnamed',
-                                              'standardize':True,
-                                              'map_smoothing_fwhm':6,
-                                              'map_threshold':0,
-                                              'cluster_threshold':0
-                                             }
-                                   },
-                        'r':{'module':Plot_R,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':['pval_threshold'],
-                                    'default':{'pval_threshold':.01}
-                                   },
-                        'pearsonr':{'module':Plot_PearsonR,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':['pval_threshold'],
-                                    'default':{'pval_threshold':.01}
-                                   },
-                        'spearmanr':{'module':Plot_SpearmanR,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':['pval_threshold'],
-                                    'default':{'pval_threshold':.01}
-                                   },
-                        'mse':{'module':Plot_MSE,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':[],
-                                    'default':{}
-                                   },
-                        'accuracy':{'module':Plot_Accuracy,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':[],
-                                    'default':{}
-                                   },
-                        'roc':{'module':Plot_ROC,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':[],
-                                    'default':{}
-                                   },
-                        'elasticnet':{'module':Plot_ElasticNet,
-                                     'data':['cv_mean_score',
-                                             'cv_standard_error',
-                                             'lambda_path',
-                                             'lambda_best',
-                                             'coef_path'],
-                                      'parameter':['confidence_interval',
-                                                   'n_coef_plot'],
-                                      'default':{'confidence_interval':.99,
-                                                'n_coef_plot':'all'
-                                                },
-                                     }
+    'brainmap':{
+        'module':Report_BrainMap,
+        'data':['weights'],
+        'parameter':['voxel_mask',
+                     'experiment_name',
+                     'standardize',
+                     'map_smoothing_fwhm',
+                     'map_threshold',
+                     'cluster_threshold'],
+        'default':{'experiment_name':'unnamed',
+                   'standardize':False,
+                   'map_smoothing_fwhm':6,
+                   'map_threshold':0,
+                   'cluster_threshold':0
+                 }
+               },
+    'r':{
+        'module':Plot_R,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':['pval_threshold'],
+        'default':{'pval_threshold':.01}
+       },
+    'pearsonr':{
+        'module':Plot_PearsonR,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':['pval_threshold'],
+        'default':{'pval_threshold':.01}
+           },
+    'spearmanr':{
+        'module':Plot_SpearmanR,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':['pval_threshold'],
+        'default':{'pval_threshold':.01}
+               },
+    'mse':{
+        'module':Plot_MSE,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+               },
+    'accuracy':{
+        'module':Plot_Accuracy,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+               },
+    'roc':{
+        'module':Plot_ROC,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+               },
+    'elasticnet':{
+        'module':Plot_ElasticNet,
+        'data':['cv_mean_score',
+                'cv_standard_error',
+                'lambda_path',
+                'lambda_best',
+                'coef_path'],
+        'parameter':['confidence_interval',
+                     'n_coef_plot'],
+        'default':{'confidence_interval':.99,
+                   'n_coef_plot':'all'
+                },
+                }
                         
 metric_function_dict
 --------------------
+`module` means class implementing the metric function in `mbfmri.utils.report_utils`.
+`data` means list of names of data required for the function. The data will be directly fed by `mbfmri.models.mvpa_general.MVPA_CV` at the end of fitting for each fold.
+`parameter` means list of names of configuring of metainfo parameter.
+`default` means dictionary of default value of each parameter if applicable.
+
 .. code-block:: json
 
-    'mse':{'module':Metric_MSE,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':[],
-                                    'default':{}
-                                   },
+    'mse':{
+        'module':Metric_MSE,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+         'parameter':[],
+         'default':{}
+        },
                         
-                        'r':{'module':Metric_R,
-                               'data':['y_train',
-                                       'y_test',
-                                       'pred_train',
-                                       'pred_test'],
-                                'parameter':[],
-                                'default':{}
-                               },
-                        'pearsonr':{'module':Metric_PearsonR,
-                                   'data':['y_train',
-                                           'y_test',
-                                           'pred_train',
-                                           'pred_test'],
-                                    'parameter':[],
-                                    'default':{}
-                                   },
-                        'spearmanr':{'module':Metric_SpearmanR,
-                               'data':['y_train',
-                                       'y_test',
-                                       'pred_train',
-                                       'pred_test'],
-                                'parameter':[],
-                                'default':{}
-                               },
-                        'auc':{'module':Metric_AUC,
-                               'data':['y_train',
-                                       'y_test',
-                                       'pred_train',
-                                       'pred_test'],
-                                'parameter':[],
-                                'default':{}
-                               },
-                        'accuracy':{'module':Metric_Accuracy,
-                               'data':['y_train',
-                                       'y_test',
-                                       'pred_train',
-                                       'pred_test'],
-                                'parameter':[],
-                                'default':{}
-                               }
-                        
+    'r':{
+        'module':Metric_R,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+        },
+    'pearsonr':{
+        'module':Metric_PearsonR,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+        },
+    'spearmanr':{
+        'module':Metric_SpearmanR,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+        },
+    'auc':{
+        'module':Metric_AUC,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+        },
+    'accuracy':{
+        'module':Metric_Accuracy,
+        'data':['y_train',
+                'y_test',
+                'pred_train',
+                'pred_test'],
+        'parameter':[],
+        'default':{}
+        }
+
 
 
 --------------------------
