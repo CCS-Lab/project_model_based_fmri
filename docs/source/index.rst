@@ -33,7 +33,7 @@ Features of model-based MVPA
 - Model-based MVPA is flexible as it allows various MVPA models plugged in.
 - Model-based MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
-The package provides previous GLM approach as well.
+The package provides GLM approach as well.
 
 Examples
 --------
@@ -61,6 +61,8 @@ Examples
                    refit_compmodel=True,                # indicate if refitting comp. model is required
                   )
 
+
+Please refer to the documentation of `mbfmri.core.engine.run_mbfmri <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#mbfmri.core.engine.run_mbfmri>`_, and you will find links for the detailed explanation on configuring analysis on the bottom of `run_mbfmri` docs.
     
 
 Content
