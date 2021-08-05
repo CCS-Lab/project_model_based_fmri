@@ -83,7 +83,7 @@ def run_mbmvpa(config=None,
         
         Parameters of the above modules can be controlled by input paramter by keywords.
         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
-        Please check `full list of configuration parameters<https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#full-list-of-configuration>_`.
+        Please check `full list of configuration parameters <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#full-list-of-configuration>_`.
         
     Examples
     --------
@@ -169,7 +169,7 @@ class MBMVPA(MBFMRI):
         
         Parameters of the above modules can be controlled by input paramter by keywords.
         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
-        Please check `full list of configuration parameters<https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#full-list-of-configuration>_`.
+        Please check `full list of configuration parameters <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#full-list-of-configuration>_`.
          
     """
     def __init__(self,
