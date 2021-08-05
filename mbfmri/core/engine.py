@@ -54,13 +54,13 @@ def run_mbfmri(analysis='mvpa',
         
         `Data loading document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.data.html#mbfmri.data.loader.BIDSDataLoader>`_
         
-         If analysis == "mvpa", `MVPA model document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html>`_ (Please refer to the corresponding model according to *mvpa_model*.)
+        If analysis == "mvpa", `MVPA model document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html>`_ (Please refer to the corresponding model according to *mvpa_model*.)
          
-         If analysis == "glm", `GLM document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#mbfmri.core.glm.GLM>`_
+        If analysis == "glm", `GLM document <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#mbfmri.core.glm.GLM>`_
          
         Parameters of the above modules can be controlled by input paramter by keywords.
         (e.g. run_mbfmri(..., mask_smoothing_fwhm=6, ..., alpha=0.01) means mask_smoothing_fwhm will be set in VoxelFeatureGenerator and alpha will be set in ElasticNet.)
-        
+        Please check `full list of configuration parameters<https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.html#Full list of configuration>_`.
         
     Examples
     --------
@@ -87,6 +87,9 @@ def run_mbfmri(analysis='mvpa',
                        overwrite=True,                      # indicate if re-run and overwriting are required
                        refit_compmodel=True,                # indicate if refitting comp. model is required
                       )
+                      
+                      
+        
         
     """
     if analysis.lower() == "mvpa":

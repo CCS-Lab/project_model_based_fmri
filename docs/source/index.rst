@@ -35,15 +35,33 @@ Features of model-based MVPA
 
 The package provides previous GLM approach as well.
 
-References
-----------
+Examples
+--------
+.. code:: python
 
-[1] Ahn, W.-Y., Haines, N., & Zhang, L. (2017). Revealing Neurocomputational Mechanisms of Reinforcement Learning and Decision-Making With the hBayesDM Package. Computational Psychiatry, 1(Figure 1), 24–57. https://doi.org/10.1162/cpsy_a_00002
+    from mbfmri.core.engine import run_mbfmri
+    import hbayesdm
 
-[2] O’Doherty, J. P., Hampton, A., & Kim, H. (2007). Model-based fMRI and its application to reward learning and decision making. Annals of the New York Academy of Sciences, 1104, 35–53. https://doi.org/10.1196/annals.1390.022
+    _ = run_mbfmri(analysis='mvpa',                     # name of analysis, "mvpa" or "glm"
+                   bids_layout='mini_bornstein2017',    # data
+                   mvpa_model='elasticnet',             # MVPA model, "mlp" or "cnn" for DNN
+                   dm_model= 'banditNarm_lapse_decay',  # computational model
+                   feature_name='zoom2rgrout',          # indentifier for processed fMRI data
+                   task_name='multiarmedbandit',        # identifier for task
+                   process_name='PEchosen',             # identifier for target latent process
+                   subjects='all',                      # list of subjects to include
+                   method='5-fold',                     # type of cross-validation
+                   report_path=report_path,             # save path for reporting results
+                   confounds=["trans_x", "trans_y",     # list of confounds to regress out
+                              "trans_z", "rot_x",
+                              "rot_y", "rot_z"],
+                   n_core=4,                            # number of core for multi-processing in hBayesDM
+                   n_thread=4,                          # number of thread for multi-threading in generating voxel features
+                   overwrite=True,                      # indicate if re-run and overwriting are required
+                   refit_compmodel=True,                # indicate if refitting comp. model is required
+                  )
 
-[3] Poldrack, R. A. (2006). Can cognitive processes be inferred from neuroimaging data? Trends in Cognitive Sciences, 10(2), 59–63. https://doi.org/10.1016/j.tics.2005.12.004
-
+    
 
 Content
 -------
@@ -61,3 +79,12 @@ Content
    mbfmri.models.rst
    mbfmri.utils.rst
    
+References
+----------
+
+[1] Ahn, W.-Y., Haines, N., & Zhang, L. (2017). Revealing Neurocomputational Mechanisms of Reinforcement Learning and Decision-Making With the hBayesDM Package. Computational Psychiatry, 1(Figure 1), 24–57. https://doi.org/10.1162/cpsy_a_00002
+
+[2] O’Doherty, J. P., Hampton, A., & Kim, H. (2007). Model-based fMRI and its application to reward learning and decision making. Annals of the New York Academy of Sciences, 1104, 35–53. https://doi.org/10.1196/annals.1390.022
+
+[3] Poldrack, R. A. (2006). Can cognitive processes be inferred from neuroimaging data? Trends in Cognitive Sciences, 10(2), 59–63. https://doi.org/10.1016/j.tics.2005.12.004
+
