@@ -71,13 +71,12 @@ Content
    :glob:
    :caption: API Reference
 
-   
    mbfmri.core.rst
    mbfmri.core.glm.rst
    mbfmri.preprocessing.rst
    mbfmri.data.rst
    mbfmri.models.rst
-   mbfmri.utils.rst
+   mbfmri.utils.report.rst
    
 References
 ----------

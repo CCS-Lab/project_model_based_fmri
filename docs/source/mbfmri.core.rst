@@ -33,10 +33,30 @@ mbfmri.core.engine.run\_mbfmri
    
 Full list of configuration
 --------------------------
+
+Check the corresponding documentation for the details.
+
+`LATENTPROCESS <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#module-mbfmri.preprocessing.events>`_
+
+`VOXELFEATURE <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#module-mbfmri.preprocessing.bold>`_ 
+
+`LOADER <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.data.html#mbfmri.data.loader.BIDSDataLoader>`_
+
+`MVPA <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html#mbfmri.models.mvpa_general.MVPA_CV>`_
+
+`MODEL <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html#models>`_
+
+`GLM <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.glm.html#mbfmri.core.glm.GLM>`_
+
+`POSTREPORT <>`_
+
+`FITREPORT <>`_
+
+
 .. code-block:: json
 
     # located in mbfmri.utils.config.py
-    'LATENTPROCESS': { #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#module-mbfmri.preprocessing.events
+    'LATENTPROCESS': { 
         'bids_layout':'.',
         'subjects':'all',
         'sessions': 'all',
@@ -67,8 +87,7 @@ Full list of configuration
         'fmriprep_name': 'fMRIPrep',
         'event_suffix': 'events',
     },
-    'VOXELFEATURE': { #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#module-mbfmri.preprocessing.bold
-    
+    'VOXELFEATURE': {
         'bids_layout':'.',
         'subjects':'all',
         'sessions': 'all',
@@ -98,7 +117,7 @@ Full list of configuration
     },
     'HBAYESDM': {
         },
-    'LOADER':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.data.html#mbfmri.data.loader.BIDSDataLoader
+    'LOADER':{
         'layout':'.',
         'subjects':'all',
         'sessions': 'all',
@@ -122,8 +141,8 @@ Full list of configuration
         'binarizer_use_ratio':True,
         'verbose': 1,
     },
-    'MVPA':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html#mbfmri.models.mvpa_general.MVPA_CV 
-        'MODEL':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html#models
+    'MVPA':{ 
+        'MODEL':{ 
             'elasticnet':{
                 'alpha': 0.001,
                 'n_sample': 100000,
@@ -258,7 +277,7 @@ Full list of configuration
         '_width': 10,
         '_fontsize': 12
     },
-    'GLM':{ #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.glm.html#mbfmri.core.glm.GLM
+    'GLM':{ 
         'task_name': None,
         'process_name': None,
         'space_name': None,
