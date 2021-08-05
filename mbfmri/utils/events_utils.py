@@ -157,6 +157,9 @@ def _add_event_info(df_events, event_infos):
 
 def _make_function_dfwise(function):
     
+    if function is None:
+        return lambda v: v
+    
     def dfwise_function(df_events,**kwargs):
         new_df = []
         for _, row in df_events.iterrows():

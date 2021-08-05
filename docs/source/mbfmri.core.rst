@@ -53,7 +53,7 @@ Check the corresponding documentation for the details.
 `FITREPORT <https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.utils.report.html#metric-function-dict>`_
 
 
-.. jsonschema::
+.. code-block::
 
     # located in mbfmri.utils.config.py
     {

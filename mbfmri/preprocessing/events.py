@@ -62,13 +62,15 @@ class LatentProcessGenerator():
         You can still use this parameter to assign the name of the model, 
         even you would not choose to emloy hBayesDM.
 
-    adjust_function : function(pandas.Series, dict)-> pandas.Series, default=lambda x \: x
+    adjust_function : function(pandas.Series, dict)-> pandas.Series, default=None
         User-defined row-wise function for modifying each row of behavioral data.
         *adjust_function* (a row of DataFrame) \: a row of DataFrame with modified behavior data
+        If None, it does nothing.
 
-    filter_function : function(pandas.Series, dict)-> boolean, default=lambda \_ \: True
+    filter_function : function(pandas.Series, dict)-> boolean, default=None
         User-defined row-wise function for filtering each row of behavioral data.
         *filter_function* (a row of DataFrame) \: True or False
+        If None, it does nothing.
 
     latent_function : function(pandas.Series, dict)-> pandas.Series, default=None
         User-defined row wise function for calculating latent process.
