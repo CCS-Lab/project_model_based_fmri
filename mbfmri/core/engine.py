@@ -41,9 +41,8 @@ def run_mbfmri(analysis='mvpa',
     analysis: str, default="mvpa"
         Name of approach. "mvpa" will conduct MVPA approach by running *run_mbmvpa*,
         and "glm" will conduct GLM approach by running *run_mbglm*.
-        
     
-    kwargs: dict
+    **kwargs: dict
         Dictionary for keywarded arguments.
         This allows users to override default configuration and *config* input.
         Argument names are same as those of wrapped modules.

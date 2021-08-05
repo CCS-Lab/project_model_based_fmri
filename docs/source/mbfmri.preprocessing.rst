@@ -39,12 +39,3 @@ mbfmri.preprocessing.events module
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: mbfmri.preprocessing
-   :members:
-   :undoc-members:
-   :show-inheritance:

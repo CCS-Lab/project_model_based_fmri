@@ -87,11 +87,11 @@ class VoxelFeatureGenerator():
 
     atlas : str, default=None
         Name of atlas when masking by ROIs.
-        #TODO add link for list 
+        See `Atlas-ROI list <>`_.
 
     rois : list of str, default=[]
         Names or ROI when masking by ROI.
-        #TODO add link for list 
+        See `Atlas-ROI list <>`_.
 
     zoom : (int,int,int),  default=(2,2,2)
         Window size for zooming fMRI images. Each of three components means x, y ,z axis respectively.

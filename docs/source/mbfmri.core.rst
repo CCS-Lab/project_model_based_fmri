@@ -36,7 +36,7 @@ Full list of configuration
 .. code-block:: json
 
     # located in mbfmri.utils.config.py
-    'LATENTPROCESS': {
+    'LATENTPROCESS': { #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#module-mbfmri.preprocessing.events
         'bids_layout':'.',
         'subjects':'all',
         'sessions': 'all',
@@ -67,7 +67,8 @@ Full list of configuration
         'fmriprep_name': 'fMRIPrep',
         'event_suffix': 'events',
     },
-    'VOXELFEATURE': {
+    'VOXELFEATURE': { #https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.preprocessing.html#module-mbfmri.preprocessing.bold
+    
         'bids_layout':'.',
         'subjects':'all',
         'sessions': 'all',
