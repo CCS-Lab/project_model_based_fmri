@@ -19,12 +19,3 @@ mbfmri.data.tf\_generator module
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: mbfmri.data
-   :members:
-   :undoc-members:
-   :show-inheritance:
