@@ -36,7 +36,7 @@ REPORT_ROOT/raw_data aggregated by fold-by-fold and run the function (this is do
 `parameter` means list of names of configuring of metainfo parameter.
 `default` means dictionary of default value of each parameter if applicable.
 
-.. code-block:: json
+.. code-block::
 
     'brainmap':{
         'module':Report_BrainMap,
@@ -129,7 +129,7 @@ metric_function_dict
 `parameter` means list of names of configuring of metainfo parameter.
 `default` means dictionary of default value of each parameter if applicable.
 
-.. code-block:: json
+.. code-block::
 
     'mse':{
         'module':Metric_MSE,

@@ -1,12 +1,12 @@
 Available named-ROI masking
 ============================
 
-The ROI masking is available by naming ROIs. The atlas and ROIs mapping is referred from NiLearn fetching atlas function, `nilearn.datasets.fetch_atlas_*` (`link <https://nilearn.github.io/modules/reference.html#module-nilearn.datasets>`_). The below is available list of altas and ROIs. The `atlas` parameter should contain one of the key in the below dictionary, e.g. "aal", and `rois` parameter should contain one of the list of the atlas, e.g. ["Precentral_L", "Precentral_R", "Frontal_Sup_L"].
+The ROI masking is available by naming ROIs. The atlas and ROIs mapping is referred from NiLearn fetching atlas function, `nilearn.datasets.fetch_atlas_*` (`link <https://nilearn.github.io/modules/reference.html#module-nilearn.datasets>`_). The below is available list of altas and ROIs. The `atlas` parameter should contain one of the key in the below dictionary, e.g. "aal", and `rois` parameter should contain one of the list of the atlas, e.g. ["Precentral_L", "Precentral_R", "Frontal_Sup_L"]. The value of argument in nilearn function is concatenated to indicate configured atlas (e.g. for version = SPM12 for "aal" (`link <https://nilearn.github.io/modules/generated/nilearn.datasets.fetch_atlas_aal.html#nilearn.datasets.fetch_atlas_aal>`_), use "aal_SPM12" atlas. if no concatenated one like "aal", default value will be used. please check the code and info. from the `link <https://nilearn.github.io/modules/reference.html#module-nilearn.datasets>`_).
 
 
 Atlas and ROIs
 --------------------------
-.. code-block:: json
+.. code-block::
 
     {
     "aal": [
