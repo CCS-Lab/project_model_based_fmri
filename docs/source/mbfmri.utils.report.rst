@@ -24,7 +24,13 @@ routed in the process of *run_mbfmri*.
                       pval_threshold=0.05,)
     pr.run()
     
-    
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+   :caption: Making brain map from coefficients (betas).
+
+   mbfmri.utils.coef2map.rst
     
     
 report_function_dict

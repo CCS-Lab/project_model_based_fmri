@@ -28,6 +28,14 @@ Multi-layer Perceptron
    :members:
    :undoc-members:
    :show-inheritance:
+   
+   
+.. toctree::
+   :maxdepth: 1
+   :glob:
+   :caption: interpreting DNN
+
+   mbfmri.utils.explainer.rst
 
 Convolutional Neural Network
 ----------------------------
@@ -36,3 +44,10 @@ Convolutional Neural Network
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+   :caption: interpreting DNN
+
+   mbfmri.utils.explainer.rst
