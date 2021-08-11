@@ -2,7 +2,7 @@ mbfmri.models package
 =====================
 
 
-Cross-validation
+General - Cross-validation
 ----------------
 
 .. automodule:: mbfmri.models.mvpa_general
@@ -14,7 +14,7 @@ Models
 ------
 
 ElasticNet
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: mbfmri.models.elasticnet
    :members:
@@ -22,7 +22,7 @@ ElasticNet
    :show-inheritance:
    
 Multi-layer Perceptron
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: mbfmri.models.tf_mlp
    :members:
@@ -38,7 +38,7 @@ Multi-layer Perceptron
    mbfmri.utils.explainer.rst
 
 Convolutional Neural Network
-----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: mbfmri.models.tf_cnn
    :members:
