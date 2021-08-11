@@ -3,7 +3,7 @@
   <img src="https://github.com/CCS-Lab/project_model_based_fmri/blob/main/images/flowchart_temp.png" width="1000px">
 </p>
 
-**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to find a brain implementation of a latent behavioral state.
+**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to find brain implementations of latent neurocognitive states.
 It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MBfMRI provides simple executable functions to conduct 
 computational modeling (supported by *hBayesDM*[1]), and to run model-based fMRI analysis using MVPA. To [install](#Installation).
 
