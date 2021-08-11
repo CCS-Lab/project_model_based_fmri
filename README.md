@@ -23,8 +23,8 @@ Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends
 - Model-based MVPA is flexible as it allows various MVPA models plugged in.
 - Model-based MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
-The package provides previous GLM approach as well.
-
+### Models implemented in MBfMRI
+- MBfMRI offers [various MVPA models](https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.models.html#models) as well as [a massive univariate approach based on GLM](https://project-model-based-fmri.readthedocs.io/en/latest/mbfmri.core.glm.html).
 
 
 # Installation
