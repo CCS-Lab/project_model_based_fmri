@@ -18,23 +18,20 @@ Submodules
 ----------
 
 mbfmri.preprocessing.bold module
---------------------------------
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: mbfmri.preprocessing.bold
    :members:
    :undoc-members:
    :show-inheritance:
 
 Atlas-ROIs information
-----------------------
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. toctree::
 
    roi_info
    
 mbfmri.preprocessing.events module
-----------------------------------
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: mbfmri.preprocessing.events
    :members:
    :undoc-members:
