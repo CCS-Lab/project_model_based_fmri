@@ -36,11 +36,7 @@ The exact workflow of MVPA approach, model-based MVPA, consists of the following
 3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as ouput (y), or target, employing the repeated cross-validation framework. 
 4) Interprete the trained MVPA models to visualize the brain implementation of the target latent process quantified as brain activation pattern attributed  to predict the target signals from the multi-voxel signals.
 
-Features of model-based MVPA
-
-- Model-based MVPA is based on MVPA regression model.
-- Model-based MVPA is flexible as it allows various MVPA models plugged in.
-- Model-based MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
+Othre distinguished features of model-based MVPA are that Model-based MVPA is flexible as it allows various MVPA models plugged in and Model-based MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
 The package provides the GLM approach, model-based GLM, as well and it has the same procedure of the prevailing approach. The only part shared is *1) Generate latent process signals to provide parametric modulation of the target signals, and `FirstLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.first_level.FirstLevelModel.html>`_ and `SecondLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.second_level.SecondLevelModel.html>`. Please refer to the links.
 
