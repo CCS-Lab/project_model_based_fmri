@@ -27,6 +27,10 @@ Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends
 
 The exact workflow of MVPA approach, model-based MVPA, consists of the following steps. 
 
+.. image:: https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri/main/images/mbmvpa_workflow.png
+   :alt: mbmvpa_workflow
+   :align: center
+
 1) Generate latent process signals by fitting computational models with behavioral data, and extracting time series of latent process followed by HRF convolution.
 2) Generate multi-voxel signals from preprocess fMRI images allowing ROI masking, zooming spatial resolution, improving the quality of signals by several well-established methods (e.g. detrending, high-pass filtering, regressing out confounds).
 3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as ouput (y), or target, employing the repeated cross-validation framework. 
