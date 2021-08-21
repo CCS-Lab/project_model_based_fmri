@@ -1,4 +1,4 @@
-mbfmri.utils package
+mbfmri.utils.explainer
 ====================
 
 Explainer employs `SHAP <https://github.com/slundberg/shap>`_ to interpret MVPA models.
