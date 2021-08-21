@@ -1,5 +1,5 @@
-mbfmri.data package
-===================
+mbfmri.data
+===========
 
 Submodules
 ----------
