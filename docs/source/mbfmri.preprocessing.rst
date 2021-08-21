@@ -17,21 +17,21 @@ The below figure is an example of generated signals.
 Submodules
 ----------
 
-mbfmri.preprocessing.bold module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+mbfmri.preprocessing.bold
+~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: mbfmri.preprocessing.bold
    :members:
    :undoc-members:
    :show-inheritance:
 
 Atlas-ROIs information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 .. toctree::
 
    roi_info
    
-mbfmri.preprocessing.events module
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+mbfmri.preprocessing.events
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: mbfmri.preprocessing.events
    :members:
    :undoc-members:
