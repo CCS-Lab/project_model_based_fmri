@@ -32,7 +32,7 @@ release = '0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 
-autodoc_mock_imports = ['mbfmri.utils.explainer']
+autodoc_mock_imports = ['shap']
 
 extensions = [
     'sphinx.ext.napoleon',
