@@ -1,4 +1,4 @@
-mbfmri.models package
+mbfmri.models
 =====================
 
 
