@@ -1,8 +1,8 @@
-mbfmri.core.mvpa
-================
-
 MVPA approach
------------------------
+=============
+
+mbfmri.core.mvpa
+----------------
 
 .. automodule:: mbfmri.core.mvpa
    :members:
