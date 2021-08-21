@@ -12,6 +12,10 @@
 #
 import os
 import sys
+from unittest.mock import Mock as MagicMock
+MOCK_MODULES = ['numpy', 'matplotlib.pyplot', 'tensroflow', 'tensorflow.keras']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = MagicMock()
 sys.path.insert(0, os.path.abspath('../mbfmri'))
 sys.path.insert(0, os.path.abspath('_ext'))
 
