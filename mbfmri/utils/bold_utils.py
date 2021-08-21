@@ -75,7 +75,7 @@ def _build_mask(mask_path, threshold, zoom,smoothing_fwhm,include_default_mask=T
     
     # list up mask image file
     
-    default_mask = load_mni152_brain_mask()
+    default_mask = ()
     if not include_default_mask:
         default_mask = nib.Nifti1Image(np.ones(default_mask.shape),
                                    affine=default_mask.affine)

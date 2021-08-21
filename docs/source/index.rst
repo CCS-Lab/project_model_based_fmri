@@ -34,11 +34,11 @@ The exact workflow of MVPA approach, model-based MVPA, consists of the following
 1) Generate latent process signals by fitting computational models with behavioral data, and extracting time series of latent process followed by HRF convolution.
 2) Generate multi-voxel signals from preprocess fMRI images allowing ROI masking, zooming spatial resolution, improving the quality of signals by several well-established methods (e.g. detrending, high-pass filtering, regressing out confounds).
 3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as ouput (y), or target, employing the repeated cross-validation framework. 
-4) Interprete the trained MVPA models to visualize the brain implementation of the target latent process quantified as brain activation pattern attributed  to predict the target signals from the multi-voxel signals.
+4) Interpret the trained MVPA models to visualize the brain implementation of the target latent process quantified as brain activation pattern attributed  to predict the target signals from the multi-voxel signals.
 
 Othre distinguished features of model-based MVPA are that Model-based MVPA is flexible as it allows various MVPA models plugged in and Model-based MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
-The package provides the GLM approach, model-based GLM, as well and it has the same procedure of the prevailing approach. The only part shared is *1) Generate latent process signals to provide parametric modulation of the target signals, and `FirstLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.first_level.FirstLevelModel.html>`_ and `SecondLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.second_level.SecondLevelModel.html>`. Please refer to the links.
+The package provides the GLM approach, model-based GLM, as well and it has the same procedure of the prevailing approach. The only part shared with MVPA approach is **1) Generate latent process signals** to provide parametric modulation of the target signals. The first-level and second-level analysis are done by **NiLearn** modules, `FirstLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.first_level.FirstLevelModel.html>`_ and `SecondLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.second_level.SecondLevelModel.html>`_ respectively. Please refer to the links.
 
 **MBfMRI** supports Python 3.6 or above and relies on `NiLearn <https://github.com/nilearn/nilearn>`_, `hBayesDM <https://github.com/CCS-Lab/hBayesDM/tree/develop/Python>`_, `py-glmnet <https://github.com/civisanalytics/python-glmnet>`_, and `tensorflow <https://www.tensorflow.org/api_docs/python/tf/keras?hl=ko>`_(tested on v2.4.0).
 
