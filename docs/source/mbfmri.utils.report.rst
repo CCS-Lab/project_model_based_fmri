@@ -1,5 +1,5 @@
-mbfmri.utils.report module
-====================
+mbfmri.utils.report
+===================
 
 Report module is for make plots or brainmaps from the raw outputs of model-based MVPA. 
 There are two types of reporting module: `FitReporter` and `PostReporter`. 
