@@ -1,5 +1,5 @@
-mbfmri.core package
-===================
+mbfmri.core
+===========
 
 mbfmri.core.engine.run\_mbfmri
 ---------------------------------------------------------------
