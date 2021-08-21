@@ -70,6 +70,7 @@ codecov = { version = "*", optional = true }
 # Extra packages for documentation
 sphinx = { version = "*", optional = true }
 sphinx_rtd_theme = { version = "*", optional = true }
+doc_utils = { version = "<0.17", optional = true }
 sphinx-autobuild = { version = "*", optional = true }
 recommonmark = { version = "*", optional = true }
 sphinx-issues = { version = "^1.2.0", optional = true }
