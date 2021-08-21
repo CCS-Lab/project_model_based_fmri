@@ -1,5 +1,5 @@
-mbfmri.preprocessing package
-============================
+mbfmri.preprocessing
+====================
 This module is for processing fMRI images and behavioral data. 
 For fMRI images (*_bold.nii), `mbfmri.preprocessing.bold.VoxelFeatureGenerator` masks, smoothes, and cleans input images to generate multi-voxel signals.
 For behavioral data (*_events.tsv), mbfmri.preprocessing.events.LatentProcessGenerator` fits computational models, selects best model, extracts latent process and generate latent process signals. 
