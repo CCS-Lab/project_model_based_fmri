@@ -1,5 +1,5 @@
-mbfmri.core.mvpa package
-===================
+mbfmri.core.mvpa
+================
 
 MVPA approach
 -----------------------
