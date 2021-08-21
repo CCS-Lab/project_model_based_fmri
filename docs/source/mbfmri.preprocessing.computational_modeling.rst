@@ -1,8 +1,8 @@
-mbfmri.preprocessing.computational\_modeling package
-====================================================
+mbfmri.preprocessing.computational\_modeling
+============================================
 
-Submodules
-----------
+Available computational model
+-----------------------------
 
 mbfmri.preprocessing.computational\_modeling.bandit2arm\_delta module
 ---------------------------------------------------------------------
