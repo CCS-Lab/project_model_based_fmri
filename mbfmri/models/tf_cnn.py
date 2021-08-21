@@ -18,7 +18,6 @@ import tempfile
 import random
 import os
 from pathlib import Path
-import shap
 
 from mbfmri.models.tf_base import MVPA_TF
 from mbfmri.utils.report import *
