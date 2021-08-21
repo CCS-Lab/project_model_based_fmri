@@ -87,6 +87,7 @@ Content
    mbfmri.preprocessing.rst
    mbfmri.data.rst
    mbfmri.models.rst
+   mbfmri.utils.explainer.rst
    mbfmri.utils.report.rst
    
 References
