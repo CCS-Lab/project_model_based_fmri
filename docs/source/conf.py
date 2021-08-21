@@ -12,10 +12,7 @@
 #
 import os
 import sys
-from unittest.mock import Mock as MagicMock
-MOCK_MODULES = ['numpy', 'matplotlib.pyplot', 'tensroflow', 'tensorflow.keras']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = MagicMock()
+
 sys.path.insert(0, os.path.abspath('../mbfmri'))
 sys.path.insert(0, os.path.abspath('_ext'))
 
@@ -34,6 +31,8 @@ release = '0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+autodoc_mock_imports = ['numpy', 'tensorflow', 'tensorflow.keras', 'numpy.core.multiarray']
+
 extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
