@@ -1,8 +1,8 @@
-mbfmri.core.glm package
-===================
-
 GLM approach
-----------------------
+============
+
+mbfmri.core.glm package
+-----------------------
 
 .. automodule:: mbfmri.core.glm
    :members:
