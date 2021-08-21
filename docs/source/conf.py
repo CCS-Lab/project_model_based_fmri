@@ -32,6 +32,8 @@ release = '0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 
+autodoc_mock_imports = ['mbfmri.utils.explainer']
+
 extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
