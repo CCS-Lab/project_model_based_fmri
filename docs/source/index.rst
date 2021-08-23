@@ -13,30 +13,28 @@ Home
 .. centered:: |version|
 ----
 
-**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to find a brain implementation of a latent behavioral state.
-It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MBfMRI provides simple executable functions to conduct 
-computational modeling (supported by hBayesDM[1]), and run model-based fMRI analysis using MVPA.
+**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to investigate brain implementations of latent neurocognitive processes. It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlysis (MVPA)*. MBfMRI offers simple executable functions to conduct computational modeling (supported by `hBayesDM <https://doi.org/10.1162/cpsy_a_00002>`_ [1]), and run model-based fMRI analysis using MVPA.
 
-The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists of the following steps.
+The basic framework of model-based fMRI by `O'Doherty et al. (2007) <https://doi.org/10.1196/annals.1390.022>`_ [2] consists of the following steps.
 
 1) Computational modeling of subjects' behaviors
 2) Extraction & time series generation for state values in the model (a.k.a latent process)
 3) Relate latent process with task-fMRI time series data
 
-Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The MVPA approach (model-based MVPA) has the following two differences. First, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]. Second, instead of mapping statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
+Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The model-based MVPA approach has the following two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, so enabling acquisition of *reverse inference* model denoted by `Poldrack (2006) <https://doi.org/10.1016/j.tics.2005.12.004>`_ [3]. Second, instead of mapping statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
-The exact workflow of MVPA approach, model-based MVPA, consists of the following steps. 
+The specific workflow of model-based MVPA approach, consists of the following steps. 
 
 .. image:: https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri/main/images/mbmvpa_workflow.png
    :alt: mbmvpa_workflow
    :align: center
 
-1) Generate latent process signals by fitting computational models with behavioral data, and extracting time series of latent process followed by HRF convolution.
-2) Generate multi-voxel signals from preprocess fMRI images allowing ROI masking, zooming spatial resolution, improving the quality of signals by several well-established methods (e.g. detrending, high-pass filtering, regressing out confounds).
-3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as ouput (y), or target, employing the repeated cross-validation framework. 
-4) Interpret the trained MVPA models to visualize the brain implementation of the target latent process quantified as brain activation pattern attributed  to predict the target signals from the multi-voxel signals.
+1) Generate latent process signals by fitting computational models with behavioral data and extracting time series of the latent process followed by HRF convolution.
+2) Generate multi-voxel signals from preprocessed fMRI images allowing ROI masking, zooming spatial resolution, and improving the quality of signals by several well-established methods (e.g., detrending, high-pass filtering, regressing out confounds).
+3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as output (y), or target, employing the repeated cross-validation framework. 
+4) Interpret the trained MVPA models to visualize the brain implementation of the target latent process quantified as brain activation pattern attributed to predict the target signals from the multi-voxel signals.
 
-Othre distinguished features of model-based MVPA are that Model-based MVPA is flexible as it allows various MVPA models plugged in and Model-based MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
+Other distinguishing features of model-based MVPA are that (1) model-based MVPA is flexible as it allows various MVPA models plugged in and (2) it is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
 The package provides the GLM approach, model-based GLM, as well and it has the same procedure of the prevailing approach. The only part shared with MVPA approach is **1) Generate latent process signals** to provide parametric modulation of the target signals. The first-level and second-level analysis are done by **NiLearn** modules, `FirstLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.first_level.FirstLevelModel.html>`_ and `SecondLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.second_level.SecondLevelModel.html>`_ respectively. Please refer to the links.
 
