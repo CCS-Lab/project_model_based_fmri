@@ -23,7 +23,7 @@ The basic framework of model-based fMRI by `O'Doherty et al. (2007) <https://doi
 
 Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The model-based MVPA approach has the following two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, enabling acquisition of *reverse inference* model denoted by `Poldrack (2006) <https://doi.org/10.1016/j.tics.2005.12.004>`_ [3]. Second, instead of mapping statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
-The specific workflow of the model-based MVPA approach, consists of the following steps. 
+The specific workflow of the model-based MVPA approach consists of the following steps. 
 
 .. image:: https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri/main/images/mbmvpa_workflow.png
    :alt: mbmvpa_workflow
