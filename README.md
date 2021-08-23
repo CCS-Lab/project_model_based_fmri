@@ -4,18 +4,18 @@
 </p>
 
 **MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to investigate brain implementations of latent neurocognitive processes.
-It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern anlaysis (MVPA)*. MBfMRI offers simple executable functions to conduct 
-computational modeling (supported by *hBayesDM*[1]), and to run model-based fMRI analysis using MVPA. To [install](#Installation).
+It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern analysis (MVPA)*. MBfMRI offers simple executable functions to conduct 
+computational modeling (supported by *hBayesDM*[1]) and run model-based fMRI analysis using MVPA. To [install](#Installation).
 
 The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists of the following steps.
 
 1) Computational modeling of subjects' behaviors
 2) Extraction & time series generation for state values in the model (a.k.a latent process)
-3) Relate latent process with task-fMRI time series data
+3) Relate latent process with task-fMRI time-series data
 
 Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The MVPA approach (model-based MVPA) has two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]; second, instead of being mapped by statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
-The workflow of MVPA approach, model-based MVPA, consists of the following steps. 
+The workflow of the model-based MVPA, consists of the following steps. 
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri/main/images/mbmvpa_workflow.png" width="750px">
