@@ -15,20 +15,20 @@ The basic framework of model-based fMRI by O'Doherty et al. (2007)[2] consists o
 
 Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The MVPA approach (model-based MVPA) has two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]; second, instead of being mapped by statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
-The workflow of the model-based MVPA, consists of the following steps: 
+The specific workflow of the model-based MVPA, consists of the following steps: 
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri/main/images/mbmvpa_workflow.png" width="750px">
 </p>
 
-1) Generate latent process signals by fitting computational models with behavioral data, and extracting time series of latent process followed by HRF convolution.
-2) Generate multi-voxel signals from preprocess fMRI images allowing ROI masking, zooming spatial resolution, improving the quality of signals by several well-established methods (e.g. detrending, high-pass filtering, regressing out confounds).
+1) Generate latent process signals by fitting computational models with behavioral data and extracting time-series of latent process followed by HRF convolution.
+2) Generate multi-voxel signals from preprocess fMRI images by allowing ROI masking, zooming spatial resolution, and improving the quality of signals by several well-established methods (e.g. detrending, high-pass filtering, regressing out confounds).
 3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as ouput (y), or target, employing the repeated cross-validation framework. 
 4) Interpret the trained MVPA models to visualize the brain implementation of the target latent process quantified as brain activation pattern attributed  to predict the target signals from the multi-voxel signals.
 
-Othre distinguished features of model-based MVPA are that Model-based MVPA is flexible as it allows various MVPA models plugged in and Model-based MVPA is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
+Othre distinguishing features of the model-based MVPA are that the model-based MVPA is flexible as it allows various MVPA models plugged in and it is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
-The package provides the GLM approach, model-based GLM, as well and it has the same procedure of the prevailing approach. The only part shared with MVPA approach is **1) Generate latent process signals** to provide parametric modulation of the target signals. The first-level and second-level analysis are done by **NiLearn** modules, [FirstLevelModel](https://nilearn.github.io/modules/generated/nilearn.glm.first_level.FirstLevelModel.html) and [SecondLevelModel](https://nilearn.github.io/modules/generated/nilearn.glm.second_level.SecondLevelModel.html) respectively. Please refer to the links.
+The package also provides the well-established model-based GLM approach. The process shared with the model-based MVPA approach is **1) Generate latent process signals** to provide parametric modulation of the target signals. The first-level and second-level analysis are done by **NiLearn** modules, [FirstLevelModel](https://nilearn.github.io/modules/generated/nilearn.glm.first_level.FirstLevelModel.html) and [SecondLevelModel](https://nilearn.github.io/modules/generated/nilearn.glm.second_level.SecondLevelModel.html) respectively. Please refer to the links if you'd like to know the details about each step.
 
 
 **MBfMRI** supports Python 3.6 or above and relies on [NiLearn](https://github.com/nilearn/nilearn), [hBayesDM](https://github.com/CCS-Lab/hBayesDM/tree/develop/Python), [py-glmnet](https://github.com/civisanalytics/python-glmnet), and [tensorflow](https://www.tensorflow.org/api_docs/python/tf/keras?hl=ko)(tested on v2.4.0).
@@ -55,7 +55,7 @@ python setup.py install
 
 # Tutorial
 
-Download the example data from [here](https://drive.google.com/file/d/1nmHwyxgrCfMQ3EhDhdFb3BwToEzMArqN/view?usp=sharing). Download it and unzip it under *tutorials*.<br>
+Download the example data from [here](https://drive.google.com/file/d/1nmHwyxgrCfMQ3EhDhdFb3BwToEzMArqN/view?usp=sharing). Download and unzip it under *tutorials*.<br>
 See the [tutorial](https://github.com/CCS-Lab/project_model_based_fmri/blob/main/tutorials/tutorial.ipynb).
 
 ## References
