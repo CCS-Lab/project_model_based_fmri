@@ -40,7 +40,7 @@ Othre distinguished features of model-based MVPA are that Model-based MVPA is fl
 
 The package provides the GLM approach, model-based GLM, as well and it has the same procedure of the prevailing approach. The only part shared with MVPA approach is **1) Generate latent process signals** to provide parametric modulation of the target signals. The first-level and second-level analysis are done by **NiLearn** modules, `FirstLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.first_level.FirstLevelModel.html>`_ and `SecondLevelModel <https://nilearn.github.io/modules/generated/nilearn.glm.second_level.SecondLevelModel.html>`_ respectively. Please refer to the links.
 
-**MBfMRI** supports Python 3.6 or above and relies on `NiLearn <https://github.com/nilearn/nilearn>`_, `hBayesDM <https://github.com/CCS-Lab/hBayesDM/tree/develop/Python>`_, `py-glmnet <https://github.com/civisanalytics/python-glmnet>`_, and `tensorflow <https://www.tensorflow.org/api_docs/python/tf/keras?hl=ko>`_(tested on v2.4.0).
+**MBfMRI** supports Python 3.6 or above and relies on `NiLearn <https://github.com/nilearn/nilearn>`_, `hBayesDM <https://github.com/CCS-Lab/hBayesDM/tree/develop/Python>`_, `py-glmnet <https://github.com/civisanalytics/python-glmnet>`_, and `tensorflow <https://www.tensorflow.org/api_docs/python/tf/keras?hl=ko>`_ (tested on v2.4.0).
 
 
 
