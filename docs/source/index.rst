@@ -17,9 +17,9 @@ Home
 
 The basic framework of model-based fMRI by `O'Doherty et al. (2007) <https://doi.org/10.1196/annals.1390.022>`_ [2] consists of the following steps.
 
-1) Computational modeling of subjects' behaviors
-2) Extraction & time series generation for state values in the model (a.k.a latent process)
-3) Relate latent process with task-fMRI time-series data
+1) Find best fitting parameters of model to behavioral data
+2) Generate model-based time series by using the best model-fitting parameters and convolve it with HRF (a.k.a. latent process)
+3) Regress model-based time series against task-fMRI data
 
 Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The model-based MVPA approach has the following two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, enabling acquisition of *reverse inference* model denoted by `Poldrack (2006) <https://doi.org/10.1016/j.tics.2005.12.004>`_ [3]. Second, instead of mapping statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
@@ -29,7 +29,7 @@ The specific workflow of the model-based MVPA approach consists of the following
    :alt: mbmvpa_workflow
    :align: center
 
-1) Generate latent process signals by fitting computational models with behavioral data and extracting time series of the latent process followed by HRF convolution.
+1) Generate latent process signals by fitting computational models with behavioral data and convolving time series of latent process with HRF.
 2) Generate multi-voxel signals from preprocessed fMRI images by allowing ROI masking, zooming spatial resolution, and improving the quality of signals by several well-established methods (e.g., detrending, high-pass filtering, regressing out confounds).
 3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as output (y), or target, employing the repeated cross-validation framework. 
 4) Interpret the trained MVPA models to visualize the brain implementation of the target latent process quantified as brain activation pattern attributed to predict the target signals from the multi-voxel signals.
