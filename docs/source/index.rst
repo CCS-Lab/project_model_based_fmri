@@ -19,7 +19,7 @@ The basic framework of model-based fMRI by `O'Doherty et al. (2007) <https://doi
 
 1) Find best fitting parameters of model to behavioral data
 2) Generate model-based time series by using the best model-fitting parameters and convolve it with HRF (a.k.a. latent process)
-3) Regress model-based time series against task-fMRI data
+3) Regress model-based time series against task-fMRI data using GLM
 
 Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The model-based MVPA approach has the following two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, enabling acquisition of *reverse inference* model denoted by `Poldrack (2006) <https://doi.org/10.1016/j.tics.2005.12.004>`_ [3]. Second, instead of mapping statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
