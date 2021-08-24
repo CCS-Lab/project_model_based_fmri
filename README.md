@@ -9,9 +9,9 @@ computational modeling (supported by *hBayesDM*[1]) and run model-based fMRI ana
 
 The basic framework of conventional model-based fMRI by O'Doherty et al. (2007)[2] consists of the following steps.
 
-1) Computational modeling of subjects' behaviors
-2) Extraction & time series generation for state values in the model (a.k.a latent process)
-3) Relate latent process with task-fMRI time-series data
+1) Find best fitting parameters of model to behavioral data
+2) Generate model-based time series by using the best model-fitting parameters and convolve it with HRF.
+3) Regress model-based time series against task-fMRI data
 
 Upon the more conventional massive univariate approach to model-based neuroimaging, **MBfMRI** extends the framework by adopting MVPA regression models. The MVPA approach (model-based MVPA) has two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, enabling acquisition of *reverse inference* model denoted by Poldrack (2006)[3]; second, instead of being mapped by statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
