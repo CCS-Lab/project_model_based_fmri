@@ -13,7 +13,11 @@ Home
 .. centered:: |version|
 ----
 
-**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to investigate brain implementations of latent neurocognitive processes. It combines two fMRI analytic frameworks: *model-based fMRI* and *multi-voxel pattern analysis (MVPA)*. MBfMRI offers simple executable functions to conduct computational modeling (supported by `hBayesDM <https://doi.org/10.1162/cpsy_a_00002>`_ [1]) and run model-based fMRI analysis using MVPA.
+**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to investigate brain
+implementations of latent neurocognitive processes. It combines two fMRI analytic frameworks:
+*model-based fMRI* and *multi-voxel pattern analysis (MVPA)*. MBfMRI offers simple executable
+functions to conduct computational modeling (supported by `hBayesDM <https://doi.org/10.11
+62/cpsy_a_00002>`_ [1]) and run model-based fMRI analysis using MVPA.
 
 The basic framework of model-based fMRI by `O'Doherty et al. (2007) <https://doi.org/10.1196/annals.1390.022>`_ [2] consists of the following steps.
 
