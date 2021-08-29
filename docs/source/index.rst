@@ -32,7 +32,7 @@ The specific workflow of the model-based MVPA approach consists of the following
 1) Generate latent process signals by fitting computational models with behavioral data and convolving time series of latent process with HRF.
 2) Generate multi-voxel signals from preprocessed fMRI images by allowing ROI masking, zooming spatial resolution, and improving the quality of signals by several well-established methods (e.g., detrending, high-pass filtering, regressing out confounds).
 3) Train MVPA models by feeding multi-voxel signals as input (X) and latent process signals as output (y), or target, employing the repeated cross-validation framework. 
-4) Interpret the trained MVPA models by *Feature Attribution*  method, and obtain a 3D brain image that quantifies brain activation pattern attributed to predict the target signals from the multi-voxel signals.
+4) Interpret the trained MVPA models by *Feature Attribution*  method, and obtain a 3D brain image that quantifies brain activation pattern attributed to  predict the target signals from the multi-voxel signals.
 
 Other distinguishing features of model-based MVPA are that (1) model-based MVPA is flexible as it allows various MVPA models plugged in and (2) it is free of analytic hierarchy (e.g. first-level anal. or second-level anal.).
 
