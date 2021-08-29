@@ -6,25 +6,30 @@
 Home
 ====
 
-.. image:: https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri/main/images/flowchart_all.png
+.. image:: https://raw.githubusercontent.com/CCS-Lab/project_model_based_fmri
+/main/images/flowchart_all.png
    :alt: flowchart
    :align: center
 
 .. centered:: |version|
 ----
 
-**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to investigate brain
-implementations of latent neurocognitive processes. It combines two fMRI analytic frameworks:
-*model-based fMRI* and *multi-voxel pattern analysis (MVPA)*. MBfMRI offers simple executable
-functions to conduct computational modeling (supported by `hBayesDM <https://doi.org/10.11
-62/cpsy_a_00002>`_ [1]) and run model-based fMRI analysis using MVPA.
+**MBfMRI** is a unified Python fMRI analysis tool on task-based fMRI data to
+investigate brain implementations of latent neurocognitive processes. MBfMRI
+offers simple executable functions to conduct computational modeling (supported
+by `hBayesDM <https://doi.org/10.1162/cpsy_a_00002>`_ [1]) and run model-based
+fMRI analysis. It is featured by a new analytic framework combining
+*computational modeling* and *multi-voxel pattern analysis (MVPA)*.
 
-The basic framework of model-based fMRI by `O'Doherty et al. (2007) <https://doi.org/10.1196/annals.1390.022>`_ [2] consists of the following steps.
+The analysis is based on the framework of model-based fMRI by `O'Doherty et al.
+(2007) <https://doi.org/10.1196/annals.1390.022>`_ [2].
 
 1) Find best fitting parameters of model to behavioral data
-2) Generate model-based time series by using the best model-fitting parameters and convolve it with HRF (a.k.a. latent process)
-3) Regress model-based time series against task-fMRI data using GLM
+2) Generate model-based time series by using the best model-fitting parameters
+and convolve it with HRF (a.k.a. latent process)
+3) Relate latent process with task-fMRI data
 
+For the step 3), the prevailing method in model-based fMRI analysis is based on Generalized Linear Model (GLM), a massive univariate approach followed by parametric mapping (GLM approach).
 Upon the prevailing massive univariate approach based on GLM, **MBfMRI** extends the framework by adopting MVPA regression models. The model-based MVPA approach has the following two differences compared to the previous approach: first, MVPA regression models predict cognitive process directly from brain activations, enabling acquisition of *reverse inference* model denoted by `Poldrack (2006) <https://doi.org/10.1016/j.tics.2005.12.004>`_ [3]. Second, instead of mapping statistical significance, the brain activation pattern correlated with the latent process is obtained by interpreting trained MVPA regression models.
 
 The specific workflow of the model-based MVPA approach consists of the following steps. 
