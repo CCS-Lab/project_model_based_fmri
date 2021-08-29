@@ -33,7 +33,7 @@ and convolve it with HRF (a.k.a. latent process)
 Generalized Linear Model (GLM), a massive univariate approach followed by
 parametric mapping (GLM approach). Upon the GLM approach, **MBfMRI** extends
 the framework by adopting MVPA regression models (MVPA approach). The MVPA
-approach has the following two differences compared to the previous approach:
+approach has the following features compared to the previous GLM approach:
 (1) MVPA regression models predict cognitive process directly from brain
 activations, enabling acquisition of *reverse inference* model denoted by
 `Poldrack (2006) <https://doi.org/10.1016/j.tics.2005.12.004>`_ [3]. (2)
