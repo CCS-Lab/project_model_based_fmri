@@ -238,9 +238,11 @@ class LatentProcessGenerator():
             self.best_model = 'unnamed'
         else:
             self.best_model = None
-            
-        self.model_comparison_table_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
-                f"task-{self.bids_controller.task_name}_{config.DEFAULT_MODELCOMPARISON_FILENAME}")
+
+        self.comp_model_dir = Path(self.bids_controller.mbmvpa_layout.root) / 'computational-modeling'
+        self.comp_model_dir.mkdir(exist_ok)
+        self.model_comparison_table_path = self.comp_model_dir /
+                f"task-{self.bids_controller.task_name}_{config.DEFAULT_MODELCOMPARISON_FILENAME}"
         self._set_trained_dm_model()
         
         if criterion == 'looic':
@@ -377,13 +379,13 @@ class LatentProcessGenerator():
                                  sep="\t", index=False,quotechar="'")
     
     def _get_indivparams_path(self,dm_model):
-        individual_params_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
-        f"task-{self.bids_controller.task_name}_model-{dm_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}")
+        individual_params_path = self.comp_model_dir /
+        f"task-{self.bids_controller.task_name}_model-{dm_model}_{config.DEFAULT_INDIVIDUAL_PARAMETERS_FILENAME}"
         return individual_params_path
     
     def _get_fitplot_path(self,dm_model):
-        fitplot_path = Path(self.bids_controller.mbmvpa_layout.root)/ (
-        f"task-{self.bids_controller.task_name}_model-{dm_model}")
+        fitplot_path = self.comp_model_dir /
+        f"task-{self.bids_controller.task_name}_model-{dm_model}"
         fitplot_path.mkdir(exist_ok=True)
         return fitplot_path
     
@@ -400,9 +402,7 @@ class LatentProcessGenerator():
                          dm_models,
                          overwrite=False,
                          **kwargs):
-        
-        
-        
+
         for dm_model in dm_models:
         
             if overwrite or \

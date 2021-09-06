@@ -530,13 +530,11 @@ class BIDSController():
         from MB-MVPA BIDS.
         '''
         process_name = ''.join(process_name.split('_'))
-        save_path = Path(self.mbmvpa_layout.root)/f'plot_feature-{feature_name}_process-{process_name}'
-        save_path.mkdir(exist_ok=True)
-        
         n_plot = 0
         n_try = 0
         for _, row in self.meta_infos.iterrows():
-            
+            save_path = self.get_path(sub_id=row['subject'], ses_id=row['session'])
+            save_path = save_path / f'plot_feature-{feature_name}_process-{process_name}'
             plotted = plot_data(mbmvpa_layout=self.mbmvpa_layout, 
                               subject=row['subject'],
                               run=row['run'],

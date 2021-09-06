@@ -377,7 +377,12 @@ class GLM():
         else:
             self.fmriprep_layout = fmriprep_layout
         now = datetime.datetime.now()
-        self.save_root = Path(glm_save_path) / f'report_glm_task-{task_name}_process-{process_name}_{now.year}-{now.month:02}-{now.day:02}-{now.hour:02}-{now.minute:02}-{now.second:02}'
+        self.save_root = Path(glm_save_path) / 'glm'
+        self.save_root.mkdir(exist_ok=True)
+        existing_reports = [-1] + [int(f.split('report-')[-1]) for self.save_root.glob('report-*')]
+        existing_reports.sort()
+        report_idx = existing_reports[-1] + 1
+        self.save_root = self.save_root / f'report-{report_idx}'
         self.save_root.mkdir(exist_ok=True)
         self.save_path_first = self.save_root /'first_map'
         self.save_path_first.mkdir(exist_ok=True)

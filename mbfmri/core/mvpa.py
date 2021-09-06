@@ -24,7 +24,7 @@ USE_EXPLAINER = ['mlp','cnn']
 
 def run_mbmvpa(config=None,
               mvpa_model='elasticnet',
-              report_path='.',
+              report_path=None,
               overwrite=False,
               overwrite_latent_process=True,
               refit_compmodel=False,
@@ -175,7 +175,7 @@ class MBMVPA(MBFMRI):
     def __init__(self,
                  config=None,
                  mvpa_model='elasticnet',
-                 report_path='.',
+                 report_path=None,
                  logistic=False,
                  **kwargs):
         
@@ -184,11 +184,11 @@ class MBMVPA(MBFMRI):
         self._override_config(config)
         kwargs['logistic']=logistic
         self._add_kwargs_to_config(kwargs)
+        if report_path is None
+            report_path = Path(bids_layout)/'mbmvpa'
         self.config['MVPA']['CV']['cv_save_path']=report_path
-        
+
         # setting name for saving outputs
-        # TODO - move setting 'result_name' while running.
-        
         self.mvpa_model_name = mvpa_model
         
         # initiating internal modules for preprocessing input data
