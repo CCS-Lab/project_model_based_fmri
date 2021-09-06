@@ -320,11 +320,7 @@ def plot_data(mbmvpa_layout,
     add_latent_process_subplot(modulation_file, signal_file, timemask_file, t_r, ax_idx=2, fig=fig, total_number=2,fontsize=fontsize)
     
     if save:
-        if session is not None:
-            file_name = f'sub-{subject}_ses-{session}_task-{task_name}_run-{run}_plot.png'
-        else:
-            file_name = f'sub-{subject}_task-{task_name}_run-{run}_plot.png'
-        plt.savefig(Path(save_path)/file_name,bbox_inches='tight')
+        plt.savefig(save_path,bbox_inches='tight')
     
     if show:
         plt.show()

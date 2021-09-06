@@ -13,6 +13,7 @@ from mbfmri.utils.explainer import Explainer
 from mbfmri.core.base import MBFMRI
 import mbfmri.utils.config
 import yaml, importlib, copy
+from pathlib import Path
 
 # dictionary for module path and class name for implemented model.
 MVPA_MODEL_DICT = {'elasticnet':['mbfmri.models.elasticnet','MVPA_ElasticNet'],
@@ -22,7 +23,8 @@ MVPA_MODEL_DICT = {'elasticnet':['mbfmri.models.elasticnet','MVPA_ElasticNet'],
 NEED_RECONSTRUCT_MODEL = ['cnn']
 USE_EXPLAINER = ['mlp','cnn']
 
-def run_mbmvpa(config=None,
+def run_mbmvpa(bids_layout,
+              config=None,
               mvpa_model='elasticnet',
               report_path=None,
               overwrite=False,
@@ -45,6 +47,9 @@ def run_mbmvpa(config=None,
     Parameters
     ----------
     
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
+        
     config : dict or str or pathlib.PosixPath, default=None
         Dictionary for keyworded configuration, or path for yaml file.
         The configuration input will override the default configuration.
@@ -52,10 +57,11 @@ def run_mbmvpa(config=None,
     mvpa_model : str, default="elasticnet"
         Name for MVPA model. Currently, "elasticnet," "mlp" and "cnn" are allowed.
     
-    report_path : str or pathlib.PosixPath, defualt="."
+    report_path : str or pathlib.PosixPath, defualt=None
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
-    
+        Default path will be set as bids_root/mbmvpa/mvpa/ (If None)
+        
     overwrite : bool, default=False
         Indicate if processing multi-voxel signals is required
         though the files exist.
@@ -116,7 +122,8 @@ def run_mbmvpa(config=None,
 
     """
     
-    mbmvpa = MBMVPA(config=config,
+    mbmvpa = MBMVPA(bids_layout=bids_layout,
+                    config=config,
                      mvpa_model=mvpa_model,
                      report_path=report_path,
                      **kwargs)
@@ -143,6 +150,9 @@ class MBMVPA(MBFMRI):
     Parameters
     ----------
     
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
+    
     config : dict or str or pathlib.PosixPath, default=None
         Dictionary for keyworded configuration, or path for yaml file.
         The configuration input will override the default configuration.
@@ -150,9 +160,10 @@ class MBMVPA(MBFMRI):
     mvpa_model : str, default="elasticnet"
         Name for MVPA model. Currently, "elasticnet," "mlp" and "cnn" are allowed.
     
-    report_path : str or pathlib.PosixPath, defualt="."
+    report_path : str or pathlib.PosixPath, defualt=None
         Path for saving outputs of MVPA_CV module. 
         please refer to mbmvpa.models.mvpa_general.MVPA_CV
+        Default path will be set as bids_root/mbmvpa/mvpa/ (If None)
         
     **kwargs : dict
         Dictionary for keywarded arguments.
@@ -173,6 +184,7 @@ class MBMVPA(MBFMRI):
          
     """
     def __init__(self,
+                 bids_layout,
                  config=None,
                  mvpa_model='elasticnet',
                  report_path=None,
@@ -184,14 +196,16 @@ class MBMVPA(MBFMRI):
         self._override_config(config)
         kwargs['logistic']=logistic
         self._add_kwargs_to_config(kwargs)
-        if report_path is None
-            report_path = Path(bids_layout)/'mbmvpa'
+        if report_path is None:
+            report_path = Path(bids_layout)/'derivatives'/'mbmvpa'
         self.config['MVPA']['CV']['cv_save_path']=report_path
 
         # setting name for saving outputs
         self.mvpa_model_name = mvpa_model
         
         # initiating internal modules for preprocessing input data
+        self.config['VOXELFEATURE']['bids_layout'] = bids_layout
+        self.config['LATENTPROCESS']['bids_layout'] = bids_layout
         self.X_generator = VoxelFeatureGenerator(**self.config['VOXELFEATURE'])
         self.bids_controller = self.X_generator.bids_controller
         self.y_generator = LatentProcessGenerator(bids_controller=self.bids_controller,
@@ -213,24 +227,6 @@ class MBMVPA(MBFMRI):
         self.logistic=logistic
         self.config['APPENDIX'] = {}
     
-    def _set_result_name(self):
-        dm_model_name = self.y_generator.best_model
-        dm_model_name = ''.join(dm_model_name.split('_'))
-        result_name = '-'.join([dm_model_name,
-                                self.loader.task_name,
-                                self.loader.process_name,
-                                self.loader.feature_name])
-        if self.logistic:
-            result_name += '-logistic'
-            self.config['MVPA']['LOGISTICPOSTREPORT']\
-                [self.mvpa_model_name]['experiment_name'] = result_name
-        else:
-            self.config['MVPA']['POSTREPORT']\
-                [self.mvpa_model_name]['experiment_name'] = result_name
-            
-        self.config['MVPA']['CV']['experiment_name'] = result_name
-        
-        
     def run(self,
             overwrite=False,
             overwrite_latent_process=True,
@@ -282,7 +278,6 @@ class MBMVPA(MBFMRI):
         voxel_mask = self.loader.get_voxel_mask()
         
         # set MVPA model and report function
-        self._set_result_name()
         input_shape = X_dict[list(X_dict.keys())[0]].shape[1:]
         self.config['MVPA']['MODEL'][self.mvpa_model_name]['input_shape'] = input_shape
         if self.mvpa_model_name in USE_EXPLAINER:

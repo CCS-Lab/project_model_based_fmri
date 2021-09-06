@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6.1"
+python = "~3.7"
 hbayesdm = "<=1.0.1"
 nibabel = "~3.2.0"
 nilearn = "~0.8.0"

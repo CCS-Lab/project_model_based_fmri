@@ -18,8 +18,8 @@ from pathlib import Path
 
 ## GENERAL SETTING
 bids_layout = "tests/test_example"
-report_path = "tests/test_report"
-Path(report_path).mkdir(exist_ok=True)
+#report_path = "tests/test_report"
+#Path(report_path).mkdir(exist_ok=True)
 
 def test_adjust(row):
     ## rename data in a row to the name which can match hbayesdm.ra_prospect requirements ##
@@ -30,13 +30,13 @@ def test_adjust(row):
 ## TEST MVPA BASIC
 
 _ = run_mbfmri(bids_layout=bids_layout,
+               analysis='glm',
                dm_model='ra_prospect',
                mvpa_model='mlp',
                feature_name='zoom2gm',
                task_name='mixedgamblestask',
                process_name='SUgamble',
                skip_compmodel=False,
-               report_path=report_path,
                adjust_function=test_adjust,
                n_core=4,
                nchain=2,

@@ -58,7 +58,8 @@ def first_level_from_bids(bids_layout, task_name, process_name,
     
     """Create FirstLevelModel objects and fit arguments from a BIDS dataset.
     """
-    
+    if high_pass is None :
+        high_pass = .01
     if not isinstance(bids_layout,BIDSLayout):
         bids_layout =  BIDSLayout(root=bids_layout,derivatives=True)
         

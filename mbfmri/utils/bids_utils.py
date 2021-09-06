@@ -534,7 +534,17 @@ class BIDSController():
         n_try = 0
         for _, row in self.meta_infos.iterrows():
             save_path = self.get_path(sub_id=row['subject'], ses_id=row['session'])
-            save_path = save_path / f'plot_feature-{feature_name}_process-{process_name}'
+            
+            file_name = f'sub-{row["subject"]}'
+            
+            if row['session'] is not None:
+                file_name += f'_ses-{row["session"]}'
+            if row['run'] is not None:
+                file_name += f'_run-{row["run"]}'
+            if row['task'] is not None:
+                file_name += f'_task-{row["task"]}'
+            file_name += '_plot.png'
+            save_path = save_path / file_name
             plotted = plot_data(mbmvpa_layout=self.mbmvpa_layout, 
                               subject=row['subject'],
                               run=row['run'],

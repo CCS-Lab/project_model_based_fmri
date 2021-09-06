@@ -35,8 +35,9 @@ from tqdm import tqdm
 import nibabel as nib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-def run_mbglm(config=None,
-              report_path='.',
+def run_mbglm(bids_layout,
+              config=None,
+              report_path=None,
               overwrite=False,
               overwrite_latent_process=True,
               refit_compmodel=False,
@@ -52,12 +53,15 @@ def run_mbglm(config=None,
     Parameters
     ----------
     
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
+        
     config : dict or str or pathlib.PosixPath, default=None
         Dictionary for keyworded configuration, or path for yaml file.
         The configuration input will override the default configuration.
     
-    report_path : str or pathlib.PosixPath, defualt="."
-        Path for saving outputs.
+    report_path : str or pathlib.PosixPath, defualt=None
+        Path for saving outputs. Default path will be set as bids_root/mbmvpa/glm/ (If None)
     
     overwrite : bool, default=False
         Indicate if processing multi-voxel signals is required
@@ -113,7 +117,8 @@ def run_mbglm(config=None,
     
     """
     
-    mbglm = MBGLM(config=config,report_path=report_path,**kwargs)
+    mbglm = MBGLM(bids_layout=bids_layout,
+                  config=config,report_path=report_path,**kwargs)
     mbglm.run(overwrite=overwrite,
              overwrite_latent_process=overwrite_latent_process,
              refit_compmodel=refit_compmodel)
@@ -130,12 +135,15 @@ class MBGLM(MBFMRI):
     Parameters
     ----------
     
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
+        
     config : dict or str or pathlib.PosixPath, default=None
         Dictionary for keyworded configuration, or path for yaml file.
         The configuration input will override the default configuration.
     
-    report_path : str or pathlib.PosixPath, defualt="."
-        Path for saving outputs.
+    report_path : str or pathlib.PosixPath, defualt=None
+        Path for saving outputs. Default path will be set as bids_root/mbmvpa/mvpa/ (If None)
     
     **kwargs : dict
         Dictionary for keywarded arguments.
@@ -156,17 +164,21 @@ class MBGLM(MBFMRI):
     
     """
     def __init__(self,
+                 bids_layout,
                  config=None,
-                 report_path='.',
+                 report_path=None,
                  **kwargs):
         
         # load & set configuration
         self.config = self._load_default_config()
         self._override_config(config)
         self._add_kwargs_to_config(kwargs)
+        if report_path is None:
+            report_path = Path(bids_layout)/'derivatives'/'mbmvpa'
         self.config['GLM']['glm_save_path']=report_path
         
         # initiating internal modules for preprocessing input data
+        self.config['LATENTPROCESS']['bids_layout'] = bids_layout
         self.y_generator = LatentProcessGenerator(**self.config['LATENTPROCESS'])
         self.config['APPENDIX'] = {}
         self.glm = None
@@ -343,7 +355,7 @@ class GLM():
                  atlas=None,
                  rois=[],
                  gm_only=False,
-                 glm_save_path='.',
+                 glm_save_path=".",
                  n_core=4,
                  bold_suffix='bold',
                  confound_suffix='regressors',
@@ -379,7 +391,7 @@ class GLM():
         now = datetime.datetime.now()
         self.save_root = Path(glm_save_path) / 'glm'
         self.save_root.mkdir(exist_ok=True)
-        existing_reports = [-1] + [int(f.split('report-')[-1]) for self.save_root.glob('report-*')]
+        existing_reports = [-1] + [int(f.name.split('report-')[-1]) for f in self.save_root.glob('report-*')]
         existing_reports.sort()
         report_idx = existing_reports[-1] + 1
         self.save_root = self.save_root / f'report-{report_idx}'
@@ -391,6 +403,8 @@ class GLM():
         self.firstlevel_done = False
         if mask_path is None:
             self.mask_path = Path(self.layout.root)/'masks'
+        elif mask_path is False:
+            self.mask_path = None
         else:
             self.mask_path = mask_path
         self.mask_threshold = mask_threshold

@@ -14,7 +14,8 @@ run_mbmvpa = run_mbmvpa
 
 valid_analysis = ['mvpa','glm']
 
-def run_mbfmri(analysis='mvpa',
+def run_mbfmri(bids_layout,
+              analysis='mvpa',
               **kwargs):
     
     """Top wrapper function for model-based fMRI analysis.
@@ -37,6 +38,9 @@ def run_mbfmri(analysis='mvpa',
     
     Parameters
     ----------
+    
+    bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
+        Root for input data. It should follow **BIDS** convention.
     
     analysis: str, default="mvpa"
         Name of approach. "mvpa" will conduct MVPA approach by running *run_mbmvpa*,
@@ -92,9 +96,9 @@ def run_mbfmri(analysis='mvpa',
         
     """
     if analysis.lower() == "mvpa":
-        run_mbmvpa(**kwargs)
+        run_mbmvpa(bids_layout=bids_layout,**kwargs)
     elif analysis.lower() == "glm":
-        run_mbglm(**kwargs)
+        run_mbglm(bids_layout=bids_layout,**kwargs)
     else:
         raise ValueError(f'ERROR: please enter valid analysis type-{valid_analysis}')
         

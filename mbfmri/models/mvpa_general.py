@@ -89,9 +89,6 @@ class MVPA_CV():
     cv_save_path : str or pathlib.PosixPath, default='.'
         Path for saving results.
 
-    experiment_name : str, default="unnamed"
-        Name for the experiment. Used for naming result files.
-
     fit_reporter : utils.report.FitReporter
         Reporting object which will make reports for every fold.
         Metrics like MSE or R can be done by FitReporter.
@@ -114,7 +111,6 @@ class MVPA_CV():
                 n_cv_repeat=1,
                 cv_save=True,
                 cv_save_path=".",
-                experiment_name="unnamed",
                 fit_reporter=None,
                 post_reporter=None,
                 ):
@@ -127,7 +123,6 @@ class MVPA_CV():
         self.n_cv_repeat = n_cv_repeat
         self.cv_save = cv_save
         self.cv_save_path = cv_save_path
-        self.experiment_name = experiment_name
         self.post_reporter = post_reporter
         self.fit_reporter = fit_reporter
         self.output_stats = {}
@@ -140,7 +135,7 @@ class MVPA_CV():
             now = datetime.datetime.now()
             self.save_root = Path(cv_save_path)/'mvpa'
             self.save_root.mkdir(exist_ok=True)
-            existing_reports = [-1] + [int(f.split('report-')[-1]) for self.save_root.glob('report-*')]
+            existing_reports = [-1] + [int(f.name.split('report-')[-1]) for f in self.save_root.glob('report-*')]
             existing_reports.sort()
             report_idx = existing_reports[-1]+1
             self.save_root = self.save_root/f'report-{report_idx}'
