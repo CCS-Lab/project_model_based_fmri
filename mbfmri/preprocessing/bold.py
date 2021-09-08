@@ -31,7 +31,6 @@ class VoxelFeatureGenerator():
 
     Parameters
     ----------
-    
     bids_layout : str or pathlib.PosixPath or bids.layout.layout.BIDSLayout or BIDSController
         Root for input data. It should follow **BIDS** convention.
 
