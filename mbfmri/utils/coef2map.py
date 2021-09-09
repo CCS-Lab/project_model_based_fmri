@@ -86,7 +86,7 @@ def cluster_level_correction(brainmap, threshold, cluster_threshold):
     
     return stat_map
 
-def get_map(coefs, voxel_mask, experiment_name, standardize=False, save_path=".", smoothing_fwhm=0,
+def get_map(coefs, voxel_mask, experiment_name, standardize=True, save_path=".", smoothing_fwhm=0,
             threshold=0, cluster_threshold=0):
     
     """make nii image file from coefficients of model.
